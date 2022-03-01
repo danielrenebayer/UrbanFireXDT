@@ -1,0 +1,3 @@
+For compiling on debian one requires the following packages:
+ - libsqlite3-dev
+
