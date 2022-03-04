@@ -10,6 +10,7 @@
 #define GLOBAL_H
 
 #include <string>
+#include <vector>
 
 namespace global {
 
@@ -23,6 +24,10 @@ namespace global {
     inline float exp_bess_kW        = 0.0;  ///< P [kW] of in the simulation added BESS installations
     inline float exp_bess_kWh       = 0.0;  ///< E [kWh] of in the simulation added BESS installations
     inline float exp_bess_start_soc = 0.0;  ///< SOC at the beginning of the simulation for newly added BESS installations
+    // Time info (read from time_indices table in central values database)
+    inline int* time_timestep_id = NULL; ///< Reference to the list of time steps
+    inline std::vector<std::string>* time_localtime_str     = NULL; ///< Reference to the list of the time as string - alignment fits to time_timestep_id
+    inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
 
     inline bool n_timesteps_init     = false;
     inline bool n_substations_init   = false;
@@ -34,11 +39,11 @@ namespace global {
     inline bool exp_bess_kW_init     = false;
     inline bool exp_bess_kWh_init    = false;
     inline bool exp_bess_start_soc_init    = false;
+    inline bool time_info_init       = false;
 
-    //
-    // Checks if all variables are initialized
-    //
-    bool all_variables_initialized();
+
+    bool all_variables_initialized(); ///< Checks if all variables are initialized
+    void vacuum();  ///< Deletes all global variables in the end
 
 }
 

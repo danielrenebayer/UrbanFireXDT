@@ -21,4 +21,12 @@ bool global::all_variables_initialized() {
         
 }
 
+void global::vacuum() {
+    delete   ts_start_str;           ts_start_str           = NULL;
+    delete   ts_end_str;             ts_end_str             = NULL;
+    delete[] time_timestep_id;       time_timestep_id       = NULL;
+    delete   time_localtime_str;     time_localtime_str     = NULL;
+    delete   time_localtimezone_str; time_localtimezone_str = NULL;
+}
+
 
