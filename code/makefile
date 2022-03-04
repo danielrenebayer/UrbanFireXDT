@@ -1,5 +1,5 @@
 FLAGS = -std=c++20 -l sqlite3 -pedantic -Wall
-FILES = main.cpp components.cpp units.cpp global.cpp
+FILES = main.cpp components.cpp units.cpp global.cpp simulation_setup.cpp
 
 all:
 	g++ $(FILES) -o main $(FLAGS)
