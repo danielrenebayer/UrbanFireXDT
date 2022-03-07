@@ -74,13 +74,13 @@ int main(int argc, char* argv[]) {
 	//
 	// Create the control units and load the data for the connected measurement units
 	//
-	if (!configld::load_data_from_central_database("/home/daniel/Daten/current/31_export_for_simulation/Merged_Information.db")) {
+	if (!configld::load_data_from_central_database("../data/input/Merged_Information.db")) {
 		return 2;
 	}
 
 	ComponentPV cPV(22.3);
 	MeasurementUnit mu(0, NULL, 0/*meloID,string melo, locID*/);
-	mu.load_data("/home/daniel/Daten/current/31_export_for_simulation/SeparatedSmartMeterData/2.csv");
+	mu.load_data("../data/input/SeparatedSmartMeterData/2.csv");
 
 	//
 	// Load central solar radation and wind profiles

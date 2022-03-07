@@ -2,3 +2,5 @@ code/main
 code/main-dbg
 test/
 .vscode/
+data/*
+!data/README.md
