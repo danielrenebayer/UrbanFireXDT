@@ -9,6 +9,7 @@
  */
 
 #include <string>
+#include <list>
 
 #include "global.h"
 
@@ -16,8 +17,61 @@
 #define UNITS_H
 
 
-class ControlUnit {
+class Substation;
+class ControlUnit;
+class MeasurementUnit;
 
+
+class Substation {
+    /*
+        This class represents a substation.
+    */
+    public:
+        Substation(int id, std::string* name);
+        ~Substation();
+        void add_unit(ControlUnit* unit);
+        //
+        //
+        static void PreInitializeStaticVariables();
+        static void InitializeStaticVariables(int n_substations);
+        static void VacuumStaticVariables();
+    private:
+        // constant member variables (other languages might call this 'final')
+        const int id;
+        const std::string* name;
+        // member variables that can change over time
+        std::list<ControlUnit*>* connected_units;
+        //
+        // static list of substations
+        static bool st__substation_list_init;
+        static Substation** st__substation_list;
+};
+
+
+class ControlUnit {
+    /*
+        This class represents a control unit
+        (i.e. a private house or a small company)
+    */
+    public:
+        ControlUnit(int unitID, int substation_id);
+        ~ControlUnit();
+        void add_unit(MeasurementUnit* unit);
+        //
+        //
+        static void PreInitializeStaticVariables();
+        static void InitializeStaticVariables(int n_CUs);
+        static void VacuumStaticVariables();
+    private:
+        // constant member variables (other languages might call this 'final')
+        const int unitID;
+        const Substation* higher_level_subst;
+        // member variables that can change over time
+        std::list<MeasurementUnit*>* connected_units;
+        //
+        // static list of CUs
+        static bool st__cu_list_init;
+        static ControlUnit** st__cu_list;
 };
 
 
@@ -33,6 +87,12 @@ class MeasurementUnit {
         MeasurementUnit(int meloID, std::string * melo, int locID);
         ~MeasurementUnit();
         bool load_data(const char * filepath);
+        //
+        //
+        static void PreInitializeStaticVariables();
+        static void InitializeStaticVariables(int n_MUs);
+        static void VacuumStaticVariables();
+        //
         // getter methods
         inline const std::string * get_melo() const;
         inline const int get_meloID() const;
@@ -44,6 +104,7 @@ class MeasurementUnit {
         const int locationID;
         const int meloID;
         const std::string * melo;
+        const ControlUnit* higher_level_cu;
         // member variables that can change over time
         float current_load_rsm_kW;
         bool rsm_has_demand;
@@ -59,6 +120,10 @@ class MeasurementUnit {
 	    float* data_value_feedin;
         //char*  data_status_demand;
 	    //char*  data_status_feedin;
+        //
+        // static list of MUs
+        static bool st__mu_list_init;
+        static MeasurementUnit** st__mu_list;
 };
 
 

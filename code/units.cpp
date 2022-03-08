@@ -5,15 +5,84 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <list>
 
 #include "global.h"
 
 using namespace std;
 
+
+// ----------------------------- //
+//      Implementation of        //
+//          Substation           //
+// ----------------------------- //
+Substation::Substation(int id, string* name)
+	: id(id), name(name)
+{
+	connected_units = new list<ControlUnit*>();
+}
+
+Substation::~Substation() {
+	delete name;
+	delete connected_units;
+}
+
+void Substation::add_unit(ControlUnit* unit) {
+	connected_units->push_back(unit);
+}
+
+void Substation::PreInitializeStaticVariables() {
+	st__substation_list_init = false;
+	st__substation_list = NULL;
+}
+
+void Substation::InitializeStaticVariables(int n_substations) {
+	st__substation_list_init = true;
+	st__substation_list = new Substation*[n_substations];
+}
+
+void Substation::VacuumStaticVariables() {
+	delete[] st__substation_list;
+	st__substation_list = NULL;
+	st__substation_list_init = false;
+}
+
+
+
+
 // ----------------------------- //
 //      Implementation of        //
 //         ControlUnit           //
 // ----------------------------- //
+ControlUnit::ControlUnit(int unitID, int substation_id)
+    : unitID(unitID), higher_level_subst(substation_id) // TODO das geht so nicht!
+{
+	connected_units = new list<MeasurementUnit*>();
+}
+
+ControlUnit::~ControlUnit() {
+	delete connected_units;
+}
+
+void ControlUnit::add_unit(MeasurementUnit* unit) {
+	connected_units->push_back(unit);
+}
+
+void ControlUnit::PreInitializeStaticVariables() {
+	st__cu_list_init = false;
+	st__cu_list = NULL;
+}
+
+void ControlUnit::InitializeStaticVariables(int n_CUs) {
+	st__cu_list_init = true;
+	st__cu_list = new ControlUnit*[n_CUs];
+}
+
+void ControlUnit::VacuumStaticVariables() {
+	delete[] st__cu_list;
+	st__cu_list = NULL;
+	st__cu_list_init = false;
+}
 
 
 
@@ -128,3 +197,18 @@ inline bool MeasurementUnit::has_demand() {
     return rsm_has_demand;
 }
 
+void MeasurementUnit::PreInitializeStaticVariables() {
+	st__mu_list_init = false;
+	st__mu_list = NULL;
+}
+
+void MeasurementUnit::InitializeStaticVariables(int n_MUs) {
+	st__mu_list_init = true;
+	st__mu_list = new MeasurementUnit*[n_MUs];
+}
+
+void MeasurementUnit::VacuumStaticVariables() {
+	delete[] st__mu_list;
+	st__mu_list = NULL;
+	st__mu_list_init = false;
+}
