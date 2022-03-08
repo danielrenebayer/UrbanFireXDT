@@ -4,6 +4,9 @@ FILES = main.cpp components.cpp units.cpp global.cpp simulation_setup.cpp
 all:
 	g++ $(FILES) -o main $(FLAGS)
 
+opti:
+	g++ $(FILES) -o main-opti $(FLAGS) -O3
+
 debug:
 	g++ $(FILES) -o main-dbg $(FLAGS) -g -D DEBUG
 
