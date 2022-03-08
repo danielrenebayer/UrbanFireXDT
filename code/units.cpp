@@ -16,10 +16,44 @@ using namespace std;
 //      Implementation of        //
 //          Substation           //
 // ----------------------------- //
+
+bool Substation::st__substation_list_init    = false;
+int Substation::st__n_substations            = 0;
+int Substation::st__new_substation_position  = 0;
+Substation** Substation::st__substation_list = NULL;
+
 Substation::Substation(int id, string* name)
 	: id(id), name(name)
 {
+	/*
+	 * Constructor implementation of class Substation.
+	 *
+	 * It constructs a new instance and checks if id is the next id
+	 */
+	// initialize instance variables
 	connected_units = new list<ControlUnit*>();
+
+	//
+	// add to class variables
+	if (!st__substation_list_init) {
+		cerr << "Error: global list of substations has not been initialized" << endl;
+		throw "Global list of substations has not been initialized!";
+		return;
+	}
+	// Attention: argument id starts with 1, not 0
+	if (id <= 0 || id > st__n_substations) {
+		cerr << "Error when creating a substation: id <= 0 or id > n_substations" << endl;
+		throw "id <= 0 or id > n_substations";
+		return;
+	}
+	if (id - 1 != st__new_substation_position) {
+		cerr << "Error when creating a substation: id - 1 != st__new_substation_position" << endl;
+		cerr << "A reason might be, that Substation IDs are not ordered sequentially!" << endl;
+		throw "Substation IDs are not ordered sequentially!";
+		return;
+	}
+	st__substation_list[st__new_substation_position] = this;
+	st__new_substation_position++;
 }
 
 Substation::~Substation() {
@@ -31,20 +65,27 @@ void Substation::add_unit(ControlUnit* unit) {
 	connected_units->push_back(unit);
 }
 
-void Substation::PreInitializeStaticVariables() {
-	st__substation_list_init = false;
-	st__substation_list = NULL;
-}
-
 void Substation::InitializeStaticVariables(int n_substations) {
 	st__substation_list_init = true;
 	st__substation_list = new Substation*[n_substations];
+	st__n_substations   = n_substations;
 }
 
-void Substation::VacuumStaticVariables() {
+void Substation::VacuumInstancesAndStaticVariables() {
+	// delete all instances
+	for (int i = 0; i < st__new_substation_position; i++)
+		delete st__substation_list[i];
+	// delete static variables and arrays
 	delete[] st__substation_list;
 	st__substation_list = NULL;
 	st__substation_list_init = false;
+}
+
+inline Substation* Substation::GetInstance(int id) {
+	if (id > 0 && id <= st__n_substations)
+		return st__substation_list[id - 1];
+	else
+		return NULL;
 }
 
 
@@ -54,10 +95,40 @@ void Substation::VacuumStaticVariables() {
 //      Implementation of        //
 //         ControlUnit           //
 // ----------------------------- //
+
+bool ControlUnit::st__cu_list_init     = false;
+int ControlUnit::st__n_CUs             = 0;
+int ControlUnit::st__new_CU_position   = 0;
+ControlUnit** ControlUnit::st__cu_list = NULL;
+
 ControlUnit::ControlUnit(int unitID, int substation_id)
-    : unitID(unitID), higher_level_subst(substation_id) // TODO das geht so nicht!
+    : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id))
 {
+	//
+	// initialize instance variables
 	connected_units = new list<MeasurementUnit*>();
+
+	//
+	// add to class variables
+	if (!st__cu_list_init) {
+		cerr << "Error: Global list of control units has not been initialized" << endl;
+		throw "Global list of control units has not been initialized!";
+		return;
+	}
+	// Attention: argument unitID starts with 1, not 0
+	if (unitID <= 0 || unitID > st__n_CUs) {
+		cerr << "Error when creating a control unit: UnitID <= 0 or UnitID > n_CUs" << endl;
+		throw "UnitID <= 0 or UnitID > n_CUs";
+		return;
+	}
+	if (unitID - 1 != st__new_CU_position) {
+		cerr << "Error when creating a substation: id - 1 != st__new_substation_position" << endl;
+		cerr << "A reason might be, that Control Unit IDs are not ordered sequentially!" << endl;
+		throw "Control Unit IDs are not ordered sequentially!";
+		return;
+	}
+	st__cu_list[st__new_CU_position] = this;
+	st__new_CU_position++;
 }
 
 ControlUnit::~ControlUnit() {
@@ -68,17 +139,17 @@ void ControlUnit::add_unit(MeasurementUnit* unit) {
 	connected_units->push_back(unit);
 }
 
-void ControlUnit::PreInitializeStaticVariables() {
-	st__cu_list_init = false;
-	st__cu_list = NULL;
-}
-
 void ControlUnit::InitializeStaticVariables(int n_CUs) {
 	st__cu_list_init = true;
 	st__cu_list = new ControlUnit*[n_CUs];
+	st__n_CUs   = n_CUs;
 }
 
-void ControlUnit::VacuumStaticVariables() {
+void ControlUnit::VacuumInstancesAndStaticVariables() {
+	// delete all instances
+	for (int i = 0; i < st__new_CU_position; i++)
+		delete st__cu_list[i];
+	// delete static variables and arrays
 	delete[] st__cu_list;
 	st__cu_list = NULL;
 	st__cu_list_init = false;
@@ -92,8 +163,15 @@ void ControlUnit::VacuumStaticVariables() {
 //       MeasurementUnit         //
 // ----------------------------- //
 
+bool MeasurementUnit::st__mu_list_init   = false;
+int MeasurementUnit::st__n_MUs           = 0;
+int MeasurementUnit::st__new_MU_position = 0;
+MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
+
 MeasurementUnit::MeasurementUnit(int meloID, string * melo, int locID) :
     locationID(locID), meloID(meloID), melo(melo) {
+	//
+	// initialize instance variables
     current_load_rsm_kW = 0;
     rsm_has_demand = false;
     rsm_has_feedin = false;
@@ -107,6 +185,28 @@ MeasurementUnit::MeasurementUnit(int meloID, string * melo, int locID) :
 	data_value_feedin = NULL;
     //data_status_demand=NULL;
     //data_status_feedin=NULL;
+
+	//
+	// add to class variables
+	if (!st__mu_list_init) {
+		cerr << "Error: global list of measurement units has not been initialized" << endl;
+		throw "Global list of measurement units has not been initialized!";
+		return;
+	}
+	// Attention: argument meloID starts with 1, not 0
+	if (meloID <= 0 || meloID > st__n_MUs) {
+		cerr << "Error when creating a measurement unit: meloID <= 0 or meloID > n_MUs" << endl;
+		throw "meloID <= 0 or meloID > n_MUs";
+		return;
+	}
+	if (meloID - 1 != st__new_MU_position) {
+		cerr << "Error when creating a measurement unit: meloID - 1 != st__new_MU_position" << endl;
+		cerr << "A reason might be, that Measurement Unit IDs are not ordered sequentially!" << endl;
+		throw "Measurement Unit IDs are not ordered sequentially!";
+		return;
+	}
+	st__mu_list[st__new_MU_position] = this;
+	st__new_MU_position++;
 }
 
 MeasurementUnit::~MeasurementUnit() {
@@ -130,11 +230,11 @@ bool MeasurementUnit::load_data(const char * filepath) {
     //
     // initialize the arrays
     //
-    data_timestepID    = new int[global::n_timesteps];    //int32    -> 4 bytes
-	data_value_demand  = new float[global::n_timesteps];  //float32  -> 4 bytes
-	data_value_feedin  = new float[global::n_timesteps];  //float32  -> 4 bytes
-    //data_status_demand = new char[global::n_timesteps]; //int8     -> 1 byte
-	//data_status_feedin = new char[global::n_timesteps]; //int8     -> 1 bytes
+    data_timestepID    = new int[Global::get_n_timesteps()];    //int32    -> 4 bytes
+	data_value_demand  = new float[Global::get_n_timesteps()];  //float32  -> 4 bytes
+	data_value_feedin  = new float[Global::get_n_timesteps()];  //float32  -> 4 bytes
+    //data_status_demand = new char[Global::get_n_timesteps()]; //int8     -> 1 byte
+	//data_status_feedin = new char[Global::get_n_timesteps()]; //int8     -> 1 bytes
 
     //
     // open and parse the csv file
@@ -147,7 +247,7 @@ bool MeasurementUnit::load_data(const char * filepath) {
 	} else {
 		string currLineString;
 		getline( smeter_input, currLineString ); // jump first line, as this is the header
-		for (int r = 0; r < global::n_timesteps; r++) {
+		for (int r = 0; r < Global::get_n_timesteps(); r++) {
 			// iterate over every row
 			getline( smeter_input, currLineString );
 			stringstream currLineStream( currLineString );
@@ -197,17 +297,17 @@ inline bool MeasurementUnit::has_demand() {
     return rsm_has_demand;
 }
 
-void MeasurementUnit::PreInitializeStaticVariables() {
-	st__mu_list_init = false;
-	st__mu_list = NULL;
-}
-
 void MeasurementUnit::InitializeStaticVariables(int n_MUs) {
 	st__mu_list_init = true;
 	st__mu_list = new MeasurementUnit*[n_MUs];
+	st__n_MUs   = n_MUs;
 }
 
-void MeasurementUnit::VacuumStaticVariables() {
+void MeasurementUnit::VacuumInstancesAndStaticVariables() {
+	// delete all instances
+	for (int i = 0; i < st__new_MU_position; i++)
+		delete st__mu_list[i];
+	// delete static variables and arrays
 	delete[] st__mu_list;
 	st__mu_list = NULL;
 	st__mu_list_init = false;

@@ -31,10 +31,12 @@ class Substation {
         ~Substation();
         void add_unit(ControlUnit* unit);
         //
-        //
-        static void PreInitializeStaticVariables();
+        // static functions
+        // 1. Initializers and destructors
         static void InitializeStaticVariables(int n_substations);
-        static void VacuumStaticVariables();
+        static void VacuumInstancesAndStaticVariables();
+        // 2. getter functions
+        static inline Substation* GetInstance(int id);
     private:
         // constant member variables (other languages might call this 'final')
         const int id;
@@ -44,6 +46,8 @@ class Substation {
         //
         // static list of substations
         static bool st__substation_list_init;
+        static int st__n_substations;
+        static int st__new_substation_position;
         static Substation** st__substation_list;
 };
 
@@ -59,9 +63,8 @@ class ControlUnit {
         void add_unit(MeasurementUnit* unit);
         //
         //
-        static void PreInitializeStaticVariables();
         static void InitializeStaticVariables(int n_CUs);
-        static void VacuumStaticVariables();
+        static void VacuumInstancesAndStaticVariables();
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;
@@ -71,6 +74,8 @@ class ControlUnit {
         //
         // static list of CUs
         static bool st__cu_list_init;
+        static int st__n_CUs;
+        static int st__new_CU_position;
         static ControlUnit** st__cu_list;
 };
 
@@ -89,9 +94,8 @@ class MeasurementUnit {
         bool load_data(const char * filepath);
         //
         //
-        static void PreInitializeStaticVariables();
         static void InitializeStaticVariables(int n_MUs);
-        static void VacuumStaticVariables();
+        static void VacuumInstancesAndStaticVariables();
         //
         // getter methods
         inline const std::string * get_melo() const;
@@ -123,6 +127,8 @@ class MeasurementUnit {
         //
         // static list of MUs
         static bool st__mu_list_init;
+        static int st__n_MUs;
+        static int st__new_MU_position;
         static MeasurementUnit** st__mu_list;
 };
 
