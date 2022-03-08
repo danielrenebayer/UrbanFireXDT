@@ -46,9 +46,11 @@ int main(int argc, char* argv[]) {
 	cout << "Initializing the simulation for scenario ID " << scenario_id << endl;
 
 	//
-	// creating variables
+	// creating variables and initializing the
+	// static attributes in the classes
 	//
 	float expansion_matrix[16][16];
+	Global::InitializeStaticVariables();
 
 	//
 	// open and parse the simulation scenario csv file
@@ -79,8 +81,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	ComponentPV cPV(22.3);
-	MeasurementUnit mu(0, NULL, 0/*meloID,string melo, locID*/);
-	mu.load_data("../data/input/SeparatedSmartMeterData/2.csv");
+	// this is not allowed anymore, as the object are deleted twice!!!
+	//MeasurementUnit mu(1, NULL, 0/*meloID,string melo, locID*/);
+	// do this:
+	MeasurementUnit* mu = new MeasurementUnit(1, NULL, 0/*meloID,string melo, locID*/);
+	mu->load_data("../data/input/SeparatedSmartMeterData/2.csv");
 
 	//
 	// Load central solar radation and wind profiles
@@ -90,8 +95,8 @@ int main(int argc, char* argv[]) {
 	// bevore starting the simulation:
 	// check if all global variables are set -> if not, error!
 	//
-	if (!global::all_variables_initialized()) {
-		cout << "Some variables are not initialized!" << endl;
+	if (!global::all_variables_initialized() || !Global::AllVariablesInitialized()) {
+		cout << "Some global variables are not initialized!" << endl;
 		return 3;
 	}
 	// TODO: and then make all global variables final!
@@ -107,6 +112,10 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
+	MeasurementUnit::VacuumInstancesAndStaticVariables();
+	ControlUnit::VacuumInstancesAndStaticVariables();
+	Substation::VacuumInstancesAndStaticVariables();
+	Global::DeleteStaticVariables();
 	global::vacuum();
 
 	return 0;
