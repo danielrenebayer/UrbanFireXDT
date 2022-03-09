@@ -29,10 +29,10 @@ void ComponentPV::calculateCurrentFeedin() {
 
 // ----------------------------- //
 //      Implementation of        //
-//        ComponentBESS          //
+//         ComponentBS           //
 // ----------------------------- //
 
-ComponentBESS::ComponentBESS(float maxE_kWh, float maxP_kW, 
+ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
         float discharge_rate_per_step, float efficiency) : maxE_kWh(maxE_kWh),maxP_kW(maxP_kW),
         discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency) {
 
@@ -42,19 +42,19 @@ ComponentBESS::ComponentBESS(float maxE_kWh, float maxP_kW,
     charge_request_kW = 0;
 
 }
-inline float ComponentBESS::get_SOC() const {
+inline float ComponentBS::get_SOC() const {
     return SOC;
 }
-inline float ComponentBESS::get_currentCharge_kWh() const {
+inline float ComponentBS::get_currentCharge_kWh() const {
     return currentE_kWh;
 }
-inline float ComponentBESS::get_currentLoad_kW() const {
+inline float ComponentBS::get_currentLoad_kW() const {
     return currentP_kW;
 }
-inline void  ComponentBESS::set_chargeRequest(float requested_charge_kW) {
+inline void  ComponentBS::set_chargeRequest(float requested_charge_kW) {
     charge_request_kW = requested_charge_kW;
 }
-void ComponentBESS::calculateActions() {
+void ComponentBS::calculateActions() {
     // TODO
     /* bisher:
     double timestep_size_in_h = 1;//main.simulationController.timestepsize_in_h;

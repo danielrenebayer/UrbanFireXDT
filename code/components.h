@@ -26,9 +26,9 @@ class ComponentPV {
         // TODO: Ausrichtung beachten -> dann current Feedin ueber globalstrahlung und sonnenstand ausrechnen
 };
 
-class ComponentBESS {
+class ComponentBS {
     public:
-        ComponentBESS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency);
+        ComponentBS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency);
         // getter methods
         inline float get_SOC() const;
         inline float get_currentCharge_kWh() const;
@@ -48,6 +48,14 @@ class ComponentBESS {
         float currentE_kWh;
         float currentP_kW;
         float charge_request_kW;
+};
+
+class ComponentHP {
+    // TODO: Implement Heat Pump
+};
+
+class ComponentWB {
+    // TODO: Implement Wallboxes
 };
 
 #endif
