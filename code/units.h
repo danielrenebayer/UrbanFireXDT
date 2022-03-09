@@ -136,8 +136,8 @@ class MeasurementUnit {
     private:
         // constant member variables (other languages might call this 'final')
         const int meloID;
-        const ControlUnit* higher_level_cu;
-        const std::string * melo;
+        ControlUnit *const higher_level_cu;
+        const std::string *const melo;
         const int locationID;
         // member variables that can change over time
         float current_load_rsm_kW;

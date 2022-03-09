@@ -297,7 +297,6 @@ MeasurementUnit::~MeasurementUnit() {
     data_value_feedin = NULL;
     //data_status_demand = NULL;
     //data_status_feedin = NULL;
-    melo = NULL;
 }
 
 bool MeasurementUnit::load_data(const char * filepath) {
