@@ -281,6 +281,11 @@ MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locI
 	}
 	st__mu_list[st__new_MU_position] = this;
 	st__new_MU_position++;
+
+	//
+	// add this measurement unit to the list of
+	// connected units in the control unit
+	higher_level_cu->add_unit(this);
 }
 
 MeasurementUnit::~MeasurementUnit() {
