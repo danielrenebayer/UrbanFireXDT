@@ -12,6 +12,7 @@
 #include <list>
 
 #include "global.h"
+#include "components.h"
 
 #ifndef UNITS_H
 #define UNITS_H
@@ -61,16 +62,35 @@ class ControlUnit {
         ControlUnit(int unitID, int substation_id);
         ~ControlUnit();
         void add_unit(MeasurementUnit* unit);
+        bool has_electricity_demand();
+        bool has_pv();
+        bool has_bs();
+        bool has_hp();
+        bool has_wb();
+        bool has_chp();
         //
-        //
+        // static functions
+        // 1. Initializers and destructors
         static void InitializeStaticVariables(int n_CUs);
         static void VacuumInstancesAndStaticVariables();
+        // 2. getter functions
+        static inline ControlUnit* GetInstance(int unitID);
+        static inline ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
+        static inline const int GetNumberOfInstances() {return st__n_CUs;}
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;
         const Substation* higher_level_subst;
         // member variables that can change over time
         std::list<MeasurementUnit*>* connected_units;
+        bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added
+        bool has_sim_bs; ///< boolean variable that states if a battery storage is simulatively added
+        bool has_sim_hp; ///< boolean variable that states if a heap pump is simulatively added
+        bool has_sim_wb; ///< boolean variable that states if a wallbox is simulatively added
+        ComponentPV* sim_comp_pv; ///< Reference to the simulated PV-Component (if it exists)
+        ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
+        ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
+        ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
         //
         // static list of CUs
         static bool st__cu_list_init;
@@ -89,34 +109,46 @@ class MeasurementUnit {
     */
     public:
         // initialization and destruction
-        MeasurementUnit(int meloID, std::string * melo, int locID);
+        MeasurementUnit(int meloID, int unitID, std::string * melo, int locID, 
+                        bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
+                        bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp);
         ~MeasurementUnit();
         bool load_data(const char * filepath);
+        bool has_demand() { return rsm_has_demand; }
+        bool has_feedin() { return rsm_has_feedin; }
+        bool has_pv()     { return rsm_with_pv_residential || rsm_with_pv_open_space; }
+        bool has_pv_residential() { return rsm_with_pv_residential; }
+        bool has_pv_open_space()  { return rsm_with_pv_open_space; }
+        bool has_bs()     { return rsm_with_bess;}
+        bool has_hp()     { return rsm_with_hp;  }
+        bool has_wb()     { return rsm_with_wb;  }
+        bool has_chp()    { return rsm_with_chp; }
         //
-        //
+        // Class (i.e. static) functions
+        // 1. Initializers and destructors
         static void InitializeStaticVariables(int n_MUs);
         static void VacuumInstancesAndStaticVariables();
         //
-        // getter methods
+        // 2. Class getter methods
         inline const std::string * get_melo() const;
         inline const int get_meloID() const;
         inline const int get_locationID() const;
-        inline bool has_feedin();
-        inline bool has_demand();
     private:
         // constant member variables (other languages might call this 'final')
-        const int locationID;
         const int meloID;
-        const std::string * melo;
         const ControlUnit* higher_level_cu;
+        const std::string * melo;
+        const int locationID;
         // member variables that can change over time
         float current_load_rsm_kW;
-        bool rsm_has_demand;
+        bool rsm_has_demand; ///< RSM stands for Real Smart Meter
         bool rsm_has_feedin;
-        bool rsm_with_pv;
+        bool rsm_with_pv_residential;
+        bool rsm_with_pv_open_space;
         bool rsm_with_bess;
         bool rsm_with_hp;
         bool rsm_with_wb;
+        bool rsm_with_chp;
         // member variables storing the data
         bool   data_loaded;
         int*   data_timestepID;

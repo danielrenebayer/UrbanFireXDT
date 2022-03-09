@@ -159,22 +159,43 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	 * out of the database.
 	 * This function also creates the measurement units.
 	 * 
+	 * Columns:
 	 * 0        1       2     3           4           5
 	 * MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential
-	 * 6                  7         8       9
-	 * has_pv_open_space, has_bess, has_hp, has_chp
+	 * 6                  7         8       9        10
+	 * has_pv_open_space, has_bess, has_hp, has_chp, LocID
 	 */
-	if (argc != 10) {
+	if (argc != 11) {
 		cerr << "Number of arguments not equal to 10 for one row!" << endl;
 		return 1;
 	}
 	int current_mu_id = stoi(argv[0]);
-	//
-	// TODO TODO TODO !!!
-	//
-	/* TODO string* stationName = new string(argv[1]);
-    Substation* newSubstation = new Substation(stationName);
-	global::substation_list[pos] = newSubstation;*/
+	int conn_to_unitID = stoi(argv[1]);
+	string* melo_str   = new string(argv[2]);
+	bool has_demand    = argv[3][0] == '1';
+	bool has_feedin    = argv[4][0] == '1';
+	bool has_pv_resid  = argv[5][0] == '1';
+	bool has_pv_opens  = argv[6][0] == '1';
+	bool has_bess      = argv[7][0] == '1';
+	bool has_hp        = argv[8][0] == '1';
+	bool has_wb        = false; // TODO: wallboxes not implemented jet
+	bool has_chp       = argv[9][0] == '1';
+	int locID          = stoi(argv[10]);
+
+	stringstream data_input_path;
+	data_input_path << "../data/input/SeparatedSmartMeterData/";
+	data_input_path << current_mu_id;
+	data_input_path << ".csv";
+
+	try {
+		MeasurementUnit* newMU =
+			new MeasurementUnit(current_mu_id, conn_to_unitID, melo_str, locID,
+								has_demand, has_feedin, has_pv_resid, has_pv_opens,
+								has_bess,   has_hp,     has_wb,       has_chp);
+		newMU->load_data(data_input_path.str().c_str());
+	} catch (const char* msg) {
+		return 1;
+	}
 	return 0;
 }
 bool configld::load_data_from_central_database(const char* filepath) {
@@ -247,7 +268,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
 			return false;
 		}
 		// 3. MUs
-		string sql_queryE = "SELECT MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp FROM melo_information ORDER BY MELO_ID;";
+		string sql_queryE = "SELECT MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM melo_information ORDER BY MELO_ID;";
 		char* sqlErrorMsgE;
 		int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
 		if (ret_valE != 0) {

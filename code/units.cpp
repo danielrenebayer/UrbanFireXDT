@@ -107,6 +107,14 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	//
 	// initialize instance variables
 	connected_units = new list<MeasurementUnit*>();
+	has_sim_pv      = false;
+	has_sim_bs      = false;
+	has_sim_hp      = false;
+	has_sim_wb      = false;
+	sim_comp_pv     = NULL;
+	sim_comp_bs     = NULL;
+	sim_comp_hp     = NULL;
+	sim_comp_wb     = NULL;
 
 	//
 	// add to class variables
@@ -133,10 +141,62 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 
 ControlUnit::~ControlUnit() {
 	delete connected_units;
+	if (has_sim_pv) delete sim_comp_pv;
+	if (has_sim_bs) delete sim_comp_bs;
+	if (has_sim_hp) delete sim_comp_hp;
+	if (has_sim_wb) delete sim_comp_wb;
 }
 
 void ControlUnit::add_unit(MeasurementUnit* unit) {
 	connected_units->push_back(unit);
+}
+
+bool ControlUnit::has_electricity_demand() {
+	for (MeasurementUnit* mu : *connected_units) {
+		if (mu->has_demand())
+			return true;
+	}
+	return false;
+}
+
+bool ControlUnit::has_pv() {
+	if (has_sim_pv)
+		return true;
+	for (MeasurementUnit* mu : *connected_units) {
+		if (mu->has_pv())
+			return true;
+	}
+	return false;
+}
+
+bool ControlUnit::has_bs() {
+	if (has_sim_bs)
+		return true;
+	for (MeasurementUnit* mu : *connected_units) {
+		if (mu->has_bs())
+			return true;
+	}
+	return false;
+}
+
+bool ControlUnit::has_hp() {
+	if (has_sim_hp)
+		return true;
+	for (MeasurementUnit* mu : *connected_units) {
+		if (mu->has_hp())
+			return true;
+	}
+	return false;
+}
+
+bool ControlUnit::has_wb() {
+	if (has_sim_wb)
+		return true;
+	for (MeasurementUnit* mu : *connected_units) {
+		if (mu->has_wb())
+			return true;
+	}
+	return false;
 }
 
 void ControlUnit::InitializeStaticVariables(int n_CUs) {
@@ -155,6 +215,14 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
 	st__cu_list_init = false;
 }
 
+inline ControlUnit* ControlUnit::GetInstance(int unitID) {
+	if (unitID > 0 && unitID <= st__n_CUs)
+		return st__cu_list[unitID - 1];
+	else
+		return NULL;
+}
+
+
 
 
 
@@ -168,17 +236,23 @@ int MeasurementUnit::st__n_MUs           = 0;
 int MeasurementUnit::st__new_MU_position = 0;
 MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
 
-MeasurementUnit::MeasurementUnit(int meloID, string * melo, int locID) :
-    locationID(locID), meloID(meloID), melo(melo) {
+MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locID,
+								 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
+								 bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) :
+	meloID(meloID),
+	higher_level_cu(ControlUnit::GetInstance(unitID)),
+	melo(melo), locationID(locID) {
 	//
 	// initialize instance variables
     current_load_rsm_kW = 0;
-    rsm_has_demand = false;
-    rsm_has_feedin = false;
-    rsm_with_pv = false;
-    rsm_with_bess = false;
-    rsm_with_hp = false;
-    rsm_with_wb = false;
+    rsm_has_demand = has_demand;
+    rsm_has_feedin = has_feedin;
+    rsm_with_pv_residential = has_pv_resid;
+	rsm_with_pv_open_space  = has_pv_opens;
+    rsm_with_bess  = has_bess;
+    rsm_with_hp    = has_hp;
+    rsm_with_wb    = has_wb;
+	rsm_with_chp   = has_chp;
     data_loaded       = false;
     data_timestepID   = NULL;
 	data_value_demand = NULL;
@@ -264,6 +338,7 @@ bool MeasurementUnit::load_data(const char * filepath) {
 		smeter_input.close();
 	}
 	
+	#ifdef DEBUG_EXTRA_OUTPUT
 	for (int i = 0; i < 10; i++) {
 		printf("%6i %6.4f %6.4f \n",
 			data_timestepID[i],
@@ -271,6 +346,7 @@ bool MeasurementUnit::load_data(const char * filepath) {
 			data_value_feedin[i]);
 	}
 	cout << endl;
+	#endif
 
     data_loaded = true;
     return true;
@@ -287,14 +363,6 @@ inline const int MeasurementUnit::get_meloID() const{
 
 inline const int MeasurementUnit::get_locationID() const {
     return locationID;
-}
-
-inline bool MeasurementUnit::has_feedin() {
-    return rsm_has_feedin;
-}
-
-inline bool MeasurementUnit::has_demand() {
-    return rsm_has_demand;
 }
 
 void MeasurementUnit::InitializeStaticVariables(int n_MUs) {
