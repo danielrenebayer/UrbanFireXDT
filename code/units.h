@@ -41,7 +41,7 @@ class Substation {
     private:
         // constant member variables (other languages might call this 'final')
         const int id;
-        const std::string* name;
+        const std::string *const name;
         // member variables that can change over time
         std::list<ControlUnit*>* connected_units;
         //
@@ -80,7 +80,7 @@ class ControlUnit {
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;
-        const Substation* higher_level_subst;
+        Substation *const higher_level_subst;
         // member variables that can change over time
         std::list<MeasurementUnit*>* connected_units;
         bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added
