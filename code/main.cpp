@@ -49,7 +49,8 @@ int main(int argc, char* argv[]) {
 	// creating variables and initializing the
 	// static attributes in the classes
 	//
-	float expansion_matrix[16][16];
+	float expansion_matrix_rel_freq[16][16];
+	int   expansion_matrix_abs_freq[16][16];
 	Global::InitializeStaticVariables();
 
 	//
@@ -62,14 +63,14 @@ int main(int argc, char* argv[]) {
 	//
 	// Load the expansion matrix
 	//
-	if (!expansion::load_expansion_matrix(expansion_matrix)) {
+	if (!expansion::load_expansion_matrix(expansion_matrix_rel_freq)) {
 		return 2;
 	}
 
 	//
 	// Check the expansion matrix
 	//
-	if (!expansion::verify_expansion_matrix(expansion_matrix)) {
+	if (!expansion::verify_expansion_matrix(expansion_matrix_rel_freq)) {
 		return 4;
 	}
 
@@ -84,8 +85,9 @@ int main(int argc, char* argv[]) {
 	// this is not allowed anymore, as the object are deleted twice!!!
 	//MeasurementUnit mu(1, NULL, 0/*meloID,string melo, locID*/);
 	// do this:
-	MeasurementUnit* mu = new MeasurementUnit(1, NULL, 0/*meloID,string melo, locID*/);
-	mu->load_data("../data/input/SeparatedSmartMeterData/2.csv");
+	//MeasurementUnit* mu = new MeasurementUnit(1, NULL, 0/*meloID,string melo, locID*/);
+	//mu->load_data("../data/input/SeparatedSmartMeterData/2.csv");
+	// TODO: Make all consturctors for the units private, so this will not happen !!!
 
 	//
 	// Load central solar radation and wind profiles
@@ -99,7 +101,6 @@ int main(int argc, char* argv[]) {
 		cout << "Some global variables are not initialized!" << endl;
 		return 3;
 	}
-	// TODO: and then make all global variables final!
 
 	//
 	// Add expansion[s] to the control units

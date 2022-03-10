@@ -42,7 +42,7 @@ namespace expansion {
     const int MaskBS      = 0b0010;
     const int MaskHP      = 0b0100;
     const int MaskWB      = 0b1000;
-    
+
     int expCombiMatrixOrderToBitRepr(int indexMatO);
     int expCombiBitReprToMatrixOrder(int bitRepr);
     int genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);
@@ -50,6 +50,7 @@ namespace expansion {
 
     bool load_expansion_matrix(float expansion_matrix[16][16]);
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
+    void add_expansion_to_units(float expansion_matrix_rel_freq[16][16], float expansion_matrix_abs_freq[16][16]);
 }
 
 

@@ -280,6 +280,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
 		//
         // Load address data
         //
+		// TODO, but required?
 		
 		sqlite3_close(dbcon);
         return true;
@@ -294,10 +295,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
 
 
 int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
-	/*
+    /*
      * This function maps an expansion combination number (as orderd in the
      * expansion matrix) to its bitwise representation.
-	*/
+     */
     switch (indexMatO) {
         case  0: return MaskNothing;
         case  1: return MaskPV;
@@ -358,7 +359,7 @@ int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
         return 15;
 
     throw "Error: Invalid bit representation!";
-	}
+}
 
 int expansion::genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool has_wb) {
 	/*
@@ -492,3 +493,27 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
     return true;
 }
 
+void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], float expansion_matrix_abs_freq[16][16]) {
+	/*
+	 * This function adds the expansion given als relative counts in expansion_matrix_rel_freq
+	 * to the control units.
+	 * @param expansion_matrix_abs_freq contains the absolute counts afterwards
+	 */
+
+	int currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
+	int currExpCountsMatIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as in expansion matrix
+	int newExpCountsMatIndexed[16]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	//
+	// 1. count current expansion status (as it is in the given data)
+	ControlUnit *const * unit_list = ControlUnit::GetArrayOfInstances();
+	const int n_CUs = ControlUnit::GetNumberOfInstances();
+	for (int i = 0; i < n_CUs; i++) {
+		ControlUnit* current_unit = unit_list[i];
+		int expCombi = current_unit->get_exp_combi_bit_repr();
+		currExpCountsBitIndexed[ expCombi ]++;
+	}
+
+	//
+	// 2. TODO ...
+}
