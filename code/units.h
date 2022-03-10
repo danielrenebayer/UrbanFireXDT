@@ -68,6 +68,7 @@ class ControlUnit {
         bool has_hp();
         bool has_wb();
         bool has_chp();
+        int  get_exp_combi_bit_repr();
         //
         // static functions
         // 1. Initializers and destructors
@@ -123,6 +124,7 @@ class MeasurementUnit {
         bool has_hp()     { return rsm_with_hp;  }
         bool has_wb()     { return rsm_with_wb;  }
         bool has_chp()    { return rsm_with_chp; }
+        int  get_expansion_combination() { return expansion_combination; }
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors
@@ -149,6 +151,7 @@ class MeasurementUnit {
         bool rsm_with_hp;
         bool rsm_with_wb;
         bool rsm_with_chp;
+        int expansion_combination;
         // member variables storing the data
         bool   data_loaded;
         int*   data_timestepID;

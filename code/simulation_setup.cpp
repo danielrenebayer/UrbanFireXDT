@@ -360,7 +360,7 @@ int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
     throw "Error: Invalid bit representation!";
 	}
 
-int expansion::generate_expansion_combination_int(bool has_pv, bool has_bs, bool has_hp, bool has_wb) {
+int expansion::genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool has_wb) {
 	/*
 	 * This function returns the binary representation of the expansion
 	 */

@@ -8,6 +8,7 @@
 #include <list>
 
 #include "global.h"
+#include "simulation_setup.h"
 
 using namespace std;
 
@@ -199,6 +200,22 @@ bool ControlUnit::has_wb() {
 	return false;
 }
 
+int ControlUnit::get_exp_combi_bit_repr() {
+	int combination = 0;
+	for (MeasurementUnit* mu : *connected_units) {
+		combination = combination | mu->get_expansion_combination();
+	}
+	if (has_sim_pv)
+		combination = combination | expansion::MaskPV;
+	if (has_sim_bs)
+		combination = combination | expansion::MaskBS;
+	if (has_sim_hp)
+		combination = combination | expansion::MaskHP;
+	if (has_sim_wb)
+		combination = combination | expansion::MaskWB;
+	return combination;
+}
+
 void ControlUnit::InitializeStaticVariables(int n_CUs) {
 	st__cu_list_init = true;
 	st__cu_list = new ControlUnit*[n_CUs];
@@ -259,6 +276,7 @@ MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locI
 	data_value_feedin = NULL;
     //data_status_demand=NULL;
     //data_status_feedin=NULL;
+	expansion_combination = expansion::genExpCombiAsBitRepr(has_pv_resid||has_pv_opens, has_bess, has_hp, has_wb);
 
 	//
 	// add to class variables

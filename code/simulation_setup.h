@@ -45,7 +45,7 @@ namespace expansion {
     
     int expCombiMatrixOrderToBitRepr(int indexMatO);
     int expCombiBitReprToMatrixOrder(int bitRepr);
-    int generate_expansion_combination_int(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);
+    int genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);
     bool isExpCombiPossible(int current_scenario_number, int b);
 
     bool load_expansion_matrix(float expansion_matrix[16][16]);
