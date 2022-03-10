@@ -293,61 +293,103 @@ bool configld::load_data_from_central_database(const char* filepath) {
 
 
 
-bool expansion::is_expansion_combination_possible(int current_scenario_number, int b) {
+int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
 	/*
-	This function returns if a expansion from current_scenario_number to b (i.e. the future scenario number) is possible or not
+     * This function maps an expansion combination number (as orderd in the
+     * expansion matrix) to its bitwise representation.
 	*/
-	if (current_scenario_number == EXPMAT_POS_) {
-		if (b == EXPMAT_POS_PV || b == EXPMAT_POS_BS || b == EXPMAT_POS_HP || b == EXPMAT_POS_WB || b == EXPMAT_POS_PV_BS || b == EXPMAT_POS_PV_HP || b == EXPMAT_POS_PV_WB || b == EXPMAT_POS_BS_HP || b == EXPMAT_POS_BS_WB || b == EXPMAT_POS_HP_WB || b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV) {
-		if (b == EXPMAT_POS_PV_BS || b == EXPMAT_POS_PV_HP || b == EXPMAT_POS_PV_WB || b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_BS) {
-		if (b == EXPMAT_POS_PV_BS || b == EXPMAT_POS_BS_HP || b == EXPMAT_POS_BS_WB || b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_HP) {
-		if (b == EXPMAT_POS_PV_HP || b == EXPMAT_POS_BS_HP || b == EXPMAT_POS_HP_WB || b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_WB) {
-		if (b == EXPMAT_POS_PV_WB || b == EXPMAT_POS_BS_WB || b == EXPMAT_POS_HP_WB || b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_BS) {
-		if (b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_HP) {
-		if (b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_WB) {
-		if (b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_BS_HP) {
-		if (b == EXPMAT_POS_PV_BS_HP || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_BS_WB) {
-		if (b == EXPMAT_POS_PV_BS_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_HP_WB) {
-		if (b == EXPMAT_POS_PV_HP_WB || b == EXPMAT_POS_BS_HP_WB || b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_BS_HP) {
-		if (b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_BS_WB) {
-		if (b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_HP_WB) {
-		if (b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_BS_HP_WB) {
-		if (b == EXPMAT_POS_PV_BS_HP_WB)
-			return true;
-	} else if (current_scenario_number == EXPMAT_POS_PV_BS_HP_WB) {
-		return false;
-	} else {
-		cerr << "Warning: A wrong value has been passed to function is_expansion_combination_possible." << endl;
+    switch (indexMatO) {
+        case  0: return MaskNothing;
+        case  1: return MaskPV;
+        case  2: return        MaskBS;
+        case  3: return               MaskHP;
+        case  4: return                      MaskWB;
+        case  5: return MaskPV|MaskBS;
+        case  6: return MaskPV|       MaskHP;
+        case  7: return MaskPV|              MaskWB;
+        case  8: return        MaskBS|MaskHP;
+        case  9: return        MaskBS|       MaskWB;
+        case 10: return               MaskHP|MaskWB;
+        case 11: return MaskPV|MaskBS|MaskHP;
+        case 12: return MaskPV|MaskBS|       MaskWB;
+        case 13: return MaskPV|       MaskHP|MaskWB;
+        case 14: return        MaskBS|MaskHP|MaskWB;
+        case 15: return MaskPV|MaskBS|MaskHP|MaskWB;
+    }
+}
+
+int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
+    /*
+     * This function maps an bitwise representation of the expansion 
+     * combination to the number (as orderd in the expansion matrix).
+     * It is the inverse to expCombiMatrixOrderToBitRepr()
+     */
+    if      (bitRepr ==  MaskNothing)
+        return  0;
+    else if (bitRepr ==  MaskPV)
+        return  1;
+    else if (bitRepr ==         MaskBS)
+        return  2;
+    else if (bitRepr ==                MaskHP)
+        return  3;
+    else if (bitRepr ==                       MaskWB)
+        return  4;
+    else if (bitRepr == (MaskPV|MaskBS)               )
+        return  5;
+    else if (bitRepr == (MaskPV|       MaskHP)        )
+        return  6;
+    else if (bitRepr == (MaskPV|              MaskWB) )
+        return  7;
+    else if (bitRepr == (       MaskBS|MaskHP)        )
+        return  8;
+    else if (bitRepr == (       MaskBS|       MaskWB) )
+        return  9;
+    else if (bitRepr == (              MaskHP|MaskWB) )
+        return 10;
+    else if (bitRepr == (MaskPV|MaskBS|MaskHP)        )
+        return 11;
+    else if (bitRepr == (MaskPV|MaskBS|       MaskWB) )
+        return 12;
+    else if (bitRepr == (MaskPV|       MaskHP|MaskWB) )
+        return 13;
+    else if (bitRepr == (       MaskBS|MaskHP|MaskWB) )
+        return 14;
+    else if (bitRepr == (MaskPV|MaskBS|MaskHP|MaskWB) )
+        return 15;
+
+    throw "Error: Invalid bit representation!";
 	}
-	return false;
+
+int expansion::generate_expansion_combination_int(bool has_pv, bool has_bs, bool has_hp, bool has_wb) {
+	/*
+	 * This function returns the binary representation of the expansion
+	 */
+	int retval = 0;
+	if (has_pv)
+		retval = retval | MaskPV;
+	if (has_bs)
+		retval = retval | MaskBS;
+	if (has_hp)
+		retval = retval | MaskHP;
+	if (has_wb)
+		retval = retval | MaskWB;
+	return retval;
+}
+
+bool expansion::isExpCombiPossible(int currExpNumber, int newExpNumber) {
+	/*
+	This function returns if a expansion from currExpNumber to newExpNumber (i.e. the future scenario number) is possible or not
+	*/
+	if (currExpNumber == newExpNumber)
+		return false; // this is not a expansion by definition!
+	int currExpBitRepr = expCombiBitReprToMatrixOrder(currExpNumber);
+	int newExpBitRepr  = expCombiBitReprToMatrixOrder(newExpNumber);
+	// A combination is possible, if and only if
+	//  - the bitwise and of curr and new state returns in the curr state
+	// and
+	//  - the bitwise or of curr and new state returns in the new state.
+	// One can see, that it is enough to check one only.
+	return (currExpBitRepr & newExpBitRepr) == currExpBitRepr;
 }
 
 
@@ -418,7 +460,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
 	//    and all values between 0 and 1
 	for (int i = 0; i < 16; i++) {
 		for (int j = 0; j < 16; j++) {
-			if (expansion::is_expansion_combination_possible(i,j)) {
+			if (expansion::isExpCombiPossible(i,j)) {
 				// check if between 0 and 1
 				if (expansion_matrix[i][j] < 0.0 || expansion_matrix[i][j] > 1.0) {
 					cerr << "Error in expansion matrix: value at position " << i << ", " << j << " is greater 1 or below 0!" << endl;

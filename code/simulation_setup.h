@@ -35,24 +35,18 @@ namespace expansion {
     //
     // General information about the expansion matrix is defined here
     //
-    const unsigned char EXPMAT_POS_   = 0;
-    const unsigned char EXPMAT_POS_PV = 1;
-    const unsigned char EXPMAT_POS_BS = 2;
-    const unsigned char EXPMAT_POS_HP = 3;
-    const unsigned char EXPMAT_POS_WB = 4;
-    const unsigned char EXPMAT_POS_PV_BS = 5;
-    const unsigned char EXPMAT_POS_PV_HP = 6;
-    const unsigned char EXPMAT_POS_PV_WB = 7;
-    const unsigned char EXPMAT_POS_BS_HP = 8;
-    const unsigned char EXPMAT_POS_BS_WB = 9;
-    const unsigned char EXPMAT_POS_HP_WB = 10;
-    const unsigned char EXPMAT_POS_PV_BS_HP = 11;
-    const unsigned char EXPMAT_POS_PV_BS_WB = 12;
-    const unsigned char EXPMAT_POS_PV_HP_WB = 13;
-    const unsigned char EXPMAT_POS_BS_HP_WB = 14;
-    const unsigned char EXPMAT_POS_PV_BS_HP_WB = 15;
+    // There are two different ways in which a expansion is defined
+    //  1. as the index it appears in the 
+    const int MaskNothing = 0b0000;
+    const int MaskPV      = 0b0001;
+    const int MaskBS      = 0b0010;
+    const int MaskHP      = 0b0100;
+    const int MaskWB      = 0b1000;
     
-    bool is_expansion_combination_possible(int current_scenario_number, int b);
+    int expCombiMatrixOrderToBitRepr(int indexMatO);
+    int expCombiBitReprToMatrixOrder(int bitRepr);
+    int generate_expansion_combination_int(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);
+    bool isExpCombiPossible(int current_scenario_number, int b);
 
     bool load_expansion_matrix(float expansion_matrix[16][16]);
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
