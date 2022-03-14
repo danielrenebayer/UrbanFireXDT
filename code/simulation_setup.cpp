@@ -317,6 +317,8 @@ int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
         case 14: return        MaskBS|MaskHP|MaskWB;
         case 15: return MaskPV|MaskBS|MaskHP|MaskWB;
     }
+	throw "Impossible index passed to function!";
+	return 0;
 }
 
 int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
