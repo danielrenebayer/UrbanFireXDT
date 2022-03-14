@@ -493,7 +493,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
     return true;
 }
 
-void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], float expansion_matrix_abs_freq[16][16]) {
+void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16]) {
 	/*
 	 * This function adds the expansion given als relative counts in expansion_matrix_rel_freq
 	 * to the control units.
