@@ -130,6 +130,9 @@ class MeasurementUnit {
         bool has_wb()     { return rsm_with_wb;  }
         bool has_chp()    { return rsm_with_chp; }
         int  get_expansion_combination() { return expansion_combination; }
+        inline const std::string * get_melo() const;
+        inline const int get_meloID() const;
+        inline const int get_locationID() const;
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors
@@ -137,9 +140,6 @@ class MeasurementUnit {
         static void VacuumInstancesAndStaticVariables();
         //
         // 2. Class getter methods
-        inline const std::string * get_melo() const;
-        inline const int get_meloID() const;
-        inline const int get_locationID() const;
     private:
         // constant member variables (other languages might call this 'final')
         const int meloID;
