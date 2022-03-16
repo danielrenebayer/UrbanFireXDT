@@ -216,6 +216,34 @@ int ControlUnit::get_exp_combi_bit_repr() {
 	return combination;
 }
 
+void ControlUnit::add_exp_pv() {
+	if (!has_sim_pv) {
+		has_sim_pv  = true;
+		sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp());
+	}
+}
+
+void ControlUnit::add_exp_bs() {
+	if (!has_sim_bs) {
+		has_sim_bs  = true;
+		sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh(), Global::get_exp_bess_kW(), 0.0, 1.0, Global::get_exp_bess_start_soc());
+	}
+}
+
+void ControlUnit::add_exp_hp() {
+	if (!has_sim_hp) {
+		has_sim_hp  = true;
+		sim_comp_hp = new ComponentHP();
+	}
+}
+
+void ControlUnit::add_exp_wb() {
+	if (!has_sim_wb) {
+		has_sim_wb  = true;
+		sim_comp_wb = new ComponentWB();
+	}
+}
+
 void ControlUnit::InitializeStaticVariables(int n_CUs) {
 	st__cu_list_init = true;
 	st__cu_list = new ControlUnit*[n_CUs];

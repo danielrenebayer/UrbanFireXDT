@@ -69,6 +69,11 @@ class ControlUnit {
         bool has_wb();
         bool has_chp();
         int  get_exp_combi_bit_repr();
+        // modifiers
+        void add_exp_pv();
+        void add_exp_bs();
+        void add_exp_hp();
+        void add_exp_wb();
         //
         // static functions
         // 1. Initializers and destructors
