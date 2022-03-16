@@ -49,8 +49,8 @@ int main(int argc, char* argv[]) {
 	// creating variables and initializing the
 	// static attributes in the classes
 	//
-	float expansion_matrix_rel_freq[16][16];
-	int   expansion_matrix_abs_freq[16][16];
+	float expansion_matrix_rel_freq[16][16] = {0};
+	int   expansion_matrix_abs_freq[16][16] = {0};
 	Global::InitializeStaticVariables();
 
 	//
@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
 		return 2;
 	}
 
-	ComponentPV cPV(22.3);
 	// this is not allowed anymore, as the object are deleted twice!!!
 	//MeasurementUnit mu(1, NULL, 0/*meloID,string melo, locID*/);
 	// do this:
@@ -105,6 +104,7 @@ int main(int argc, char* argv[]) {
 	//
 	// Add expansion[s] to the control units
 	//
+	expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
 
 	//
 	// Run the simulation

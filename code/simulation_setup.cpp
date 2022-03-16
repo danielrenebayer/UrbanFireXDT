@@ -6,6 +6,7 @@ using namespace expansion;
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <sqlite3.h>
 #include <sstream>
 #include <string>
@@ -505,17 +506,91 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	int currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
 	int currExpCountsMatIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as in expansion matrix
 	int newExpCountsMatIndexed[16]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	vector<list<ControlUnit*>> cuRefLstVectBitOrder(16); // vector of 16 lists, that contains the references to the CUs, where the index of the list in the vector corresponds to the expansion in bitwise order
 
 	//
 	// 1. count current expansion status (as it is in the given data)
+	//    and store the references to the CUs for a given current expansion in a list
 	ControlUnit *const * unit_list = ControlUnit::GetArrayOfInstances();
 	const int n_CUs = ControlUnit::GetNumberOfInstances();
 	for (int i = 0; i < n_CUs; i++) {
 		ControlUnit* current_unit = unit_list[i];
 		int expCombi = current_unit->get_exp_combi_bit_repr();
 		currExpCountsBitIndexed[ expCombi ]++;
+		cuRefLstVectBitOrder[ expCombi ].push_back( current_unit ); // add unit to reference list
+	}
+	// change order
+	for (int i = 0; i < 16; i++) {
+		currExpCountsMatIndexed[i] = currExpCountsBitIndexed[ expCombiMatrixOrderToBitRepr(i) ];
 	}
 
 	//
-	// 2. TODO ...
+	// 2. calculate expansion matrix with absolute values based
+	//    on the abolute counts from 1 by a row-wise multiplication
+	//    Note: Impossible values will be jumped, and diagonal values
+	//          will be computed afterwards as a difference because
+	//          we the absolute numbers have to be integer (half units
+	//          are impossible, obviously)
+	for (int i = 0; i < 16; i++) {
+		for (int j = i+1; j < 16; j++) {
+			expansion_matrix_abs_freq[i][j] = expansion_matrix_rel_freq[i][j] * currExpCountsMatIndexed[i];
+		}
+	}
+	// calculate diagonal values
+	for (int i = 0; i < 16; i++) {
+		int sum_expanded_i = 0;
+		for (int j = i+1; j < 16; j++){
+			sum_expanded_i += expansion_matrix_abs_freq[i][j];
+		}
+		expansion_matrix_abs_freq[i][i] = currExpCountsMatIndexed[i] - sum_expanded_i;
+	}
+
+	//
+	// 3. count new expansion status, that will be simulated now
+	//    This is the column sum of the absolute expansion matrix
+	for (int j = 0; j < 16; j++) { // sum over j (cols) instead of i (rows) first
+		for (int i = 0; i < 16; i++) {
+			newExpCountsMatIndexed[j] += expansion_matrix_abs_freq[i][j];
+		}
+	}
+
+	//
+	// 4. plan and execute expansion
+	for (int iMatO = 0; iMatO < 16; iMatO++) {
+		int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
+		list<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
+		list<ControlUnit*>::iterator iter = listOfCUs->begin();
+		// loop over all current expansion states
+		for (int jExpTargetMatO = 0; jExpTargetMatO < 16; jExpTargetMatO++) {
+			// get number of CUs that get the current expansion
+			int numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
+			// find out, which units we have to add for this i/j-combination
+			int iBitRepr = expCombiMatrixOrderToBitRepr(iMatO);
+			int jBitRepr = expCombiMatrixOrderToBitRepr(jExpTargetMatO);
+			int ijXOR = iBitRepr ^ jBitRepr;
+			bool expPV = false;
+			bool expBS = false;
+			bool expHP = false;
+			bool expWB = false;
+			if (ijXOR & MaskPV) expPV = true;
+			if (ijXOR & MaskBS) expBS = true;
+			if (ijXOR & MaskHP) expHP = true;
+			if (ijXOR & MaskWB) expWB = true;
+			// loop over this number
+			for (int n = 0; n < numThisCombi_i_j; n++) {
+				if (iter == listOfCUs->end()) {
+					cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
+					goto outer_loop_end;
+				}
+				// 1. add components
+				if (expPV) (*iter)->add_exp_pv();
+				if (expBS) (*iter)->add_exp_bs();
+				if (expHP) (*iter)->add_exp_hp();
+				if (expWB) (*iter)->add_exp_wb();
+				// 2. remove from list (would be good, but not required)
+				iter++;
+			}
+		}
+		outer_loop_end:;
+	}
 }
