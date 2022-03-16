@@ -33,13 +33,18 @@ void ComponentPV::calculateCurrentFeedin() {
 // ----------------------------- //
 
 ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
-        float discharge_rate_per_step, float efficiency) : maxE_kWh(maxE_kWh),maxP_kW(maxP_kW),
+        float discharge_rate_per_step, float efficiency, float initial_SoC) : maxE_kWh(maxE_kWh),maxP_kW(maxP_kW),
         discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency) {
 
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
     charge_request_kW = 0;
+
+    if (initial_SoC > 0) {
+        SOC = initial_SoC;
+        currentE_kWh = maxE_kWh * initial_SoC;
+    }
 
 }
 inline float ComponentBS::get_SOC() const {

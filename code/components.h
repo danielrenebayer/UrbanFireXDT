@@ -28,7 +28,7 @@ class ComponentPV {
 
 class ComponentBS {
     public:
-        ComponentBS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency);
+        ComponentBS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency, float initial_SoC);
         // getter methods
         inline float get_SOC() const;
         inline float get_currentCharge_kWh() const;
