@@ -66,6 +66,14 @@ void Substation::add_unit(ControlUnit* unit) {
 	connected_units->push_back(unit);
 }
 
+float Substation::calc_load() {
+	float total_load = 0.0;
+	for (ControlUnit* cu : *connected_units) {
+		total_load += cu->get_current_load_vSMeter_kW();
+	}
+	return total_load;
+}
+
 void Substation::InitializeStaticVariables(int n_substations) {
 	st__substation_list_init = true;
 	st__substation_list = new Substation*[n_substations];
@@ -116,6 +124,8 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	sim_comp_bs     = NULL;
 	sim_comp_hp     = NULL;
 	sim_comp_wb     = NULL;
+	current_load_vSM_kW   = 0;
+	self_produced_load_kW = 0;
 
 	//
 	// add to class variables
@@ -242,6 +252,59 @@ void ControlUnit::add_exp_wb() {
 		has_sim_wb  = true;
 		sim_comp_wb = new ComponentWB();
 	}
+}
+
+bool ControlUnit::compute_next_value(int ts) {
+	//
+	// This function computes the next value
+	// for this complete control unit.
+	// It also calls the methods of all connected components
+	// to calculate their actions for the next step.
+	//
+
+	//
+	// 1. get sum of all real smart meter values
+	current_load_vSM_kW = 0.0;
+	for (MeasurementUnit* mu : *connected_units) {
+		if (!mu->compute_next_value(ts))
+			return false;
+		current_load_vSM_kW += mu->get_current_ts_rsm_value();
+	}
+	float load_bevore_local_pv_bess = current_load_vSM_kW;
+	//
+	// 2. get PV feedin
+	if (has_sim_pv) {
+		sim_comp_pv->calculateCurrentFeedin(ts);
+		current_load_vSM_kW -= sim_comp_pv->get_currentGeneration_kW();
+	}
+	//
+	// 3. send situation to battery storage and get its resulting action
+	if (has_sim_bs) {
+		sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+		sim_comp_bs->calculateActions();
+		current_load_vSM_kW += sim_comp_bs->get_currentLoad_kW();
+	}
+	// TODO: implement 4 and 5: sector coupling
+	// 4. the effect of the heat pump
+	// 5. the effect of the car
+
+	//
+	// compute self-produced load, that is directly consumed
+	self_produced_load_kW = 0;
+	if (load_bevore_local_pv_bess > 0) {
+		if (current_load_vSM_kW > 0) {
+			// less local production than than consumption -> additional supply from the grid
+			self_produced_load_kW = load_bevore_local_pv_bess - current_load_vSM_kW;
+			// only check
+			if (self_produced_load_kW < 0)
+				cerr << "Error: load_self_produced < 0!" << endl;
+		} else {
+			// more (or equal) local production than consumption -> additional feedin (or nothing)
+			self_produced_load_kW = load_bevore_local_pv_bess;
+		}
+	}
+
+	return true;
 }
 
 void ControlUnit::InitializeStaticVariables(int n_CUs) {
@@ -413,6 +476,16 @@ inline const int MeasurementUnit::get_meloID() const{
 
 inline const int MeasurementUnit::get_locationID() const {
     return locationID;
+}
+
+bool MeasurementUnit::compute_next_value(int ts) {
+	if (ts <= 0 || ts > Global::get_n_timesteps()) {
+		current_load_rsm_kW = 0.0;
+		return false;
+	}
+	int tsID = ts - 1;
+	current_load_rsm_kW = data_value_demand[tsID] - data_value_feedin[tsID];
+	return true;
 }
 
 void MeasurementUnit::InitializeStaticVariables(int n_MUs) {

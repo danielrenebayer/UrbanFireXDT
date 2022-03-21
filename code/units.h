@@ -31,6 +31,8 @@ class Substation {
         Substation(int id, std::string* name);
         ~Substation();
         void add_unit(ControlUnit* unit);
+        // methods for simulation run
+        float calc_load();
         //
         // static functions
         // 1. Initializers and destructors
@@ -38,6 +40,8 @@ class Substation {
         static void VacuumInstancesAndStaticVariables();
         // 2. getter functions
         static inline Substation* GetInstance(int id);
+        static        Substation*const * GetArrayOfInstances() {return st__substation_list;}
+        static        const int GetNumberOfInstances() {return st__n_substations;}
     private:
         // constant member variables (other languages might call this 'final')
         const int id;
@@ -69,11 +73,14 @@ class ControlUnit {
         bool has_wb();
         bool has_chp();
         int  get_exp_combi_bit_repr();
+        float get_current_load_vSMeter_kW() { return current_load_vSM_kW; }
         // modifiers
         void add_exp_pv();
         void add_exp_bs();
         void add_exp_hp();
         void add_exp_wb();
+        // for simulation runs
+        bool compute_next_value(int ts);
         //
         // static functions
         // 1. Initializers and destructors
@@ -97,6 +104,9 @@ class ControlUnit {
         ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
+        //
+        float current_load_vSM_kW; ///< Current load at the virtual smart meter
+        float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units
         //
         // static list of CUs
         static bool st__cu_list_init;
@@ -133,6 +143,9 @@ class MeasurementUnit {
         inline const std::string * get_melo() const;
         inline const int get_meloID() const;
         inline const int get_locationID() const;
+        // for simulation runs
+        bool compute_next_value(int ts);
+        float get_current_ts_rsm_value() { return current_load_rsm_kW; }
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors
