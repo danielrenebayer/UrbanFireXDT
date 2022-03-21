@@ -12,6 +12,7 @@
 #include "components.h"
 #include "units.h"
 #include "simulation_setup.h"
+#include "simulation_logic.h"
 
 
 using namespace std;
@@ -109,6 +110,10 @@ int main(int argc, char* argv[]) {
 	//
 	// Run the simulation
 	//
+	if (!simulation::runSimulation()) {
+		cerr << "Error during simulation run!" << endl;
+		return 3;
+	}
 	
 	//
 	// clean up
