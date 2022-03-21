@@ -13,11 +13,8 @@ ComponentPV::ComponentPV(float kWp) : kWp(kWp) {
 inline float ComponentPV::get_kWp() const {
     return kWp;
 }
-float ComponentPV::get_currentGeneration_kW() {
-    // TODO
-    return 0;
-}
-void ComponentPV::calculateCurrentFeedin() {
+
+void ComponentPV::calculateCurrentFeedin(int ts) {
     // TODO
     // currentGeneration_kW = ...
     // bisher: current_generation_kW = main.pv_wind_data_storage.currentPVPenetration*kWp;
@@ -47,68 +44,40 @@ ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
     }
 
 }
-inline float ComponentBS::get_SOC() const {
-    return SOC;
-}
-inline float ComponentBS::get_currentCharge_kWh() const {
-    return currentE_kWh;
-}
-inline float ComponentBS::get_currentLoad_kW() const {
-    return currentP_kW;
-}
-inline void  ComponentBS::set_chargeRequest(float requested_charge_kW) {
-    charge_request_kW = requested_charge_kW;
-}
+
 void ComponentBS::calculateActions() {
-    // TODO
-    /* bisher:
-    double timestep_size_in_h = 1;//main.simulationController.timestepsize_in_h;
-    double new_charge_kWh;
+    float timestep_size_in_h = 1;//main.simulationController.timestepsize_in_h;
+    float new_charge_kWh;
 
-    current_P_load_kW = 0;
+    currentP_kW = 0;
 
-    // Self-discharge
-    current_E_charge_kWh -= discharge_rate_per_step * current_E_charge_kWh;
-    charge_request_kW     = charge_request_kW * efficiency;
-
-    if (status_output) {
-        System.out.println("Bat. state start: charge request: " + Double.toString(charge_request_kW) + 
-        ", curr. charge: " + Double.toString(current_E_charge_kWh));
-    }
+    // Calculate Self-discharge
+    currentE_kWh -= discharge_rate_per_step * currentE_kWh;
+    // Calculate efficiency
+    charge_request_kW = charge_request_kW * efficiency;
 
     // Charging and discharging
-    if (!charge_request_set) {
-        System.out.println("Important warning: charge_request not set!");
-    } else {
-        if (charge_request_kW > 0) {
-            // charging requested
-            if (charge_request_kW > maxP_kW)
-                charge_request_kW = maxP_kW;
-            new_charge_kWh = current_E_charge_kWh + timestep_size_in_h*charge_request_kW;
-            if (new_charge_kWh > maxE_kWh)
-                new_charge_kWh = maxE_kWh;
-            current_P_load_kW = (new_charge_kWh - current_E_charge_kWh)/timestep_size_in_h;
-            current_E_charge_kWh = new_charge_kWh;
-        } else if (charge_request_kW < 0) {
-            // discharging requested
-            if (-charge_request_kW > maxP_kW)
-                charge_request_kW = -maxP_kW;
-            new_charge_kWh = current_E_charge_kWh + timestep_size_in_h*charge_request_kW;
-            if (new_charge_kWh < 0)
-                new_charge_kWh = 0;
-            current_P_load_kW    = (new_charge_kWh - current_E_charge_kWh)/timestep_size_in_h;
-            current_E_charge_kWh = new_charge_kWh;
-        }
-        charge_request_set = false;
+    if (charge_request_kW > 0) {
+        // charging requested
+        if (charge_request_kW > maxP_kW)
+            charge_request_kW = maxP_kW;
+        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW;
+        if (new_charge_kWh > maxE_kWh)
+            new_charge_kWh = maxE_kWh;
+        currentP_kW  = (new_charge_kWh - currentE_kWh)/timestep_size_in_h;
+        currentE_kWh = new_charge_kWh;
+    } else if (charge_request_kW < 0) {
+        // discharging requested
+        if (-charge_request_kW > maxP_kW)
+            charge_request_kW = -maxP_kW;
+        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW;
+        if (new_charge_kWh < 0)
+            new_charge_kWh = 0;
+        currentP_kW  = (new_charge_kWh - currentE_kWh)/timestep_size_in_h;
+        currentE_kWh = new_charge_kWh;
     }
 
-    if (status_output) {
-        System.out.println("Bat. state end: charge request: curr. charge: " + Double.toString(current_E_charge_kWh)
-        + ", current_P_load_kW: " + Double.toString(current_P_load_kW));
-    }
-
-    charge_actual_set = true;
-    SOC = current_E_charge_kWh / maxE_kWh;
-    */
+    // calculate new SOC value
+    SOC = currentE_kWh / maxE_kWh;
 }
 

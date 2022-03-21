@@ -15,9 +15,9 @@ class ComponentPV {
         ComponentPV(float kWp);
         // getter methods
         inline float get_kWp() const;
-        float get_currentGeneration_kW();
+        float get_currentGeneration_kW() { return currentGeneration_kW; }
         // update / action methods
-        void  calculateCurrentFeedin();
+        void  calculateCurrentFeedin(int ts);
     private:
         // constant member variables (other languages might call this 'final')
         const float kWp;
@@ -30,11 +30,11 @@ class ComponentBS {
     public:
         ComponentBS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency, float initial_SoC);
         // getter methods
-        inline float get_SOC() const;
-        inline float get_currentCharge_kWh() const;
-        inline float get_currentLoad_kW() const;
+        float get_SOC() const               { return SOC; }
+        float get_currentCharge_kWh() const { return currentE_kWh; }
+        float get_currentLoad_kW() const    { return currentP_kW;  }
         // setter methods
-        inline void  set_chargeRequest(float requested_charge_kW);
+        void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         // update / action methods
         void calculateActions();
     private:
