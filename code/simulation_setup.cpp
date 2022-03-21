@@ -3,6 +3,7 @@
 using namespace expansion;
 
 
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -45,8 +46,17 @@ bool configld::parse_scenario_file(int scenario_id) {
 			// convert individual strings to int / float / char
 			int currentLineID = stoi( currLineSplitted[0] );
 			if (currentLineID == scenario_id) {
-				Global::set_ts_start_str(   new string( currLineSplitted[1] )); // copy constructor
-				Global::set_ts_end_str(     new string( currLineSplitted[2] )); // copy constructor
+				// read and parse time info
+				//struct tm
+				struct tm* tm_start = new struct tm;
+				struct tm* tm_end   = new struct tm;
+				stringstream stream_val_t_start( currLineSplitted[1] );
+				stringstream stream_val_t_end(   currLineSplitted[2] );
+				stream_val_t_start >> get_time(tm_start, "%Y-%m-%d %H:%M:%S");
+				stream_val_t_end   >> get_time(tm_end,   "%Y-%m-%d %H:%M:%S");
+				Global::set_ts_start_tm( tm_start );
+				Global::set_ts_end_tm(   tm_end   );
+				// read other values
 				Global::set_tsteps_per_hour(stoi( currLineSplitted[3] ));
 				Global::set_expansion_scenario_id(stoi( currLineSplitted[4] ));
 				Global::set_exp_pv_kWp(        stof( currLineSplitted[5] ));
@@ -110,8 +120,13 @@ int load_data_from_central_database_callbackB(void* data, int argc, char** argv,
 		cerr << "Time indices are not ordered sequentially!" << endl;
 		return 1;
 	}
+	// convert time values
+	struct tm* time_value = new struct tm;
+	stringstream stream_time_value(argv[1]);
+	stream_time_value >> get_time(time_value, "%Y-%m-%d %H:%M:%S");
+	// add time values to global list
     global::time_timestep_id[pos] = current_time_index;
-    global::time_localtime_str->push_back(string(argv[1]));
+    global::time_localtime_str->push_back(time_value);
     global::time_localtimezone_str->push_back(string(argv[2]));
     callcounter++;
 	return 0;
@@ -222,7 +237,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Initialize global time list
         //
         global::time_timestep_id = new int[Global::get_n_timesteps()];
-        global::time_localtime_str = new vector<string>();
+        global::time_localtime_str = new vector<struct tm*>();
         global::time_localtimezone_str = new vector<string>();
         //
         // Load time indices

@@ -3,7 +3,7 @@
 using namespace global;
 
 
-
+#include <ctime>
 #include <iostream>
 
 using namespace std;
@@ -20,6 +20,10 @@ bool global::all_variables_initialized() {
 }
 
 void global::vacuum() {
+    for (struct tm* t : *time_localtime_str) {
+        delete t;
+    }
+
     delete[] time_timestep_id;       time_timestep_id       = NULL;
     delete   time_localtime_str;     time_localtime_str     = NULL;
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
@@ -38,8 +42,8 @@ int Global::n_timesteps           = 0;
 int Global::n_substations         = 0;
 int Global::n_CUs                 = 0;
 int Global::n_MUs                 = 0;
-string* Global::ts_start_str          = NULL;
-string* Global::ts_end_str            = NULL;
+struct tm* Global::ts_start_tm    = NULL;
+struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
 int Global::expansion_scenario_id = 0;
 float Global::exp_pv_kWp            = 0.0;
@@ -65,8 +69,8 @@ void Global::InitializeStaticVariables() {
 }
 
 void Global::DeleteStaticVariables() {
-    delete ts_start_str;
-    delete ts_end_str;
+    delete ts_start_tm;
+    delete ts_end_tm;
 }
 
 bool Global::AllVariablesInitialized() {
@@ -161,19 +165,19 @@ void Global::set_n_MUs(int n_MUs) {
         Global::n_MUs_init = true;
     }
 }
-void Global::set_ts_start_str(std::string* ts_start_str) {
+void Global::set_ts_start_tm(struct tm* ts_start_tm) {
     if (ts_start_str_init) {
         cerr << "Global variable ts_start_str is already initialized!" << endl;
     } else {
-        Global::ts_start_str = ts_start_str;
+        Global::ts_start_tm = ts_start_tm;
         Global::ts_start_str_init = true;
     }
 }
-void Global::set_ts_end_str(std::string* ts_end_str) {
+void Global::set_ts_end_tm(struct tm* ts_end_tm) {
     if (ts_end_str_init) {
         cerr << "Global variable ts_end_str is already initialized!" << endl;
     } else {
-        Global::ts_end_str = ts_end_str;
+        Global::ts_end_tm = ts_end_tm;
         Global::ts_end_str_init = true;
     }
 }

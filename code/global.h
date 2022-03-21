@@ -9,6 +9,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,7 @@ namespace global {
     // inline float current_energy_supply_price = 0.0;
     // Time info (read from time_indices table in central values database)
     inline int* time_timestep_id = NULL; ///< Reference to the list of time steps
-    inline std::vector<std::string>* time_localtime_str     = NULL; ///< Reference to the list of the time as string - alignment fits to time_timestep_id
+    inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
 
     inline bool time_info_init       = false;
@@ -76,8 +77,8 @@ class Global {
         static int get_n_substations() {  return n_substations; }
         static int get_n_CUs()         {  return n_CUs; }
         static int get_n_MUs()         {  return n_MUs; }
-        static std::string* get_ts_start_str() { return ts_start_str;    }
-        static std::string* get_ts_end_str()   { return ts_end_str;    }
+        static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
+        static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
         static int get_expansion_scenario_id() { return expansion_scenario_id;    }
         static float get_exp_pv_kWp()          { return exp_pv_kWp;    }
@@ -89,8 +90,8 @@ class Global {
         static void set_n_substations(int n_substations);
         static void set_n_CUs(int n_CUs);
         static void set_n_MUs(int n_MUs);
-        static void set_ts_start_str(std::string* ts_start_str);
-        static void set_ts_end_str(std::string* ts_end_str);
+        static void set_ts_start_tm(struct tm* ts_start_tm);
+        static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
         static void set_expansion_scenario_id(int expansion_scenario_id);
         static void set_exp_pv_kWp(float exp_pv_kWp);
@@ -104,8 +105,8 @@ class Global {
         static int n_substations;          ///< Total number of substations for which data is available
         static int n_CUs;                  ///< Total number of control units for which data is available
         static int n_MUs;                  ///< Total number of meausrement units for which data is available
-        static std::string* ts_start_str;  ///< String of the start date
-        static std::string* ts_end_str;    ///< String of the end date
+        static struct tm* ts_start_tm;     ///< struct tm of the start date
+        static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
         static int expansion_scenario_id;  ///< ID of the expansion scenario
         static float exp_pv_kWp;           ///< kWp of in the simulation added PV installations
