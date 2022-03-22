@@ -148,6 +148,11 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	}
 	st__cu_list[st__new_CU_position] = this;
 	st__new_CU_position++;
+
+	//
+	// add this control unit to the list of
+	// connected units in the connected substation
+	higher_level_subst->add_unit(this);
 }
 
 ControlUnit::~ControlUnit() {
