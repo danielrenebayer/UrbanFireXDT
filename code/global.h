@@ -10,6 +10,7 @@
 #define GLOBAL_H
 
 #include <ctime>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,10 @@ namespace global {
     inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
 
+    inline std::ofstream* substation_output;
+
     inline bool time_info_init       = false;
+    inline bool substation_output_init = false;
 
 
     bool all_variables_initialized(); ///< Checks if all variables are initialized

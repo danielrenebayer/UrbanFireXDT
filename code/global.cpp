@@ -11,7 +11,7 @@ using namespace std;
 
 
 bool global::all_variables_initialized() {
-    if (time_info_init)
+    if (time_info_init && substation_output_init)
     {
         return true;
     } else {
@@ -20,6 +20,13 @@ bool global::all_variables_initialized() {
 }
 
 void global::vacuum() {
+    // close output file for substations
+    if (substation_output_init) {
+        substation_output->close();
+        delete substation_output;
+    }
+
+    // delete global arrays
     for (struct tm* t : *time_localtime_str) {
         delete t;
     }
