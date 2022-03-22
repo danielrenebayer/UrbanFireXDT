@@ -30,6 +30,10 @@ class Substation {
     public:
         Substation(int id, std::string* name);
         ~Substation();
+        // getter methods
+        const int get_id() { return id; }
+        const std::string *const get_name() { return name; }
+        // modifiers bevore simulation start
         void add_unit(ControlUnit* unit);
         // methods for simulation run
         float calc_load();
