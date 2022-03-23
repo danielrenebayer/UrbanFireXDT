@@ -8,6 +8,7 @@
 #include <list>
 
 #include "global.h"
+#include "output.h"
 #include "simulation_setup.h"
 
 using namespace std;
@@ -302,27 +303,36 @@ bool ControlUnit::compute_next_value(int ts) {
 	// to calculate their actions for the next step.
 	//
 
+	float current_load_all_rSMs_kW = 0.0;
+	float load_pv = 0.0;
+	float load_bs = 0.0;
+	float bs_SOC  = 0.0;
+
 	//
 	// 1. get sum of all real smart meter values
-	current_load_vSM_kW = 0.0;
 	for (MeasurementUnit* mu : *connected_units) {
 		if (!mu->compute_next_value(ts))
 			return false;
-		current_load_vSM_kW += mu->get_current_ts_rsm_value();
+		current_load_all_rSMs_kW += mu->get_current_ts_rsm_value();
 	}
+	current_load_vSM_kW = current_load_all_rSMs_kW;
 	float load_bevore_local_pv_bess = current_load_vSM_kW;
 	//
 	// 2. get PV feedin
 	if (has_sim_pv) {
 		sim_comp_pv->calculateCurrentFeedin(ts);
-		current_load_vSM_kW -= sim_comp_pv->get_currentGeneration_kW();
+		load_pv = sim_comp_pv->get_currentGeneration_kW();
+		current_load_vSM_kW -= load_pv;
 	}
 	//
 	// 3. send situation to battery storage and get its resulting action
 	if (has_sim_bs) {
 		sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
 		sim_comp_bs->calculateActions();
-		current_load_vSM_kW += sim_comp_bs->get_currentLoad_kW();
+		load_bs = sim_comp_bs->get_currentLoad_kW();
+		current_load_vSM_kW += load_bs;
+
+		bs_SOC = sim_comp_bs->get_SOC();
 	}
 	// TODO: implement 4 and 5: sector coupling
 	// 4. the effect of the heat pump
@@ -343,6 +353,11 @@ bool ControlUnit::compute_next_value(int ts) {
 			self_produced_load_kW = load_bevore_local_pv_bess;
 		}
 	}
+
+	//
+	// output current status
+	output::output_for_one_cu(ts, unitID, current_load_vSM_kW, current_load_all_rSMs_kW, self_produced_load_kW,
+                              load_pv, bs_SOC, load_bs);
 
 	return true;
 }
