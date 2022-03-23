@@ -7,26 +7,31 @@
  */
 
 
+#include <fstream>
+#include <mutex>
+#include <sstream>
+
+using namespace std;
+
+
 namespace output {
+
+    inline std::ofstream* substation_output;
+    inline std::ofstream* cu_output;
+    inline mutex cu_output_mutex;
+
     void initializeSubstationOutput(int scenario_id);
+    void initializeCUOutput(int scenario_id);
+
+    void closeOutputs();
+
+    void flushBuffers();
+
+    void output_for_one_cu(int ts, int cuID, float load_vsm, float load_rsm, float load_selfprod, float load_pv, float bs_SOC, float load_bs);
+
+    // TODO: these lines are a speedup test, only
+    inline const size_t bufferSize = 64*1024;
+    inline char buffer[bufferSize];
+
 }
 
-
-class OutputQueue {
-    /*
-     * This class represents a queue of data, that should
-     * be written to a file.
-     */
-    public:
-        OutputQueue(const char* filepath, unsigned int max_size); // constructs the object and opens the file
-        ~OutputQueue(); // destructs the element and closes the file
-        void add_to_queue(); // add element for outputting - blocks, if queue is full
-        // run thread
-            // checks, if elements are in the queue
-            // if not: sleep for some time
-            // if yes: empty queue and write data to file
-    private:
-        const unsigned int max_size;
-        // FILE file to write
-        // QUEUE ...
-};

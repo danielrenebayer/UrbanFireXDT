@@ -99,6 +99,7 @@ int main(int argc, char* argv[]) {
 	// open output files
 	//
 	output::initializeSubstationOutput(scenario_id);
+	output::initializeCUOutput(scenario_id);
 
 	//
 	// bevore starting the simulation:
@@ -128,6 +129,7 @@ int main(int argc, char* argv[]) {
 	MeasurementUnit::VacuumInstancesAndStaticVariables();
 	ControlUnit::VacuumInstancesAndStaticVariables();
 	Substation::VacuumInstancesAndStaticVariables();
+	output::closeOutputs();
 	Global::DeleteStaticVariables();
 	global::vacuum();
 
