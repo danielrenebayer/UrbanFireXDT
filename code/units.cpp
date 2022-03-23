@@ -216,10 +216,27 @@ bool ControlUnit::has_wb() {
 }
 
 int ControlUnit::get_exp_combi_bit_repr() {
+	return get_exp_combi_bit_repr_from_MUs() | get_exp_combi_bit_repr_sim_added();
+}
+
+int ControlUnit::get_exp_combi_bit_repr_from_MUs() {
+	//
+	// This function returns the expansion combination in bitwise representation
+	// as given by the sum of the connected measurement units
+	//
 	int combination = 0;
 	for (MeasurementUnit* mu : *connected_units) {
 		combination = combination | mu->get_expansion_combination();
 	}
+	return combination;
+}
+
+int ControlUnit::get_exp_combi_bit_repr_sim_added() {
+	//
+	// This function returns the expansion combination in bitwise representation
+	// that is added by the simulation
+	//
+	int combination = 0;
 	if (has_sim_pv)
 		combination = combination | expansion::MaskPV;
 	if (has_sim_bs)
@@ -229,6 +246,24 @@ int ControlUnit::get_exp_combi_bit_repr() {
 	if (has_sim_wb)
 		combination = combination | expansion::MaskWB;
 	return combination;
+}
+
+float ControlUnit::get_sim_comp_pv_kWp() {
+	if (has_sim_pv)
+		return sim_comp_pv->get_kWp();
+	return 0;
+}
+
+float ControlUnit::get_sim_comp_bs_P_kW() {
+	if (has_sim_bs)
+		return sim_comp_bs->get_maxP_kW();
+	return 0;
+}
+
+float ControlUnit::get_sim_comp_bs_E_kWh() {
+	if (has_sim_bs)
+		return sim_comp_bs->get_maxE_kWh();
+	return 0;
 }
 
 void ControlUnit::add_exp_pv() {
