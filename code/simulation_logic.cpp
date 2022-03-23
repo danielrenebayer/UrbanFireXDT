@@ -4,6 +4,7 @@ using namespace simulation;
 
 #include <ctime>
 #include <iostream>
+#include <sstream>
 
 #include "global.h"
 #include "units.h"
@@ -42,6 +43,7 @@ bool simulation::runSimulation() {
         }
         // execute one step
         if (!oneStep(ts)) return false;
+        // TODO: flush global::substation_output every X steps (eg. 40)
     }
 
     std::cout << " ... run finished." << std::endl;
@@ -73,9 +75,15 @@ bool simulation::oneStep(int ts) {
     float total_load = 0.0;
     Substation*const* subList = Substation::GetArrayOfInstances();
     const int nSubst = Substation::GetNumberOfInstances();
+    *(global::substation_output) << ts << ","; // add timestep to output
 	for (int i = 0; i < nSubst; i++) {
-		total_load += subList[i]->calc_load();
+        float current_station_load = subList[i]->calc_load();
+		total_load += current_station_load;
+        // stuff for output
+        *(global::substation_output) << current_station_load << ",";
 	}
+    *(global::substation_output) << total_load << std::endl; // add total load to output
+
     std::cout << ".";
 
     return true;
