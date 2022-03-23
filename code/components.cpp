@@ -10,10 +10,6 @@ ComponentPV::ComponentPV(float kWp) : kWp(kWp) {
     currentGeneration_kW = 0;
 }
 
-inline float ComponentPV::get_kWp() const {
-    return kWp;
-}
-
 void ComponentPV::calculateCurrentFeedin(int ts) {
     // TODO
     // currentGeneration_kW = ...
