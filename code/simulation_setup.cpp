@@ -511,7 +511,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
     return true;
 }
 
-void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16]) {
+void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16], int scenario_id) {
 	/*
 	 * This function adds the expansion given als relative counts in expansion_matrix_rel_freq
 	 * to the control units.
@@ -608,4 +608,56 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 		}
 		outer_loop_end:;
 	}
+
+	//
+	// finally: write expansion information to file
+	// A. output expansion matrix with absolute numbers
+	stringstream output_path_A;
+	output_path_A << "../data/output/";
+	output_path_A << setw(4) << setfill('0') << scenario_id;
+	output_path_A << "-expansion-matrix-abs-values.csv"; // TODO: make path configurable!
+	ofstream output_exp_mat(output_path_A.str().c_str(), std::ofstream::out);
+	output_exp_mat << ",0. Nothing,1. PV,2. BS,3. HP,4. WB,5. PV+BS,6. PV+HP,7. PV+WB,8. BS+HP,9. BS+WB,10. HP+WB,11. PV+BS+HP,12. PV+BS+WB,13. PV+HP+WB,14. BS+HP+WB,15. PV+BS+HP+WB,Sum as in data" << endl;
+	const char * first_column[16] = {"0. Nothing","1. PV","2. BS","3. HP","4. WB","5. PV+BS","6. PV+HP","7. PV+WB","8. BS+HP","9. BS+WB","10. HP+WB","11. PV+BS+HP","12. PV+BS+WB","13. PV+HP+WB","14. BS+HP+WB","15. PV+BS+HP+WB"};
+	for (int i = 0; i < 16; i++) {
+		output_exp_mat << first_column[i];
+		for (int j = 0; j < 16; j++) {
+			output_exp_mat << "," << expansion_matrix_abs_freq[i][j];
+		}
+		output_exp_mat << "," << currExpCountsMatIndexed[i] << endl;
+	}
+	output_exp_mat << "Sum as simulated";
+	for (int i = 0; i < 16; i++)
+		output_exp_mat << "," << newExpCountsMatIndexed[i];
+	output_exp_mat << "," << endl;
+	output_exp_mat.close();
+	//
+	// B. output information about added components per MELO
+	stringstream output_path_B;
+	output_path_B << "../data/output/";
+	output_path_B << setw(4) << setfill('0') << scenario_id;
+	output_path_B << "-expansion-per-cu.csv"; // TODO: make path configurable!
+	ofstream output_per_cu(output_path_B.str().c_str(), std::ofstream::out);
+	output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bess_orig,bess_added,wp_orig,wp_added,wbx_orig,wbx_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
+	// n_CUs and unit_list defined above, at 1.
+	for (int i = 0; i < n_CUs; i++) {
+		ControlUnit* current_unit = unit_list[i];
+		int expCombiAsInData    = current_unit->get_exp_combi_bit_repr_from_MUs();
+		int expCombiAsSimulated = current_unit->get_exp_combi_bit_repr_sim_added();
+		// output information
+		output_per_cu <<        current_unit->get_unitID();
+		output_per_cu << "," << current_unit->get_n_MUs();
+		output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsInData));
+		output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsSimulated));
+		output_per_cu << "," << (0 < (expansion::MaskBS & expCombiAsInData));
+		output_per_cu << "," << (0 < (expansion::MaskBS & expCombiAsSimulated));
+		output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsInData));
+		output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsSimulated));
+		output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsInData));
+		output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsSimulated));
+		output_per_cu << "," << current_unit->get_sim_comp_pv_kWp();
+		output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
+		output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW() << endl;
+	}
+	output_per_cu.close();
 }

@@ -11,6 +11,7 @@
 
 #include "components.h"
 #include "units.h"
+#include "output.h"
 #include "simulation_setup.h"
 #include "simulation_logic.h"
 
@@ -92,6 +93,12 @@ int main(int argc, char* argv[]) {
 	//
 	// Load central solar radation and wind profiles
 	//
+	// TODO: load central solar and wind profiles
+
+	//
+	// open output files
+	//
+	output::initializeSubstationOutput(scenario_id);
 
 	//
 	// bevore starting the simulation:
@@ -105,7 +112,7 @@ int main(int argc, char* argv[]) {
 	//
 	// Add expansion[s] to the control units
 	//
-	expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
+	expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
 
 	//
 	// Run the simulation

@@ -50,7 +50,7 @@ namespace expansion {
 
     bool load_expansion_matrix(float expansion_matrix[16][16]);
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
-    void add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16]);
+    void add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16], int scenario_id);
 }
 
 
