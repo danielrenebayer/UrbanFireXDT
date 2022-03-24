@@ -45,7 +45,7 @@ void output::initializeCUOutput(int scenario_id) {
 	output_path_CUs << setw(4) << setfill('0') << scenario_id;
 	output_path_CUs << "-CU-time-series.csv";
 	cu_output = new ofstream(output_path_CUs.str().c_str(), std::ofstream::out);
-	// TODO: these lines are a speedup test, only
+	// activate buffers for speedup
 	cu_output->rdbuf()->pubsetbuf(buffer, bufferSize);
     //
 	// add header to output file
@@ -71,5 +71,5 @@ void output::flushBuffers() {
 
 void output::output_for_one_cu(int ts, int cuID, float load_vsm, float load_rsm, float load_selfprod, float load_pv, float bs_SOC, float load_bs) {
 	unique_lock lock(cu_output_mutex); // secure access by using a mutex
-	*(cu_output) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << endl;
+	*(cu_output) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
 }

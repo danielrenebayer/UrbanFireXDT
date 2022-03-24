@@ -29,7 +29,7 @@ namespace output {
 
     void output_for_one_cu(int ts, int cuID, float load_vsm, float load_rsm, float load_selfprod, float load_pv, float bs_SOC, float load_bs);
 
-    // TODO: these lines are a speedup test, only
+    // buffers for speedup
     inline const size_t bufferSize = 64*1024;
     inline char buffer[bufferSize];
 
