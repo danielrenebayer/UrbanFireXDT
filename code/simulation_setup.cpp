@@ -40,10 +40,12 @@ bool configld::load_config_file() {
         string str_data_ipt = tree_root.get<string>("Data Input Path");
 	    string str_data_opt = tree_root.get<string>("Data Output Path");
 	    // check, if path ends with an "/", add it, if not
-	    if (str_data_ipt.back() != '/')
+	    if (str_data_ipt.back() != '/') {
 	        str_data_ipt += "/";
-	    if (str_data_opt.back() != '/')
+		}
+	    if (str_data_opt.back() != '/') {
 	        str_data_opt += "/";
+		}
 		// add to global variable collection
 		Global::set_input_path(str_data_ipt);
 		Global::set_output_path(str_data_opt);
