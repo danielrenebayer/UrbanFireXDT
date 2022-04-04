@@ -51,6 +51,8 @@ float Global::exp_pv_kWp            = 0.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_start_soc    = 0.0;
+string Global::input_path         = "";
+string Global::output_path        = "";
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -64,6 +66,8 @@ bool Global::exp_pv_kWp_init       = false;
 bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_start_soc_init    = false;
+bool Global::input_path_init       = false;
+bool Global::output_path_init      = false;
 
 void Global::InitializeStaticVariables() {
     // nothing to do anymore
@@ -86,7 +90,9 @@ bool Global::AllVariablesInitialized() {
         exp_pv_kWp_init &&
         exp_bess_kW_init &&
         exp_bess_kWh_init &&
-        exp_bess_start_soc_init)
+        exp_bess_start_soc_init &&
+        input_path_init &&
+        output_path_init)
     {
         return true;
     } else {
@@ -228,5 +234,21 @@ void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
     } else {
         Global::exp_bess_start_soc = exp_bess_start_soc;
         Global::exp_bess_start_soc_init = true;
+    }
+}
+void Global::set_input_path(string& path) {
+    if (input_path_init) {
+        cerr << "Input path already set!" << endl;
+    } else {
+        Global::input_path = path;
+        Global::input_path_init = true;
+    }
+}
+void Global::set_output_path(string& path) {
+    if (output_path_init) {
+        cerr << "Output path already set!" << endl;
+    } else {
+        Global::output_path = path;
+        Global::output_path_init = true;
     }
 }

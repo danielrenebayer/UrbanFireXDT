@@ -85,6 +85,8 @@ class Global {
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
+        static const std::string& get_input_path()  { return input_path;  }
+        static const std::string& get_output_path() { return output_path; }
         // setter methods
         static void set_n_timesteps(int n_timesteps);
         static void set_n_substations(int n_substations);
@@ -98,6 +100,8 @@ class Global {
         static void set_exp_bess_kW(float exp_bess_kW);
         static void set_exp_bess_kWh(float exp_bess_kWh);
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
+        static void set_input_path(std::string& path);
+        static void set_output_path(std::string& path);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         // variables
@@ -113,6 +117,8 @@ class Global {
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
+        static std::string input_path;     ///< reference to the string holding the input path of the data
+        static std::string output_path;    ///< reference to the string holding the output path of the data
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;
@@ -127,6 +133,8 @@ class Global {
         static bool exp_bess_kW_init;
         static bool exp_bess_kWh_init;
         static bool exp_bess_start_soc_init;
+        static bool input_path_init;
+        static bool output_path_init;
 };
 
 #endif
