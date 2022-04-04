@@ -30,7 +30,7 @@ Return values of the program:
 */
 
 int main(int argc, char* argv[]) {
-	
+
 	//
 	// parsing command line arguments
 	//
@@ -54,6 +54,13 @@ int main(int argc, char* argv[]) {
 	float expansion_matrix_rel_freq[16][16] = {0};
 	int   expansion_matrix_abs_freq[16][16] = {0};
 	Global::InitializeStaticVariables();
+
+	//
+	// open and parse global settings file
+	//
+	if (!configld::load_config_file()) {
+		return 2;
+	}
 
 	//
 	// open and parse the simulation scenario csv file

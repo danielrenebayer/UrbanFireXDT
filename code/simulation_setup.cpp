@@ -13,13 +13,46 @@ using namespace expansion;
 #include <string>
 #include <vector>
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 using namespace std;
+namespace bpt = boost::property_tree;
 
 
 #include "global.h"
 #include "units.h"
 
 
+//
+// loads the global config file
+//
+bool configld::load_config_file() {
+	bpt::ptree tree_root;
+	try {
+        bpt::read_json("../config/simulation_config.json", tree_root);
+	} catch (bpt::json_parser_error& j) {
+	    cerr << "Error when reading json file: " << j.what() << endl;
+	    return false;
+	}
+	try {
+        string str_data_ipt = tree_root.get<string>("Data Input Path");
+	    string str_data_opt = tree_root.get<string>("Data Output Path");
+	    // check, if path ends with an "/", add it, if not
+	    if (str_data_ipt.back() != '/')
+	        str_data_ipt += "/";
+	    if (str_data_opt.back() != '/')
+	        str_data_opt += "/";
+		// add to global variable collection
+		Global::set_input_path(str_data_ipt);
+		Global::set_output_path(str_data_opt);
+	} catch (bpt::ptree_bad_path& j) {
+		cerr << "Error when parsing json file: " << j.what() << endl;
+		return false;
+	}
+	return true;
+}
 
 //
 // open and parse the simulation scenario csv file
@@ -613,9 +646,9 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	// finally: write expansion information to file
 	// A. output expansion matrix with absolute numbers
 	stringstream output_path_A;
-	output_path_A << "../data/output/";
+	output_path_A << Global::get_output_path();
 	output_path_A << setw(4) << setfill('0') << scenario_id;
-	output_path_A << "-expansion-matrix-abs-values.csv"; // TODO: make path configurable!
+	output_path_A << "-expansion-matrix-abs-values.csv";
 	ofstream output_exp_mat(output_path_A.str().c_str(), std::ofstream::out);
 	output_exp_mat << ",0. Nothing,1. PV,2. BS,3. HP,4. WB,5. PV+BS,6. PV+HP,7. PV+WB,8. BS+HP,9. BS+WB,10. HP+WB,11. PV+BS+HP,12. PV+BS+WB,13. PV+HP+WB,14. BS+HP+WB,15. PV+BS+HP+WB,Sum as in data" << endl;
 	const char * first_column[16] = {"0. Nothing","1. PV","2. BS","3. HP","4. WB","5. PV+BS","6. PV+HP","7. PV+WB","8. BS+HP","9. BS+WB","10. HP+WB","11. PV+BS+HP","12. PV+BS+WB","13. PV+HP+WB","14. BS+HP+WB","15. PV+BS+HP+WB"};
@@ -634,9 +667,9 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	//
 	// B. output information about added components per MELO
 	stringstream output_path_B;
-	output_path_B << "../data/output/";
+	output_path_B << Global::get_output_path();
 	output_path_B << setw(4) << setfill('0') << scenario_id;
-	output_path_B << "-expansion-per-cu.csv"; // TODO: make path configurable!
+	output_path_B << "-expansion-per-cu.csv";
 	ofstream output_per_cu(output_path_B.str().c_str(), std::ofstream::out);
 	output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bess_orig,bess_added,wp_orig,wp_added,wbx_orig,wbx_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
 	// n_CUs and unit_list defined above, at 1.

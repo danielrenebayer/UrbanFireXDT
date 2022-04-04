@@ -17,7 +17,7 @@ void output::initializeSubstationOutput(int scenario_id) {
     //
     // initialize the output file
     stringstream output_path_subst;
-	output_path_subst << "../data/output/";
+	output_path_subst << Global::get_output_path();
 	output_path_subst << setw(4) << setfill('0') << scenario_id;
 	output_path_subst << "-substation-time-series.csv";
 	substation_output = new ofstream(output_path_subst.str().c_str(), std::ofstream::out);
@@ -30,7 +30,6 @@ void output::initializeSubstationOutput(int scenario_id) {
         *(substation_output) << "," << subList[i]->get_name()->c_str();
 	}
 	*(substation_output) << ",total_load" << endl;
-	// TODO: make output path configurable and use absolute path
 }
 
 void output::initializeCUOutput(int scenario_id) {
@@ -41,7 +40,7 @@ void output::initializeCUOutput(int scenario_id) {
     //
     // initialize the output file
     stringstream output_path_CUs;
-	output_path_CUs << "../data/output/";
+	output_path_CUs << Global::get_output_path();
 	output_path_CUs << setw(4) << setfill('0') << scenario_id;
 	output_path_CUs << "-CU-time-series.csv";
 	cu_output = new ofstream(output_path_CUs.str().c_str(), std::ofstream::out);
@@ -50,7 +49,6 @@ void output::initializeCUOutput(int scenario_id) {
     //
 	// add header to output file
 	*(cu_output) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedIn_Simulated_kW,BESS_SOC,BESS_load_kW" << endl;
-	// TODO: make output path configurable and use absolute path
 }
 
 void output::closeOutputs() {
