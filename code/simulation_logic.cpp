@@ -64,7 +64,7 @@ bool simulation::oneStep(int ts) {
     // Parameter ts is the current time step
     //
 
-    int tsID = ts - 1;
+    //int tsID = ts - 1;
 
     // TODO: IMPLEMENT THE FOLLOWING STUFF
     // TODO: set new global radiation values for PV and wind speed
