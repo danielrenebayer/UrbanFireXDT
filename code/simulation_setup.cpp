@@ -234,7 +234,7 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	int locID          = stoi(argv[10]);
 
 	stringstream data_input_path;
-	data_input_path << "../data/input/SeparatedSmartMeterData/";
+	data_input_path << Global::get_input_path() << "SeparatedSmartMeterData/";
 	data_input_path << current_mu_id;
 	data_input_path << ".csv";
 

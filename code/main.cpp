@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 	//
 	// Create the control units and load the data for the connected measurement units
 	//
-	if (!configld::load_data_from_central_database("../data/input/Merged_Information.db")) {
+	if (!configld::load_data_from_central_database((Global::get_input_path() + "Merged_Information.db").c_str())) {
 		return 2;
 	}
 
