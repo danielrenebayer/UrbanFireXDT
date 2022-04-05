@@ -34,6 +34,8 @@ namespace global {
     inline int* time_timestep_id = NULL; ///< Reference to the list of time steps
     inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
+    inline const float* pv_profile   = NULL; ///< Reference to the list of the global PV profile values
+    inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
 
     inline bool time_info_init       = false;
 

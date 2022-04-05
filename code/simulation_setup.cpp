@@ -249,6 +249,60 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	}
 	return 0;
 }
+int load_data_from_central_database_callback_PV(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the global PV profile.
+     *
+     * The first argument (data) holds the reference to the target array, where
+     * data should be written into.
+     *
+     * Columns:
+     * 0           1
+     * TimestepID  Value_Feedin
+     */
+    static int callcounter = 1;
+    int pos = callcounter - 1; // the current position is one behind the callcounter
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoi(argv[0]) != callcounter) {
+        cerr << "Wrong ordering of the global PV profile values!" << endl;
+        return 1;
+    }
+    ((float*) data)[pos] = stof(argv[1]);
+
+    callcounter++;
+    return 0;
+}
+int load_data_from_central_database_callback_Wind(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the global Wind profile.
+     *
+     * The first argument (data) holds the reference to the target array, where
+     * data should be written into.
+     *
+     * Columns:
+     * 0           1
+     * TimestepID  wind_profile_value
+     */
+    static int callcounter = 1;
+    int pos = callcounter - 1; // the current position is one behind the callcounter
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoi(argv[0]) != callcounter) {
+        cerr << "Wrong ordering of the global PV profile values!" << endl;
+        return 1;
+    }
+    ((float*) data)[pos] = stof(argv[1]);
+
+    callcounter++;
+    return 0;
+}
 bool configld::load_data_from_central_database(const char* filepath) {
     sqlite3* dbcon;
 	int rc = sqlite3_open(filepath, &dbcon);
@@ -328,6 +382,33 @@ bool configld::load_data_from_central_database(const char* filepath) {
 			return false;
 		}
         
+        //
+        // Load central solar radation profile
+        //
+        float* new_pv_array = new float[Global::get_n_timesteps()];
+        string sql_query = "SELECT TimestepID,Value_Feedin FROM GlobalProfilePV;";
+        char* sqlErrorMsgF;
+        int ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::pv_profile = new_pv_array;
+
+        //
+        // Load central wind profile
+        //
+        float* new_wind_array = new float[Global::get_n_timesteps()];
+        sql_query = "SELECT TimestepID,wind_profile_value FROM GlobalProfileWind;";
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_Wind, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::wind_profile = new_wind_array;
+
 		//
         // Load address data
         //

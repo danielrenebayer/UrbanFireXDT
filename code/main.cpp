@@ -98,11 +98,6 @@ int main(int argc, char* argv[]) {
 	// TODO: Make all consturctors for the units private, so this will not happen !!!
 
 	//
-	// Load central solar radation and wind profiles
-	//
-	// TODO: load central solar and wind profiles
-
-	//
 	// open output files
 	//
 	output::initializeSubstationOutput(scenario_id);

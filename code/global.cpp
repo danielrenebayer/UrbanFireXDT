@@ -11,7 +11,9 @@ using namespace std;
 
 
 bool global::all_variables_initialized() {
-    if (time_info_init)
+    if (time_info_init &&
+        pv_profile   != NULL &&
+        wind_profile != NULL)
     {
         return true;
     } else {
@@ -28,6 +30,8 @@ void global::vacuum() {
     delete[] time_timestep_id;       time_timestep_id       = NULL;
     delete   time_localtime_str;     time_localtime_str     = NULL;
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
+    delete[] pv_profile;   pv_profile   = NULL;
+    delete[] wind_profile; wind_profile = NULL;
 }
 
 
