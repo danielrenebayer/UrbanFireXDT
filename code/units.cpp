@@ -142,7 +142,7 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 		return;
 	}
 	if (unitID - 1 != st__new_CU_position) {
-		cerr << "Error when creating a substation: id - 1 != st__new_substation_position" << endl;
+		cerr << "Error when creating a control unit: id - 1 != st__new_CU_position" << endl;
 		cerr << "A reason might be, that Control Unit IDs are not ordered sequentially!" << endl;
 		throw "Control Unit IDs are not ordered sequentially!";
 		return;
