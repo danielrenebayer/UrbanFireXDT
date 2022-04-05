@@ -364,7 +364,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
 			return false;
 		}
 		// 2. CUs
-		string sql_queryD = "SELECT UnitID, substation_id FROM melo_information ORDER BY UnitID;";
+		string sql_queryD = "SELECT UnitID, substation_id FROM control_units ORDER BY UnitID;";
 		char* sqlErrorMsgD;
 		int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
 		if (ret_valD != 0) {
