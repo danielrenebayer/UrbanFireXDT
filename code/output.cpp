@@ -29,7 +29,7 @@ void output::initializeSubstationOutput(int scenario_id) {
 	for (int i = 0; i < nSubst; i++) {
         *(substation_output) << "," << subList[i]->get_name()->c_str();
 	}
-	*(substation_output) << ",total_load" << endl;
+	*(substation_output) << ",open_space_pv_feedin,wind_feedin,total_load" << endl;
 }
 
 void output::initializeCUOutput(int scenario_id) {

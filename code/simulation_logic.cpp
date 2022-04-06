@@ -66,8 +66,6 @@ bool simulation::oneStep(int ts) {
 
     //int tsID = ts - 1;
 
-    // TODO: IMPLEMENT THE FOLLOWING STUFF
-    // TODO: set new global radiation values for PV and wind speed
     // loop over all control units:
     //    set new values and execute next actions
     ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
@@ -76,9 +74,16 @@ bool simulation::oneStep(int ts) {
         if (!cuList[i]->compute_next_value(ts))
             return false;
 	}
+    //
+    // set new global radiation values for PV and wind speed
+    float total_load = 0.0;
+    global::unit_open_space_pv->compute_next_value(ts);
+    global::unit_open_space_wind->compute_next_value(ts);
+    total_load -= global::unit_open_space_pv->get_current_feedin_kW();
+    total_load -= global::unit_open_space_wind->get_current_feedin_kW();
+    //
     // loop over all substations: compute new load values
     // and calculate total grid load
-    float total_load = 0.0;
     Substation*const* subList = Substation::GetArrayOfInstances();
     const int nSubst = Substation::GetNumberOfInstances();
     *(output::substation_output) << ts << ","; // add timestep to output
@@ -88,7 +93,9 @@ bool simulation::oneStep(int ts) {
         // stuff for output
         *(output::substation_output) << current_station_load << ",";
 	}
-    *(output::substation_output) << total_load << std::endl; // add total load to output
+    *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
+    *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
+    *(output::substation_output) << total_load << "\n"; // add total load to output
 
     std::cout << ".";
 
