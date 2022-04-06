@@ -73,8 +73,8 @@ bool configld::parse_scenario_file(int scenario_id) {
 			// iterate over every row
 			getline( scenarios_input, currLineString );
 			stringstream currLineStream( currLineString );
-			string currLineSplitted[9];
-			for (int col = 0; col < 9; col++) {
+			string currLineSplitted[11];
+			for (int col = 0; col < 11; col++) {
 				// split this row on the ","
 				getline( currLineStream, currLineSplitted[col], ',' );
 			}
