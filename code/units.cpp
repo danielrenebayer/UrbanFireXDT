@@ -558,3 +558,28 @@ void MeasurementUnit::VacuumInstancesAndStaticVariables() {
 	st__mu_list = NULL;
 	st__mu_list_init = false;
 }
+
+
+
+// ----------------------------- //
+//      Implementation of        //
+//      OpenSpacePVOrWind        //
+// ----------------------------- //
+OpenSpacePVOrWind::OpenSpacePVOrWind(float kWp, OpenSpacePVOrWindType type)
+: kWp(kWp) {
+    // select the correct profile array
+	if (type == OpenSpacePVOrWindType::PV)
+	    profile_data = global::pv_profile;
+	else
+	    profile_data = global::wind_profile;
+}
+
+bool OpenSpacePVOrWind::compute_next_value(int ts) {
+	if (ts <= 0 || ts > Global::get_n_timesteps()) {
+		current_feedin_kW = 0.0;
+		return false;
+	}
+	int tsID = ts - 1;
+    current_feedin_kW = profile_data[tsID] * kWp;
+	return true;
+}

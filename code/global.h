@@ -36,6 +36,8 @@ namespace global {
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
     inline const float* pv_profile   = NULL; ///< Reference to the list of the global PV profile values
     inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
+    inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit
+    inline OpenSpacePVOrWind* unit_open_space_wind = NULL; ///< Reference to the global open space wind unit
 
     inline bool time_info_init       = false;
 

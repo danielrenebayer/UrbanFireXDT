@@ -197,4 +197,24 @@ class MeasurementUnit {
 };
 
 
+
+enum OpenSpacePVOrWindType {
+    PV,
+    Wind
+};
+
+class OpenSpacePVOrWind {
+    public:
+        OpenSpacePVOrWind(float kWp, OpenSpacePVOrWindType type);
+        float get_current_feedin_kW() { return current_feedin_kW; }
+        // for simulation runs
+        bool compute_next_value(int ts);
+    private:
+        // constant member variables
+        const float kWp;
+        const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be global::wind_profile or global::pv_profile
+        // members that might change during the time
+        float current_feedin_kW;
+};
+
 #endif

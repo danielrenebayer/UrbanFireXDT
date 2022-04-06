@@ -397,6 +397,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         global::pv_profile = new_pv_array;
+		//
+		// initialize the global open space pv unit
+		global::unit_open_space_pv = new OpenSpacePVOrWind(Global::get_open_space_pv_kWp(), OpenSpacePVOrWindType::PV);
 
         //
         // Load central wind profile
@@ -410,6 +413,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         global::wind_profile = new_wind_array;
+		//
+		// initialize the global wind turbine unit
+		global::unit_open_space_wind = new OpenSpacePVOrWind(Global::get_wind_kWp(), OpenSpacePVOrWindType::Wind);
 
 		//
         // Load address data
