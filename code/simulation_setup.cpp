@@ -98,6 +98,8 @@ bool configld::parse_scenario_file(int scenario_id) {
 				Global::set_exp_bess_kW(       stof( currLineSplitted[6] ));
 				Global::set_exp_bess_kWh(      stof( currLineSplitted[7] ));
 				Global::set_exp_bess_start_soc(stof( currLineSplitted[8] ));
+				Global::set_open_space_pv_kWp( stof( currLineSplitted[9] ));
+				Global::set_wind_kWp(          stof( currLineSplitted[10]));
 				break;
 			} else {
 				continue;

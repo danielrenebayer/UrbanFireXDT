@@ -87,6 +87,8 @@ class Global {
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
+        static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
+        static float get_wind_kWp()            { return wind_kWp; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         // setter methods
@@ -102,6 +104,8 @@ class Global {
         static void set_exp_bess_kW(float exp_bess_kW);
         static void set_exp_bess_kWh(float exp_bess_kWh);
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
+        static void set_open_space_pv_kWp(float open_space_kWp);
+        static void set_wind_kWp(float wind_kWp);
         static void set_input_path(std::string& path);
         static void set_output_path(std::string& path);
     private:
@@ -119,6 +123,8 @@ class Global {
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
+        static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
+        static float wind_kWp;             ///< kWp of the wind turbines
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         // boolean values holding information if the correspoding 
@@ -135,6 +141,8 @@ class Global {
         static bool exp_bess_kW_init;
         static bool exp_bess_kWh_init;
         static bool exp_bess_start_soc_init;
+        static bool open_space_pv_kWp_init;
+        static bool wind_kWp_init;
         static bool input_path_init;
         static bool output_path_init;
 };

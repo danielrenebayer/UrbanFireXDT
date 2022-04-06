@@ -55,6 +55,8 @@ float Global::exp_pv_kWp            = 0.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_start_soc    = 0.0;
+float Global::open_space_pv_kWp     = 0.0;
+float Global::wind_kWp              = 0.0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 //
@@ -70,6 +72,8 @@ bool Global::exp_pv_kWp_init       = false;
 bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_start_soc_init    = false;
+bool Global::open_space_pv_kWp_init= false;
+bool Global::wind_kWp_init         = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 
@@ -238,6 +242,22 @@ void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
     } else {
         Global::exp_bess_start_soc = exp_bess_start_soc;
         Global::exp_bess_start_soc_init = true;
+    }
+}
+void Global::set_open_space_pv_kWp(float open_space_kWp) {
+    if (open_space_pv_kWp_init) {
+        cerr << "Global variable open_space_pv_kWp is already initialized!" << endl;
+    } else {
+        Global::open_space_pv_kWp = open_space_kWp;
+        open_space_pv_kWp_init = true;
+    }
+}
+void Global::set_wind_kWp(float wind_kWp) {
+    if (wind_kWp_init) {
+        cerr << "Global variable wind_kWp is already initialized!" << endl;
+    } else {
+        Global::wind_kWp = wind_kWp;
+        wind_kWp_init = true;
     }
 }
 void Global::set_input_path(string& path) {
