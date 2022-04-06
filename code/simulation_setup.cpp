@@ -29,31 +29,31 @@ namespace bpt = boost::property_tree;
 // loads the global config file
 //
 bool configld::load_config_file() {
-	bpt::ptree tree_root;
-	try {
+    bpt::ptree tree_root;
+    try {
         bpt::read_json("../config/simulation_config.json", tree_root);
-	} catch (bpt::json_parser_error& j) {
-	    cerr << "Error when reading json file: " << j.what() << endl;
-	    return false;
-	}
-	try {
+    } catch (bpt::json_parser_error& j) {
+        cerr << "Error when reading json file: " << j.what() << endl;
+        return false;
+    }
+    try {
         string str_data_ipt = tree_root.get<string>("Data Input Path");
-	    string str_data_opt = tree_root.get<string>("Data Output Path");
-	    // check, if path ends with an "/", add it, if not
-	    if (str_data_ipt.back() != '/') {
-	        str_data_ipt += "/";
-		}
-	    if (str_data_opt.back() != '/') {
-	        str_data_opt += "/";
-		}
-		// add to global variable collection
-		Global::set_input_path(str_data_ipt);
-		Global::set_output_path(str_data_opt);
-	} catch (bpt::ptree_bad_path& j) {
-		cerr << "Error when parsing json file: " << j.what() << endl;
-		return false;
-	}
-	return true;
+        string str_data_opt = tree_root.get<string>("Data Output Path");
+        // check, if path ends with an "/", add it, if not
+        if (str_data_ipt.back() != '/') {
+            str_data_ipt += "/";
+        }
+        if (str_data_opt.back() != '/') {
+            str_data_opt += "/";
+        }
+        // add to global variable collection
+        Global::set_input_path(str_data_ipt);
+        Global::set_output_path(str_data_opt);
+    } catch (bpt::ptree_bad_path& j) {
+        cerr << "Error when parsing json file: " << j.what() << endl;
+        return false;
+    }
+    return true;
 }
 
 //
@@ -61,52 +61,52 @@ bool configld::load_config_file() {
 //
 bool configld::parse_scenario_file(int scenario_id) {
     const char* scenarios_input_path = "../config/simulation_scenarios.csv";
-	ifstream scenarios_input;
-	scenarios_input.open(scenarios_input_path);
-	if (!scenarios_input.good()) {
-		cerr << "Error when connecting to the simulation scenario file with path " << scenarios_input_path << endl;
-		return false;
-	} else {
-		string currLineString;
-		getline( scenarios_input, currLineString ); // jump first line, as this is the header
-		for (int r = 0; r < scenario_id; r++) {
-			// iterate over every row
-			getline( scenarios_input, currLineString );
-			stringstream currLineStream( currLineString );
-			string currLineSplitted[11];
-			for (int col = 0; col < 11; col++) {
-				// split this row on the ","
-				getline( currLineStream, currLineSplitted[col], ',' );
-			}
-			// convert individual strings to int / float / char
-			int currentLineID = stoi( currLineSplitted[0] );
-			if (currentLineID == scenario_id) {
-				// read and parse time info
-				//struct tm
-				struct tm* tm_start = new struct tm;
-				struct tm* tm_end   = new struct tm;
-				stringstream stream_val_t_start( currLineSplitted[1] );
-				stringstream stream_val_t_end(   currLineSplitted[2] );
-				stream_val_t_start >> get_time(tm_start, "%Y-%m-%d %H:%M:%S");
-				stream_val_t_end   >> get_time(tm_end,   "%Y-%m-%d %H:%M:%S");
-				Global::set_ts_start_tm( tm_start );
-				Global::set_ts_end_tm(   tm_end   );
-				// read other values
-				Global::set_tsteps_per_hour(stoi( currLineSplitted[3] ));
-				Global::set_expansion_scenario_id(stoi( currLineSplitted[4] ));
-				Global::set_exp_pv_kWp(        stof( currLineSplitted[5] ));
-				Global::set_exp_bess_kW(       stof( currLineSplitted[6] ));
-				Global::set_exp_bess_kWh(      stof( currLineSplitted[7] ));
-				Global::set_exp_bess_start_soc(stof( currLineSplitted[8] ));
-				Global::set_open_space_pv_kWp( stof( currLineSplitted[9] ));
-				Global::set_wind_kWp(          stof( currLineSplitted[10]));
-				break;
-			} else {
-				continue;
-			}
-		}
-		scenarios_input.close();
-	}
+    ifstream scenarios_input;
+    scenarios_input.open(scenarios_input_path);
+    if (!scenarios_input.good()) {
+        cerr << "Error when connecting to the simulation scenario file with path " << scenarios_input_path << endl;
+        return false;
+    } else {
+        string currLineString;
+        getline( scenarios_input, currLineString ); // jump first line, as this is the header
+        for (int r = 0; r < scenario_id; r++) {
+            // iterate over every row
+            getline( scenarios_input, currLineString );
+            stringstream currLineStream( currLineString );
+            string currLineSplitted[11];
+            for (int col = 0; col < 11; col++) {
+                // split this row on the ","
+                getline( currLineStream, currLineSplitted[col], ',' );
+            }
+            // convert individual strings to int / float / char
+            int currentLineID = stoi( currLineSplitted[0] );
+            if (currentLineID == scenario_id) {
+                // read and parse time info
+                //struct tm
+                struct tm* tm_start = new struct tm;
+                struct tm* tm_end   = new struct tm;
+                stringstream stream_val_t_start( currLineSplitted[1] );
+                stringstream stream_val_t_end(   currLineSplitted[2] );
+                stream_val_t_start >> get_time(tm_start, "%Y-%m-%d %H:%M:%S");
+                stream_val_t_end   >> get_time(tm_end,   "%Y-%m-%d %H:%M:%S");
+                Global::set_ts_start_tm( tm_start );
+                Global::set_ts_end_tm(   tm_end   );
+                // read other values
+                Global::set_tsteps_per_hour(stoi( currLineSplitted[3] ));
+                Global::set_expansion_scenario_id(stoi( currLineSplitted[4] ));
+                Global::set_exp_pv_kWp(        stof( currLineSplitted[5] ));
+                Global::set_exp_bess_kW(       stof( currLineSplitted[6] ));
+                Global::set_exp_bess_kWh(      stof( currLineSplitted[7] ));
+                Global::set_exp_bess_start_soc(stof( currLineSplitted[8] ));
+                Global::set_open_space_pv_kWp( stof( currLineSplitted[9] ));
+                Global::set_wind_kWp(          stof( currLineSplitted[10]));
+                break;
+            } else {
+                continue;
+            }
+        }
+        scenarios_input.close();
+    }
     return true;
 }
 
@@ -143,68 +143,68 @@ int load_data_from_central_database_callbackA(void* data, int argc, char** argv,
 	return 0;
 }
 int load_data_from_central_database_callbackB(void* data, int argc, char** argv, char** colName) {
-	/* 
-	 * This is the callback function for loading the time indices
-	 */
+    /* 
+     * This is the callback function for loading the time indices
+     */
     static int callcounter = 1;
     int pos = callcounter - 1; // current position in the array is one behind the count of calls
-	if (argc != 3) {
-		cerr << "Number of arguments not equal to 3 for one row!" << endl;
-		return 1;
-	}
-	int current_time_index = stoi(argv[0]);
-	if (current_time_index != callcounter) {
-		cerr << "Time indices are not ordered sequentially!" << endl;
-		return 1;
-	}
-	// convert time values
-	struct tm* time_value = new struct tm;
-	stringstream stream_time_value(argv[1]);
-	stream_time_value >> get_time(time_value, "%Y-%m-%d %H:%M:%S");
-	// add time values to global list
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+        return 1;
+    }
+    int current_time_index = stoi(argv[0]);
+    if (current_time_index != callcounter) {
+        cerr << "Time indices are not ordered sequentially!" << endl;
+        return 1;
+    }
+    // convert time values
+    struct tm* time_value = new struct tm;
+    stringstream stream_time_value(argv[1]);
+    stream_time_value >> get_time(time_value, "%Y-%m-%d %H:%M:%S");
+    // add time values to global list
     global::time_timestep_id[pos] = current_time_index;
     global::time_localtime_str->push_back(time_value);
     global::time_localtimezone_str->push_back(string(argv[2]));
     callcounter++;
-	return 0;
+    return 0;
 }
 int load_data_from_central_database_callbackC(void* data, int argc, char** argv, char** colName) {
-	/* 
-	 * This is the callback function for geeting information about the substations
-	 * out of the database.
-	 * This function also creates the substations.
-	 */
-	if (argc != 2) {
-		cerr << "Number of arguments not equal to 2 for one row!" << endl;
-		return 1;
-	}
-	int current_station_id = stoi(argv[0]);
-	string* stationName = new string(argv[1]);
-	try {
-    	/*Substation* newSubstation = */ new Substation(current_station_id, stationName);
-	} catch (const char* msg) {
-		return 1;
-	}
-	return 0;
+    /* 
+     * This is the callback function for geeting information about the substations
+     * out of the database.
+     * This function also creates the substations.
+     */
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+    int current_station_id = stoi(argv[0]);
+    string* stationName = new string(argv[1]);
+    try {
+        /*Substation* newSubstation = */ new Substation(current_station_id, stationName);
+    } catch (const char* msg) {
+        return 1;
+    }
+    return 0;
 }
 int load_data_from_central_database_callbackD(void* data, int argc, char** argv, char** colName) {
-	/* 
-	 * This is the callback function for geeting information about the control units
-	 * out of the database.
-	 * This function also creates the control units.
-	 */
-	if (argc != 2) {
-		cerr << "Number of arguments not equal to 2 for one row!" << endl;
-		return 1;
-	}
-	int current_cu_id = stoi(argv[0]);
-	int conn_to_subst_id = stoi(argv[1]);
-	try {
-    	/*ControlUnit* newCU = */ new ControlUnit(current_cu_id, conn_to_subst_id);
-	} catch (const char* msg) {
-		return 1;
-	}
-	return 0;
+    /* 
+     * This is the callback function for geeting information about the control units
+     * out of the database.
+     * This function also creates the control units.
+     */
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+    int current_cu_id = stoi(argv[0]);
+    int conn_to_subst_id = stoi(argv[1]);
+    try {
+        /*ControlUnit* newCU = */ new ControlUnit(current_cu_id, conn_to_subst_id);
+    } catch (const char* msg) {
+        return 1;
+    }
+    return 0;
 }
 int load_data_from_central_database_callbackE(void* data, int argc, char** argv, char** colName) {
 	/* 
@@ -307,22 +307,22 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
 }
 bool configld::load_data_from_central_database(const char* filepath) {
     sqlite3* dbcon;
-	int rc = sqlite3_open(filepath, &dbcon);
+    int rc = sqlite3_open(filepath, &dbcon);
 
-	if (rc == 0) {
-		cout << "Retrieving information from Merged_Information.db ..." << endl;
-		
+    if (rc == 0) {
+        cout << "Retrieving information from Merged_Information.db ..." << endl;
+
         //
         // Load general data
         //
-		string sql_queryA = "SELECT key, value FROM general_data_information;";
-		char* sqlErrorMsgA;
-		int ret_valA = sqlite3_exec(dbcon, sql_queryA.c_str(), load_data_from_central_database_callbackA, NULL, &sqlErrorMsgA);
-		if (ret_valA != 0) {
-			cerr << "Error when reading the SQL-Table: " << sqlErrorMsgA;
-			sqlite3_free(sqlErrorMsgA);
-			return false;
-		}
+        string sql_queryA = "SELECT key, value FROM general_data_information;";
+        char* sqlErrorMsgA;
+        int ret_valA = sqlite3_exec(dbcon, sql_queryA.c_str(), load_data_from_central_database_callbackA, NULL, &sqlErrorMsgA);
+        if (ret_valA != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgA;
+            sqlite3_free(sqlErrorMsgA);
+            return false;
+        }
 
         //
         // Initialize global time list
@@ -334,56 +334,56 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load time indices
         //
         string sql_queryB = "SELECT TimestepID, local_time, local_time_zone FROM time_indices ORDER BY TimestepID;";
-		char* sqlErrorMsgB;
-		int ret_valB = sqlite3_exec(dbcon, sql_queryB.c_str(), load_data_from_central_database_callbackB, NULL, &sqlErrorMsgB);
-		if (ret_valB != 0) {
-			cerr << "Error when reading the SQL-Table: " << sqlErrorMsgB;
-			sqlite3_free(sqlErrorMsgB);
-			return false;
-		}
+        char* sqlErrorMsgB;
+        int ret_valB = sqlite3_exec(dbcon, sql_queryB.c_str(), load_data_from_central_database_callbackB, NULL, &sqlErrorMsgB);
+        if (ret_valB != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgB;
+            sqlite3_free(sqlErrorMsgB);
+            return false;
+        }
         //
         global::time_info_init = true;
-		
-		//
+
+        //
         // Initialize global list of units (i.e. control unit, measurement unit and substation)
         //
-		Substation::InitializeStaticVariables(Global::get_n_substations());
-		ControlUnit::InitializeStaticVariables(Global::get_n_CUs());
-		MeasurementUnit::InitializeStaticVariables(Global::get_n_MUs());
+        Substation::InitializeStaticVariables(Global::get_n_substations());
+        ControlUnit::InitializeStaticVariables(Global::get_n_CUs());
+        MeasurementUnit::InitializeStaticVariables(Global::get_n_MUs());
         //
         // Load component information and create units
         // 1. per substation
         // 2. per control unit
         // 3. per measurement unit
         //
-		// 1. substations
-		string sql_queryC = "SELECT substation_id, substation_name FROM substation_information ORDER BY substation_id;";
-		char* sqlErrorMsgC;
-		int ret_valC = sqlite3_exec(dbcon, sql_queryC.c_str(), load_data_from_central_database_callbackC, NULL, &sqlErrorMsgC);
-		if (ret_valC != 0) {
-			cerr << "Error when reading the SQL-Table: " << sqlErrorMsgC;
-			sqlite3_free(sqlErrorMsgC);
-			return false;
-		}
-		// 2. CUs
-		string sql_queryD = "SELECT UnitID, substation_id FROM control_units ORDER BY UnitID;";
-		char* sqlErrorMsgD;
-		int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
-		if (ret_valD != 0) {
-			cerr << "Error when reading the SQL-Table: " << sqlErrorMsgD;
-			sqlite3_free(sqlErrorMsgD);
-			return false;
-		}
-		// 3. MUs
-		string sql_queryE = "SELECT MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM melo_information ORDER BY MELO_ID;";
-		char* sqlErrorMsgE;
-		int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
-		if (ret_valE != 0) {
-			cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE;
-			sqlite3_free(sqlErrorMsgE);
-			return false;
-		}
-        
+        // 1. substations
+        string sql_queryC = "SELECT substation_id, substation_name FROM substation_information ORDER BY substation_id;";
+        char* sqlErrorMsgC;
+        int ret_valC = sqlite3_exec(dbcon, sql_queryC.c_str(), load_data_from_central_database_callbackC, NULL, &sqlErrorMsgC);
+        if (ret_valC != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgC;
+            sqlite3_free(sqlErrorMsgC);
+            return false;
+        }
+        // 2. CUs
+        string sql_queryD = "SELECT UnitID, substation_id FROM control_units ORDER BY UnitID;";
+        char* sqlErrorMsgD;
+        int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
+        if (ret_valD != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgD;
+            sqlite3_free(sqlErrorMsgD);
+            return false;
+        }
+        // 3. MUs
+        string sql_queryE = "SELECT MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM melo_information ORDER BY MELO_ID;";
+        char* sqlErrorMsgE;
+        int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
+        if (ret_valE != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE;
+            sqlite3_free(sqlErrorMsgE);
+            return false;
+        }
+
         //
         // Load central solar radation profile
         //
@@ -397,9 +397,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         global::pv_profile = new_pv_array;
-		//
-		// initialize the global open space pv unit
-		global::unit_open_space_pv = new OpenSpacePVOrWind(Global::get_open_space_pv_kWp(), OpenSpacePVOrWindType::PV);
+        //
+        // initialize the global open space pv unit
+        global::unit_open_space_pv = new OpenSpacePVOrWind(Global::get_open_space_pv_kWp(), OpenSpacePVOrWindType::PV);
 
         //
         // Load central wind profile
@@ -413,21 +413,21 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         global::wind_profile = new_wind_array;
-		//
-		// initialize the global wind turbine unit
-		global::unit_open_space_wind = new OpenSpacePVOrWind(Global::get_wind_kWp(), OpenSpacePVOrWindType::Wind);
+        //
+        // initialize the global wind turbine unit
+        global::unit_open_space_wind = new OpenSpacePVOrWind(Global::get_wind_kWp(), OpenSpacePVOrWindType::Wind);
 
-		//
+        //
         // Load address data
         //
-		// TODO, but required?
-		
-		sqlite3_close(dbcon);
+        // TODO, but required?
+
+        sqlite3_close(dbcon);
         return true;
-	} else {
-		cerr << "Error when connecting to the database" << endl;
-		return false;
-	}
+    } else {
+        cerr << "Error when connecting to the database" << endl;
+        return false;
+    }
 }
 
 
@@ -457,8 +457,8 @@ int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
         case 14: return        MaskBS|MaskHP|MaskWB;
         case 15: return MaskPV|MaskBS|MaskHP|MaskWB;
     }
-	throw "Impossible index passed to function!";
-	return 0;
+    throw "Impossible index passed to function!";
+    return 0;
 }
 
 int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {

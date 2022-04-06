@@ -92,13 +92,13 @@ void Global::DeleteStaticVariables() {
 
 bool Global::AllVariablesInitialized() {
     if (n_timesteps_init && 
-	    n_substations_init &&
+        n_substations_init &&
         n_CUs_init &&
         n_MUs_init &&
-		ts_start_str_init &&
-	    ts_end_str_init &&
-	    tsteps_per_hour_init &&
-		expansion_scenario_id_init &&
+        ts_start_str_init &&
+        ts_end_str_init &&
+        tsteps_per_hour_init &&
+        expansion_scenario_id_init &&
         exp_pv_kWp_init &&
         exp_bess_kW_init &&
         exp_bess_kWh_init &&

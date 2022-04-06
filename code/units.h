@@ -184,10 +184,10 @@ class MeasurementUnit {
         // member variables storing the data
         bool   data_loaded;
         int*   data_timestepID;
-	    float* data_value_demand;
-	    float* data_value_feedin;
+        float* data_value_demand;
+        float* data_value_feedin;
         //char*  data_status_demand;
-	    //char*  data_status_feedin;
+        //char*  data_status_feedin;
         //
         // static list of MUs
         static bool st__mu_list_init;
