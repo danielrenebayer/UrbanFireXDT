@@ -11,9 +11,8 @@ ComponentPV::ComponentPV(float kWp) : kWp(kWp) {
 }
 
 void ComponentPV::calculateCurrentFeedin(int ts) {
-    // TODO
-    // currentGeneration_kW = ...
-    // bisher: current_generation_kW = main.pv_wind_data_storage.currentPVPenetration*kWp;
+    int tsID = ts - 1;
+    currentGeneration_kW = kWp * global::pv_profile[tsID];
 }
 
 
