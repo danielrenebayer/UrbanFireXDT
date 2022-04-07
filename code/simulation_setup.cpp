@@ -886,7 +886,7 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	output_path_B << setw(4) << setfill('0') << scenario_id;
 	output_path_B << "-expansion-per-cu.csv";
 	ofstream output_per_cu(output_path_B.str().c_str(), std::ofstream::out);
-	output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bess_orig,bess_added,wp_orig,wp_added,wbx_orig,wbx_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
+	output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,wb_orig,wb_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
 	// n_CUs and unit_list defined above, at 1.
 	for (int i = 0; i < n_CUs; i++) {
 		ControlUnit* current_unit = unit_list[i];

@@ -48,7 +48,7 @@ void output::initializeCUOutput(int scenario_id) {
     cu_output->rdbuf()->pubsetbuf(buffer, bufferSize);
     //
     // add header to output file
-    *(cu_output) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedIn_Simulated_kW,BESS_SOC,BESS_load_kW" << endl;
+    *(cu_output) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW" << endl;
 }
 
 void output::closeOutputs() {
