@@ -28,7 +28,7 @@ namespace bpt = boost::property_tree;
 //
 // loads the global config file
 //
-bool configld::load_config_file() {
+bool configld::load_config_file(int scenario_id) {
     bpt::ptree tree_root;
     try {
         bpt::read_json("../config/simulation_config.json", tree_root);
@@ -37,8 +37,102 @@ bool configld::load_config_file() {
         return false;
     }
     try {
-        string str_data_ipt = tree_root.get<string>("Data Input Path");
-        string str_data_opt = tree_root.get<string>("Data Output Path");
+        string str_data_ipt = "";  bool str_data_ipt_set = false;
+        string str_data_opt = "";  bool str_data_opt_set = false;
+        string start_str    = "";  bool start_str_set    = false;
+        string end_str      = "";  bool end_str_set      = false;
+        int    ts_per_hour  = 1;   bool ts_per_hour_set  = false;
+        int    expansionID  = 0;   bool expanisonID_set  = false;
+        float  exp_pv_kWp   = 0.0; bool exp_pv_kWp_set   = false;
+        float  exp_bs_kW    = 0.0; bool exp_bs_kW_set    = false;
+        float  exp_bs_kWh   = 0.0; bool exp_bs_kWh_set   = false;
+        float  exp_bs_iSOC  = 0.0; bool exp_bs_iSOC_set  = false;
+        float  os_pv_kWp    = 0.0; bool os_pv_kWp_set    = false;
+        float  os_wind_kWp  = 0.0; bool os_wind_kWp_set  = false;
+
+        //
+        // read default values
+        for (auto& scenario_dict_all : tree_root.get_child("Default Scenario Values")) {
+            string element_name = scenario_dict_all.first;
+            if ( element_name.compare("data input path") == 0 ) {
+                str_data_ipt    = scenario_dict_all.second.get_value<string>();
+                str_data_ipt_set= true;
+            } else if ( element_name.compare("data output path") == 0 ) {
+                str_data_opt    = scenario_dict_all.second.get_value<string>();
+                str_data_opt_set= true;
+            } else if ( element_name.compare("start") == 0 ) {
+                start_str       = scenario_dict_all.second.get_value<string>();
+                start_str_set   = true;
+            } else if ( element_name.compare("end") == 0 ) {
+                end_str         = scenario_dict_all.second.get_value<string>();
+                end_str_set     = true;
+            } else if ( element_name.compare("time steps per hour") == 0 ) {
+                ts_per_hour     = scenario_dict_all.second.get_value<int>();
+                ts_per_hour_set = true;
+            }
+        }
+
+        //
+        // search the correct scenario dictionary
+        // and read all variables from there, overwrite defaults if it necessary
+        bool scenario_found = false;
+        for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
+            auto scenario_dict = scenario_dict_all.second;
+            // if we have found the correct entry ...
+            if (scenario_dict.get<int>("id") == scenario_id) {
+                // ... we read all variables
+                for (auto& s : scenario_dict) {
+                    string element_name = s.first;
+                    if ( element_name.compare("data input path") == 0 ) {
+                        str_data_ipt    = scenario_dict.get<string>("data input path");
+                        str_data_ipt_set= true;
+                    } else if ( element_name.compare("data output path") == 0 ) {
+                        str_data_opt    = scenario_dict.get<string>("data output path");
+                        str_data_opt_set= true;
+                    } else if ( element_name.compare("start") == 0 ) {
+                        start_str       = scenario_dict.get<string>("start");
+                        start_str_set   = true;
+                    } else if ( element_name.compare("end") == 0 ) {
+                        end_str         = scenario_dict.get<string>("end");
+                        end_str_set     = true;
+                    } else if ( element_name.compare("time steps per hour") == 0 ) {
+                        ts_per_hour     = scenario_dict.get<int>("time steps per hour");
+                        ts_per_hour_set = true;
+                    } else if ( element_name.compare("expanison id") == 0 ) {
+                        expansionID     = scenario_dict.get<int>("expanison id");
+                        expanisonID_set = true;
+                    } else if ( element_name.compare("expanison PV kWp") == 0 ) {
+                        exp_pv_kWp      = scenario_dict.get<float>("expanison PV kWp");
+                        exp_pv_kWp_set  = true;
+                    } else if ( element_name.compare("expansion BS kW") == 0 ) {
+                        exp_bs_kW       = scenario_dict.get<float>("expansion BS kW");
+                        exp_bs_kW_set   = true;
+                    } else if ( element_name.compare("expansion BS kWh") == 0 ) {
+                        exp_bs_kWh      = scenario_dict.get<float>("expansion BS kWh");
+                        exp_bs_kWh_set  = true;
+                    } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
+                        exp_bs_iSOC     = scenario_dict.get<float>("expansion BS initial SOC");
+                        exp_bs_iSOC_set = true;
+                    } else if ( element_name.compare("open space PV kWp") == 0 ) {
+                        os_pv_kWp       = scenario_dict.get<float>("open space PV kWp");
+                        os_pv_kWp_set   = true;
+                    } else if ( element_name.compare("open space wind kWp") == 0 ) {
+                        os_wind_kWp     = scenario_dict.get<float>("open space wind kWp");
+                        os_wind_kWp_set = true;
+                    }
+                }
+                //
+                scenario_found = true;
+                break;
+            }
+        }
+        cout << "str_data_ipt = " << str_data_ipt << endl;
+        cout << "str_data_opt = " << str_data_opt << endl;
+        cout << "start_str = " << start_str << endl;
+        cout << "end_str = " << end_str << endl;
+        cout << "ts_per_hour = " << ts_per_hour << endl;
+
+        //
         // check, if path ends with an "/", add it, if not
         if (str_data_ipt.back() != '/') {
             str_data_ipt += "/";
@@ -46,16 +140,45 @@ bool configld::load_config_file() {
         if (str_data_opt.back() != '/') {
             str_data_opt += "/";
         }
-        // add to global variable collection
-        Global::set_input_path(str_data_ipt);
-        Global::set_output_path(str_data_opt);
+
+        //
+        // Finally, add to global variable collection
+        if (scenario_found) {
+            if (str_data_ipt_set) Global::set_input_path(str_data_ipt);
+            if (str_data_opt_set) Global::set_output_path(str_data_opt);
+            // for start / end time: convert value bevore setting global variable
+            if (start_str_set && end_str_set) {
+                struct tm* tm_start = new struct tm;
+                struct tm* tm_end   = new struct tm;
+                stringstream stream_val_t_start( start_str );
+                stringstream stream_val_t_end(   end_str );
+                stream_val_t_start >> get_time(tm_start, "%Y-%m-%d %H:%M:%S");
+                stream_val_t_end   >> get_time(tm_end,   "%Y-%m-%d %H:%M:%S");
+                Global::set_ts_start_tm( tm_start );
+                Global::set_ts_end_tm(   tm_end   );
+            }
+            // other values
+            if (ts_per_hour_set)  Global::set_tsteps_per_hour(ts_per_hour);
+            if (expanisonID_set)  Global::set_expansion_scenario_id(expansionID);
+            if (exp_pv_kWp_set)   Global::set_exp_pv_kWp(exp_pv_kWp);
+            if (exp_bs_kW_set)    Global::set_exp_bess_kW(exp_bs_kW);
+            if (exp_bs_kWh_set)   Global::set_exp_bess_kWh(exp_bs_kWh);
+            if (exp_bs_iSOC_set)  Global::set_exp_bess_start_soc(exp_bs_iSOC);
+            if (os_pv_kWp_set)    Global::set_open_space_pv_kWp(os_pv_kWp);
+            if (os_wind_kWp_set)  Global::set_wind_kWp(os_wind_kWp);
+            return true;
+        }
+
     } catch (bpt::ptree_bad_path& j) {
         cerr << "Error when parsing json file: " << j.what() << endl;
         return false;
     }
-    return true;
+
+    cerr << "Scenario ID " << scenario_id << " not found in the simulation configuration JSON file!" << endl;
+    return false; // as we have not found what we searched
 }
 
+/*
 //
 // open and parse the simulation scenario csv file
 //
@@ -109,6 +232,7 @@ bool configld::parse_scenario_file(int scenario_id) {
     }
     return true;
 }
+*/
 
 
 int load_data_from_central_database_callbackA(void* data, int argc, char** argv, char** colName) {

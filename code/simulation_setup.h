@@ -20,8 +20,8 @@ namespace configld {
      * infromation and the scenario file
      */
 
-    bool load_config_file();
-    bool parse_scenario_file(int scenario_id);
+    bool load_config_file(int scenario_id);
+    //bool parse_scenario_file(int scenario_id);
     bool load_data_from_central_database(const char* filepath);
 
 }

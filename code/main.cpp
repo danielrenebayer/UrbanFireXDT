@@ -58,14 +58,7 @@ int main(int argc, char* argv[]) {
 	//
 	// open and parse global settings file
 	//
-	if (!configld::load_config_file()) {
-		return 2;
-	}
-
-	//
-	// open and parse the simulation scenario csv file
-	//
-	if (!configld::parse_scenario_file(scenario_id)) {
+	if (!configld::load_config_file(scenario_id)) {
 		return 2;
 	}
 

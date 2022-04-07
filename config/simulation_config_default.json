@@ -1,0 +1,21 @@
+{
+    "Default Scenario Values": {
+        "data input path":  "../data/input/",
+        "data output path": "../data/output/",
+        "start": "2020-01-01 00:00:00",
+        "end":   "2020-12-31 00:00:00",
+        "time steps per hour": 1
+    },
+    "Scenarios": [
+        {
+            "id": 1,
+            "expanison id": 0,
+            "expanison PV kWp": 0,
+            "expansion BS kW":  0,
+            "expansion BS kWh": 0,
+            "expansion BS initial SOC": 0,
+            "open space PV kWp":   0,
+            "open space wind kWp": 0
+        }
+    ]
+}
