@@ -28,10 +28,10 @@ namespace bpt = boost::property_tree;
 //
 // loads the global config file
 //
-bool configld::load_config_file(int scenario_id) {
+bool configld::load_config_file(int scenario_id, string& filepath) {
     bpt::ptree tree_root;
     try {
-        bpt::read_json("../config/simulation_config.json", tree_root);
+        bpt::read_json(filepath, tree_root);
     } catch (bpt::json_parser_error& j) {
         cerr << "Error when reading json file: " << j.what() << endl;
         return false;

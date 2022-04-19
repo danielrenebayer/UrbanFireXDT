@@ -10,6 +10,8 @@
 #ifndef SIMULATION_SETUP_H
 #define SIMULATION_SETUP_H
 
+#include <string>
+
 #include "global.h"
 
 
@@ -20,7 +22,7 @@ namespace configld {
      * infromation and the scenario file
      */
 
-    bool load_config_file(int scenario_id);
+    bool load_config_file(int scenario_id, std::string& filepath);
     //bool parse_scenario_file(int scenario_id);
     bool load_data_from_central_database(const char* filepath);
 

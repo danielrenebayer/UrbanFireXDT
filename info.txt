@@ -1,4 +1,5 @@
 For compiling on debian one requires the following packages:
  - libsqlite3-dev
  - libboost-dev
+ - libboost-program-options-dev
 

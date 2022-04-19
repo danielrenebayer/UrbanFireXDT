@@ -7,6 +7,9 @@
 //#include <format> // not available for GCC !!!
 #include <cstdio>
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#include <boost/program_options.hpp>
+
 #include "global.h"
 
 #include "components.h"
@@ -17,6 +20,7 @@
 
 
 using namespace std;
+namespace bpopts = boost::program_options;
 
 
 
@@ -27,6 +31,7 @@ Return values of the program:
 2	A required file was not found or error during database connections
 3	Errors duing the simulation
 4	Erroneous input files
+5   No simulation executed / e.g. help displayed
 */
 
 int main(int argc, char* argv[]) {
@@ -35,15 +40,51 @@ int main(int argc, char* argv[]) {
 	// parsing command line arguments
 	//
 	int scenario_id;
-	if (argc == 1) {
+    string config_filepath;
+    //
+    bpopts::options_description opts_desc("Options");
+    opts_desc.add_options()
+        ("help,h",                            "Show help")
+        ("config",   bpopts::value<string>(), "Path to the json configuration file")
+        ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
+        ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not");
+    bpopts::positional_options_description opts_desc_pos;
+    opts_desc_pos.add("scenario", -1);
+    bpopts::variables_map opts_vals;
+    try {
+        bpopts::command_line_parser parser{argc, argv};
+        parser.options(opts_desc).positional(opts_desc_pos);
+        bpopts::parsed_options parsed_options = parser.run();
+        bpopts::store( parsed_options, opts_vals );
+        bpopts::notify(opts_vals);
+    } catch (const bpopts::error &err) {
+        cerr << "Error when parsing command line arguments:" << "\n";
+        cerr << err.what() << endl;
+        return 1;
+    }
+    // now, command line arguments are parsed
+    // we now set the internal variables accordingly
+    if (opts_vals.count("help") > 0) {
+        cerr << opts_desc << endl;
+        cerr << "Usage: simulation [-h] [--config PATH] [--pvar IDvar] [[--scenario] IDscenario]" << endl;
+        return 5;
+    }
+    if (opts_vals.count("config") > 0) {
+        config_filepath = opts_vals["config"].as<string>();
+    } else {
+        config_filepath = "../config/simulation_config.json";
+    }
+    if (opts_vals.count("pvar") > 0) {
+        cout << "pvar     " << opts_vals["pvar"].as<int>() << endl;
+        // TODO implement parameter variation
+    } else {
+        // TODO
+    }
+    if (opts_vals.count("scenario") > 0) {
+		scenario_id = opts_vals["scenario"].as<int>();
+    } else {
 		scenario_id = 1;
-	} else if (argc == 2) {
-		scenario_id = stoi(argv[1]);
-	} else {
-		cout << "Error: Wrong number of arguments!" << endl;
-		cout << "Usage: main[-dbg] [scenario id]" << endl;
-		return 1;
-	}
+    }
 
 	cout << "Initializing the simulation for scenario ID " << scenario_id << endl;
 
@@ -58,7 +99,7 @@ int main(int argc, char* argv[]) {
 	//
 	// open and parse global settings file
 	//
-	if (!configld::load_config_file(scenario_id)) {
+	if (!configld::load_config_file(scenario_id, config_filepath)) {
 		return 2;
 	}
 
