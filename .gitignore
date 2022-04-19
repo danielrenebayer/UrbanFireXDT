@@ -5,3 +5,4 @@ test/
 .vscode/
 data/*
 !data/README.md
+*.swp
