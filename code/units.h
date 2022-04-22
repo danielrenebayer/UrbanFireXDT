@@ -13,6 +13,7 @@
 
 #include "global.h"
 #include "components.h"
+#include "output.h"
 
 #ifndef UNITS_H
 #define UNITS_H
@@ -90,6 +91,7 @@ class ControlUnit {
         void add_exp_bs();
         void add_exp_hp();
         void add_exp_wb();
+        void set_output_object(CUOutput* output_obj);
         // for simulation runs
         bool compute_next_value(int ts);
         //
@@ -115,6 +117,7 @@ class ControlUnit {
         ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
+        CUOutput*    output_obj;
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
         float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units
@@ -218,3 +221,4 @@ class OpenSpacePVOrWind {
 };
 
 #endif
+

@@ -127,6 +127,7 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	sim_comp_wb     = NULL;
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
+    output_obj      = NULL;
 
 	//
 	// add to class variables
@@ -295,6 +296,10 @@ void ControlUnit::add_exp_wb() {
     }
 }
 
+void ControlUnit::set_output_object(CUOutput* output_obj) {
+    this->output_obj = output_obj;
+}
+
 bool ControlUnit::compute_next_value(int ts) {
     //
     // This function computes the next value
@@ -356,8 +361,13 @@ bool ControlUnit::compute_next_value(int ts) {
 
     //
     // output current status
-    output::output_for_one_cu(ts, unitID, current_load_vSM_kW, current_load_all_rSMs_kW, self_produced_load_kW,
-                              load_pv, bs_SOC, load_bs);
+    if (output_obj != NULL)
+        output_obj->output_for_one_cu(
+            unitID, ts,
+            current_load_vSM_kW,
+            current_load_all_rSMs_kW,
+            self_produced_load_kW,
+            load_pv, bs_SOC, load_bs);
 
     return true;
 }
