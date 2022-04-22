@@ -47,7 +47,8 @@ int main(int argc, char* argv[]) {
         ("help,h",                            "Show help")
         ("config",   bpopts::value<string>(), "Path to the json configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
-        ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not");
+        ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
+        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
     bpopts::variables_map opts_vals;
@@ -84,6 +85,20 @@ int main(int argc, char* argv[]) {
 		scenario_id = opts_vals["scenario"].as<int>();
     } else {
 		scenario_id = 1;
+    }
+    if (opts_vals.count("cu-output") > 0) {
+        string cu_output = opts_vals["cu-output"].as<string>();
+        if (cu_output == "no") {
+            Global::set_output_mode_per_cu(global::OutputModePerCU::NoOutput);
+        } else if (cu_output == "single") {
+            Global::set_output_mode_per_cu(global::OutputModePerCU::SingleFile);
+        } else {
+            // invalid argument
+            cerr << "Error when parsing command line arguments: invalid option for --cu-output given!" << endl;
+            return 1;
+        }
+    } else {
+        Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
     }
 
 	cout << "Initializing the simulation for scenario ID " << scenario_id << endl;

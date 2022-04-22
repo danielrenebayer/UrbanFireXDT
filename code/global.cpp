@@ -63,6 +63,7 @@ float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 string Global::input_path         = "";
 string Global::output_path        = "";
+OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -80,6 +81,7 @@ bool Global::open_space_pv_kWp_init= false;
 bool Global::wind_kWp_init         = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
+bool Global::output_mode_per_cu_init    = false;
 
 void Global::InitializeStaticVariables() {
     // nothing to do anymore
@@ -104,7 +106,8 @@ bool Global::AllVariablesInitialized() {
         exp_bess_kWh_init &&
         exp_bess_start_soc_init &&
         input_path_init &&
-        output_path_init)
+        output_path_init &&
+        output_mode_per_cu_init)
     {
         return true;
     } else {
@@ -280,3 +283,12 @@ void Global::set_output_path(string& path) {
         Global::output_path_init = true;
     }
 }
+void Global::set_output_mode_per_cu(OutputModePerCU mode) {
+    if (output_mode_per_cu_init) {
+        cerr << "Output mode already set!" << endl;
+    } else {
+        Global::output_mode_per_cu = mode;
+        Global::output_mode_per_cu_init = true;
+    }
+}
+

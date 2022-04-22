@@ -6,19 +6,26 @@
  *
  */
 
+#ifndef __OUTPUT_H
+#define __OUTPUT_H
 
+#include <filesystem>
 #include <fstream>
 #include <mutex>
 #include <sstream>
 
 using namespace std;
 
+class CUOutput;
+class CUOutputSingleFile;
+class CUOutputOneFilePerCU;
 
 namespace output {
 
     inline std::ofstream* substation_output;
-    inline std::ofstream* cu_output;
-    inline mutex cu_output_mutex;
+    inline bool substation_output_init = false;
+    inline CUOutputSingleFile* cu_single_output = NULL; ///< Reference to the single_output object, if one output for all CUs is selected
+    inline CUOutputOneFilePerCU** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
 
     void initializeSubstationOutput(int scenario_id);
     void initializeCUOutput(int scenario_id);
@@ -27,11 +34,68 @@ namespace output {
 
     void flushBuffers();
 
-    void output_for_one_cu(int ts, int cuID, float load_vsm, float load_rsm, float load_selfprod, float load_pv, float bs_SOC, float load_bs);
-
-    // buffers for speedup
-    inline const size_t bufferSize = 64*1024;
-    inline char buffer[bufferSize];
-
 }
+
+class CUOutput {
+    /*
+     * This (virtual) class represents the output for one (or more)
+     * control units.
+     * This is an abstract class, as most methods are 'implemented'
+     * as pure virtual functions here.
+     */
+    public:
+        virtual ~CUOutput();
+        virtual void output_for_one_cu(
+                int cuID,            int ts,
+                float load_vsm,      float load_rsm,
+                float load_selfprod, float load_pv,
+                float bs_SOC,        float load_bs) = 0;
+        virtual void flush_buffer() = 0;
+        void close_buffer();
+    protected:
+        bool            buffer_open;   ///< True, if buffer(s) is/are opened
+        std::ofstream*  output_stream; ///< output stream
+};
+
+class CUOutputSingleFile : public CUOutput {
+    /*
+     * This class represents the output for the
+     * control units, that is directed into one
+     * output file.
+     */
+    public:
+        CUOutputSingleFile(int scenario_id);
+        ~CUOutputSingleFile();
+        static const size_t bufferSize = 128*1024;
+        //
+        // definition of virtual methods from base class
+        void output_for_one_cu(
+                int cuID,            int ts,
+                float load_vsm,      float load_rsm,
+                float load_selfprod, float load_pv,
+                float bs_SOC,        float load_bs);
+        void flush_buffer();
+    private:
+        mutex  single_file_mutex; ///< If a single file is selected as CU output, this variable holds the mutex to ensure correct concurrency behavior
+        char*  buffer; // buffer for speedup
+};
+
+class CUOutputOneFilePerCU : public CUOutput {
+    /*
+     * This class represents the output for one
+     * individual control unit.
+     */
+    public:
+        CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath);
+        //
+        // definition of virtual methods from base class
+        void output_for_one_cu(
+                int cuID,            int ts,
+                float load_vsm,      float load_rsm,
+                float load_selfprod, float load_pv,
+                float bs_SOC,        float load_bs);
+        void flush_buffer();
+};
+
+#endif
 

@@ -45,6 +45,18 @@ namespace global {
     bool all_variables_initialized(); ///< Checks if all variables are initialized
     void vacuum();  ///< Deletes all global variables in the end
 
+
+    /*
+     * This enum defines different output modes per CU.
+     * It corresponds to the --cu-output cmd line parameter.
+     */
+    enum struct OutputModePerCU : short {
+        IndividualFile,
+        SingleFile,
+        NoOutput
+    };
+
+
 }
 
 class Global {
@@ -93,6 +105,7 @@ class Global {
         static float get_wind_kWp()            { return wind_kWp; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
+        static global::OutputModePerCU get_output_mode_per_cu() { return output_mode_per_cu; }
         // setter methods
         static void set_n_timesteps(int n_timesteps);
         static void set_n_substations(int n_substations);
@@ -110,6 +123,7 @@ class Global {
         static void set_wind_kWp(float wind_kWp);
         static void set_input_path(std::string& path);
         static void set_output_path(std::string& path);
+        static void set_output_mode_per_cu(global::OutputModePerCU mode);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         // variables
@@ -129,6 +143,7 @@ class Global {
         static float wind_kWp;             ///< kWp of the wind turbines
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
+        static global::OutputModePerCU output_mode_per_cu; ///< Variable storing the selected output mode per CU
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;
@@ -147,6 +162,7 @@ class Global {
         static bool wind_kWp_init;
         static bool input_path_init;
         static bool output_path_init;
+        static bool output_mode_per_cu_init;
 };
 
 #endif
