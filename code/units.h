@@ -38,6 +38,7 @@ class Substation {
         void add_unit(ControlUnit* unit);
         // methods for simulation run
         float calc_load();
+        const std::list<ControlUnit*>* get_connected_units() { return connected_units; } ///< Return the list of connected units (as read only list)
         //
         // static functions
         // 1. Initializers and destructors
@@ -101,8 +102,8 @@ class ControlUnit {
         static void VacuumInstancesAndStaticVariables();
         // 2. getter functions
         static inline ControlUnit* GetInstance(int unitID);
-        static inline ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
-        static inline const int GetNumberOfInstances() {return st__n_CUs;}
+        static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
+        static const int GetNumberOfInstances() {return st__n_CUs;}
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;
@@ -165,6 +166,7 @@ class MeasurementUnit {
         // 1. Initializers and destructors
         static void InitializeStaticVariables(int n_MUs);
         static void VacuumInstancesAndStaticVariables();
+        static const int GetNumberOfInstances() {return st__n_MUs;}
         //
         // 2. Class getter methods
     private:
