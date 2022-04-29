@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include "global.h"
 
@@ -48,7 +49,7 @@ void output::initializeCUOutput(int scenario_id) {
             cuList[i]->set_output_object(cu_single_output);
         }
     } else if (Global::get_output_mode_per_cu() == global::OutputModePerCU::IndividualFile) {
-        // Case 2: One file for each individual CU
+        // Case 2: One file for each substation
         //
         // create output directory, and delete existing if present
         filesystem::path dirpath = Global::get_output_path();
@@ -60,14 +61,25 @@ void output::initializeCUOutput(int scenario_id) {
         // now, actually create output dir (maybe again)
         filesystem::create_directory(dirpath);
         //
-        // create a output object for every (future) control unit
-        // and add reference to all CUs
-        cu_multi_outputs = new CUOutputOneFilePerCU*[Global::get_n_CUs()];
-        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+        // create a output object for every (future) substation
+        // and add reference to all connected CUs
+        n_cu_multi_outputs = Global::get_n_substations();
+        cu_multi_outputs = new CUOutputOneFilePerSubstation*[n_cu_multi_outputs];
+        Substation*const* substationList = Substation::GetArrayOfInstances();
+        for (int nSubst = 1; nSubst <= Global::get_n_substations(); nSubst++) {
+            Substation* currentS = substationList[nSubst-1];
+            cu_multi_outputs[nSubst-1] = new CUOutputOneFilePerSubstation(currentS->get_name(), dirpath);
+            // add output file to all connected CUs
+            const list<ControlUnit*>* conn_units = currentS->get_connected_units();
+            for (auto cu : *conn_units) {
+                cu->set_output_object(cu_multi_outputs[nSubst-1]);
+            }
+        }
+        /*ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
         for (int cuID = 1; cuID <= Global::get_n_CUs(); cuID++) {
             cu_multi_outputs[cuID-1] = new CUOutputOneFilePerCU(cuID, dirpath);
             cuList[cuID-1]->set_output_object(cu_multi_outputs[cuID-1]);
-        }
+        }*/
     } else {
         // Case 3: no output per CU selected
     }
@@ -87,7 +99,7 @@ void output::closeOutputs() {
         cu_single_output = NULL;
     }
     if (cu_multi_outputs != NULL) {
-        for (int i = 0; i < Global::get_n_CUs(); i++) {
+        for (size_t i = 0; i < n_cu_multi_outputs; i++) {
             cu_multi_outputs[i]->close_buffer();
             delete cu_multi_outputs[i];
         }
@@ -127,7 +139,8 @@ CUOutput::~CUOutput() {
 }
 
 void CUOutput::close_buffer() {
-    output_stream->close();
+    if (buffer_open)
+        output_stream->close();
 }
 
 CUOutputSingleFile::CUOutputSingleFile(int scenario_id) {
@@ -164,6 +177,17 @@ CUOutputOneFilePerCU::CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath) 
     buffer_open = true;
 }
 
+CUOutputOneFilePerSubstation::CUOutputOneFilePerSubstation(const string* substName, filesystem::path& dirpath) {
+    stringstream filename_i;
+    filename_i << *(substName) << "-AllCUs-ts.csv";
+    filesystem::path filepath_i;
+    filepath_i /= dirpath;
+    filepath_i /= filename_i.str();
+    output_stream = new ofstream(filepath_i, std::ofstream::out);
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW\n";
+    buffer_open = true;
+}
+
 void CUOutputSingleFile::output_for_one_cu(
         int   cuID,     int   ts,            float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
@@ -181,12 +205,24 @@ void CUOutputOneFilePerCU::output_for_one_cu(
     *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
 }
 
+void CUOutputOneFilePerSubstation::output_for_one_cu(
+        int   cuID,     int   ts,            float load_vsm,
+        float load_rsm, float load_selfprod, float load_pv,
+        float bs_SOC,   float load_bs)
+{
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
+}
+
 void CUOutputSingleFile::flush_buffer() {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
     output_stream->flush();
 }
 
 void CUOutputOneFilePerCU::flush_buffer() {
+    output_stream->flush();
+}
+
+void CUOutputOneFilePerSubstation::flush_buffer() {
     output_stream->flush();
 }
 

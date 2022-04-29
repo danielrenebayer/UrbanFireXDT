@@ -13,19 +13,22 @@
 #include <fstream>
 #include <mutex>
 #include <sstream>
+#include <string>
 
 using namespace std;
 
 class CUOutput;
 class CUOutputSingleFile;
 class CUOutputOneFilePerCU;
+class CUOutputOneFilePerSubstation;
 
 namespace output {
 
     inline std::ofstream* substation_output;
     inline bool substation_output_init = false;
     inline CUOutputSingleFile* cu_single_output = NULL; ///< Reference to the single_output object, if one output for all CUs is selected
-    inline CUOutputOneFilePerCU** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
+    inline CUOutputOneFilePerSubstation** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
+    inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs
 
     void initializeSubstationOutput(int scenario_id);
     void initializeCUOutput(int scenario_id);
@@ -87,6 +90,24 @@ class CUOutputOneFilePerCU : public CUOutput {
      */
     public:
         CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath);
+        //
+        // definition of virtual methods from base class
+        void output_for_one_cu(
+                int cuID,            int ts,
+                float load_vsm,      float load_rsm,
+                float load_selfprod, float load_pv,
+                float bs_SOC,        float load_bs);
+        void flush_buffer();
+};
+
+class CUOutputOneFilePerSubstation : public CUOutput {
+    /*
+     * This class represents the output for all
+     * control units, that are connected to one
+     * substation.
+     */
+    public:
+        CUOutputOneFilePerSubstation(const string* substName, filesystem::path& dirpath);
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
