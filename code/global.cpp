@@ -34,6 +34,8 @@ void global::vacuum() {
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
     delete   unit_open_space_pv;     unit_open_space_pv   = NULL;
     delete   unit_open_space_wind;   unit_open_space_wind = NULL;
+    delete   parameter_var_list;     parameter_var_list   = NULL;
+    delete   current_output_dir;     current_output_dir   = NULL;
     delete[] pv_profile;   pv_profile   = NULL;
     delete[] wind_profile; wind_profile = NULL;
 }
@@ -51,6 +53,8 @@ int Global::n_timesteps           = 0;
 int Global::n_substations         = 0;
 int Global::n_CUs                 = 0;
 int Global::n_MUs                 = 0;
+bool Global::pvar_selected        = false;
+int  Global::pvar_id              = 0;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
@@ -69,6 +73,7 @@ bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
 bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
+bool Global::pvar_set              = false;
 bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
 bool Global::tsteps_per_hour_init  = false;
@@ -97,6 +102,7 @@ bool Global::AllVariablesInitialized() {
         n_substations_init &&
         n_CUs_init &&
         n_MUs_init &&
+        pvar_set &&
         ts_start_str_init &&
         ts_end_str_init &&
         tsteps_per_hour_init &&
@@ -185,6 +191,15 @@ void Global::set_n_MUs(int n_MUs) {
     } else {
         Global::n_MUs = n_MUs;
         Global::n_MUs_init = true;
+    }
+}
+void Global::set_pvar_vals(bool pvar_val, int pvarID) {
+    if (pvar_set) {
+        cerr << "Values for parameter variation are already set!" << endl;
+    } else {
+        Global::pvar_selected = pvar_val;
+        Global::pvar_id  = pvarID;
+        Global::pvar_set = true;
     }
 }
 void Global::set_ts_start_tm(struct tm* ts_start_tm) {

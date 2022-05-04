@@ -10,7 +10,9 @@
 #define GLOBAL_H
 
 #include <ctime>
+#include <list>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "units.h"
@@ -38,6 +40,11 @@ namespace global {
     inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
     inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit
     inline OpenSpacePVOrWind* unit_open_space_wind = NULL; ///< Reference to the global open space wind unit
+
+    inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
+
+    inline unsigned int current_param_vari_index = 0;
+    inline filesystem::path* current_output_dir  = NULL; ///< Reference to the object holding the current output path (maybe changed due to different parameter variations)
 
     inline bool time_info_init       = false;
 
@@ -93,6 +100,8 @@ class Global {
         static int get_n_substations() {  return n_substations; }
         static int get_n_CUs()         {  return n_CUs; }
         static int get_n_MUs()         {  return n_MUs; }
+        static bool is_parameter_variation()   { return pvar_selected;  }
+        static int  get_parameter_varID()      { return pvar_id;        }
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
@@ -111,6 +120,7 @@ class Global {
         static void set_n_substations(int n_substations);
         static void set_n_CUs(int n_CUs);
         static void set_n_MUs(int n_MUs);
+        static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
@@ -131,6 +141,8 @@ class Global {
         static int n_substations;          ///< Total number of substations for which data is available
         static int n_CUs;                  ///< Total number of control units for which data is available
         static int n_MUs;                  ///< Total number of meausrement units for which data is available
+        static bool pvar_selected;         ///< True, if a parameter variation is selected
+        static int  pvar_id;               ///< ID of the parameter variation
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
@@ -150,6 +162,7 @@ class Global {
         static bool n_substations_init;
         static bool n_CUs_init;
         static bool n_MUs_init;
+        static bool pvar_set;
         static bool ts_start_str_init;
         static bool ts_end_str_init;
         static bool tsteps_per_hour_init;
