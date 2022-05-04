@@ -11,6 +11,7 @@ using namespace expansion;
 #include <sqlite3.h>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
@@ -22,6 +23,7 @@ namespace bpt = boost::property_tree;
 
 
 #include "global.h"
+#include "helper.h"
 #include "units.h"
 
 
@@ -131,6 +133,68 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         cout << "start_str = " << start_str << endl;
         cout << "end_str = " << end_str << endl;
         cout << "ts_per_hour = " << ts_per_hour << endl;
+
+        //
+        // is a parameter variation selected?
+        // if yes, load the variables to vary
+        bool pvar_scenario_found = false;
+        if (Global::is_parameter_variation()) {
+            vector<pair<string,vector<float>*>> parameter_var_list; // this list holds the parsed parameters (string) with values (vector<float>) for the parameter variation
+            for (auto& scenario_dict_all : tree_root.get_child("Parameter Variation")) {
+                auto scenario_dict = scenario_dict_all.second;
+                // if we have found the correct entry
+                if (scenario_dict.get<int>("id") == Global::get_parameter_varID()) {
+                    // ... we read all variables
+                    for (auto& s : scenario_dict.get_child("variations")) {
+                        // read variables from file
+                        string varname = s.second.get<string>("variable");
+                        float  step    = s.second.get<float>("step");
+                        float  rStart  = s.second.get<float>("range start");
+                        float  rEnd    = s.second.get<float>("range end");
+                        // generate linspace
+                        if (step < 0 || rEnd <= rStart) {
+                            cerr << "Error when parsing parameter variation!" << endl;
+                            cerr << "step < 0 || rEnd <= rStart" << endl;
+                            return false;
+                        }
+                        vector<float>* linspace = new vector<float>();
+                        float cVal = rStart;
+                        while (cVal <= rEnd) {
+                            linspace->push_back(cVal);
+                            cout << "Linspace step with value " << cVal << endl;
+                            cVal += step;
+                        }
+                        // add linspace (with varname) to list of parameter variations
+                        parameter_var_list.emplace_back(varname,linspace);
+                    }
+                    //
+                    pvar_scenario_found = true;
+                    break;
+                }
+            }
+            //
+            // now, if the parameter variation scenario was found
+            // we generate all combinations that should be simulated;
+            // i.e. we compute the cartesian product
+            if (pvar_scenario_found) {
+                global::parameter_var_list = cartesian_product(parameter_var_list);
+                // TODO: delete parameter_var_list vectors ...
+            }
+            // test only
+            for (auto elem : *(global::parameter_var_list)) {
+                for (auto elem1 : elem) {
+                    cout << setw(14) << setfill(' ') << elem1.first;
+                }
+                cout << endl;
+            }
+            for (auto elem : *(global::parameter_var_list)) {
+                for (auto elem1 : elem) {
+                    cout << setw(6) << setfill(' ') << elem1.second;
+                }
+                cout << endl;
+            }
+            // test end
+        }
 
         //
         // check, if path ends with an "/", add it, if not
@@ -861,7 +925,7 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	// finally: write expansion information to file
 	// A. output expansion matrix with absolute numbers
 	stringstream output_path_A;
-	output_path_A << Global::get_output_path();
+	output_path_A << Global::get_output_path(); // for the expansion matrix it is acceptable to use the static output path (that does not change over time for different parameter variations, as expansion cannot change)
 	output_path_A << setw(4) << setfill('0') << scenario_id;
 	output_path_A << "-expansion-matrix-abs-values.csv";
 	ofstream output_exp_mat(output_path_A.str().c_str(), std::ofstream::out);
@@ -882,7 +946,7 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	//
 	// B. output information about added components per MELO
 	stringstream output_path_B;
-	output_path_B << Global::get_output_path();
+	output_path_B << Global::get_output_path(); // same argument as 21 lines above
 	output_path_B << setw(4) << setfill('0') << scenario_id;
 	output_path_B << "-expansion-per-cu.csv";
 	ofstream output_per_cu(output_path_B.str().c_str(), std::ofstream::out);
