@@ -45,6 +45,7 @@ namespace global {
 
     inline unsigned int current_param_vari_index = 0;
     inline filesystem::path* current_output_dir  = NULL; ///< Reference to the object holding the current output path (maybe changed due to different parameter variations)
+    inline filesystem::path* current_global_output_dir = NULL; ///< Reference to the object holding the current output dir for global information (i.e. information that does not change during parameter variations)
 
     inline bool time_info_init       = false;
 

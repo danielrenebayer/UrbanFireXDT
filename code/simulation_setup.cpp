@@ -4,6 +4,7 @@ using namespace expansion;
 
 
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -924,11 +925,9 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	//
 	// finally: write expansion information to file
 	// A. output expansion matrix with absolute numbers
-	stringstream output_path_A;
-	output_path_A << Global::get_output_path(); // for the expansion matrix it is acceptable to use the static output path (that does not change over time for different parameter variations, as expansion cannot change)
-	output_path_A << setw(4) << setfill('0') << scenario_id;
-	output_path_A << "-expansion-matrix-abs-values.csv";
-	ofstream output_exp_mat(output_path_A.str().c_str(), std::ofstream::out);
+    filesystem::path info_path_A (*(global::current_global_output_dir)); // for the expansion matrix it is acceptable to use the static output path (that does not change over time for different parameter variations, as expansion cannot change)
+	info_path_A /= "expansion-matrix-abs-values.csv";
+	ofstream output_exp_mat(info_path_A, std::ofstream::out);
 	output_exp_mat << ",0. Nothing,1. PV,2. BS,3. HP,4. WB,5. PV+BS,6. PV+HP,7. PV+WB,8. BS+HP,9. BS+WB,10. HP+WB,11. PV+BS+HP,12. PV+BS+WB,13. PV+HP+WB,14. BS+HP+WB,15. PV+BS+HP+WB,Sum as in data" << endl;
 	const char * first_column[16] = {"0. Nothing","1. PV","2. BS","3. HP","4. WB","5. PV+BS","6. PV+HP","7. PV+WB","8. BS+HP","9. BS+WB","10. HP+WB","11. PV+BS+HP","12. PV+BS+WB","13. PV+HP+WB","14. BS+HP+WB","15. PV+BS+HP+WB"};
 	for (int i = 0; i < 16; i++) {
@@ -945,11 +944,9 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	output_exp_mat.close();
 	//
 	// B. output information about added components per MELO
-	stringstream output_path_B;
-	output_path_B << Global::get_output_path(); // same argument as 21 lines above
-	output_path_B << setw(4) << setfill('0') << scenario_id;
-	output_path_B << "-expansion-per-cu.csv";
-	ofstream output_per_cu(output_path_B.str().c_str(), std::ofstream::out);
+    filesystem::path info_path_B (*(global::current_global_output_dir)); // same argument as 21 lines above
+    info_path_B /= "expansion-per-cu.csv";
+	ofstream output_per_cu(info_path_B, std::ofstream::out);
 	output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,wb_orig,wb_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
 	// n_CUs and unit_list defined above, at 1.
 	for (int i = 0; i < n_CUs; i++) {

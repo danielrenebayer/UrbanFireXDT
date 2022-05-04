@@ -26,6 +26,16 @@ void output::initializeDirectory(int scenario_id) {
     if (!filesystem::is_directory(dirpath)) {
         filesystem::create_directory(dirpath);
     }
+    stringstream current_scenario_str;
+    current_scenario_str << "S";
+    current_scenario_str << setw(4) << setfill('0') << scenario_id;
+    dirpath /= current_scenario_str.str();
+    if (!filesystem::is_directory(dirpath)) {
+        filesystem::create_directory(dirpath);
+    }
+    // copy to global variable
+    delete global::current_global_output_dir;
+    global::current_global_output_dir = new filesystem::path(dirpath);
     //
     // in case of a parameter variation: create subfolder for
     // the current variation (and delete old ones if the still exist)
