@@ -76,10 +76,9 @@ int main(int argc, char* argv[]) {
         config_filepath = "../config/simulation_config.json";
     }
     if (opts_vals.count("pvar") > 0) {
-        cout << "pvar     " << opts_vals["pvar"].as<int>() << endl;
-        // TODO implement parameter variation
+        Global::set_pvar_vals(true, opts_vals["pvar"].as<int>() );
     } else {
-        // TODO
+        Global::set_pvar_vals(false, 0);
     }
     if (opts_vals.count("scenario") > 0) {
 		scenario_id = opts_vals["scenario"].as<int>();
@@ -149,6 +148,7 @@ int main(int argc, char* argv[]) {
 	//
 	// open output files
 	//
+    output::initializeDirectory(scenario_id);
 	output::initializeSubstationOutput(scenario_id);
 	output::initializeCUOutput(scenario_id);
 

@@ -11,6 +11,40 @@
 using namespace std;
 using namespace output;
 
+void output::initializeDirectory(int scenario_id) {
+    //
+    // This function initializes the direcory (or directories)
+    // for the output, for the current scenario AND
+    // the current parameter variation (if selected).
+    // Thus, it has to be callen for every parameter variation
+    // setting individually again, if parameter variation
+    // is selected at all.
+    //
+    //
+    // create a subfolder for the current scenario, if it does not exist
+    filesystem::path dirpath = Global::get_output_path();
+    if (!filesystem::is_directory(dirpath)) {
+        filesystem::create_directory(dirpath);
+    }
+    //
+    // in case of a parameter variation: create subfolder for
+    // the current variation (and delete old ones if the still exist)
+    filesystem::path param_vari_path = dirpath;
+    stringstream current_vari_name;
+    current_vari_name << "param vari ";
+    current_vari_name << setw(4) << setfill('0') << global::current_param_vari_index;
+    param_vari_path /= current_vari_name.str();
+    if (filesystem::is_directory(param_vari_path)) {
+        filesystem::remove_all(param_vari_path);
+    }
+    // now, actually create output dir (maybe again)
+    filesystem::create_directory(param_vari_path);
+    //
+    // copy output path to the global variable
+    delete global::current_output_dir;
+    global::current_output_dir = new filesystem::path(param_vari_path);
+}
+
 void output::initializeSubstationOutput(int scenario_id) {
     //
     // This method initializes the substation output
@@ -19,10 +53,11 @@ void output::initializeSubstationOutput(int scenario_id) {
     //
     // initialize the output file
     stringstream output_path_subst;
-    output_path_subst << Global::get_output_path();
     output_path_subst << setw(4) << setfill('0') << scenario_id;
     output_path_subst << "-substation-time-series.csv";
-    substation_output = new ofstream(output_path_subst.str().c_str(), std::ofstream::out);
+    filesystem::path output_path = *(global::current_output_dir);
+    output_path /= output_path_subst.str();
+    substation_output = new ofstream(output_path, std::ofstream::out);
     //
     // add header to output file
     *(substation_output) << "Timestep";
@@ -52,7 +87,7 @@ void output::initializeCUOutput(int scenario_id) {
         // Case 2: One file for each substation
         //
         // create output directory, and delete existing if present
-        filesystem::path dirpath = Global::get_output_path();
+        filesystem::path dirpath = *(global::current_output_dir);
         dirpath /= "ts-per-cu";
         if (filesystem::is_directory(dirpath)) {
             // clear existing directory
@@ -147,10 +182,11 @@ CUOutputSingleFile::CUOutputSingleFile(int scenario_id) {
     //
     // initialize the output file
     stringstream output_path_CUs;
-    output_path_CUs << Global::get_output_path();
     output_path_CUs << setw(4) << setfill('0') << scenario_id;
     output_path_CUs << "-CU-time-series.csv";
-    output_stream = new ofstream(output_path_CUs.str().c_str(), std::ofstream::out);
+    filesystem::path output_path = *(global::current_output_dir);
+    output_path /= output_path_CUs.str();
+    output_stream = new ofstream(output_path, std::ofstream::out);
     //
     // activate buffers for speedup
     buffer = new char[bufferSize];
