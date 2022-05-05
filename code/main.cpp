@@ -148,7 +148,8 @@ int main(int argc, char* argv[]) {
 	//
 	// open output files
 	//
-    output::initializeDirectory(scenario_id);
+    output::initializeDirectoriesOnce(scenario_id);
+    output::initializeDirectoriesPerPVar(scenario_id);
 	output::initializeSubstationOutput(scenario_id);
 	output::initializeCUOutput(scenario_id);
 

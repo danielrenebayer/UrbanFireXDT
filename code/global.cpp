@@ -36,6 +36,7 @@ void global::vacuum() {
     delete   unit_open_space_wind;   unit_open_space_wind = NULL;
     delete   parameter_var_list;     parameter_var_list   = NULL;
     delete   current_output_dir;     current_output_dir   = NULL;
+    delete   current_output_dir_prefix;current_output_dir_prefix   = NULL;
     delete   current_global_output_dir;current_global_output_dir   = NULL;
     delete[] pv_profile;   pv_profile   = NULL;
     delete[] wind_profile; wind_profile = NULL;

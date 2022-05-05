@@ -43,8 +43,9 @@ namespace global {
 
     inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 
-    inline unsigned int current_param_vari_index = 0;
+    inline unsigned int curr_param_vari_combi_index = 0; ///< The index of the current parameter variation combination, that is simulated (0, if no parameter variation is selected)
     inline filesystem::path* current_output_dir  = NULL; ///< Reference to the object holding the current output path (maybe changed due to different parameter variations)
+    inline filesystem::path* current_output_dir_prefix = NULL; ///< Reference to the path of the output path where all parameter variations can be found (i.e. the top level of current_output_dir if param vari is selected; i.e.2. one level below current_global_output_dir)
     inline filesystem::path* current_global_output_dir = NULL; ///< Reference to the object holding the current output dir for global information (i.e. information that does not change during parameter variations)
 
     inline bool time_info_init       = false;

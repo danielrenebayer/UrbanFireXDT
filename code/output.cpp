@@ -11,14 +11,30 @@
 using namespace std;
 using namespace output;
 
-void output::initializeDirectory(int scenario_id) {
+//
+// Helper function (not defined in header file).
+// It removes a directory if this already exists
+// and creates a new, empty directory
+//
+void create_dir_del_if_exists(filesystem::path dirpath) {
+    // check if dir exists
+    if (filesystem::is_directory(dirpath)) {
+        // if yes, delete it
+        filesystem::remove_all(dirpath);
+    }
+    // now, actually create output dir (maybe again)
+    filesystem::create_directory(dirpath);
+}
+
+void output::initializeDirectoriesOnce(int scenario_id) {
     //
     // This function initializes the direcory (or directories)
-    // for the output, for the current scenario AND
-    // the current parameter variation (if selected).
+    // for the output, for the current scenario.
     // Thus, it has to be callen for every parameter variation
     // setting individually again, if parameter variation
     // is selected at all.
+    //
+    // MUST be callen BEFORE initializeDirectoriesPerPVar()
     //
     //
     // create a subfolder for the current scenario, if it does not exist
@@ -34,21 +50,52 @@ void output::initializeDirectory(int scenario_id) {
         filesystem::create_directory(dirpath);
     }
     // copy to global variable
-    delete global::current_global_output_dir;
+    //delete global::current_global_output_dir;
     global::current_global_output_dir = new filesystem::path(dirpath);
+    //
+    // create the output dir prefix
+    filesystem::path param_vari_path = dirpath;
+    stringstream current_vari_name;
+    if (Global::is_parameter_variation()) {
+        // if parameter variation is selected,
+        // create a folder where subfolders are created for the output
+        current_vari_name << "param vari ";
+        current_vari_name << setw(4) << setfill('0') << Global::get_parameter_varID();
+    } else {
+        // if no parameter variuation is selected,
+        // we just create one folder with "no param vari"
+        current_vari_name << "no param vari";
+    }
+    param_vari_path /= current_vari_name.str();
+    create_dir_del_if_exists(param_vari_path);
+    // copy to global variable
+    global::current_output_dir_prefix = new filesystem::path(param_vari_path);
+}
+
+void output::initializeDirectoriesPerPVar(int scenario_id) {
+    //
+    // This function initializes the direcory (or directories)
+    // for the current parameter variation (if selected).
+    // Thus, it has to be callen for every parameter variation
+    // setting individually again.
+    // Even in the case of no parameter variation, it has to be callen once.
+    //
+    // MUST be callen AFTER initializeDirectoriesOnce()
+    //
     //
     // in case of a parameter variation: create subfolder for
     // the current variation (and delete old ones if the still exist)
-    filesystem::path param_vari_path = dirpath;
+    filesystem::path param_vari_path = *(global::current_output_dir_prefix);
     stringstream current_vari_name;
-    current_vari_name << "param vari ";
-    current_vari_name << setw(4) << setfill('0') << global::current_param_vari_index;
-    param_vari_path /= current_vari_name.str();
-    if (filesystem::is_directory(param_vari_path)) {
-        filesystem::remove_all(param_vari_path);
+    if (Global::is_parameter_variation()) {
+        // create folder for the current parameter variation combination
+        current_vari_name << "variation index ";
+        current_vari_name << setw(4) << setfill('0') << global::curr_param_vari_combi_index;
+        param_vari_path /= current_vari_name.str();
+        create_dir_del_if_exists(param_vari_path);
+    } else {
+        // do nothing, if no parameter variation is selected
     }
-    // now, actually create output dir (maybe again)
-    filesystem::create_directory(param_vari_path);
     //
     // copy output path to the global variable
     delete global::current_output_dir;

@@ -30,7 +30,8 @@ namespace output {
     inline CUOutputOneFilePerSubstation** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
     inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs
 
-    void initializeDirectory(int scenario_id);
+    void initializeDirectoriesOnce(int scenario_id);
+    void initializeDirectoriesPerPVar(int scenario_id);
     void initializeSubstationOutput(int scenario_id);
     void initializeCUOutput(int scenario_id);
 
