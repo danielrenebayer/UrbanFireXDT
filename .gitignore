@@ -6,3 +6,4 @@ test/
 data/*
 !data/README.md
 *.swp
+.ipynb_checkpoints/
