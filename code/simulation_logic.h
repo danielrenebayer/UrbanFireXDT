@@ -11,7 +11,8 @@
 
 namespace simulation {
 
-    bool runSimulation();
+    bool runSimulationForOneParamSetting();
     bool oneStep(int ts);
+    bool runSimulationForAllVariations(int scenario_id);
 
 }

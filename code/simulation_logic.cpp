@@ -12,9 +12,11 @@ using namespace simulation;
 #include "units.h"
 
 
-bool simulation::runSimulation() {
+bool simulation::runSimulationForOneParamSetting() {
     //
-    // This function loops over all time steps as they are defined in the data
+    // This function loops over all time steps as they are defined in the data.
+    // If multiple settings (e.g. a parameter variation) should be applied,
+    // one has to call this function more often.
     //
     std::cout << "Run simulation for a complete episode ..." << std::endl;
 
@@ -104,4 +106,81 @@ bool simulation::oneStep(int ts) {
 
     return true;
 
+}
+
+bool simulation::runSimulationForAllVariations(int scenario_id) {
+    //
+    // This function runs the simulation for all given parameter
+    // variations. If no variation is selected, it executes the
+    // simulation once only.
+    // Returns false, if an error occurs during the simulation,
+    // else true.
+    //
+
+    if (Global::is_parameter_variation()) {
+        // in case of a parameter variation:
+        // loop over all parameter combinations
+        unsigned int param_vari_combi_ind = 0;
+        for (auto& list_of_variables : *(global::parameter_var_list)) {
+            //
+            // 0. set global variable
+            global::curr_param_vari_combi_index = param_vari_combi_ind;
+            //
+            // 1. set current variable values
+            //    i.e. iterate over all variable-name / value combinations and
+            //    set values accordingly
+            ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+            for (auto& var_name_and_val : list_of_variables) {
+                if        (var_name_and_val.first.compare("expansion PV kWp") == 0) {
+                    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
+                        cuList[i]->set_exp_pv_kWp(var_name_and_val.second);
+
+                } else if (var_name_and_val.first.compare("expansion BS kW")  == 0) {
+                    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
+                        cuList[i]->set_exp_bs_maxP_kW(var_name_and_val.second);
+
+                } else if (var_name_and_val.first.compare("expansion BS kWh") == 0) {
+                    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
+                        cuList[i]->set_exp_bs_maxE_kWh(var_name_and_val.second);
+
+                } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
+                    std::cerr << "This is not implemented!" << std::endl;
+
+                } else {
+                    std::cerr << "Unknown parameter variable to vary: " << var_name_and_val.first << std::endl;
+                    return false;
+                }
+            }
+            //
+            // 2. open output files
+            output::initializeDirectoriesPerPVar(scenario_id);
+            output::initializeSubstationOutput(scenario_id);
+            output::initializeCUOutput(scenario_id);
+            //
+            // 3. run the simulation
+            bool no_error = runSimulationForOneParamSetting();
+            if (!no_error) return false;
+            //
+            // 4. close output files
+            output::closeOutputs();
+            //
+            // 5. increment combination counter
+            param_vari_combi_ind++;
+        }
+    } else {
+        //
+        // 1. open output files
+        output::initializeDirectoriesPerPVar(scenario_id);
+        output::initializeSubstationOutput(scenario_id);
+        output::initializeCUOutput(scenario_id);
+        //
+        // 2. Run the simulation
+        bool no_error = runSimulationForOneParamSetting();
+        if (!no_error) return false;
+        //
+        // 3. close output files
+        output::closeOutputs();
+    }
+
+    return true;
 }

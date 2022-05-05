@@ -146,14 +146,6 @@ int main(int argc, char* argv[]) {
 	// TODO: Make all consturctors for the units private, so this will not happen !!!
 
 	//
-	// open output files
-	//
-    output::initializeDirectoriesOnce(scenario_id);
-    output::initializeDirectoriesPerPVar(scenario_id);
-	output::initializeSubstationOutput(scenario_id);
-	output::initializeCUOutput(scenario_id);
-
-	//
 	// bevore starting the simulation:
 	// check if all global variables are set -> if not, error!
 	//
@@ -162,18 +154,25 @@ int main(int argc, char* argv[]) {
 		return 3;
 	}
 
+    //
+    // Initialize global output directories
+    //
+    output::initializeDirectoriesOnce(scenario_id);
+
 	//
 	// Add expansion[s] to the control units
 	//
 	expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
 
-	//
-	// Run the simulation
-	//
-	if (!simulation::runSimulation()) {
-		cerr << "Error during simulation run!" << endl;
-		return 3;
-	}
+    //
+    // Run the simulation
+    // - once (if no parameter variation is selected) or
+    // - multiple times, if param. vari. is selected
+    //
+    if (!simulation::runSimulationForAllVariations(scenario_id)) {
+        cerr << "Error during simulation run!" << endl;
+        return 3;
+    }
 	
 	//
 	// clean up
@@ -181,7 +180,6 @@ int main(int argc, char* argv[]) {
 	MeasurementUnit::VacuumInstancesAndStaticVariables();
 	ControlUnit::VacuumInstancesAndStaticVariables();
 	Substation::VacuumInstancesAndStaticVariables();
-	output::closeOutputs();
 	Global::DeleteStaticVariables();
 	global::vacuum();
 
