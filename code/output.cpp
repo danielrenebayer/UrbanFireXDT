@@ -182,6 +182,8 @@ void output::closeOutputs() {
     if (substation_output_init) {
         substation_output->close();
         delete substation_output;
+        substation_output = NULL;
+        substation_output_init = false;
     }
     //
     // close outputs for CUs if existing
@@ -197,6 +199,12 @@ void output::closeOutputs() {
         }
         delete[] cu_multi_outputs;
         cu_multi_outputs = NULL;
+    }
+    //
+    // remove references to output objects from all CUs
+    ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+        cuList[i]->set_output_object(NULL);
     }
 }
 
