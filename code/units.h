@@ -93,6 +93,9 @@ class ControlUnit {
         void add_exp_hp();
         void add_exp_wb();
         void set_output_object(CUOutput* output_obj);
+        void set_exp_pv_kWp     (float value);
+        void set_exp_bs_maxE_kWh(float value);
+        void set_exp_bs_maxP_kW (float value);
         // for simulation runs
         bool compute_next_value(int ts);
         //

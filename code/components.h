@@ -18,9 +18,10 @@ class ComponentPV {
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         // update / action methods
         void  calculateCurrentFeedin(int ts);
+        void  set_kWp(float value)       { kWp = value; }
     private:
-        // constant member variables (other languages might call this 'final')
-        const float kWp;
+        // semi-constant member variables, i.e. they might change for parameter variations
+        float kWp;
         // member variables that can change over time
         float currentGeneration_kW;
         // TODO: Ausrichtung beachten -> dann current Feedin ueber globalstrahlung und sonnenstand ausrechnen
@@ -37,12 +38,15 @@ class ComponentBS {
         const float get_maxP_kW()  const    { return maxP_kW;      }
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
+        void  set_maxE_kWh(float value)     { maxE_kWh = value; }
+        void  set_maxP_kW (float value)     { maxP_kW  = value; }
         // update / action methods
         void calculateActions();
     private:
+        // semi-constant member variables, i.e. they might change for parameter variations
+        float maxE_kWh;
+        float maxP_kW;
         // constant member variables (other languages might call this 'final')
-        const float maxE_kWh;
-        const float maxP_kW;
         const float discharge_rate_per_step;
         const float efficiency;
         // member variables that can change over time

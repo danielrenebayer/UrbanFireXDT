@@ -300,6 +300,21 @@ void ControlUnit::set_output_object(CUOutput* output_obj) {
     this->output_obj = output_obj;
 }
 
+void ControlUnit::set_exp_pv_kWp(float value) {
+    if (has_sim_pv)
+        sim_comp_pv->set_kWp(value);
+}
+
+void ControlUnit::set_exp_bs_maxE_kWh(float value) {
+    if (has_sim_bs)
+        sim_comp_bs->set_maxE_kWh(value);
+}
+
+void ControlUnit::set_exp_bs_maxP_kW(float value) {
+    if (has_sim_bs)
+        sim_comp_bs->set_maxP_kW(value);
+}
+
 bool ControlUnit::compute_next_value(int ts) {
     //
     // This function computes the next value
