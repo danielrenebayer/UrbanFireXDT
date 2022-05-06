@@ -125,6 +125,8 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             //
             // 0. set global variable
             global::curr_param_vari_combi_index = param_vari_combi_ind;
+            // 0.1. initialize struct required for outputting the current parameter setting
+            output::CurrentParamValues cParamVals;
             //
             // 1. set current variable values
             //    i.e. iterate over all variable-name / value combinations and
@@ -134,14 +136,20 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
                 if        (var_name_and_val.first.compare("expansion PV kWp") == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
                         cuList[i]->set_exp_pv_kWp(var_name_and_val.second);
+                    cParamVals.exp_pv_kWp = var_name_and_val.second;
+                    cParamVals.exp_pv_kWp_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS kW")  == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
                         cuList[i]->set_exp_bs_maxP_kW(var_name_and_val.second);
+                    cParamVals.exp_bs_maxP_kW = var_name_and_val.second;
+                    cParamVals.exp_bs_maxP_kW_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS kWh") == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
                         cuList[i]->set_exp_bs_maxE_kWh(var_name_and_val.second);
+                    cParamVals.exp_bs_maxE_kWh = var_name_and_val.second;
+                    cParamVals.exp_bs_maxE_kWh_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
                     std::cerr << "This is not implemented!" << std::endl;
@@ -156,6 +164,8 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             output::initializeDirectoriesPerPVar(scenario_id);
             output::initializeSubstationOutput(scenario_id);
             output::initializeCUOutput(scenario_id);
+            // 2.b output the current parameter variation combination
+            output::outputCurrentParamVariCombi(cParamVals);
             //
             // 3. run the simulation
             bool no_error = runSimulationForOneParamSetting();
@@ -173,6 +183,9 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         output::initializeDirectoriesPerPVar(scenario_id);
         output::initializeSubstationOutput(scenario_id);
         output::initializeCUOutput(scenario_id);
+        // 1.b output the current parameter variation combination
+        output::CurrentParamValues cParamVals;
+        output::outputCurrentParamVariCombi(cParamVals);
         //
         // 2. Run the simulation
         bool no_error = runSimulationForOneParamSetting();

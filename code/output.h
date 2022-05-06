@@ -39,6 +39,16 @@ namespace output {
 
     void flushBuffers();
 
+    // struct for the below defined funtion:
+    // it holds the current parameter values
+    struct CurrentParamValues {
+        float exp_pv_kWp      = 0.0;  bool exp_pv_kWp_set      = false;
+        float exp_bs_maxP_kW  = 0.0;  bool exp_bs_maxP_kW_set  = false;
+        float exp_bs_maxE_kWh = 0.0;  bool exp_bs_maxE_kWh_set = false;
+        float exp_bs_init_SOC = 0.0;  bool exp_bs_init_SOC_set = false;
+    };
+    void outputCurrentParamVariCombi(CurrentParamValues&);
+
 }
 
 class CUOutput {
