@@ -1,9 +1,10 @@
 code/main
 code/main-dbg
 code/main-opti
-test/
+cpp-test/
 .vscode/
 data/*
 !data/README.md
 *.swp
 .ipynb_checkpoints/
+*.code-workspace
