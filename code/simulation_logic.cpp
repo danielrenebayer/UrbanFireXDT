@@ -50,11 +50,10 @@ bool simulation::runSimulationForOneParamSetting() {
         //
         // execute one step
         if (!oneStep(ts)) return false;
-        /*
-        // flush output buffers every 64 steps, so that RAM consumption does not increase too much
-        if ((ts % 64) == 0)
+        // flush output buffers every configurable step, so that RAM consumption does not increase too much
+        if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
-        */
+
     }
 
     std::cout << " ... run finished." << std::endl;

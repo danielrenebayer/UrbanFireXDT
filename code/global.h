@@ -40,6 +40,7 @@ namespace global {
     inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
     inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit
     inline OpenSpacePVOrWind* unit_open_space_wind = NULL; ///< Reference to the global open space wind unit
+    inline unsigned long n_ts_between_flushs = 1000; ///< Number of timesteps between the flush of the output buffers
 
     inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 

@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
         ("config",   bpopts::value<string>(), "Path to the json configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
         ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
+        ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
@@ -99,6 +100,8 @@ int main(int argc, char* argv[]) {
     } else {
         Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
     }
+    // set output flush interval
+    global::n_ts_between_flushs = opts_vals["suof"].as<unsigned long>();
 
 	cout << "Initializing the simulation for scenario ID " << scenario_id << endl;
 
