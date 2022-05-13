@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
         ("config",   bpopts::value<string>(), "Path to the json configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
         ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
+        ("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit");
     bpopts::positional_options_description opts_desc_pos;
@@ -99,6 +100,11 @@ int main(int argc, char* argv[]) {
         }
     } else {
         Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
+    }
+    if (opts_vals.count("metrics")) {
+        Global::set_comp_eval_metrics(true);
+    } else {
+        Global::set_comp_eval_metrics(false);
     }
     // set output flush interval
     global::n_ts_between_flushs = opts_vals["suof"].as<unsigned long>();

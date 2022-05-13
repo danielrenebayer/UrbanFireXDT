@@ -155,6 +155,23 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	// add this control unit to the list of
 	// connected units in the connected substation
 	higher_level_subst->add_unit(this);
+
+    //
+    // If evaluation metrics (like SSC/SSR) should be computed directly
+    // one needs to store some information about every time step for the current
+    // parameter variation setting. So we create an array for storing this data
+    // for the complete simulation.
+    if (Global::get_comp_eval_metrics()) {
+        create_history_output = true;
+        history_self_prod_load_kW       = new float[Global::get_n_timesteps()];
+        history_pv_generation_kW        = new float[Global::get_n_timesteps()];
+        history_avg_consumption_load_kW = new float[Global::get_n_timesteps()];
+    } else {
+        create_history_output = false;
+        history_self_prod_load_kW       = NULL;
+        history_pv_generation_kW        = NULL;
+        history_avg_consumption_load_kW = NULL;
+    }
 }
 
 ControlUnit::~ControlUnit() {
@@ -163,6 +180,10 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
 	if (has_sim_wb) delete sim_comp_wb;
+    if (create_history_output) {
+        delete[] history_self_prod_load_kW;
+        delete[] history_pv_generation_kW;
+    }
 }
 
 void ControlUnit::add_unit(MeasurementUnit* unit) {
@@ -372,6 +393,14 @@ bool ControlUnit::compute_next_value(int ts) {
             // more (or equal) local production than consumption -> additional feedin (or nothing)
             self_produced_load_kW = load_bevore_local_pv_bess;
         }
+    }
+
+    //
+    // write values to history-arrays if this is selected
+    if (create_history_output) {
+        history_self_prod_load_kW[ts - 1]     = self_produced_load_kW;
+        history_pv_generation_kW[ ts - 1]     = load_pv;
+        history_avg_consumption_load_kW[ts-1] = current_load_all_rSMs_kW;
     }
 
     //

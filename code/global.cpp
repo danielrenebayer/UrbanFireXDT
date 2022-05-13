@@ -55,6 +55,7 @@ int Global::n_timesteps           = 0;
 int Global::n_substations         = 0;
 int Global::n_CUs                 = 0;
 int Global::n_MUs                 = 0;
+bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
 struct tm* Global::ts_start_tm    = NULL;
@@ -75,6 +76,7 @@ bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
 bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
+bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
 bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
@@ -104,6 +106,7 @@ bool Global::AllVariablesInitialized() {
         n_substations_init &&
         n_CUs_init &&
         n_MUs_init &&
+        comp_eval_metrics_init &&
         pvar_set &&
         ts_start_str_init &&
         ts_end_str_init &&
@@ -193,6 +196,14 @@ void Global::set_n_MUs(int n_MUs) {
     } else {
         Global::n_MUs = n_MUs;
         Global::n_MUs_init = true;
+    }
+}
+void Global::set_comp_eval_metrics(bool value) {
+    if (comp_eval_metrics_init) {
+        cerr << "Global variable comp_eval_metrics is already initialized!" << endl;
+    } else {
+        Global::comp_eval_metrics = value;
+        Global::comp_eval_metrics_init = true;
     }
 }
 void Global::set_pvar_vals(bool pvar_val, int pvarID) {

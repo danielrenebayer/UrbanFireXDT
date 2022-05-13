@@ -122,6 +122,10 @@ class ControlUnit {
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
         CUOutput*    output_obj;
+        float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed
+        float* history_pv_generation_kW; ///< Array for later analysis, holding the historical values of the PV-generation
+        float* history_avg_consumption_load_kW; ///< Array for later analysis, holding the historical (average) consumption load for the corresponding time step
+        bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
         float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units
