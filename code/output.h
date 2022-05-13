@@ -49,6 +49,8 @@ namespace output {
     };
     void outputCurrentParamVariCombi(CurrentParamValues&);
 
+    void outputMetrics();
+
 }
 
 class CUOutput {

@@ -289,6 +289,32 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
     return 0;
 }
 
+string* ControlUnit::get_metrics_string() {
+    if (create_history_output) {
+        double sum_of_consumption_kWh    = 0;
+        double sum_of_selfconsumed_e_kWh = 0;
+        double sum_of_pv_generated_e_kWh = 0;
+        for (int i = 0; i < Global::get_n_timesteps(); i++) {
+            // TODO: Devide by time step unit (no problem for 1 hour steps, but for other it is)
+            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i];
+            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i];
+            sum_of_pv_generated_e_kWh += history_pv_generation_kW[i];
+        }
+        double SCR = sum_of_selfconsumed_e_kWh / sum_of_pv_generated_e_kWh;
+        double SSR = sum_of_selfconsumed_e_kWh / sum_of_consumption_kWh;
+        string* retstr = new string;
+        *retstr += to_string(unitID) + ",";
+        *retstr += to_string(SCR) + ",";
+        *retstr += to_string(SSR) + ",";
+        *retstr += to_string(sum_of_consumption_kWh) + ",";
+        *retstr += to_string(sum_of_selfconsumed_e_kWh) + ",";
+        *retstr += to_string(sum_of_pv_generated_e_kWh);
+        return retstr;
+    } else {
+        return NULL;
+    }
+}
+
 void ControlUnit::add_exp_pv() {
     if (!has_sim_pv) {
         has_sim_pv  = true;

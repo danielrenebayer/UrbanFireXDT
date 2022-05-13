@@ -170,7 +170,9 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             bool no_error = runSimulationForOneParamSetting();
             if (!no_error) return false;
             //
-            // 4. close output files
+            // 4a. output metrics (if selected)
+            output::outputMetrics();
+            // 4b. close output files
             output::closeOutputs();
             //
             // 5. increment combination counter
@@ -190,7 +192,9 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         bool no_error = runSimulationForOneParamSetting();
         if (!no_error) return false;
         //
-        // 3. close output files
+        // 3a. output metrics (if selected)
+        output::outputMetrics();
+        // 3b. close output files
         output::closeOutputs();
     }
 

@@ -251,6 +251,31 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs.close();
 }
 
+//
+// This function outputs the computed metrics for all control units
+// after the simulation has been finished.
+// If no metric computetion is selected, the function does nothing
+//
+void output::outputMetrics() {
+    if (Global::get_comp_eval_metrics()) {
+        filesystem::path output_path {*(global::current_output_dir)};
+        output_path /= "metrics-per-cu.csv";
+        ofstream ofs(output_path, std::ofstream::out);
+        ofs << "UnitID,SCR,SSR,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh]\n";
+        //
+        // loop over all CUs and get metrics output string
+        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+        for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+            string* output_str = cuList[i]->get_metrics_string();
+            if (output_str != NULL)
+                ofs << *output_str;
+        }
+        ofs << "\n";
+        //
+        ofs.close();
+    }
+}
+
 
 /////////////////////////////////
 //    Implementation of all    //
