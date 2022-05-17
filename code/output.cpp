@@ -217,7 +217,7 @@ void output::flushBuffers() {
     if (cu_single_output != NULL)
         cu_single_output->flush_buffer();
     if (cu_multi_outputs != NULL)
-        for (int i = 0; i < Global::get_n_CUs(); i++)
+        for (size_t i = 0; i < n_cu_multi_outputs; i++)
             cu_multi_outputs[i]->flush_buffer();
 }
 
@@ -269,8 +269,8 @@ void output::outputMetrics() {
             string* output_str = cuList[i]->get_metrics_string();
             if (output_str != NULL)
                 ofs << *output_str;
+            ofs << "\n";
         }
-        ofs << "\n";
         //
         ofs.close();
     }
