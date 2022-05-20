@@ -270,6 +270,7 @@ void output::outputMetrics() {
             if (output_str != NULL)
                 ofs << *output_str;
             ofs << "\n";
+            delete output_str;
         }
         //
         ofs.close();
