@@ -1,0 +1,2 @@
+UnitID,n_MUs,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,wb_orig,wb_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW
+1,1,0,1,0,1,0,0,0,0,10,10,10
