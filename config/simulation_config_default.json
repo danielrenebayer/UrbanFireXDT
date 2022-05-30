@@ -1,5 +1,6 @@
 {
     "Default Scenario Values": {
+        "__comment__": "All paths should be relative to this file",
         "data input path":  "../data/input/",
         "data output path": "../data/output/",
         "start": "2020-01-01 00:00:00",

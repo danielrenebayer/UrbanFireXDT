@@ -32,6 +32,8 @@ namespace bpt = boost::property_tree;
 // loads the global config file
 //
 bool configld::load_config_file(int scenario_id, string& filepath) {
+    //
+    // parse json
     bpt::ptree tree_root;
     try {
         bpt::read_json(filepath, tree_root);
@@ -129,11 +131,13 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 break;
             }
         }
+        #ifdef DEBUG
         cout << "str_data_ipt = " << str_data_ipt << endl;
         cout << "str_data_opt = " << str_data_opt << endl;
         cout << "start_str = " << start_str << endl;
         cout << "end_str = " << end_str << endl;
         cout << "ts_per_hour = " << ts_per_hour << endl;
+        #endif
 
         //
         // is a parameter variation selected?
@@ -231,6 +235,12 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (exp_bs_iSOC_set)  Global::set_exp_bess_start_soc(exp_bs_iSOC);
             if (os_pv_kWp_set)    Global::set_open_space_pv_kWp(os_pv_kWp);
             if (os_wind_kWp_set)  Global::set_wind_kWp(os_wind_kWp);
+            //
+            // change current working dir to the location of the config file
+            filesystem::path config_fp = filepath;
+            filesystem::current_path( config_fp.parent_path() );
+            //
+            //
             return true;
         }
 
@@ -733,7 +743,7 @@ Returns false if an error occurs, else true.
 bool expansion::load_expansion_matrix(float expansion_matrix[16][16]) {
 	ifstream expmat_input;
 	stringstream expmat_input_path;
-	expmat_input_path << "../config/expansion_scenarios/";
+	expmat_input_path << "./expansion_scenarios/";
 	expmat_input_path << setw(4) << setfill('0') << Global::get_expansion_scenario_id();
 	expmat_input_path << ".csv";
 	expmat_input.open(expmat_input_path.str());
