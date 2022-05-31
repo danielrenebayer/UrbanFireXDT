@@ -42,6 +42,7 @@ class ComponentBS {
         void  set_maxP_kW (float value)     { maxP_kW  = value; }
         // update / action methods
         void calculateActions();
+        void resetInternalState();
     private:
         // semi-constant member variables, i.e. they might change for parameter variations
         float maxE_kWh;
@@ -49,6 +50,7 @@ class ComponentBS {
         // constant member variables (other languages might call this 'final')
         const float discharge_rate_per_step;
         const float efficiency;
+        const float initial_SoC;
         // member variables that can change over time
         float SOC;
         float currentE_kWh;

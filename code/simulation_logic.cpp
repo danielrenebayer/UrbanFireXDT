@@ -126,6 +126,8 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             global::curr_param_vari_combi_index = param_vari_combi_ind;
             // 0.1. initialize struct required for outputting the current parameter setting
             output::CurrentParamValues cParamVals;
+            // 0.2. reset internal variables for control units
+            ControlUnit::ResetAllInternalStates();
             //
             // 1. set current variable values
             //    i.e. iterate over all variable-name / value combinations and

@@ -26,7 +26,8 @@ void ComponentPV::calculateCurrentFeedin(int ts) {
 
 ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
         float discharge_rate_per_step, float efficiency, float initial_SoC) : maxE_kWh(maxE_kWh),maxP_kW(maxP_kW),
-        discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency) {
+        discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency),
+        initial_SoC(initial_SoC) {
 
     SOC               = 0;
     currentE_kWh      = 0;
@@ -74,5 +75,13 @@ void ComponentBS::calculateActions() {
 
     // calculate new SOC value
     SOC = currentE_kWh / maxE_kWh;
+}
+
+void ComponentBS::resetInternalState() {
+    //
+    // This method resets the internal SOC to the initial level
+    //
+    SOC = initial_SoC;
+    currentE_kWh = maxE_kWh * initial_SoC;
 }
 

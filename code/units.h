@@ -118,6 +118,8 @@ class ControlUnit {
         static inline ControlUnit* GetInstance(int unitID);
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static const int GetNumberOfInstances() {return st__n_CUs;}
+        // 3. modifiers for all created objects
+        static void ResetAllInternalStates();
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;

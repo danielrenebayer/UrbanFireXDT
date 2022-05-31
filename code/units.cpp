@@ -470,6 +470,21 @@ inline ControlUnit* ControlUnit::GetInstance(int unitID) {
         return NULL;
 }
 
+void ControlUnit::ResetAllInternalStates() {
+    //
+    // Call this function to reset all internal states of
+    // the unit and all connected components (as long as they
+    // have interal states, like a battery has the current SOC
+    // as internal state).
+    //
+    for (int i = 0; i < st__n_CUs; i++) {
+        ControlUnit* e_i = st__cu_list[i];
+        if (e_i->has_sim_bs) {
+            e_i->sim_comp_bs->resetInternalState();
+        }
+    }
+}
+
 
 
 
