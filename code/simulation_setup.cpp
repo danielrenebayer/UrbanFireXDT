@@ -381,7 +381,7 @@ int load_data_from_central_database_callbackC(void* data, int argc, char** argv,
     int current_station_id = stoi(argv[0]);
     string* stationName = new string(argv[1]);
     try {
-        /*Substation* newSubstation = */ new Substation(current_station_id, stationName);
+        Substation::InstantiateNewSubstation(current_station_id, stationName);
     } catch (runtime_error& e) {
         cerr << "Error when creating a substation:" << endl;
         cerr << e.what() << endl;
@@ -402,7 +402,7 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
     int current_cu_id = stoi(argv[0]);
     int conn_to_subst_id = stoi(argv[1]);
     try {
-        /*ControlUnit* newCU = */ new ControlUnit(current_cu_id, conn_to_subst_id);
+        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id);
     } catch (runtime_error& e) {
         cerr << "Error when creating a control unit:" << endl;
         cerr << e.what() << endl;
@@ -445,8 +445,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	data_input_path << ".csv";
 
 	try {
-		MeasurementUnit* newMU =
-			new MeasurementUnit(current_mu_id, conn_to_unitID, melo_str, locID,
+        MeasurementUnit* newMU = MeasurementUnit::InstantiateNewMeasurementUnit(
+                                current_mu_id, conn_to_unitID, melo_str, locID,
 								has_demand, has_feedin, has_pv_resid, has_pv_opens,
 								has_bess,   has_hp,     has_wb,       has_chp);
 		newMU->load_data(data_input_path.str().c_str());

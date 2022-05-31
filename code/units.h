@@ -29,7 +29,12 @@ class Substation {
         This class represents a substation.
     */
     public:
+        static Substation* InstantiateNewSubstation(int id, std::string* name) {
+            return new Substation(id, name);
+        }
+    private:
         Substation(int id, std::string* name);
+    public:
         ~Substation();
         // getter methods
         const int get_id() { return id; }
@@ -69,7 +74,12 @@ class ControlUnit {
         (i.e. a private house or a small company)
     */
     public:
+        static ControlUnit* InstantiateNewControlUnit(int unitID, int substation_id) {
+            return new ControlUnit(unitID, substation_id);
+        }
+    private:
         ControlUnit(int unitID, int substation_id);
+    public:
         ~ControlUnit();
         void add_unit(MeasurementUnit* unit);
         bool has_electricity_demand();
@@ -147,10 +157,17 @@ class MeasurementUnit {
         components exists in the real unit as well.
     */
     public:
+        static MeasurementUnit* InstantiateNewMeasurementUnit(int meloID, int unitID, std::string * melo, int locID, 
+                bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
+                bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) {
+                    return new MeasurementUnit(meloID, unitID, melo, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wb, has_chp);
+                }
+    private:
         // initialization and destruction
         MeasurementUnit(int meloID, int unitID, std::string * melo, int locID, 
                         bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                         bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp);
+    public:
         ~MeasurementUnit();
         bool load_data(const char * filepath);
         bool has_demand() { return rsm_has_demand; }

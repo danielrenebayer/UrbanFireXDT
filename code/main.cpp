@@ -147,13 +147,6 @@ int main(int argc, char* argv[]) {
 		return 2;
 	}
 
-	// this is not allowed anymore, as the object are deleted twice!!!
-	//MeasurementUnit mu(1, NULL, 0/*meloID,string melo, locID*/);
-	// do this:
-	//MeasurementUnit* mu = new MeasurementUnit(1, NULL, 0/*meloID,string melo, locID*/);
-	//mu->load_data("../data/input/SeparatedSmartMeterData/2.csv");
-	// TODO: Make all consturctors for the units private, so this will not happen !!!
-
 	//
 	// bevore starting the simulation:
 	// check if all global variables are set -> if not, error!
