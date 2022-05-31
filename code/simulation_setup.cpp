@@ -11,6 +11,7 @@ using namespace expansion;
 #include <list>
 #include <sqlite3.h>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -381,7 +382,9 @@ int load_data_from_central_database_callbackC(void* data, int argc, char** argv,
     string* stationName = new string(argv[1]);
     try {
         /*Substation* newSubstation = */ new Substation(current_station_id, stationName);
-    } catch (const char* msg) {
+    } catch (runtime_error& e) {
+        cerr << "Error when creating a substation:" << endl;
+        cerr << e.what() << endl;
         return 1;
     }
     return 0;
@@ -400,7 +403,9 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
     int conn_to_subst_id = stoi(argv[1]);
     try {
         /*ControlUnit* newCU = */ new ControlUnit(current_cu_id, conn_to_subst_id);
-    } catch (const char* msg) {
+    } catch (runtime_error& e) {
+        cerr << "Error when creating a control unit:" << endl;
+        cerr << e.what() << endl;
         return 1;
     }
     return 0;
@@ -445,7 +450,9 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 								has_demand, has_feedin, has_pv_resid, has_pv_opens,
 								has_bess,   has_hp,     has_wb,       has_chp);
 		newMU->load_data(data_input_path.str().c_str());
-	} catch (const char* msg) {
+    } catch (runtime_error& e) {
+        cerr << "Error when creating a control unit:" << endl;
+        cerr << e.what() << endl;
 		return 1;
 	}
 	return 0;
@@ -656,7 +663,7 @@ int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
         case 14: return        MaskBS|MaskHP|MaskWB;
         case 15: return MaskPV|MaskBS|MaskHP|MaskWB;
     }
-    throw "Impossible index passed to function!";
+    throw logic_error("Impossible index passed to function!");
     return 0;
 }
 
@@ -699,7 +706,7 @@ int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
     else if (bitRepr == (MaskPV|MaskBS|MaskHP|MaskWB) )
         return 15;
 
-    throw "Error: Invalid bit representation!";
+    throw logic_error("Invalid bit representation!");
 }
 
 int expansion::genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool has_wb) {

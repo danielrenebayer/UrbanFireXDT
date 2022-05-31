@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <list>
 
 #include "global.h"
@@ -39,19 +40,19 @@ Substation::Substation(int id, string* name)
 	// add to class variables
 	if (!st__substation_list_init) {
 		cerr << "Error: global list of substations has not been initialized" << endl;
-		throw "Global list of substations has not been initialized!";
+		throw runtime_error("Global list of substations has not been initialized!");
 		return;
 	}
 	// Attention: argument id starts with 1, not 0
 	if (id <= 0 || id > st__n_substations) {
 		cerr << "Error when creating a substation: id <= 0 or id > n_substations" << endl;
-		throw "id <= 0 or id > n_substations";
+		throw runtime_error("id <= 0 or id > n_substations");
 		return;
 	}
 	if (id - 1 != st__new_substation_position) {
 		cerr << "Error when creating a substation: id - 1 != st__new_substation_position" << endl;
 		cerr << "A reason might be, that Substation IDs are not ordered sequentially!" << endl;
-		throw "Substation IDs are not ordered sequentially!";
+		throw runtime_error("Substation IDs are not ordered sequentially!");
 		return;
 	}
 	st__substation_list[st__new_substation_position] = this;
@@ -133,19 +134,19 @@ ControlUnit::ControlUnit(int unitID, int substation_id)
 	// add to class variables
 	if (!st__cu_list_init) {
 		cerr << "Error: Global list of control units has not been initialized" << endl;
-		throw "Global list of control units has not been initialized!";
+		throw runtime_error("Global list of control units has not been initialized!");
 		return;
 	}
 	// Attention: argument unitID starts with 1, not 0
 	if (unitID <= 0 || unitID > st__n_CUs) {
 		cerr << "Error when creating a control unit: UnitID <= 0 or UnitID > n_CUs" << endl;
-		throw "UnitID <= 0 or UnitID > n_CUs";
+		throw runtime_error("UnitID <= 0 or UnitID > n_CUs");
 		return;
 	}
 	if (unitID - 1 != st__new_CU_position) {
 		cerr << "Error when creating a control unit: id - 1 != st__new_CU_position" << endl;
 		cerr << "A reason might be, that Control Unit IDs are not ordered sequentially!" << endl;
-		throw "Control Unit IDs are not ordered sequentially!";
+		throw runtime_error("Control Unit IDs are not ordered sequentially!");
 		return;
 	}
 	st__cu_list[st__new_CU_position] = this;
@@ -512,19 +513,19 @@ MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locI
     // add to class variables
     if (!st__mu_list_init) {
         cerr << "Error: global list of measurement units has not been initialized" << endl;
-        throw "Global list of measurement units has not been initialized!";
+        throw runtime_error("Global list of measurement units has not been initialized!");
         return;
     }
     // Attention: argument meloID starts with 1, not 0
     if (meloID <= 0 || meloID > st__n_MUs) {
         cerr << "Error when creating a measurement unit: meloID <= 0 or meloID > n_MUs" << endl;
-        throw "meloID <= 0 or meloID > n_MUs";
+        throw runtime_error("meloID <= 0 or meloID > n_MUs");
         return;
     }
     if (meloID - 1 != st__new_MU_position) {
         cerr << "Error when creating a measurement unit: meloID - 1 != st__new_MU_position" << endl;
         cerr << "A reason might be, that Measurement Unit IDs are not ordered sequentially!" << endl;
-        throw "Measurement Unit IDs are not ordered sequentially!";
+        throw runtime_error("Measurement Unit IDs are not ordered sequentially!");
         return;
     }
     st__mu_list[st__new_MU_position] = this;
