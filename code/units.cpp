@@ -184,6 +184,7 @@ ControlUnit::~ControlUnit() {
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
         delete[] history_pv_generation_kW;
+        delete[] history_avg_consumption_load_kW;
     }
 }
 
