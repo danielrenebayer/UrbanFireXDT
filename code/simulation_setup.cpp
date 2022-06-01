@@ -9,6 +9,7 @@ using namespace expansion;
 #include <iomanip>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <sqlite3.h>
 #include <sstream>
 #include <stdexcept>
@@ -145,7 +146,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         // if yes, load the variables to vary
         bool pvar_scenario_found = false;
         if (Global::is_parameter_variation()) {
-            vector<pair<string,vector<float>*>> parameter_var_list; // this list holds the parsed parameters (string) with values (vector<float>) for the parameter variation
+            vector<pair<string,shared_ptr<vector<float>>>> parameter_var_list; // this list holds the parsed parameters (string) with values (vector<float>) for the parameter variation
             for (auto& scenario_dict_all : tree_root.get_child("Parameter Variation")) {
                 auto scenario_dict = scenario_dict_all.second;
                 // if we have found the correct entry
@@ -163,11 +164,13 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                             cerr << "step < 0 || rEnd <= rStart" << endl;
                             return false;
                         }
-                        vector<float>* linspace = new vector<float>();
+                        shared_ptr<vector<float>> linspace ( new vector<float>() );
                         float cVal = rStart;
                         while (cVal <= rEnd) {
                             linspace->push_back(cVal);
+                            #ifdef DEBUG
                             cout << "Linspace step with value " << cVal << endl;
+                            #endif
                             cVal += step;
                         }
                         // add linspace (with varname) to list of parameter variations
@@ -184,8 +187,9 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             // i.e. we compute the cartesian product
             if (pvar_scenario_found) {
                 global::parameter_var_list = cartesian_product(parameter_var_list);
-                // TODO: delete parameter_var_list vectors ...
             }
+
+            #ifdef DEBUG
             // test only
             for (auto elem : *(global::parameter_var_list)) {
                 for (auto elem1 : elem) {
@@ -200,6 +204,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 cout << endl;
             }
             // test end
+            #endif
         }
 
         //

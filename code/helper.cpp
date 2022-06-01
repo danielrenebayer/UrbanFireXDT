@@ -2,6 +2,7 @@
 #include "helper.h"
 
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,7 +16,7 @@ using namespace std;
  * Only used for nice recursive computation.
  */
 list<list<pair<string,float>>>* cartesian_product_internal(
-        vector<pair<string,vector<float>*>>& input,
+        vector<pair<string,shared_ptr<vector<float>>>>& input,
         size_t start_index)
 {
     // base case
@@ -60,7 +61,7 @@ list<list<pair<string,float>>>* cartesian_product_internal(
    of a vector of vectors.
 */
 list<list<pair<string,float>>>* cartesian_product(
-        vector<pair<string,vector<float>*>>& input)
+        vector<pair<string,shared_ptr<vector<float>>>>& input)
 {
     return cartesian_product_internal(input, 0);
 }

@@ -10,6 +10,7 @@
 #define __HELPER_H_
 
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -22,7 +23,7 @@ using namespace std;
    of a vector of vectors.
 */
 list<list<pair<string,float>>>* cartesian_product(
-        vector<pair<string,vector<float>*>>& input);
+        vector<pair<string,shared_ptr<vector<float>>>>& input);
 
 /*
  * This function compares two struct tm objects directly
