@@ -4,6 +4,15 @@
 # and compare the results with the verified output
 #
 
+# change to the directory where this script is located
+cd $(dirname $0)
+
+dirs_to_compare="S0001 S0002 S0003"
+# 0. delete output dirs if they already exist (e.g. from previous test runs)
+for di in $dirs_to_compare; do
+    rm -rf test-output/$di
+done
+
 # 1. run simulations
 ../code/main-opti -m --config ../test/test-config/test_config.json 1
 ../code/main-opti -m --config ../test/test-config/test_config.json 2
@@ -15,7 +24,6 @@ echo -e "------------------------------\n"
 
 # 2. compare results with verified output
 error_happend=0
-dirs_to_compare="S0001 S0002 S0003"
 for di in $dirs_to_compare; do
     #
     diff -rq test-output/$di test-output-verified/$di
