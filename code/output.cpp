@@ -238,7 +238,7 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion PV kWp,";
     if (cParamVals.exp_pv_kWp_set)      ofs << cParamVals.exp_pv_kWp;      else ofs << Global::get_exp_pv_kWp();
     ofs << "\n";
-    ofs << "expansion BS E in kW,";
+    ofs << "expansion BS E in kWh,";
     if (cParamVals.exp_bs_maxE_kWh_set) ofs << cParamVals.exp_bs_maxE_kWh; else ofs << Global::get_exp_bess_kWh();
     ofs << "\n";
     ofs << "expansion BS P in kW,";

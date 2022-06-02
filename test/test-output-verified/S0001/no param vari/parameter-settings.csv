@@ -1,5 +1,5 @@
 Parameter Name,Value
 expansion PV kWp,0
-expansion BS E in kW,0
+expansion BS E in kWh,0
 expansion BS P in kW,0
 expansion BS initial SOC,0
