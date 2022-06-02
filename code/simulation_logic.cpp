@@ -140,13 +140,13 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
                     cParamVals.exp_pv_kWp = var_name_and_val.second;
                     cParamVals.exp_pv_kWp_set = true;
 
-                } else if (var_name_and_val.first.compare("expansion BS kW")  == 0) {
+                } else if (var_name_and_val.first.compare("expansion BS P in kW")  == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
                         cuList[i]->set_exp_bs_maxP_kW(var_name_and_val.second);
                     cParamVals.exp_bs_maxP_kW = var_name_and_val.second;
                     cParamVals.exp_bs_maxP_kW_set = true;
 
-                } else if (var_name_and_val.first.compare("expansion BS kWh") == 0) {
+                } else if (var_name_and_val.first.compare("expansion BS E in kWh") == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
                         cuList[i]->set_exp_bs_maxE_kWh(var_name_and_val.second);
                     cParamVals.exp_bs_maxE_kWh = var_name_and_val.second;

@@ -111,11 +111,11 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                     } else if ( element_name.compare("expanison PV kWp") == 0 ) {
                         exp_pv_kWp      = scenario_dict.get<float>("expanison PV kWp");
                         exp_pv_kWp_set  = true;
-                    } else if ( element_name.compare("expansion BS kW") == 0 ) {
-                        exp_bs_kW       = scenario_dict.get<float>("expansion BS kW");
+                    } else if ( element_name.compare("expansion BS P in kW") == 0 ) {
+                        exp_bs_kW       = scenario_dict.get<float>("expansion BS P in kW");
                         exp_bs_kW_set   = true;
-                    } else if ( element_name.compare("expansion BS kWh") == 0 ) {
-                        exp_bs_kWh      = scenario_dict.get<float>("expansion BS kWh");
+                    } else if ( element_name.compare("expansion BS E in kWh") == 0 ) {
+                        exp_bs_kWh      = scenario_dict.get<float>("expansion BS E in kWh");
                         exp_bs_kWh_set  = true;
                     } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
                         exp_bs_iSOC     = scenario_dict.get<float>("expansion BS initial SOC");

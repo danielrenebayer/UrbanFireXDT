@@ -235,16 +235,16 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     // If a variable is changed, the boolean indicator variable in the
     // argument cParamVals says so -> in this case one uses this value.
     // Otherwise (if variable is unchanged) use global value.
-    ofs << "Exp. PV kWp,";
+    ofs << "expansion PV kWp,";
     if (cParamVals.exp_pv_kWp_set)      ofs << cParamVals.exp_pv_kWp;      else ofs << Global::get_exp_pv_kWp();
     ofs << "\n";
-    ofs << "Exp. BS E in kWh,";
+    ofs << "expansion BS E in kW,";
     if (cParamVals.exp_bs_maxE_kWh_set) ofs << cParamVals.exp_bs_maxE_kWh; else ofs << Global::get_exp_bess_kWh();
     ofs << "\n";
-    ofs << "Exp. BS P in kW,";
+    ofs << "expansion BS P in kW,";
     if (cParamVals.exp_bs_maxP_kW_set)  ofs << cParamVals.exp_bs_maxP_kW;  else ofs << Global::get_exp_bess_kW();
     ofs << "\n";
-    ofs << "Exp. BS init. SOC,";
+    ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
     //
