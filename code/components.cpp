@@ -42,7 +42,7 @@ ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
 }
 
 void ComponentBS::calculateActions() {
-    float timestep_size_in_h = 1;//main.simulationController.timestepsize_in_h;
+    float timestep_size_in_h = Global::get_time_step_size_in_h();
     float new_charge_kWh;
 
     currentP_kW = 0;

@@ -62,6 +62,7 @@ struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
 int Global::expansion_scenario_id = 0;
+float Global::time_step_size_in_h   = 0.0;
 float Global::exp_pv_kWp            = 0.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
@@ -235,8 +236,18 @@ void Global::set_tsteps_per_hour(int tsteps_per_hour) {
     if (tsteps_per_hour_init) {
         cerr << "Global variable tsteps_per_hour is already initialized!" << endl;
     } else {
+        if (tsteps_per_hour < 0) {
+            cerr << "tsteps_per_hour should be set to a value < 0. This is not allowed." << endl;
+            return;
+        }
         Global::tsteps_per_hour = tsteps_per_hour;
         Global::tsteps_per_hour_init = true;
+        // set set_tsteps_per_hour accordingly
+        Global::time_step_size_in_h = 1.0/tsteps_per_hour;
+        #ifdef DEBUG
+        cout << "tsteps_per_hour = " << tsteps_per_hour << endl;
+        cout << "Global::time_step_size_in_h = " << Global::time_step_size_in_h << endl;
+        #endif
     }
 }
 void Global::set_expansion_scenario_id(int expansion_scenario_id) {

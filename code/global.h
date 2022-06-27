@@ -110,6 +110,7 @@ class Global {
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
         static int get_expansion_scenario_id() { return expansion_scenario_id;    }
+        static float get_time_step_size_in_h() { return time_step_size_in_h; }
         static float get_exp_pv_kWp()          { return exp_pv_kWp;    }
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
@@ -153,6 +154,7 @@ class Global {
         static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
         static int expansion_scenario_id;  ///< ID of the expansion scenario
+        static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
         static float exp_pv_kWp;           ///< kWp of in the simulation added PV installations
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
