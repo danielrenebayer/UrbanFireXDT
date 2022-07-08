@@ -13,10 +13,15 @@ for di in $dirs_to_compare; do
     rm -rf test-output/$di
 done
 
+mem_error_happend=0
 # 1. run simulations
 ../code/main-opti -m --config ../test/test-config/test_config.json 1
 ../code/main-opti -m --config ../test/test-config/test_config.json 2
-../code/main-opti -m --config ../test/test-config/test_config.json 3
+# use valgrind for last run
+valgrind ../code/main-opti -m --config ../test/test-config/test_config.json 3
+if (( $? != 0 )); then
+    mem_error_happend=1
+fi
 
 echo -e "\n------------------------------"
 echo -e "-- Simulation runs finished --"
@@ -37,11 +42,17 @@ done
 
 # 3. output results
 echo -e "\n------------------------------------"
-echo "-- Test result:                   --"
+echo "-- Output test result:            --"
 if (( $error_happend > 0 )); then
     echo -e "--\033[01;31m Failed! Outputs do not match!\033[0m  --"
 else
     echo -e "--\033[01;32m Everything passed!           \033[0m  --"
 fi
+echo -e "------------------------------------"
+echo "-- Memory check resuly:           --"
+if (( $mem_error_happend > 0 )); then
+    echo -e "--\033[01;31m Failed! Memory lekage detected!\033[0m--"
+else
+    echo -e "--\033[01;32m Everything passed!           \033[0m  --"
+fi
 echo -e "------------------------------------\n"
-
