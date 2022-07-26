@@ -500,12 +500,12 @@ int MeasurementUnit::st__n_MUs           = 0;
 int MeasurementUnit::st__new_MU_position = 0;
 MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
 
-MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locID,
+MeasurementUnit::MeasurementUnit(int meUID, int unitID, string * meterPointName, int locID,
                                  bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                                  bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) :
-    meloID(meloID),
+    meUID(meUID),
     higher_level_cu(ControlUnit::GetInstance(unitID)),
-    melo(melo), locationID(locID) {
+    meterPointName(meterPointName), locationID(locID) {
     //
     // initialize instance variables
     current_load_rsm_kW = 0;
@@ -532,14 +532,14 @@ MeasurementUnit::MeasurementUnit(int meloID, int unitID, string * melo, int locI
         throw runtime_error("Global list of measurement units has not been initialized!");
         return;
     }
-    // Attention: argument meloID starts with 1, not 0
-    if (meloID <= 0 || meloID > st__n_MUs) {
-        cerr << "Error when creating a measurement unit: meloID <= 0 or meloID > n_MUs" << endl;
-        throw runtime_error("meloID <= 0 or meloID > n_MUs");
+    // Attention: argument meUID starts with 1, not 0
+    if (meUID <= 0 || meUID > st__n_MUs) {
+        cerr << "Error when creating a measurement unit: meUID <= 0 or meUID > n_MUs" << endl;
+        throw runtime_error("meUID <= 0 or meUID > n_MUs");
         return;
     }
-    if (meloID - 1 != st__new_MU_position) {
-        cerr << "Error when creating a measurement unit: meloID - 1 != st__new_MU_position" << endl;
+    if (meUID - 1 != st__new_MU_position) {
+        cerr << "Error when creating a measurement unit: meUID - 1 != st__new_MU_position" << endl;
         cerr << "A reason might be, that Measurement Unit IDs are not ordered sequentially!" << endl;
         throw runtime_error("Measurement Unit IDs are not ordered sequentially!");
         return;
@@ -560,7 +560,7 @@ MeasurementUnit::~MeasurementUnit() {
     //delete[] data_status_demand;
     //delete[] data_status_feedin;
 
-    delete melo;
+    delete meterPointName;
 
     data_timestepID = NULL;
     data_value_demand = NULL;
@@ -622,12 +622,12 @@ bool MeasurementUnit::load_data(const char * filepath) {
 
 }
 
-inline const std::string * MeasurementUnit::get_melo() const {
-    return melo;
+inline const std::string * MeasurementUnit::get_meterPointName() const {
+    return meterPointName;
 }
 
-inline const int MeasurementUnit::get_meloID() const{
-    return meloID;
+inline const int MeasurementUnit::get_meUID() const{
+    return meUID;
 }
 
 inline const int MeasurementUnit::get_locationID() const {

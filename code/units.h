@@ -159,14 +159,14 @@ class MeasurementUnit {
         components exists in the real unit as well.
     */
     public:
-        static MeasurementUnit* InstantiateNewMeasurementUnit(int meloID, int unitID, std::string * melo, int locID, 
+        static MeasurementUnit* InstantiateNewMeasurementUnit(int meUID, int unitID, std::string * meterPointName, int locID, 
                 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                 bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) {
-                    return new MeasurementUnit(meloID, unitID, melo, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wb, has_chp);
+                    return new MeasurementUnit(meUID, unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wb, has_chp);
                 }
     private:
         // initialization and destruction
-        MeasurementUnit(int meloID, int unitID, std::string * melo, int locID, 
+        MeasurementUnit(int meUID, int unitID, std::string * meterPointName, int locID, 
                         bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                         bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp);
     public:
@@ -182,8 +182,8 @@ class MeasurementUnit {
         bool has_wb()     { return rsm_with_wb;  }
         bool has_chp()    { return rsm_with_chp; }
         int  get_expansion_combination() { return expansion_combination; }
-        inline const std::string * get_melo() const;
-        inline const int get_meloID() const;
+        inline const std::string * get_meterPointName() const;
+        inline const int get_meUID() const;
         inline const int get_locationID() const;
         // for simulation runs
         bool compute_next_value(int ts);
@@ -198,9 +198,9 @@ class MeasurementUnit {
         // 2. Class getter methods
     private:
         // constant member variables (other languages might call this 'final')
-        const int meloID;
+        const int meUID;
         ControlUnit *const higher_level_cu;
-        const std::string *const melo;
+        const std::string *const meterPointName;
         const int locationID;
         // member variables that can change over time
         float current_load_rsm_kW;

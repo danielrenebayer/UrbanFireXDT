@@ -422,8 +422,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	 * This function also creates the measurement units.
 	 * 
 	 * Columns:
-	 * 0        1       2     3           4           5
-	 * MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential
+	 * 0      1       2             3           4           5
+	 * MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential
 	 * 6                  7         8       9        10
 	 * has_pv_open_space, has_bess, has_hp, has_chp, LocID
 	 */
@@ -433,7 +433,7 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	}
 	int current_mu_id = stoi(argv[0]);
 	int conn_to_unitID = stoi(argv[1]);
-	string* melo_str   = new string(argv[2]);
+	string* mPointIDStr= new string(argv[2]);
 	bool has_demand    = argv[3][0] == '1';
 	bool has_feedin    = argv[4][0] == '1';
 	bool has_pv_resid  = argv[5][0] == '1';
@@ -451,7 +451,7 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 
 	try {
         MeasurementUnit* newMU = MeasurementUnit::InstantiateNewMeasurementUnit(
-                                current_mu_id, conn_to_unitID, melo_str, locID,
+                                current_mu_id, conn_to_unitID, mPointIDStr, locID,
 								has_demand, has_feedin, has_pv_resid, has_pv_opens,
 								has_bess,   has_hp,     has_wb,       has_chp);
 		newMU->load_data(data_input_path.str().c_str());
@@ -568,7 +568,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // 3. per measurement unit
         //
         // 1. substations
-        string sql_queryC = "SELECT substation_id, substation_name FROM substation_information ORDER BY substation_id;";
+        string sql_queryC = "SELECT substation_id, substation_name FROM list_of_substations ORDER BY substation_id;";
         char* sqlErrorMsgC;
         int ret_valC = sqlite3_exec(dbcon, sql_queryC.c_str(), load_data_from_central_database_callbackC, NULL, &sqlErrorMsgC);
         if (ret_valC != 0) {
@@ -577,7 +577,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 2. CUs
-        string sql_queryD = "SELECT UnitID, substation_id FROM control_units ORDER BY UnitID;";
+        string sql_queryD = "SELECT UnitID, substation_id FROM list_of_control_units ORDER BY UnitID;";
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {
@@ -586,7 +586,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 3. MUs
-        string sql_queryE = "SELECT MELO_ID, UnitID, MELO, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM melo_information ORDER BY MELO_ID;";
+        string sql_queryE = "SELECT MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM list_of_measurement_units ORDER BY MeUID;";
         char* sqlErrorMsgE;
         int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
         if (ret_valE != 0) {
@@ -965,7 +965,7 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
 	output_exp_mat << "," << endl;
 	output_exp_mat.close();
 	//
-	// B. output information about added components per MELO
+	// B. output information about added components per MeUID
     filesystem::path info_path_B (*(global::current_global_output_dir)); // same argument as 21 lines above
     info_path_B /= "expansion-per-cu.csv";
 	ofstream output_per_cu(info_path_B, std::ofstream::out);
