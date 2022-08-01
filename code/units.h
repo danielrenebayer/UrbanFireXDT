@@ -10,6 +10,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 #include "global.h"
 #include "components.h"
@@ -74,11 +75,11 @@ class ControlUnit {
         (i.e. a private house or a small company)
     */
     public:
-        static ControlUnit* InstantiateNewControlUnit(int unitID, int substation_id) {
-            return new ControlUnit(unitID, substation_id);
+        static ControlUnit* InstantiateNewControlUnit(int unitID, int substation_id, unsigned long locationID) {
+            return new ControlUnit(unitID, substation_id, locationID);
         }
     private:
-        ControlUnit(int unitID, int substation_id);
+        ControlUnit(int unitID, int substation_id, unsigned long locationID);
     public:
         ~ControlUnit();
         void add_unit(MeasurementUnit* unit);
@@ -124,6 +125,7 @@ class ControlUnit {
         // constant member variables (other languages might call this 'final')
         const int unitID;
         Substation *const higher_level_subst;
+        const unsigned long locationID;
         // member variables that can change over time
         std::list<MeasurementUnit*>* connected_units;
         bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added
@@ -148,6 +150,9 @@ class ControlUnit {
         static int st__n_CUs;
         static int st__new_CU_position;
         static ControlUnit** st__cu_list;
+        //
+        // static data for selecting the next time series for expansion
+        static size_t next_hp_idx;
 };
 
 
