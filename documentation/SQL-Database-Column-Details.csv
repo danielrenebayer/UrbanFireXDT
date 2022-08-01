@@ -45,8 +45,8 @@ global_profiles_heatpumps,Value_Demand,REAL,The normalized demand value of the h
 global_profiles_heatpumps,TimeSeriesIndex,INTEGER,"The index of the heat pump time series (important, if there is more than one time series)"
 ,,,
 address_data,LocID,INTEGER,ID of the location (starting with 0)
-address_data,YearlyHPHeatDemand_kWh,REAL,Energy demand in the case a heat pump is used for heating
+address_data,YearlyHPElectricityDemand_kWh,REAL,Yearly electric energy demand in kWh in the case a heat pump is used for heating
 ,,,
 address_roof_data,LocID,INTEGER,ID of the referenced location [Foreign key]
-address_roof_data,Area_in_m2,REAL,Area of the roof in square meter
-address_roof_data,Orientation,TEXT / VARCHAR(2),The orientation of the roof; for every orientation there has to exist a correspoding time series in the tabel 'global_profiles_pv'
+address_roof_data,Area_in_m2,REAL,Area of the roof section in square meter
+address_roof_data,Orientation,TEXT / VARCHAR(2),The orientation of the given roof section; for every orientation there has to exist a correspoding time series in the tabel 'global_profiles_pv'
