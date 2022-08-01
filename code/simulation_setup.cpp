@@ -10,6 +10,7 @@ using namespace expansion;
 #include <iostream>
 #include <list>
 #include <memory>
+#include <numeric>
 #include <sqlite3.h>
 #include <sstream>
 #include <stdexcept>
@@ -330,6 +331,7 @@ int load_data_from_central_database_callbackA(void* data, int argc, char** argv,
 	string comparisonStr2 = "n_substations";
 	string comparisonStr3 = "n_control_units";
 	string comparisonStr4 = "n_measurement_units";
+    string comparisonStr5 = "n_profiles_hp";
 	if (argc != 2) {
 		cerr << "Number of arguments not equal to 2 for one row!" << endl;
 		return 1;
@@ -343,7 +345,9 @@ int load_data_from_central_database_callbackA(void* data, int argc, char** argv,
 		Global::set_n_CUs(          stoi(argv[1]) );
 	} else if (comparisonStr4.compare(argv[0]) == 0) {
 		Global::set_n_MUs(          stoi(argv[1]) );
-	}
+    } else if (comparisonStr5.compare(argv[0]) == 0) {
+        Global::set_n_heatpump_profiles( stoul(argv[1]) );
+    }
 
 	return 0;
 }
@@ -399,15 +403,21 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
      * This is the callback function for geeting information about the control units
      * out of the database.
      * This function also creates the control units.
+     * 
+     * Columns:
+	 * 0       1              2
+	 * UnitID  substation_id  LocID
+     * 
      */
-    if (argc != 2) {
-        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
     }
     int current_cu_id = stoi(argv[0]);
     int conn_to_subst_id = stoi(argv[1]);
+    int location_id      = stoul(argv[2]);
     try {
-        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id);
+        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id);
     } catch (runtime_error& e) {
         cerr << "Error when creating a control unit:" << endl;
         cerr << e.what() << endl;
@@ -462,31 +472,92 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
 	}
 	return 0;
 }
-int load_data_from_central_database_callback_PV(void* data, int argc, char** argv, char** colName) {
+int load_data_from_central_database_callback_PV_info(void* data, int argc, char** argv, char** colName) {
     /*
-     * This is the callback function for geeting the global PV profile.
+     * This is the callback function for geeting information about available
+     * orientations and their counts of the global PV profiles.
      *
      * The first argument (data) holds the reference to the target array, where
      * data should be written into.
      *
      * Columns:
-     * 0           1
-     * TimestepID  Value_Feedin
+     * 0            1
+     * orientation  number_of_ts
      */
-    static int callcounter = 1;
-    int pos = callcounter - 1; // the current position is one behind the callcounter
     if (argc != 2) {
         cerr << "Number of arguments not equal to 2 for one row!" << endl;
         return 1;
     }
 
-    if (stoi(argv[0]) != callcounter) {
+    string orientation  = argv[0];
+    size_t number_of_ts = stoul(argv[1]);
+    global::pv_profiles_information[orientation] = number_of_ts;
+
+    return 0;
+}
+int load_data_from_central_database_callback_PV(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the global PV profiles.
+     *
+     * The first argument (data) holds the reference to the target array, where
+     * data should be written into.
+     *
+     * Columns:
+     * 0           1             2            3
+     * TimestepID  Value_Feedin  Orientation  SameOrientationTimeSeriesIndex
+     */
+    static int callcounter_timestepID = 1; // internal counter for the timestep ID
+    static int callcounter_timeseries = 0; // internal counter for the timeseries
+    static string last_orientation;
+    static int last_same_orientation_ts_index = -1;
+
+    if (argc != 4) {
+        cerr << "Number of arguments not equal to 4 for one row!" << endl;
+        return 1;
+    }
+
+    // parse the current values
+    int current_timestepID = stoi(argv[0]);
+    int current_same_orientation_ts_index = stoi(argv[3]);
+    string current_orientation = argv[2];
+
+    // initialize last_orientation and last_same_orientation_tsIndex
+    // at the beginning of a new time series
+    if (callcounter_timestepID == 1) {
+        last_same_orientation_ts_index = current_same_orientation_ts_index;
+        last_orientation = current_orientation;
+    } else {
+        // else check the values
+        if (last_orientation != current_orientation || last_same_orientation_ts_index != current_same_orientation_ts_index) {
+            cerr << "There is at least one global PV profile where values are missing!" << endl;
+            return 1;
+        }
+    }
+
+    if (current_timestepID != callcounter_timestepID) {
         cerr << "Wrong ordering of the global PV profile values!" << endl;
         return 1;
     }
-    ((float*) data)[pos] = stof(argv[1]);
 
-    callcounter++;
+    int pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
+    ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
+
+    if (callcounter_timestepID < Global::get_n_timesteps()) {
+        callcounter_timestepID++;
+    } else {
+        // time series is loaded completly
+        // 1. reset counters
+        callcounter_timestepID = 1;
+        callcounter_timeseries++;
+        // 2. add this time series to the global list
+            /*
+            This is done automatically
+        auto search_result = global::pv_profiles_per_ori.find(current_orientation);
+        if (search_result == global::pv_profiles_per_ori.end())
+            global::pv_profiles_per_ori[current_orientation] = vector<const float *>();
+            */
+        global::pv_profiles_per_ori[current_orientation].push_back( ((float**) data)[callcounter_timeseries] );
+    }
     return 0;
 }
 int load_data_from_central_database_callback_Wind(void* data, int argc, char** argv, char** colName) {
@@ -514,6 +585,73 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
     ((float*) data)[pos] = stof(argv[1]);
 
     callcounter++;
+    return 0;
+}
+int load_data_from_central_database_callback_HP(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the global heat pump profiles.
+     *
+     * The first argument (data) holds the reference to the target array, where
+     * data should be written into.
+     *
+     * Columns:
+     * 0           1             2
+     * TimestepID  Value_Demand  TimeSeriesIndex
+     */
+    static int callcounter_timestepID = 1; // internal counter for the timestep ID
+    static int callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoi(argv[0]) != callcounter_timestepID) {
+        cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
+        return 1;
+    }
+    if (stoi(argv[2]) != callcounter_timeseries) {
+        cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
+        return 1;
+    }
+    int pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
+    ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
+
+    if (callcounter_timestepID < Global::get_n_timesteps()) {
+        callcounter_timestepID++;
+    } else {
+        callcounter_timestepID = 1;
+        callcounter_timeseries++;
+    }
+    return 0;
+}
+int load_data_from_central_database_callback_address_data_A(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the yearly heat pump electricity demand in kWh per Location ID.
+     *
+     * Columns:
+     * 0      1
+     * LocID  YearlyHPHeatDemand_kWh
+     */
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+    global::yearly_hp_energy_demand_kWh[ stoul(argv[0]) ] = stof(argv[1]);
+    return 0;
+}
+int load_data_from_central_database_callback_address_data_B(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the roof orientations per location.
+     *
+     * Columns:
+     * 0      1           2
+     * LocID  Area_in_m2  Orientation
+     */
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+        return 1;
+    }
+    global::roof_section_orientations[ stoul(argv[0]) ].push_back( pair<float, std::string>(stof(argv[1]), string(argv[2])) );
     return 0;
 }
 bool configld::load_data_from_central_database(const char* filepath) {
@@ -577,7 +715,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 2. CUs
-        string sql_queryD = "SELECT UnitID, substation_id FROM list_of_control_units ORDER BY UnitID;";
+        string sql_queryD = "SELECT UnitID, substation_id, LocID FROM list_of_control_units ORDER BY UnitID;";
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {
@@ -596,18 +734,36 @@ bool configld::load_data_from_central_database(const char* filepath) {
         }
 
         //
-        // Load central solar radation profile
+        // Load central solar radation profiles
         //
-        float* new_pv_array = new float[Global::get_n_timesteps()];
-        string sql_query = "SELECT TimestepID,Value_Feedin FROM GlobalProfilePV;";
+        // 1. Load metadata
+        string sql_query = "SELECT orientation, number_of_ts FROM global_profiles_pv_info;";
         char* sqlErrorMsgF;
-        int ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
+        int ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
-        global::pv_profile = new_pv_array;
+        unsigned long number_of_pv_profiles = accumulate(
+                begin(global::pv_profiles_information),
+                end(global::pv_profiles_information),
+                0,
+                [](const size_t prev, const auto& elem){ return prev + elem.second; });
+        Global::set_n_pv_profiles(number_of_pv_profiles);
+        // 2. Load the concrete profiles
+        float** new_pv_array = new float*[Global::get_n_pv_profiles()];
+        for (size_t pv_idx = 0; pv_idx < Global::get_n_pv_profiles(); pv_idx++) {
+            new_pv_array[pv_idx] = new float[Global::get_n_timesteps()];
+        }
+        sql_query = "SELECT TimestepID,Value_Feedin,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
+        ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::pv_profiles_data = new_pv_array;
         //
         // initialize the global open space pv unit
         global::unit_open_space_pv = new OpenSpacePVOrWind(Global::get_open_space_pv_kWp(), OpenSpacePVOrWindType::PV);
@@ -616,7 +772,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load central wind profile
         //
         float* new_wind_array = new float[Global::get_n_timesteps()];
-        sql_query = "SELECT TimestepID,wind_profile_value FROM GlobalProfileWind;";
+        sql_query = "SELECT TimestepID,wind_profile_value FROM global_profile_wind;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_Wind, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
@@ -629,9 +785,40 @@ bool configld::load_data_from_central_database(const char* filepath) {
         global::unit_open_space_wind = new OpenSpacePVOrWind(Global::get_wind_kWp(), OpenSpacePVOrWindType::Wind);
 
         //
+        // Load central heat pump profiles
+        //
+        float** new_hp_profile_array = new float*[Global::get_n_heatpump_profiles()];
+        for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
+            new_hp_profile_array[hp_idx] = new float[Global::get_n_timesteps()];
+        }
+        sql_query = "SELECT TimestepID,Value_Demand,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::hp_profiles = new_hp_profile_array;
+
+        //
         // Load address data
         //
-        // TODO, but required?
+        // 1. yearly heat demand for heat pumps
+        sql_query = "SELECT LocID, YearlyHPElectricityDemand_kWh FROM address_data ORDER BY LocID;";
+        ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        // 2. get information about roof sections
+        sql_query = "SELECT LocID, Area_in_m2, Orientation FROM address_roof_data ORDER BY LocID;";
+        ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_B, NULL, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
 
         sqlite3_close(dbcon);
         return true;
