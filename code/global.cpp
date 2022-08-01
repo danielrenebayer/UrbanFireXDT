@@ -12,7 +12,8 @@ using namespace std;
 
 bool global::all_variables_initialized() {
     if (time_info_init &&
-        pv_profile   != NULL &&
+        pv_profiles_data != NULL &&
+        hp_profiles  != NULL &&
         wind_profile != NULL &&
         unit_open_space_pv   != NULL &&
         unit_open_space_wind != NULL)
@@ -29,6 +30,15 @@ void global::vacuum() {
         delete t;
     }
 
+    // delete heatpump profiles
+    for (size_t hpIdx = 0; hpIdx < Global::get_n_heatpump_profiles(); hpIdx++)
+        delete[] hp_profiles[hpIdx];
+    delete[] hp_profiles; hp_profiles = NULL;
+    // delete pv profiles
+    for (size_t pvIdx = 0; pvIdx < Global::get_n_pv_profiles(); pvIdx++)
+        delete[] pv_profiles_data[pvIdx];
+    delete[] pv_profiles_data; pv_profiles_data = NULL;
+
     delete[] time_timestep_id;       time_timestep_id       = NULL;
     delete   time_localtime_str;     time_localtime_str     = NULL;
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
@@ -38,7 +48,6 @@ void global::vacuum() {
     delete   current_output_dir;     current_output_dir   = NULL;
     delete   current_output_dir_prefix;current_output_dir_prefix   = NULL;
     delete   current_global_output_dir;current_global_output_dir   = NULL;
-    delete[] pv_profile;   pv_profile   = NULL;
     delete[] wind_profile; wind_profile = NULL;
 }
 
@@ -55,6 +64,8 @@ int Global::n_timesteps           = 0;
 int Global::n_substations         = 0;
 int Global::n_CUs                 = 0;
 int Global::n_MUs                 = 0;
+unsigned long Global::n_pv_ts     = 0;
+unsigned long Global::n_hp_ts     = 0;
 bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
@@ -77,6 +88,8 @@ bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
 bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
+bool Global::n_pv_ts_init          = false;
+bool Global::n_hp_ts_init          = false;
 bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
 bool Global::ts_start_str_init     = false;
@@ -107,6 +120,8 @@ bool Global::AllVariablesInitialized() {
         n_substations_init &&
         n_CUs_init &&
         n_MUs_init &&
+        n_pv_ts_init &&
+        n_hp_ts_init &&
         comp_eval_metrics_init &&
         pvar_set &&
         ts_start_str_init &&
@@ -189,6 +204,22 @@ void Global::set_n_CUs(int n_CUs) {
     } else {
         Global::n_CUs = n_CUs;
         Global::n_CUs_init = true;
+    }
+}
+void Global::set_n_pv_profiles(unsigned long n_pv_ts) {
+    if (n_pv_ts_init) {
+        cerr << "Global variable n_pv_profiles is already initialized!" << endl;
+    } else {
+        Global::n_pv_ts = n_hp_ts;
+        Global::n_pv_ts_init = true;
+    }
+}
+void Global::set_n_heatpump_profiles(unsigned long n_hp_ts) {
+    if (n_hp_ts_init) {
+        cerr << "Global variable n_heatpump_profiles is already initialized!" << endl;
+    } else {
+        Global::n_hp_ts = n_hp_ts;
+        Global::n_hp_ts_init = true;
     }
 }
 void Global::set_n_MUs(int n_MUs) {

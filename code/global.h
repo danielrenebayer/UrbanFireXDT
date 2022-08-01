@@ -11,6 +11,7 @@
 
 #include <ctime>
 #include <list>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,11 +37,16 @@ namespace global {
     inline int* time_timestep_id = NULL; ///< Reference to the list of time steps
     inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
-    inline const float* pv_profile   = NULL; ///< Reference to the list of the global PV profile values
+    inline std::map<std::string, size_t> pv_profiles_information; ///< Map (orientation, number of time series) where the number of pv-profiles per orientation are given
+    inline std::map<std::string, vector<const float*>> pv_profiles_per_ori; ///< Map (orientation, vector of references to the time series) where the available time series per orientation are given - same ordering as in data
+    inline const float* const* pv_profiles_data = NULL; ///< Reference to the list of global PV profiles (Two dimensional array with [n_pv_profiles, n_timesteps])
+    inline const float* const* hp_profiles = NULL; ///< Reference to the list of global heat pump profiles (Two dimensional array with [n_heatpump_profiles, n_timesteps])
     inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
     inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit
     inline OpenSpacePVOrWind* unit_open_space_wind = NULL; ///< Reference to the global open space wind unit
     inline unsigned long n_ts_between_flushs = 1000; ///< Number of timesteps between the flush of the output buffers
+    inline std::map<unsigned long, float> yearly_hp_energy_demand_kWh; ///< Map storing the yearly energy demand for the heat pump in kWh (electric) [per location id]
+    inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
 
     inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 
@@ -103,6 +109,8 @@ class Global {
         static int get_n_substations() {  return n_substations; }
         static int get_n_CUs()         {  return n_CUs; }
         static int get_n_MUs()         {  return n_MUs; }
+        static unsigned long get_n_pv_profiles()        { return n_pv_ts; }
+        static unsigned long get_n_heatpump_profiles()  { return n_hp_ts; }
         static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
         static bool is_parameter_variation()   { return pvar_selected;  }
         static int  get_parameter_varID()      { return pvar_id;        }
@@ -125,6 +133,8 @@ class Global {
         static void set_n_substations(int n_substations);
         static void set_n_CUs(int n_CUs);
         static void set_n_MUs(int n_MUs);
+        static void set_n_pv_profiles(unsigned long n_pv_ts);
+        static void set_n_heatpump_profiles(unsigned long n_hp_ts);
         static void set_comp_eval_metrics(bool value);
         static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_ts_start_tm(struct tm* ts_start_tm);
@@ -147,6 +157,8 @@ class Global {
         static int n_substations;          ///< Total number of substations for which data is available
         static int n_CUs;                  ///< Total number of control units for which data is available
         static int n_MUs;                  ///< Total number of meausrement units for which data is available
+        static unsigned long n_pv_ts;      ///< Total number of available normalized pv feedin time series that can be used for simulating new pv installations
+        static unsigned long n_hp_ts;      ///< Total number of available normalized heat pump time series that can be used for simulating new heat pumps
         static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
         static bool pvar_selected;         ///< True, if a parameter variation is selected
         static int  pvar_id;               ///< ID of the parameter variation
@@ -170,6 +182,8 @@ class Global {
         static bool n_substations_init;
         static bool n_CUs_init;
         static bool n_MUs_init;
+        static bool n_pv_ts_init;
+        static bool n_hp_ts_init;
         static bool comp_eval_metrics_init;
         static bool pvar_set;
         static bool ts_start_str_init;
