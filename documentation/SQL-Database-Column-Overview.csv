@@ -2,9 +2,13 @@ Required Tables in the Data Input Folder,
 ,
 Table Name,Description
 time_indices,List of time indices
-general_data_information,"General information about the data in a key-value-structure, it requires the following keys (i.e. number of elements in the data): n_timesteps, n_substations, n_control_units, n_measurement_units"
+general_data_information,"General information about the data in a key-value-structure, it requires the following keys (i.e. number of elements in the data): n_timesteps, n_substations, n_control_units, n_measurement_units, n_profiles_hp"
 list_of_substations,List of substations
 list_of_control_units,List of control units
 list_of_measurement_units,List of measurement units
-GlobalProfilePV ,Global PV feedin (normalized)
-GlobalProfileWind ,Global wind farm feedin (normalized)
+global_profiles_pv,Global PV feedin (normalized)
+global_profiles_pv_info,Information about how many global PV feedin time series exist per orientation
+global_profile_wind,Global wind farm feedin (normalized)
+global_profiles_heatpumps,Global heap pump demand profiles (normalized)
+address_data,List of all known addresses with yearly energy demand in case of heat pump heating
+address_roof_data,List of all roof subareas of all buildings (with orientation and size)
