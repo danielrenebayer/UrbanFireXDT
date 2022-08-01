@@ -1,18 +1,90 @@
 
 #include "components.h"
 
+#include <numeric>
+#include <string>
+
+// ----------------------------- //
+//      Implementation of        //
+//        RoofSectionPV          //
+// ----------------------------- //
+
+RoofSectionPV::RoofSectionPV(float kWp_total_location, float share_of_total_area, std::string orientation, size_t profile_index)
+    : share_of_total_area(share_of_total_area), kWp_total_location(kWp_total_location)
+{
+    this_section_kWp = kWp_total_location * share_of_total_area;
+    // select the correct profile
+    profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
+}
+
+float RoofSectionPV::get_currentFeedin_kW(int ts) {
+    int tsID = ts - 1;
+    return this_section_kWp * profile_data[tsID];
+}
+
+void RoofSectionPV::set_kWp(float kWp_total_location) {
+    this->kWp_total_location = kWp_total_location;
+    this_section_kWp = kWp_total_location * share_of_total_area;
+}
+
+
+
+
 // ----------------------------- //
 //      Implementation of        //
 //         ComponentPV           //
 // ----------------------------- //
 
-ComponentPV::ComponentPV(float kWp) : kWp(kWp) {
+std::map<std::string, size_t> ComponentPV::next_pv_idx;
+
+ComponentPV::ComponentPV(float kWp, unsigned long locationID)
+    : kWp(kWp)
+{
     currentGeneration_kW = 0;
+    // attach roof sections as defined in data
+    auto& roof_section_vec = global::roof_section_orientations[locationID];
+    //unsigned long number_of_sections = roof_section_vec.size();
+    float complete_roof_area = accumulate(
+                begin(roof_section_vec),
+                end(roof_section_vec),
+                0,
+                [](const size_t prev, const auto& elem){ return prev + elem.first; });;
+    // iterate over all roof sections
+    // and get all orientations and areas per roof section
+    for (auto& section_tuple : roof_section_vec) {
+        float  section_roof_area   = section_tuple.first;
+        std::string section_orientation = section_tuple.second;
+        // 1)
+        // take the correct profile
+        size_t pv_profile_idx = 0;
+        // TODO: select randomly as an alternative
+        if (next_pv_idx.contains(section_orientation)) {
+            size_t& next_pv_idx_so = next_pv_idx[section_orientation];
+            pv_profile_idx = next_pv_idx_so;
+            next_pv_idx_so++; // increment next index by one until end is reached
+            if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
+                next_pv_idx_so = 0;
+        }
+        // 2)
+        // compute the share of this section among all existing sections
+        float share_of_total_area = section_roof_area / complete_roof_area;
+        // 3)
+        // create and add section to list
+        roof_sections.emplace_back(kWp, share_of_total_area, section_orientation, pv_profile_idx);
+    }
 }
 
 void ComponentPV::calculateCurrentFeedin(int ts) {
-    int tsID = ts - 1;
-    currentGeneration_kW = kWp * global::pv_profile[tsID];
+    currentGeneration_kW = 0.0;
+    for (RoofSectionPV& section : roof_sections)
+        currentGeneration_kW += section.get_currentFeedin_kW(ts);
+}
+
+void ComponentPV::set_kWp(float value) {
+    this->kWp = value;
+    // ajust on all attachted components
+    for (RoofSectionPV& section : roof_sections)
+        section.set_kWp(value);
 }
 
 
@@ -85,3 +157,26 @@ void ComponentBS::resetInternalState() {
     currentE_kWh = maxE_kWh * initial_SoC;
 }
 
+
+
+
+
+// ----------------------------- //
+//      Implementation of        //
+//         ComponentHP           //
+// ----------------------------- //
+
+ComponentHP::ComponentHP(size_t profile_index, float yearly_econs_kWh)
+    : yearly_electricity_consumption_kWh(yearly_econs_kWh),
+      scaling_factor(yearly_econs_kWh/1000.0)
+{
+    // reference the profile
+    profile_data = global::hp_profiles[profile_index];
+    // further initialization
+    currentDemand_kW = 0;
+}
+
+void ComponentHP::calculateCurrentFeedin(int ts) {
+    int tsID = ts - 1;
+    currentDemand_kW = profile_data[tsID] * scaling_factor;
+}

@@ -10,21 +10,42 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include <string>
+#include <vector>
+
+class RoofSectionPV {
+    public:
+        RoofSectionPV(float kWp_total_location, float share_of_total_area, std::string orientation, size_t profile_index);
+        float get_currentFeedin_kW(int ts);
+        void  set_kWp(float kWp_total_location);
+    private:
+        // constant member variables
+        const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
+        const float  share_of_total_area; ///< The ratio of the current section on the complete roof area for the given location
+        // semi-constant member variables, i.e. they might change for parameter variations
+        float this_section_kWp;
+        float kWp_total_location;
+};
+
 class ComponentPV {
     public:
-        ComponentPV(float kWp);
+        ComponentPV(float kWp, unsigned long locationID);
         // getter methods
         float get_kWp() const            { return kWp; }
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         // update / action methods
         void  calculateCurrentFeedin(int ts);
-        void  set_kWp(float value)       { kWp = value; }
+        void  set_kWp(float value);
     private:
+        // constant members
+        std::vector<RoofSectionPV> roof_sections;
         // semi-constant member variables, i.e. they might change for parameter variations
         float kWp;
         // member variables that can change over time
         float currentGeneration_kW;
-        // TODO: Ausrichtung beachten -> dann current Feedin ueber globalstrahlung und sonnenstand ausrechnen
+        //
+        // static data for selecting the next time series for expansion
+        static std::map<std::string, size_t> next_pv_idx; ///< Next index per orientation (given as string)
 };
 
 class ComponentBS {
@@ -60,6 +81,19 @@ class ComponentBS {
 
 class ComponentHP {
     // TODO: Implement Heat Pump
+    public:
+        ComponentHP(size_t profile_index, float yearly_econs_kWh);
+        // getter methods
+        float get_currentDemand_kW() { return currentDemand_kW; }
+        // update / action methods
+        void calculateCurrentFeedin(int ts);
+    private:
+        // constant member variables
+        const float yearly_electricity_consumption_kWh;
+        const float scaling_factor; ///< Factor to scale the profile to fit the yearly_electricity_consumption_kWh
+        const float* profile_data; ///< Reference to the profile, should be one of global::hp_profiles
+        // member variables that can change over time
+        float currentDemand_kW;
 };
 
 class ComponentWB {
