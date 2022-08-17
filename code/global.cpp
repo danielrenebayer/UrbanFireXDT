@@ -206,11 +206,11 @@ void Global::set_n_CUs(int n_CUs) {
         Global::n_CUs_init = true;
     }
 }
-void Global::set_n_pv_profiles(unsigned long n_pv_ts) {
+void Global::set_n_pv_profiles(unsigned long value) {
     if (n_pv_ts_init) {
         cerr << "Global variable n_pv_profiles is already initialized!" << endl;
     } else {
-        Global::n_pv_ts = n_hp_ts;
+        Global::n_pv_ts = value;
         Global::n_pv_ts_init = true;
     }
 }
