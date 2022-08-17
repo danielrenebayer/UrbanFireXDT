@@ -66,7 +66,8 @@ class CUOutput {
                 int cuID,            int ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs) = 0;
+                float bs_SOC,        float load_bs,
+                float load_hp,       float load_wb) = 0;
         virtual void flush_buffer() = 0;
         void close_buffer();
     protected:
@@ -90,7 +91,8 @@ class CUOutputSingleFile : public CUOutput {
                 int cuID,            int ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs);
+                float bs_SOC,        float load_bs,
+                float load_hp,       float load_wb);
         void flush_buffer();
     private:
         mutex  single_file_mutex; ///< If a single file is selected as CU output, this variable holds the mutex to ensure correct concurrency behavior
@@ -110,7 +112,8 @@ class CUOutputOneFilePerCU : public CUOutput {
                 int cuID,            int ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs);
+                float bs_SOC,        float load_bs,
+                float load_hp,       float load_wb);
         void flush_buffer();
 };
 
@@ -128,7 +131,8 @@ class CUOutputOneFilePerSubstation : public CUOutput {
                 int cuID,            int ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs);
+                float bs_SOC,        float load_bs,
+                float load_hp,       float load_wb);
         void flush_buffer();
 };
 

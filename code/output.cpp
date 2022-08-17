@@ -330,7 +330,7 @@ CUOutputOneFilePerCU::CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath) 
     filepath_i /= dirpath;
     filepath_i /= filename_i.str();
     output_stream = new ofstream(filepath_i, std::ofstream::out);
-    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW\n";
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,WB_load_kW\n";
     buffer_open = true;
 }
 
@@ -341,33 +341,36 @@ CUOutputOneFilePerSubstation::CUOutputOneFilePerSubstation(const string* substNa
     filepath_i /= dirpath;
     filepath_i /= filename_i.str();
     output_stream = new ofstream(filepath_i, std::ofstream::out);
-    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW\n";
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,WB_load_kW\n";
     buffer_open = true;
 }
 
 void CUOutputSingleFile::output_for_one_cu(
         int   cuID,     int   ts,            float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs)
+        float bs_SOC,   float load_bs,       float load_hp,
+        float load_wb)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
         int   cuID,     int   ts,            float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs)
+        float bs_SOC,   float load_bs,       float load_hp,
+        float load_wb)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
         int   cuID,     int   ts,            float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs)
+        float bs_SOC,   float load_bs,       float load_hp,
+        float load_wb)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
 }
 
 void CUOutputSingleFile::flush_buffer() {

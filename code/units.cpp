@@ -486,7 +486,8 @@ bool ControlUnit::compute_next_value(int ts) {
             current_load_vSM_kW,
             current_load_all_rSMs_kW,
             self_produced_load_kW,
-            load_pv, bs_SOC, load_bs);
+            load_pv, bs_SOC, load_bs,
+            load_hp, load_wb);
 
     return true;
 }
