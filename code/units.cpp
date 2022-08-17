@@ -388,7 +388,10 @@ bool ControlUnit::compute_next_value(int ts) {
     //
 
     float current_load_all_rSMs_kW = 0.0;
+    float total_consumption = 0.0;
     float load_pv = 0.0;
+    float load_hp = 0.0;
+    float load_wb = 0.0;
     float load_bs = 0.0;
     float bs_SOC  = 0.0;
 
@@ -400,7 +403,8 @@ bool ControlUnit::compute_next_value(int ts) {
         current_load_all_rSMs_kW += mu->get_current_ts_rsm_value();
     }
     current_load_vSM_kW = current_load_all_rSMs_kW;
-    float load_bevore_local_pv_bess = current_load_vSM_kW;
+    total_consumption   = current_load_all_rSMs_kW;
+    // // //float load_bevore_local_pv_bess = current_load_vSM_kW;
     //
     // 2. get PV feedin
     if (has_sim_pv) {
@@ -409,7 +413,19 @@ bool ControlUnit::compute_next_value(int ts) {
         current_load_vSM_kW -= load_pv;
     }
     //
-    // 3. send situation to battery storage and get its resulting action
+    // 3. get the demand of the heat pump
+    if (has_sim_hp) {
+        sim_comp_hp->calculateCurrentFeedin(ts);
+        load_hp = sim_comp_hp->get_currentDemand_kW();
+        current_load_vSM_kW += load_hp;
+        total_consumption   += load_hp;
+    }
+    //
+    // 4. get the effect of the e-car / wallbox
+    // TODO
+    // if load_wb > 0: total_consumption += load_wb; // ... only problem: wallbox feeds in energy taken from somewhere else
+    //
+    // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
         sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
         sim_comp_bs->calculateActions();
@@ -418,23 +434,39 @@ bool ControlUnit::compute_next_value(int ts) {
 
         bs_SOC = sim_comp_bs->get_SOC();
     }
-    // TODO: implement 4 and 5: sector coupling
-    // 4. the effect of the heat pump
-    // 5. the effect of the car
 
     //
     // compute self-produced load, that is directly consumed
     self_produced_load_kW = 0;
-    if (load_bevore_local_pv_bess > 0) {
-        if (current_load_vSM_kW > 0) {
+    if (load_pv > 0) {
+        if (current_load_vSM_kW >= 0) {
             // less local production than than consumption -> additional supply from the grid
-            self_produced_load_kW = load_bevore_local_pv_bess - current_load_vSM_kW;
-            // only check
-            if (self_produced_load_kW < 0)
-                cerr << "Error: load_self_produced < 0!" << endl;
+            // complete PV feed-in is consumed locally
+            self_produced_load_kW = load_pv;
         } else {
-            // more (or equal) local production than consumption -> additional feedin (or nothing)
-            self_produced_load_kW = load_bevore_local_pv_bess;
+            // current_load_vSM_kW < 0
+            // more (or equal) local production than consumption, or feedin caused by battery or wallbox
+            if (load_bs >= 0 && load_wb >= 0) {
+                // 1. case (most of the time)
+                // battery and wall box do nothing or show an energy demand
+                self_produced_load_kW = current_load_all_rSMs_kW + load_hp + load_bs + load_wb;
+            } else {
+                // 2. case
+                // battery or wallbox feed in (whatever the reason for this might be)
+                //
+                // now, A. compute balance of all components that show an energy demand
+                float selected_balance = 0.0;
+                if      (load_bs <  0 && load_wb >= 0) { selected_balance = current_load_all_rSMs_kW + load_hp + load_wb; }
+                else if (load_bs >= 0 && load_wb <  0) { selected_balance = current_load_all_rSMs_kW + load_hp + load_bs; }
+                else if (load_bs <  0 && load_wb <  0) { selected_balance = current_load_all_rSMs_kW + load_hp;           }
+                //
+                // B. check, if this balance is higher than PV production or not
+                if (selected_balance >= load_pv) {
+                    self_produced_load_kW = load_pv;
+                } else {
+                    self_produced_load_kW = selected_balance;
+                }
+            }
         }
     }
 
@@ -443,7 +475,7 @@ bool ControlUnit::compute_next_value(int ts) {
     if (create_history_output) {
         history_self_prod_load_kW[ts - 1]     = self_produced_load_kW;
         history_pv_generation_kW[ ts - 1]     = load_pv;
-        history_avg_consumption_load_kW[ts-1] = current_load_all_rSMs_kW;
+        history_avg_consumption_load_kW[ts-1] = total_consumption;
     }
 
     //
