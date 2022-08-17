@@ -15,6 +15,7 @@ list_of_substations,substation_name,TEXT,Name of the substation
 ,,,
 list_of_control_units,UnitID,INTEGER,"ID of the control unit, must start with 1 and must be numbered consecutively"
 list_of_control_units,substation_id,INTEGER,ID of the substation to which this control unit is connected to [Foreign key]
+list_of_control_units,LocID,INTEGER,ID of the location where the control unit is located at [Foreign key] 
 list_of_control_units,has_wbx,INTEGER,"Holds the value 1, iff there is a wallbox connected to this control unit"
 ,,,
 list_of_measurement_units,MeUID,INTEGER,"ID of the measurement unit, must start with 1 and must be numbered consecutively"
@@ -35,7 +36,7 @@ global_profiles_pv,Orientation,TEXT / VARCHAR(2),The orientation of the given fe
 global_profiles_pv,SameOrientationTimeSeriesIndex,INTEGER,"If there are more time series for one orientation, this number gives the id (starting with 0) of the time series with the same direction"
 ,,,
 global_profiles_pv_info,orientation,TEXT / VARCHAR(2),The orientation
-global_profiles_pv_info,numer_of_ts,INTEGER,Number of time series for the given orientation
+global_profiles_pv_info,number_of_ts,INTEGER,Number of time series for the given orientation
 ,,,
 global_profile_wind,TimestepID,INTEGER,The time step for which the dataset is valid [Foreign key]
 global_profile_wind,wind_profile_value ,REAL,The normalized feed-in value at the given timestep
