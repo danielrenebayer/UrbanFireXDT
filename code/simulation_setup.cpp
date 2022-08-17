@@ -507,9 +507,16 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
      * TimestepID  Value_Feedin  Orientation  SameOrientationTimeSeriesIndex
      */
     static int callcounter_timestepID = 1; // internal counter for the timestep ID
-    static int callcounter_timeseries = 0; // internal counter for the timeseries
+    static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries
     static string last_orientation;
     static int last_same_orientation_ts_index = -1;
+
+    // check callcounter
+    if (callcounter_timeseries >= Global::get_n_pv_profiles()) {
+        cerr << "Error in time series table for PV profiles.\n";
+        cerr << "It is said that there are " << Global::get_n_pv_profiles() << " PV profiles, but therer are more available in the table." << endl;
+        return 1;
+    }
 
     if (argc != 4) {
         cerr << "Number of arguments not equal to 4 for one row!" << endl;
@@ -517,9 +524,18 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
     }
 
     // parse the current values
-    int current_timestepID = stoi(argv[0]);
-    int current_same_orientation_ts_index = stoi(argv[3]);
-    string current_orientation = argv[2];
+    int current_timestepID;
+    int current_same_orientation_ts_index;
+    string current_orientation;
+    try {
+        current_timestepID = stoi(argv[0]);
+        current_same_orientation_ts_index = stoi(argv[3]);
+        current_orientation = argv[2];
+    } catch (const exception& ex) {
+        cerr << "An error occured during the reading of the PV profiles:" << endl;
+        cerr << ex.what() << endl;
+        return 1;
+    }
 
     // initialize last_orientation and last_same_orientation_tsIndex
     // at the beginning of a new time series
@@ -546,10 +562,7 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
         callcounter_timestepID++;
     } else {
         // time series is loaded completly
-        // 1. reset counters
-        callcounter_timestepID = 1;
-        callcounter_timeseries++;
-        // 2. add this time series to the global list
+        // 1. add this time series to the global list
             /*
             This is done automatically
         auto search_result = global::pv_profiles_per_ori.find(current_orientation);
@@ -557,6 +570,9 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
             global::pv_profiles_per_ori[current_orientation] = vector<const float *>();
             */
         global::pv_profiles_per_ori[current_orientation].push_back( ((float**) data)[callcounter_timeseries] );
+        // 2. reset counters
+        callcounter_timestepID = 1;
+        callcounter_timeseries++;
     }
     return 0;
 }
@@ -599,7 +615,15 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
      * TimestepID  Value_Demand  TimeSeriesIndex
      */
     static int callcounter_timestepID = 1; // internal counter for the timestep ID
-    static int callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
+    static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
+
+    // check callcounter
+    if (callcounter_timeseries >= Global::get_n_heatpump_profiles()) {
+        cerr << "Error in data for heat pumps.\n";
+        cerr << "It is said that there are " << Global::get_n_heatpump_profiles() << " heat pump profiles, but therer are more available in the table." << endl;
+        return 1;
+    }
+
     if (argc != 3) {
         cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
@@ -609,7 +633,7 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
         return 1;
     }
-    if (stoi(argv[2]) != callcounter_timeseries) {
+    if (stoul(argv[2]) != callcounter_timeseries) {
         cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
         return 1;
     }
@@ -668,7 +692,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgA;
         int ret_valA = sqlite3_exec(dbcon, sql_queryA.c_str(), load_data_from_central_database_callbackA, NULL, &sqlErrorMsgA);
         if (ret_valA != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgA;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgA << endl;
             sqlite3_free(sqlErrorMsgA);
             return false;
         }
@@ -686,7 +710,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgB;
         int ret_valB = sqlite3_exec(dbcon, sql_queryB.c_str(), load_data_from_central_database_callbackB, NULL, &sqlErrorMsgB);
         if (ret_valB != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgB;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgB << endl;
             sqlite3_free(sqlErrorMsgB);
             return false;
         }
@@ -710,7 +734,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgC;
         int ret_valC = sqlite3_exec(dbcon, sql_queryC.c_str(), load_data_from_central_database_callbackC, NULL, &sqlErrorMsgC);
         if (ret_valC != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgC;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgC << endl;
             sqlite3_free(sqlErrorMsgC);
             return false;
         }
@@ -719,7 +743,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgD;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgD << endl;
             sqlite3_free(sqlErrorMsgD);
             return false;
         }
@@ -728,7 +752,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgE;
         int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
         if (ret_valE != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE << endl;
             sqlite3_free(sqlErrorMsgE);
             return false;
         }
@@ -739,9 +763,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // 1. Load metadata
         string sql_query = "SELECT orientation, number_of_ts FROM global_profiles_pv_info;";
         char* sqlErrorMsgF;
-        int ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, NULL, &sqlErrorMsgF);
+        int ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV_info, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -759,7 +783,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT TimestepID,Value_Feedin,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -775,7 +799,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT TimestepID,wind_profile_value FROM global_profile_wind;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_Wind, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -792,9 +816,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
             new_hp_profile_array[hp_idx] = new float[Global::get_n_timesteps()];
         }
         sql_query = "SELECT TimestepID,Value_Demand,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
-        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -807,7 +831,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT LocID, YearlyHPElectricityDemand_kWh FROM address_data ORDER BY LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -815,7 +839,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT LocID, Area_in_m2, Orientation FROM address_roof_data ORDER BY LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_B, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF;
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
