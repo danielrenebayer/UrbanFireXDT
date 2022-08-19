@@ -1,6 +1,7 @@
 
 #include "components.h"
 
+#include <iostream>
 #include <numeric>
 #include <string>
 
@@ -14,6 +15,10 @@ RoofSectionPV::RoofSectionPV(float kWp_total_location, float share_of_total_area
 {
     this_section_kWp = kWp_total_location * share_of_total_area;
     // select the correct profile
+    if (global::pv_profiles_per_ori[orientation].size() <= 0) {
+        std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << std::endl;
+        throw runtime_error("There is no feed-in profile given for a selected orientation!");
+    }
     profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
 }
 

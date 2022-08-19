@@ -713,10 +713,15 @@ void MeasurementUnit::VacuumInstancesAndStaticVariables() {
 OpenSpacePVOrWind::OpenSpacePVOrWind(float kWp, OpenSpacePVOrWindType type)
 : kWp(kWp) {
     // select the correct profile array
-    if (type == OpenSpacePVOrWindType::PV)
+    if (type == OpenSpacePVOrWindType::PV) {
+        if (global::pv_profiles_per_ori["S"].size() <= 0) {
+            cerr << "Error: There is no south feed-in profile given!" << endl;
+            throw runtime_error("There is no south feed-in profile given!");
+        }
         profile_data = global::pv_profiles_per_ori["S"][0];
-    else
+    } else {
         profile_data = global::wind_profile;
+    }
 }
 
 bool OpenSpacePVOrWind::compute_next_value(int ts) {
