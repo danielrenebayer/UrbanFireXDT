@@ -74,7 +74,11 @@ struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
 int Global::expansion_scenario_id = 0;
 float Global::time_step_size_in_h   = 0.0;
-float Global::exp_pv_kWp            = 0.0;
+bool  Global::exp_pv_kWp_static_mode  = false;
+float Global::exp_pv_kWp_static       = 0.0;
+float Global::exp_pv_kWp_per_m2       = 0.0;
+float Global::exp_pv_min_kWp_roof_sec = 0.0;
+float Global::exp_pv_max_kWp_per_sec  = 0.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_start_soc    = 0.0;
@@ -96,7 +100,11 @@ bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
 bool Global::tsteps_per_hour_init  = false;
 bool Global::expansion_scenario_id_init = false;
-bool Global::exp_pv_kWp_init       = false;
+bool Global::exp_pv_kWp_static_mode_init  = false;
+bool Global::exp_pv_kWp_static_init       = false;
+bool Global::exp_pv_kWp_per_m2_init       = false;
+bool Global::exp_pv_min_kWp_roof_sec_init = false;
+bool Global::exp_pv_max_kWp_per_sec_init  = false;
 bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_start_soc_init    = false;
@@ -128,7 +136,7 @@ bool Global::AllVariablesInitialized() {
         ts_end_str_init &&
         tsteps_per_hour_init &&
         expansion_scenario_id_init &&
-        exp_pv_kWp_init &&
+        exp_pv_kWp_static_mode_init &&
         exp_bess_kW_init &&
         exp_bess_kWh_init &&
         exp_bess_start_soc_init &&
@@ -136,7 +144,13 @@ bool Global::AllVariablesInitialized() {
         output_path_init &&
         output_mode_per_cu_init)
     {
-        return true;
+        if ( ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
+             (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
+                                      && exp_pv_min_kWp_roof_sec_init
+                                      && exp_pv_max_kWp_per_sec_init) )
+            return true;
+        else
+            return false;
     } else {
         return false;
     }
@@ -289,12 +303,44 @@ void Global::set_expansion_scenario_id(int expansion_scenario_id) {
         Global::expansion_scenario_id_init = true;
     }
 }
-void Global::set_exp_pv_kWp(float exp_pv_kWp) {
-    if (exp_pv_kWp_init) {
-        cerr << "Global variable exp_pv_kWp is already initialized!" << endl;
+void Global::set_exp_pv_mode(bool mode) {
+    if (exp_pv_kWp_static_mode_init) {
+        cerr << "Global variable exp_pv_kWp_static_mode is already initialized!" << endl;
     } else {
-        Global::exp_pv_kWp = exp_pv_kWp;
-        Global::exp_pv_kWp_init = true;
+        Global::exp_pv_kWp_static_mode      = mode;
+        Global::exp_pv_kWp_static_mode_init = true;
+    }
+}
+void Global::set_exp_pv_kWp_static(float value) {
+    if (exp_pv_kWp_static_init) {
+        cerr << "Global variable exp_pv_kWp_static is already initialized!" << endl;
+    } else {
+        Global::exp_pv_kWp_static      = value;
+        Global::exp_pv_kWp_static_init = true;
+    }
+}
+void Global::set_exp_pv_kWp_per_m2(float value) {
+    if (exp_pv_kWp_per_m2_init) {
+        cerr << "Global variable exp_pv_kWp_per_m2 is already initialized!" << endl;
+    } else {
+        Global::exp_pv_kWp_per_m2      = value;
+        Global::exp_pv_kWp_per_m2_init = true;
+    }
+}
+void Global::set_exp_pv_min_kWp_roof_sec(float value) {
+    if (exp_pv_min_kWp_roof_sec_init) {
+        cerr << "Global variable exp_pv_min_kWp_roof_sec is already initialized!" << endl;
+    } else {
+        Global::exp_pv_min_kWp_roof_sec      = value;
+        Global::exp_pv_min_kWp_roof_sec_init = true;
+    }
+}
+void Global::set_exp_pv_max_kWp_roof_sec(float value) {
+    if (exp_pv_max_kWp_per_sec_init) {
+        cerr << "Global variable exp_pv_max_kWp_per_sec is already initialized!" << endl;
+    } else {
+        Global::exp_pv_max_kWp_per_sec      = value;
+        Global::exp_pv_max_kWp_per_sec_init = true;
     }
 }
 void Global::set_exp_bess_kW(float exp_bess_kW) {

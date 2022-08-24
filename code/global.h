@@ -119,7 +119,11 @@ class Global {
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
         static int get_expansion_scenario_id() { return expansion_scenario_id;    }
         static float get_time_step_size_in_h() { return time_step_size_in_h; }
-        static float get_exp_pv_kWp()          { return exp_pv_kWp;    }
+        static bool  get_exp_pv_static_mode()   { return exp_pv_kWp_static_mode; }
+        static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
+        static float get_exp_pv_kWp_per_m2()    { return exp_pv_kWp_per_m2;      }
+        static float get_exp_pv_min_kWp_roof_sec()   { return exp_pv_min_kWp_roof_sec; }
+        static float get_exp_pv_max_kWp_roof_sec()   { return exp_pv_max_kWp_per_sec;  }
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
@@ -141,7 +145,11 @@ class Global {
         static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
         static void set_expansion_scenario_id(int expansion_scenario_id);
-        static void set_exp_pv_kWp(float exp_pv_kWp);
+        static void set_exp_pv_mode(bool mode);
+        static void set_exp_pv_kWp_static(float value);
+        static void set_exp_pv_kWp_per_m2(float value);
+        static void set_exp_pv_min_kWp_roof_sec(float value);
+        static void set_exp_pv_max_kWp_roof_sec(float value);
         static void set_exp_bess_kW(float exp_bess_kW);
         static void set_exp_bess_kWh(float exp_bess_kWh);
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
@@ -167,7 +175,11 @@ class Global {
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
         static int expansion_scenario_id;  ///< ID of the expansion scenario
         static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
-        static float exp_pv_kWp;           ///< kWp of in the simulation added PV installations
+        static bool  exp_pv_kWp_static_mode; ///< true, if static PV kWp calculation is selected, otherwise false
+        static float exp_pv_kWp_static;    ///< kWp of in the simulation added PV installations, if all units should get the same kWp in the end
+        static float exp_pv_kWp_per_m2;    ///< kWp per m2 roof area, if dynamic kWp calculation is selected
+        static float exp_pv_min_kWp_roof_sec; ///< minimal size in kWp that a PV section on a given roof section must have so that this section is used for expansion, only applicable with dynamic kWp calculation
+        static float exp_pv_max_kWp_per_sec;  ///< maximal size in kWp of a PV section on a given roof section, bigger roof sections will be cut to this value; only applicable when dynamic kWp calculation is selected
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
@@ -190,7 +202,11 @@ class Global {
         static bool ts_end_str_init;
         static bool tsteps_per_hour_init;
         static bool expansion_scenario_id_init;
-        static bool exp_pv_kWp_init;
+        static bool exp_pv_kWp_static_mode_init;
+        static bool exp_pv_kWp_static_init;
+        static bool exp_pv_kWp_per_m2_init;
+        static bool exp_pv_min_kWp_roof_sec_init;
+        static bool exp_pv_max_kWp_per_sec_init;
         static bool exp_bess_kW_init;
         static bool exp_bess_kWh_init;
         static bool exp_bess_start_soc_init;
