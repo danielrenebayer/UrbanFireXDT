@@ -10,10 +10,9 @@
 //        RoofSectionPV          //
 // ----------------------------- //
 
-RoofSectionPV::RoofSectionPV(float kWp_total_location, float share_of_total_area, std::string orientation, size_t profile_index)
-    : share_of_total_area(share_of_total_area), kWp_total_location(kWp_total_location)
+RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string orientation, size_t profile_index)
+    : this_section_kWp(this_section_kWp)
 {
-    this_section_kWp = kWp_total_location * share_of_total_area;
     // select the correct profile
     if (global::pv_profiles_per_ori[orientation].size() <= 0) {
         std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << std::endl;
@@ -27,11 +26,6 @@ float RoofSectionPV::get_currentFeedin_kW(int ts) {
     return this_section_kWp * profile_data[tsID];
 }
 
-void RoofSectionPV::set_kWp(float kWp_total_location) {
-    this->kWp_total_location = kWp_total_location;
-    this_section_kWp = kWp_total_location * share_of_total_area;
-}
-
 
 
 
@@ -43,8 +37,14 @@ void RoofSectionPV::set_kWp(float kWp_total_location) {
 std::map<std::string, size_t> ComponentPV::next_pv_idx;
 
 ComponentPV::ComponentPV(float kWp, unsigned long locationID)
-    : kWp(kWp)
+    : total_kWp(kWp)
 {
+    /*
+     *
+     * Constructor for ComponentPV
+     * in the case of a static kWp computation
+     *
+     */
     currentGeneration_kW = 0;
     // attach roof sections as defined in data
     auto& roof_section_vec = global::roof_section_orientations[locationID];
@@ -75,7 +75,56 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
         float share_of_total_area = section_roof_area / complete_roof_area;
         // 3)
         // create and add section to list
-        roof_sections.emplace_back(kWp, share_of_total_area, section_orientation, pv_profile_idx);
+        float section_kWp = share_of_total_area * kWp;
+        roof_sections.emplace_back(section_kWp, section_orientation, pv_profile_idx);
+    }
+}
+
+ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID)
+{
+    /*
+     *
+     * Constructor for ComponentPV
+     * in the case of a dynamic kWp computation
+     *
+     */
+
+    currentGeneration_kW = 0;
+    total_kWp = 0;
+    // attach roof sections as defined in data
+    // // float min_roof_area = min_kWp / kWp_per_m2;
+    // // float max_roof_area = max_kWp / kWp_per_m2;
+    auto& roof_section_vec = global::roof_section_orientations[locationID];
+    // iterate over all roof sections
+    // and get all orientations and areas per roof section
+    for (auto& section_tuple : roof_section_vec) {
+        float       section_roof_area   = section_tuple.first;
+        std::string section_orientation = section_tuple.second;
+        // 1)
+        // compute the kWp of this area and decide whether to use it or not
+        float section_kWp = section_roof_area * kWp_per_m2;
+        if (section_kWp < min_kWp) {
+            // ignore this section
+            continue;
+        }
+        if (section_kWp > max_kWp) {
+            section_kWp = max_kWp;
+        }
+        total_kWp += section_kWp;
+        // 2)
+        // take the correct profile
+        size_t pv_profile_idx = 0;
+        // TODO: select randomly as an alternative
+        if (next_pv_idx.contains(section_orientation)) {
+            size_t& next_pv_idx_so = next_pv_idx[section_orientation];
+            pv_profile_idx = next_pv_idx_so;
+            next_pv_idx_so++; // increment next index by one until end is reached
+            if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
+                next_pv_idx_so = 0;
+        }
+        // 3)
+        // create and add section to list
+        roof_sections.emplace_back(section_kWp, section_orientation, pv_profile_idx);
     }
 }
 
@@ -83,13 +132,6 @@ void ComponentPV::calculateCurrentFeedin(int ts) {
     currentGeneration_kW = 0.0;
     for (RoofSectionPV& section : roof_sections)
         currentGeneration_kW += section.get_currentFeedin_kW(ts);
-}
-
-void ComponentPV::set_kWp(float value) {
-    this->kWp = value;
-    // ajust on all attachted components
-    for (RoofSectionPV& section : roof_sections)
-        section.set_kWp(value);
 }
 
 

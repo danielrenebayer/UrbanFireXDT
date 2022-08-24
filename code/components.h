@@ -15,32 +15,29 @@
 
 class RoofSectionPV {
     public:
-        RoofSectionPV(float kWp_total_location, float share_of_total_area, std::string orientation, size_t profile_index);
+        RoofSectionPV(float this_section_kWp, std::string orientation, size_t profile_index);
         float get_currentFeedin_kW(int ts);
-        void  set_kWp(float kWp_total_location);
     private:
         // constant member variables
         const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
-        const float  share_of_total_area; ///< The ratio of the current section on the complete roof area for the given location
-        // semi-constant member variables, i.e. they might change for parameter variations
-        float this_section_kWp;
-        float kWp_total_location;
+        const float  this_section_kWp;
 };
 
 class ComponentPV {
     public:
-        ComponentPV(float kWp, unsigned long locationID);
+        ComponentPV(float kWp_static, unsigned long locationID); ///< Constructor in the case of static kWp computation
+        ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation
         // getter methods
-        float get_kWp() const            { return kWp; }
+        float get_kWp() const            { return total_kWp; }
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         // update / action methods
         void  calculateCurrentFeedin(int ts);
-        void  set_kWp(float value);
+        //void  set_kWp(float value);
     private:
         // constant members
         std::vector<RoofSectionPV> roof_sections;
         // semi-constant member variables, i.e. they might change for parameter variations
-        float kWp;
+        float total_kWp;
         // member variables that can change over time
         float currentGeneration_kW;
         //
@@ -80,7 +77,6 @@ class ComponentBS {
 };
 
 class ComponentHP {
-    // TODO: Implement Heat Pump
     public:
         ComponentHP(size_t profile_index, float yearly_econs_kWh);
         // getter methods
