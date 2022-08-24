@@ -134,11 +134,24 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             //    set values accordingly
             ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
             for (auto& var_name_and_val : list_of_variables) {
-                if        (var_name_and_val.first.compare("expansion PV kWp") == 0) {
+
+                if        (var_name_and_val.first.compare("expansion PV kWp static") == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                        cuList[i]->set_exp_pv_kWp(var_name_and_val.second);
-                    cParamVals.exp_pv_kWp = var_name_and_val.second;
-                    cParamVals.exp_pv_kWp_set = true;
+                        cuList[i]->set_exp_pv_params_A(var_name_and_val.second);
+                    cParamVals.exp_pv_kWp_static     = var_name_and_val.second;
+                    cParamVals.exp_pv_kWp_static_set = true;
+
+                } else if (var_name_and_val.first.compare("expansion PV kWp min kWp for section usage") == 0) {
+                    cParamVals.exp_pv_min_kWp_roof_sec     = var_name_and_val.second;
+                    cParamVals.exp_pv_min_kWp_roof_sec_set = true;
+
+                } else if (var_name_and_val.first.compare("expansion PV kWp max inst kWp per section") == 0) {
+                    cParamVals.exp_pv_max_kWp_roof_sec     = var_name_and_val.second;
+                    cParamVals.exp_pv_max_kWp_roof_sec_set = true;
+
+                } else if (var_name_and_val.first.compare("expansion PV kWp per roof area in m2") == 0) {
+                    cParamVals.exp_pv_kWp_per_m2     = var_name_and_val.second;
+                    cParamVals.exp_pv_kWp_per_m2_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS P in kW")  == 0) {
                     for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
@@ -160,6 +173,20 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
                     return false;
                 }
             }
+            // 1b. if expansion PV kWp min/max or kWp per m2 is set, apply it here
+            //     it cannot be set directly at the place above (like the other parameters)
+            //     as these values can only be set together
+            if (cParamVals.exp_pv_min_kWp_roof_sec_set || cParamVals.exp_pv_max_kWp_roof_sec_set || cParamVals.exp_pv_kWp_per_m2_set) {
+                float kWp_per_m2 = Global::get_exp_pv_kWp_per_m2();
+                float min_kWp    = Global::get_exp_pv_min_kWp_roof_sec();
+                float max_kWp    = Global::get_exp_pv_max_kWp_roof_sec();
+                if (cParamVals.exp_pv_kWp_per_m2_set)       kWp_per_m2 = cParamVals.exp_pv_kWp_per_m2;
+                if (cParamVals.exp_pv_min_kWp_roof_sec_set) min_kWp    = cParamVals.exp_pv_min_kWp_roof_sec;
+                if (cParamVals.exp_pv_max_kWp_roof_sec_set) max_kWp    = cParamVals.exp_pv_max_kWp_roof_sec;
+                for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
+                    cuList[i]->set_exp_pv_params_B(kWp_per_m2, min_kWp, max_kWp);
+            }
+
             //
             // 2. open output files
             output::initializeDirectoriesPerPVar(scenario_id);
