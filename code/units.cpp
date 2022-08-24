@@ -325,7 +325,14 @@ string* ControlUnit::get_metrics_string() {
 void ControlUnit::add_exp_pv() {
     if (!has_sim_pv) {
         has_sim_pv  = true;
-        sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp(), locationID);
+        if (Global::get_exp_pv_static_mode()) {
+            sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_static(), locationID);
+        } else {
+            sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_per_m2(),
+                                          Global::get_exp_pv_min_kWp_roof_sec(),
+                                          Global::get_exp_pv_max_kWp_roof_sec(),
+                                          locationID);
+        }
     }
 }
 
@@ -364,9 +371,28 @@ void ControlUnit::set_output_object(CUOutput* output_obj) {
     this->output_obj = output_obj;
 }
 
-void ControlUnit::set_exp_pv_kWp(float value) {
-    if (has_sim_pv)
-        sim_comp_pv->set_kWp(value);
+void ControlUnit::set_exp_pv_params_A(float value) {
+    // do something only if this unit is selected for PV expansion
+    if (has_sim_pv) {
+        if (Global::get_exp_pv_static_mode()) {
+            delete sim_comp_pv;
+            sim_comp_pv = new ComponentPV(value, locationID);
+        } else {
+            throw runtime_error("Error: ControlUnit::set_exp_pv_params_A() has been callen even though PV static mode is set!");
+        }
+    }
+}
+
+void ControlUnit::set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp) {
+    // do something only if this unit is selected for PV expansion
+    if (has_sim_pv) {
+        if (Global::get_exp_pv_static_mode()) {
+            throw runtime_error("Error: ControlUnit::set_exp_pv_params_B() has been callen even though PV static mode is not set!");
+        } else {
+            delete sim_comp_pv;
+            sim_comp_pv = new ComponentPV(kWp_per_m2, min_kWp, max_kWp, locationID);
+        }
+    }
 }
 
 void ControlUnit::set_exp_bs_maxE_kWh(float value) {

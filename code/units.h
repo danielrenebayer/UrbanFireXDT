@@ -105,7 +105,8 @@ class ControlUnit {
         void add_exp_hp();
         void add_exp_wb();
         void set_output_object(CUOutput* output_obj);
-        void set_exp_pv_kWp     (float value);
+        void set_exp_pv_params_A(float kWp_static); ///< Set the kWp of expanded PV installations in the case of static kWp computation per section
+        void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         // for simulation runs
