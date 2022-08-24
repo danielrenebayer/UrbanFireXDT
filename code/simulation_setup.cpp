@@ -675,7 +675,18 @@ int load_data_from_central_database_callback_address_data_B(void* data, int argc
         cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
     }
-    global::roof_section_orientations[ stoul(argv[0]) ].push_back( pair<float, std::string>(stof(argv[1]), string(argv[2])) );
+    //
+    // Assume a flat roof to be a south orientation where modules are installed with a 45-degree pitch
+    //     in this case, we assume a 45 degree pitch of the installed modules, so the acual area is 
+    //     acual_usabel_area = given_area / cos(45 deg) = given_area / 0.707107
+    float usable_area = stof(argv[1]);
+    string orientation ( argv[2] );
+    if (orientation == "flat_roof" || orientation == "f") {
+        // compute new usable area as stated above
+        usable_area = usable_area / 0.707107;
+        orientation = "S";
+    }
+    global::roof_section_orientations[ stoul(argv[0]) ].push_back( pair<float, std::string>(usable_area, orientation) );
     return 0;
 }
 bool configld::load_data_from_central_database(const char* filepath) {
