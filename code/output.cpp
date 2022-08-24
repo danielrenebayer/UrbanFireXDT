@@ -235,8 +235,20 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     // If a variable is changed, the boolean indicator variable in the
     // argument cParamVals says so -> in this case one uses this value.
     // Otherwise (if variable is unchanged) use global value.
-    ofs << "expansion PV kWp,";
-    if (cParamVals.exp_pv_kWp_set)      ofs << cParamVals.exp_pv_kWp;      else ofs << Global::get_exp_pv_kWp();
+    ofs << "expansion PV min kWp for section usage,";
+    if (cParamVals.exp_pv_min_kWp_roof_sec_set) ofs << cParamVals.exp_pv_min_kWp_roof_sec; else ofs << Global::get_exp_pv_min_kWp_roof_sec();
+    ofs << "\n";
+    ofs << "expansion PV max inst kWp per section,";
+    if (cParamVals.exp_pv_max_kWp_roof_sec_set) ofs << cParamVals.exp_pv_max_kWp_roof_sec; else ofs << Global::get_exp_pv_max_kWp_roof_sec();
+    ofs << "\n";
+    ofs << "expansion PV kWp per roof area in m2,";
+    if (cParamVals.exp_pv_kWp_per_m2_set)       ofs << cParamVals.exp_pv_kWp_per_m2;       else ofs << Global::get_exp_pv_kWp_per_m2();
+    ofs << "\n";
+    ofs << "expansion PV kWp static,";
+    if (cParamVals.exp_pv_kWp_static_set)       ofs << cParamVals.exp_pv_kWp_static;       else ofs << Global::get_exp_pv_kWp_static();
+    ofs << "\n";
+    ofs << "expansion PV kWp static mode,";
+    if (cParamVals.exp_pv_static_mode_set)      ofs << cParamVals.exp_pv_static_mode;      else ofs << Global::get_exp_pv_static_mode();
     ofs << "\n";
     ofs << "expansion BS E in kWh,";
     if (cParamVals.exp_bs_maxE_kWh_set) ofs << cParamVals.exp_bs_maxE_kWh; else ofs << Global::get_exp_bess_kWh();

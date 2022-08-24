@@ -42,7 +42,11 @@ namespace output {
     // struct for the below defined funtion:
     // it holds the current parameter values
     struct CurrentParamValues {
-        float exp_pv_kWp      = 0.0;  bool exp_pv_kWp_set      = false;
+        bool  exp_pv_static_mode    = false; bool exp_pv_static_mode_set      = false;
+        float exp_pv_kWp_static       = 0.0; bool exp_pv_kWp_static_set       = false;
+        float exp_pv_kWp_per_m2       = 0.0; bool exp_pv_kWp_per_m2_set       = false;
+        float exp_pv_min_kWp_roof_sec = 0.0; bool exp_pv_min_kWp_roof_sec_set = false;
+        float exp_pv_max_kWp_roof_sec = 0.0; bool exp_pv_max_kWp_roof_sec_set = false;
         float exp_bs_maxP_kW  = 0.0;  bool exp_bs_maxP_kW_set  = false;
         float exp_bs_maxE_kWh = 0.0;  bool exp_bs_maxE_kWh_set = false;
         float exp_bs_init_SOC = 0.0;  bool exp_bs_init_SOC_set = false;
