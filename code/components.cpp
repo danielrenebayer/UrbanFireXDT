@@ -89,6 +89,14 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
      *
      */
 
+    // general checks
+    if (kWp_per_m2 <= 0.0) {
+        throw runtime_error("Error in ComponentPV constructor: kWp_per_m2 <= 0!");
+    }
+    if (min_kWp > max_kWp) {
+        throw runtime_error("Error in ComponentPV constructor: min_kWp > max_kWp");
+    }
+
     currentGeneration_kW = 0;
     total_kWp = 0;
     // attach roof sections as defined in data
