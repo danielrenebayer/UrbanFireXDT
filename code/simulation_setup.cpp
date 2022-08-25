@@ -56,6 +56,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         float  exp_bs_iSOC  = 0.0; bool exp_bs_iSOC_set  = false;
         float  os_pv_kWp    = 0.0; bool os_pv_kWp_set    = false;
         float  os_wind_kWp  = 0.0; bool os_wind_kWp_set  = false;
+        string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         // variables for PV expansion
         float  exp_pv_kWp_static  = 0.0; bool exp_pv_kWp_static_set   = false;
         float  exp_pv_kWp_m2_roof = 0.0; bool exp_pv_kWp_m2_roof_set  = false;
@@ -129,6 +130,9 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                     } else if ( element_name.compare("open space wind kWp") == 0 ) {
                         os_wind_kWp     = scenario_dict.get<float>("open space wind kWp");
                         os_wind_kWp_set = true;
+                    } else if ( element_name.compare("expansion profile selection") == 0 ) {
+                        exp_profile_mode       = scenario_dict.get<string>("expansion profile selection");
+                        exp_profile_mode_set   = true;
                     } else if ( element_name.compare("expansion PV kWp static") == 0 ) {
                         exp_pv_kWp_static      = scenario_dict.get<float>("expansion PV kWp static");
                         exp_pv_kWp_static_set  = true;
@@ -158,6 +162,20 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         cout << "end_str = " << end_str << endl;
         cout << "ts_per_hour = " << ts_per_hour << endl;
         #endif
+
+        //
+        // transform parameters if required (e.g. for exp_profile_mode)
+        global::ExpansionProfileAllocationMode exp_profile_mode_transf;
+        if (exp_profile_mode_set) {
+            if      (exp_profile_mode == "as in data")
+                exp_profile_mode_transf = global::ExpansionProfileAllocationMode::AsInData;
+            else if (exp_profile_mode == "random")
+                exp_profile_mode_transf = global::ExpansionProfileAllocationMode::Random;
+            else {
+                cerr << "Parameter 'expansion profile selection' is defined as '" << exp_profile_mode << "' in config-json, but this value is unknown." << endl;
+                throw runtime_error("Parameter 'expansion profile selection' as defined in config-json is unknown.");
+            }
+        }
 
         //
         // is a parameter variation selected?
@@ -258,6 +276,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (exp_bs_iSOC_set)  Global::set_exp_bess_start_soc(exp_bs_iSOC);
             if (os_pv_kWp_set)    Global::set_open_space_pv_kWp(os_pv_kWp);
             if (os_wind_kWp_set)  Global::set_wind_kWp(os_wind_kWp);
+            if (exp_profile_mode_set)   Global::set_exp_profile_mode(exp_profile_mode_transf);
             if (exp_pv_mode_static_set) Global::set_exp_pv_mode(exp_pv_mode_static);
             if (exp_pv_kWp_static_set)  Global::set_exp_pv_kWp_static(exp_pv_kWp_static);
             if (exp_pv_kWp_m2_roof_set) Global::set_exp_pv_kWp_per_m2(exp_pv_kWp_m2_roof);

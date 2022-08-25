@@ -87,6 +87,7 @@ float Global::wind_kWp              = 0.0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
+ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -113,6 +114,7 @@ bool Global::wind_kWp_init         = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
+bool Global::exp_profile_mode_init      = false;
 
 void Global::InitializeStaticVariables() {
     // nothing to do anymore
@@ -142,7 +144,8 @@ bool Global::AllVariablesInitialized() {
         exp_bess_start_soc_init &&
         input_path_init &&
         output_path_init &&
-        output_mode_per_cu_init)
+        output_mode_per_cu_init &&
+        exp_profile_mode_init)
     {
         if ( ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
@@ -405,6 +408,14 @@ void Global::set_output_mode_per_cu(OutputModePerCU mode) {
     } else {
         Global::output_mode_per_cu = mode;
         Global::output_mode_per_cu_init = true;
+    }
+}
+void Global::set_exp_profile_mode(ExpansionProfileAllocationMode mode) {
+    if (exp_profile_mode_init) {
+        cerr << "Expansion profile mode already set!" << endl;
+    } else {
+        Global::exp_profile_mode = mode;
+        Global::exp_profile_mode_init = true;
     }
 }
 
