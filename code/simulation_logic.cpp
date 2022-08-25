@@ -194,6 +194,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             output::initializeCUOutput(scenario_id);
             // 2.b output the current parameter variation combination
             output::outputCurrentParamVariCombi(cParamVals);
+            output::outputCurrentCUSettings();
             //
             // 3. run the simulation
             bool no_error = runSimulationForOneParamSetting();
@@ -216,6 +217,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         // 1.b output the current parameter variation combination
         output::CurrentParamValues cParamVals;
         output::outputCurrentParamVariCombi(cParamVals);
+        output::outputCurrentCUSettings();
         //
         // 2. Run the simulation
         bool no_error = runSimulationForOneParamSetting();

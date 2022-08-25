@@ -53,7 +53,9 @@ namespace output {
     };
     void outputCurrentParamVariCombi(CurrentParamValues&);
 
-    void outputMetrics();
+    void outputCurrentCUSettings(); ///< This function outputs current settings of the control units (like PV kWp, BS capacity and power, ...) and also which roof sections exist per sim. added PV component
+
+    void outputMetrics(); ///< This function computed metrics for all control units after the simulation has been finished
 
 }
 

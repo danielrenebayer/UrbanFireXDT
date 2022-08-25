@@ -263,6 +263,37 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs.close();
 }
 
+void output::outputCurrentCUSettings() {
+    // 1)
+    // output information per control unit about sim. added kWp of PV, BS ...
+    filesystem::path output_path {*(global::current_output_dir)};
+    output_path /= "cu-parameters.csv";
+    ofstream ofs(output_path, std::ofstream::out);
+    ofs << "UnitID,PV kWp,BS P kW,BS E kWh\n";
+    // now, iterate over all control units
+    ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+        ControlUnit* cu = cuList[i];
+        ofs << cu->get_unitID()            << ",";
+        ofs << cu->get_sim_comp_pv_kWp()   << ",";
+        ofs << cu->get_sim_comp_bs_P_kW()  << ",";
+        ofs << cu->get_sim_comp_bs_E_kWh() << "\n";
+    }
+    ofs.close();
+    // 2)
+    // output information about every sim. added roof section
+    output_path  = *(global::current_output_dir);
+    output_path /= "sim-added-roof-sections-per-cu.csv";
+    ofstream ofs2(output_path, std::ofstream::out);
+    ofs2 << "UnitID,roof_section_number,section_kWp,orientation,profile_index\n";
+    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+        string* cu_string = cuList[i]->get_pv_section_string();
+        ofs2 << *cu_string;
+        delete cu_string;
+    }
+    ofs2.close();
+}
+
 //
 // This function outputs the computed metrics for all control units
 // after the simulation has been finished.
