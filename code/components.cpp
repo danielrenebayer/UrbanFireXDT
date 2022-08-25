@@ -18,6 +18,10 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation, s
         std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << std::endl;
         throw runtime_error("There is no feed-in profile given for a selected orientation!");
     }
+    if (global::pv_profiles_per_ori[orientation].size() <= profile_index) {
+        std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << " and index " << profile_index << std::endl;
+        throw runtime_error("There is no feed-in profile given for a selected orientation and the given index!");
+    }
     profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
 }
 
@@ -69,6 +73,9 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
             next_pv_idx_so++; // increment next index by one until end is reached
             if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
                 next_pv_idx_so = 0;
+        } else {
+            pv_profile_idx = global::pv_profiles_information[section_orientation] - 1; // take last index available
+            next_pv_idx[section_orientation] = 0; // set this to first, as this is the following on to the last one
         }
         // 2)
         // compute the share of this section among all existing sections
@@ -129,6 +136,9 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
             next_pv_idx_so++; // increment next index by one until end is reached
             if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
                 next_pv_idx_so = 0;
+        } else {
+            pv_profile_idx = global::pv_profiles_information[section_orientation] - 1; // take last index available
+            next_pv_idx[section_orientation] = 0; // set this to first, as this is the following on to the last one
         }
         // 3)
         // create and add section to list
