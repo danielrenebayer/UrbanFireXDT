@@ -322,6 +322,14 @@ string* ControlUnit::get_metrics_string() {
     }
 }
 
+string* ControlUnit::get_pv_section_string() {
+    if (has_sim_pv) {
+        return sim_comp_pv->get_section_string(to_string(unitID));
+    } else {
+        return new string();
+    }
+}
+
 void ControlUnit::add_exp_pv() {
     if (!has_sim_pv) {
         has_sim_pv  = true;

@@ -10,8 +10,8 @@
 //        RoofSectionPV          //
 // ----------------------------- //
 
-RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string orientation, size_t profile_index)
-    : this_section_kWp(this_section_kWp)
+RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation, size_t profile_index)
+    : this_section_kWp(this_section_kWp), orientation(orientation), profile_index(profile_index)
 {
     // select the correct profile
     if (global::pv_profiles_per_ori[orientation].size() <= 0) {
@@ -134,6 +134,27 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         // create and add section to list
         roof_sections.emplace_back(section_kWp, section_orientation, pv_profile_idx);
     }
+}
+
+string* ComponentPV::get_section_string(const string& prefix_per_line) {
+    string* return_str = new string();
+    unsigned long counter = 1;
+    string local_line_prefix { prefix_per_line };
+    if (local_line_prefix.length() > 0)
+        local_line_prefix.append(",");
+    for (RoofSectionPV& section : roof_sections) {
+        return_str->append( local_line_prefix );
+        return_str->append( to_string( counter ) );
+        return_str->append(",");
+        return_str->append( to_string( section.get_section_kWp() )   );
+        return_str->append(",");
+        return_str->append(            section.get_orientation()     );
+        return_str->append(",");
+        return_str->append( to_string( section.get_profile_index() ) );
+        return_str->append("\n");
+        counter++;
+    }
+    return return_str;
 }
 
 void ComponentPV::calculateCurrentFeedin(int ts) {
