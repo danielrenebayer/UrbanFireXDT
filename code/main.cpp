@@ -179,6 +179,7 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
+    ComponentHP::VacuumStaticVariables();
 	MeasurementUnit::VacuumInstancesAndStaticVariables();
 	ControlUnit::VacuumInstancesAndStaticVariables();
 	Substation::VacuumInstancesAndStaticVariables();

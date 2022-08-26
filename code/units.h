@@ -152,9 +152,6 @@ class ControlUnit {
         static int st__n_CUs;
         static int st__new_CU_position;
         static ControlUnit** st__cu_list;
-        //
-        // static data for selecting the next time series for expansion
-        static size_t next_hp_idx;
 };
 
 

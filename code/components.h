@@ -84,11 +84,15 @@ class ComponentBS {
 
 class ComponentHP {
     public:
-        ComponentHP(size_t profile_index, float yearly_econs_kWh);
+        ComponentHP(float yearly_econs_kWh);
         // getter methods
         float get_currentDemand_kW() { return currentDemand_kW; }
         // update / action methods
         void calculateCurrentFeedin(int ts);
+        //
+        // static methods for initializing the random generators
+        static void InitializeRandomGenerator();
+        static void VacuumStaticVariables();
     private:
         // constant member variables
         const float yearly_electricity_consumption_kWh;
@@ -96,6 +100,12 @@ class ComponentHP {
         const float* profile_data; ///< Reference to the profile, should be one of global::hp_profiles
         // member variables that can change over time
         float currentDemand_kW;
+        //
+        // static data for selecting the next time series for expansion
+        static size_t next_hp_idx;
+        static bool random_generator_init;
+        static std::default_random_engine* random_generator;
+        static std::uniform_int_distribution<size_t>* distribution;
 };
 
 class ComponentWB {

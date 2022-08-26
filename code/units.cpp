@@ -111,7 +111,6 @@ bool ControlUnit::st__cu_list_init     = false;
 int ControlUnit::st__n_CUs             = 0;
 int ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
-size_t ControlUnit::next_hp_idx        = 0;
 
 ControlUnit::ControlUnit(int unitID, int substation_id, unsigned long locationID)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID)
@@ -354,17 +353,12 @@ void ControlUnit::add_exp_bs() {
 void ControlUnit::add_exp_hp() {
     if (!has_sim_hp) {
         //
-        // get yearly electricity consumption and correct profile
+        // get yearly electricity consumption
         float yearly_electricity_cons_kWh = global::yearly_hp_energy_demand_kWh[locationID];
-        size_t hp_profile_idx = next_hp_idx; // TODO: select randomly as an alternative
-        // increment next index by one
-        next_hp_idx++;
-        if (next_hp_idx >= Global::get_n_heatpump_profiles())
-            next_hp_idx = 0;
         //
         // create and link component
         has_sim_hp  = true;
-        sim_comp_hp = new ComponentHP(hp_profile_idx, yearly_electricity_cons_kWh);
+        sim_comp_hp = new ComponentHP(yearly_electricity_cons_kWh);
     }
 }
 

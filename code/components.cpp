@@ -252,12 +252,32 @@ void ComponentBS::resetInternalState() {
 //         ComponentHP           //
 // ----------------------------- //
 
-ComponentHP::ComponentHP(size_t profile_index, float yearly_econs_kWh)
+size_t ComponentHP::next_hp_idx = 0;
+bool   ComponentHP::random_generator_init = false;
+std::default_random_engine*            ComponentHP::random_generator = NULL;
+std::uniform_int_distribution<size_t>* ComponentHP::distribution     = NULL;
+
+ComponentHP::ComponentHP(float yearly_econs_kWh)
     : yearly_electricity_consumption_kWh(yearly_econs_kWh),
       scaling_factor(yearly_econs_kWh/1000.0)
 {
+    // select heat pump profile static or random
+    size_t this_hp_profile_idx;
+    if (Global::get_exp_profile_mode() == global::ExpansionProfileAllocationMode::AsInData) {
+        this_hp_profile_idx = next_hp_idx;
+        // increment next index by one
+        next_hp_idx++;
+        if (next_hp_idx >= Global::get_n_heatpump_profiles())
+            next_hp_idx = 0;
+    } else {
+        if (!random_generator_init)
+            throw runtime_error("Static random generator is not initialized for ComponentHP.");
+        // randomly select new index
+        this_hp_profile_idx = (*distribution)(*random_generator);
+    }
+    //
     // reference the profile
-    profile_data = global::hp_profiles[profile_index];
+    profile_data = global::hp_profiles[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
 }
@@ -265,4 +285,22 @@ ComponentHP::ComponentHP(size_t profile_index, float yearly_econs_kWh)
 void ComponentHP::calculateCurrentFeedin(int ts) {
     int tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
+}
+
+void ComponentHP::InitializeRandomGenerator() {
+    if (random_generator_init) {
+        throw runtime_error("Error: Static variables of ComponentHP are already initialized.");
+    } else {
+        random_generator_init = true;
+        random_generator = new std::default_random_engine();
+        distribution     = new std::uniform_int_distribution<size_t>(0, Global::get_n_heatpump_profiles()-1);
+    }
+}
+
+void ComponentHP::VacuumStaticVariables() {
+    if (random_generator_init) {
+        random_generator_init = false;
+        delete random_generator;
+        delete distribution;
+    }
 }
