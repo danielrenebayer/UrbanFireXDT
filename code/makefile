@@ -1,6 +1,6 @@
 FLAGS = -std=c++20 -pedantic -Wall
 LIBS  = -l sqlite3 -l boost_program_options
-FILES = main.cpp components.cpp units.cpp global.cpp simulation_setup.cpp simulation_logic.cpp output.cpp helper.cpp
+FILES = main.cpp components.cpp units.cpp global.cpp sac_planning.cpp setup_and_dataloading.cpp simulation_logic.cpp output.cpp helper.cpp
 
 default:
 	g++ $(FILES) -o main $(FLAGS) $(LIBS)

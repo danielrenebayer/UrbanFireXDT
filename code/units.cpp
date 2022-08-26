@@ -10,7 +10,7 @@
 
 #include "global.h"
 #include "output.h"
-#include "simulation_setup.h"
+#include "sac_planning.h"
 
 using namespace std;
 
