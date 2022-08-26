@@ -1,32 +1,18 @@
 /*
  * 
- * simulation_setup.h
+ * sac_planning.h
  *
- * Contains all code required for initializing the
- * simulation and loading central data
+ * Planning of the Simulatively Added Components (to the control units)
+ *
+ * This file contains all code required for the planning of which
+ * simulatively added components are added to which control unit.
  *
  * */
 
-#ifndef SIMULATION_SETUP_H
-#define SIMULATION_SETUP_H
-
-#include <string>
-
-#include "global.h"
+#ifndef SAC_PLANNING_H
+#define SAC_PLANNING_H
 
 
-
-namespace configld {
-    /*
-     * This namespace contains all functions required for loading central
-     * infromation and the scenario file
-     */
-
-    bool load_config_file(int scenario_id, std::string& filepath);
-    //bool parse_scenario_file(int scenario_id);
-    bool load_data_from_central_database(const char* filepath);
-
-}
 
 namespace expansion {
     /*
@@ -55,8 +41,6 @@ namespace expansion {
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
     void add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16], int scenario_id);
 }
-
-
 
 
 
