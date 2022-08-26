@@ -10,22 +10,34 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include <random>
 #include <string>
 #include <vector>
 
 class RoofSectionPV {
     public:
-        RoofSectionPV(float this_section_kWp, std::string& orientation, size_t profile_index);
+        RoofSectionPV(float this_section_kWp, std::string& orientation);
         float get_currentFeedin_kW(int ts);
         const float        get_section_kWp()   const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
         const size_t       get_profile_index() const { return profile_index;    }
+        //
+        // static methods for initializing the random generators
+        static void InitializeRandomGenerator();
+        static void VacuumStaticVariables();
     private:
         // constant member variables
         const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
         const float  this_section_kWp;
         const std::string orientation;
-        const size_t profile_index;
+        size_t profile_index;
+        //
+        // static data for selecting the next time series for expansion
+        static std::map<std::string, size_t> next_pv_idx; ///< Next index per orientation (given as string)
+        // static data for selecting the next time series randomly
+        static bool random_generator_init;
+        static std::map<std::string, std::default_random_engine>            random_generators;
+        static std::map<std::string, std::uniform_int_distribution<size_t>> distributions;
 };
 
 class ComponentPV {
@@ -46,9 +58,6 @@ class ComponentPV {
         float total_kWp;
         // member variables that can change over time
         float currentGeneration_kW;
-        //
-        // static data for selecting the next time series for expansion
-        static std::map<std::string, size_t> next_pv_idx; ///< Next index per orientation (given as string)
 };
 
 class ComponentBS {

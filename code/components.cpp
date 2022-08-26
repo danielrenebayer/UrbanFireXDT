@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <numeric>
+#include <random>
 #include <string>
 
 // ----------------------------- //
@@ -10,9 +11,39 @@
 //        RoofSectionPV          //
 // ----------------------------- //
 
-RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation, size_t profile_index)
-    : this_section_kWp(this_section_kWp), orientation(orientation), profile_index(profile_index)
+std::map<std::string, size_t> RoofSectionPV::next_pv_idx;
+std::map<std::string, std::default_random_engine>            RoofSectionPV::random_generators;
+std::map<std::string, std::uniform_int_distribution<size_t>> RoofSectionPV::distributions;
+
+RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
+    : this_section_kWp(this_section_kWp), orientation(orientation)
 {
+    // 1)
+    // take the correct profile
+    profile_index = 0;
+    if (Global::get_exp_profile_mode() == global::ExpansionProfileAllocationMode::AsInData) {
+        // case: selection as it appears in data
+        // look up next index for a given orientation
+        // if this orientation is not in the map up to now, take the last available index and add this orientation to the map
+        if (next_pv_idx.contains(orientation)) {
+            size_t& next_pv_idx_so = next_pv_idx[orientation];
+            profile_index = next_pv_idx_so;
+            next_pv_idx_so++; // increment next index by one until end is reached
+            if (next_pv_idx_so >= global::pv_profiles_information[orientation])
+                next_pv_idx_so = 0;
+        } else {
+            profile_index = global::pv_profiles_information[orientation] - 1; // take last index available
+            next_pv_idx[orientation] = 0; // set this to first, as this is the following on to the last one
+        }
+    } else {
+        // case random selection
+        if (!random_generators.contains(orientation)) {
+            random_generators[orientation] = std::default_random_engine{};
+            distributions[orientation] = std::uniform_int_distribution<size_t>(0, global::pv_profiles_information[orientation]-1);
+        }
+        profile_index = distributions[orientation](random_generators[orientation]);
+    }
+    // 2)
     // select the correct profile
     if (global::pv_profiles_per_ori[orientation].size() <= 0) {
         std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << std::endl;
@@ -22,6 +53,7 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation, s
         std::cerr << "Error: There is no feed-in profile given for the orientation " << orientation << " and index " << profile_index << std::endl;
         throw runtime_error("There is no feed-in profile given for a selected orientation and the given index!");
     }
+    // 3) initialize the pointer to the profile data
     profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
 }
 
@@ -33,12 +65,11 @@ float RoofSectionPV::get_currentFeedin_kW(int ts) {
 
 
 
+
 // ----------------------------- //
 //      Implementation of        //
 //         ComponentPV           //
 // ----------------------------- //
-
-std::map<std::string, size_t> ComponentPV::next_pv_idx;
 
 ComponentPV::ComponentPV(float kWp, unsigned long locationID)
     : total_kWp(kWp)
@@ -64,26 +95,12 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
         float  section_roof_area   = section_tuple.first;
         std::string section_orientation = section_tuple.second;
         // 1)
-        // take the correct profile
-        size_t pv_profile_idx = 0;
-        // TODO: select randomly as an alternative
-        if (next_pv_idx.contains(section_orientation)) {
-            size_t& next_pv_idx_so = next_pv_idx[section_orientation];
-            pv_profile_idx = next_pv_idx_so;
-            next_pv_idx_so++; // increment next index by one until end is reached
-            if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
-                next_pv_idx_so = 0;
-        } else {
-            pv_profile_idx = global::pv_profiles_information[section_orientation] - 1; // take last index available
-            next_pv_idx[section_orientation] = 0; // set this to first, as this is the following on to the last one
-        }
-        // 2)
         // compute the share of this section among all existing sections
         float share_of_total_area = section_roof_area / complete_roof_area;
-        // 3)
+        // 2)
         // create and add section to list
         float section_kWp = share_of_total_area * kWp;
-        roof_sections.emplace_back(section_kWp, section_orientation, pv_profile_idx);
+        roof_sections.emplace_back(section_kWp, section_orientation);
     }
 }
 
@@ -127,22 +144,8 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         }
         total_kWp += section_kWp;
         // 2)
-        // take the correct profile
-        size_t pv_profile_idx = 0;
-        // TODO: select randomly as an alternative
-        if (next_pv_idx.contains(section_orientation)) {
-            size_t& next_pv_idx_so = next_pv_idx[section_orientation];
-            pv_profile_idx = next_pv_idx_so;
-            next_pv_idx_so++; // increment next index by one until end is reached
-            if (next_pv_idx_so >= global::pv_profiles_information[section_orientation])
-                next_pv_idx_so = 0;
-        } else {
-            pv_profile_idx = global::pv_profiles_information[section_orientation] - 1; // take last index available
-            next_pv_idx[section_orientation] = 0; // set this to first, as this is the following on to the last one
-        }
-        // 3)
         // create and add section to list
-        roof_sections.emplace_back(section_kWp, section_orientation, pv_profile_idx);
+        roof_sections.emplace_back(section_kWp, section_orientation);
     }
 }
 
@@ -271,7 +274,7 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
             next_hp_idx = 0;
     } else {
         if (!random_generator_init)
-            throw runtime_error("Static random generator is not initialized for ComponentHP.");
+            ComponentHP::InitializeRandomGenerator();
         // randomly select new index
         this_hp_profile_idx = (*distribution)(*random_generator);
     }
