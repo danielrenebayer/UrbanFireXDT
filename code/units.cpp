@@ -297,10 +297,9 @@ string* ControlUnit::get_metrics_string() {
         double sum_of_selfconsumed_e_kWh = 0;
         double sum_of_pv_generated_e_kWh = 0;
         for (int i = 0; i < Global::get_n_timesteps(); i++) {
-            // TODO: Devide by time step unit (no problem for 1 hour steps, but for other it is)
-            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i];
-            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i];
-            sum_of_pv_generated_e_kWh += history_pv_generation_kW[i];
+            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
+            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
+            sum_of_pv_generated_e_kWh += history_pv_generation_kW[i]  * Global::get_time_step_size_in_h();
         }
         double SCR = 0.0;
         double SSR = 0.0;
