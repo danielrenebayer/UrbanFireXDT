@@ -21,10 +21,6 @@ class RoofSectionPV {
         const float        get_section_kWp()   const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
         const size_t       get_profile_index() const { return profile_index;    }
-        //
-        // static methods for initializing the random generators
-        static void InitializeRandomGenerator();
-        static void VacuumStaticVariables();
     private:
         // constant member variables
         const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
@@ -35,7 +31,6 @@ class RoofSectionPV {
         // static data for selecting the next time series for expansion
         static std::map<std::string, size_t> next_pv_idx; ///< Next index per orientation (given as string)
         // static data for selecting the next time series randomly
-        static bool random_generator_init;
         static std::map<std::string, std::default_random_engine>            random_generators;
         static std::map<std::string, std::uniform_int_distribution<size_t>> distributions;
 };
