@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "sac_planning.h"
 #include "units.h"
 
 namespace global {
@@ -140,6 +141,7 @@ class Global {
         static const std::string& get_output_path() { return output_path; }
         static global::OutputModePerCU get_output_mode_per_cu() { return output_mode_per_cu; }
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
+        static expansion::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         // setter methods
         static void set_n_timesteps(int n_timesteps);
         static void set_n_substations(int n_substations);
@@ -167,6 +169,7 @@ class Global {
         static void set_output_path(std::string& path);
         static void set_output_mode_per_cu(global::OutputModePerCU mode);
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
+        static void set_cu_selection_mode_fca(expansion::CUSModeFCA mode);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         // variables
@@ -198,6 +201,7 @@ class Global {
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static global::OutputModePerCU output_mode_per_cu; ///< Variable storing the selected output mode per CU
         static global::ExpansionProfileAllocationMode exp_profile_mode; ///< Variable storing the selected mode for assigning profiles to PV sections or heat pumps
+        static expansion::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;
@@ -226,6 +230,7 @@ class Global {
         static bool output_path_init;
         static bool output_mode_per_cu_init;
         static bool exp_profile_mode_init;
+        static bool cu_selection_mode_fca_init;
 };
 
 #endif

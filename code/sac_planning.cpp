@@ -3,10 +3,12 @@
 using namespace expansion;
 
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <list>
+/*#include <list>*/
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -234,7 +236,7 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
     int currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
     int currExpCountsMatIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as in expansion matrix
     int newExpCountsMatIndexed[16]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    vector<list<ControlUnit*>> cuRefLstVectBitOrder(16); // vector of 16 lists, that contains the references to the CUs, where the index of the list in the vector corresponds to the expansion in bitwise order
+    vector<vector<ControlUnit*>> cuRefLstVectBitOrder(16); // vector of 16 lists (actually also vectors), that contains the references to the CUs, where the index of the list in the vector corresponds to the expansion in bitwise order
 
     //
     // 1. count current expansion status (as it is in the given data)
@@ -286,8 +288,15 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
     // 4. plan and execute expansion
     for (int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
-        list<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
-        list<ControlUnit*>::iterator iter = listOfCUs->begin();
+        vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
+        // shuffle list if CU selection mode for comp. add. tells so
+        if (Global::get_cu_selection_mode_fca() == expansion::CUSModeFCA::RandomSelection) {
+            random_device rndDevice;
+            mt19937 rndGen( rndDevice() );
+            shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
+        }
+        // get the iterator
+        vector<ControlUnit*>::iterator iter = listOfCUs->begin();
         // loop over all current expansion states
         for (int jExpTargetMatO = 0; jExpTargetMatO < 16; jExpTargetMatO++) {
             // get number of CUs that get the current expansion

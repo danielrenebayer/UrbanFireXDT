@@ -88,6 +88,7 @@ string Global::input_path         = "";
 string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
+expansion::CUSModeFCA Global::cu_selection_mode_fca     = expansion::CUSModeFCA::OrderAsInData;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -115,6 +116,7 @@ bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
 bool Global::exp_profile_mode_init      = false;
+bool Global::cu_selection_mode_fca_init = false;
 
 void Global::InitializeStaticVariables() {
     // nothing to do anymore
@@ -416,6 +418,14 @@ void Global::set_exp_profile_mode(ExpansionProfileAllocationMode mode) {
     } else {
         Global::exp_profile_mode = mode;
         Global::exp_profile_mode_init = true;
+    }
+}
+void Global::set_cu_selection_mode_fca(expansion::CUSModeFCA mode) {
+    if (cu_selection_mode_fca_init) {
+        cerr << "CU selection mode for component addition already set!" << endl;
+    } else {
+        Global::cu_selection_mode_fca = mode;
+        Global::cu_selection_mode_fca_init = true;
     }
 }
 
