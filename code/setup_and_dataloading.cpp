@@ -64,25 +64,71 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
 
         //
+        // define internal functions (here i.e. a lambda function with complete capture-by-reference)
+        auto parse_element = [&](string& element_name, boost::property_tree::ptree& scenario_dict) -> void {
+            if ( element_name.compare("data input path") == 0 ) {
+                str_data_ipt    = scenario_dict.get_value<string>();
+                str_data_ipt_set= true;
+            } else if ( element_name.compare("data output path") == 0 ) {
+                str_data_opt    = scenario_dict.get_value<string>();
+                str_data_opt_set= true;
+            } else if ( element_name.compare("start") == 0 ) {
+                start_str       = scenario_dict.get_value<string>();
+                start_str_set   = true;
+            } else if ( element_name.compare("end") == 0 ) {
+                end_str         = scenario_dict.get_value<string>();
+                end_str_set     = true;
+            } else if ( element_name.compare("time steps per hour") == 0 ) {
+                ts_per_hour     = scenario_dict.get_value<int>();
+                ts_per_hour_set = true;
+            } else if ( element_name.compare("expansion id") == 0 ) {
+                expansionID     = scenario_dict.get_value<int>();
+                expansionID_set = true;
+            } else if ( element_name.compare("expansion BS P in kW") == 0 ) {
+                exp_bs_kW       = scenario_dict.get_value<float>();
+                exp_bs_kW_set   = true;
+            } else if ( element_name.compare("expansion BS E in kWh") == 0 ) {
+                exp_bs_kWh      = scenario_dict.get_value<float>();
+                exp_bs_kWh_set  = true;
+            } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
+                exp_bs_iSOC     = scenario_dict.get_value<float>();
+                exp_bs_iSOC_set = true;
+            } else if ( element_name.compare("open space PV kWp") == 0 ) {
+                os_pv_kWp       = scenario_dict.get_value<float>();
+                os_pv_kWp_set   = true;
+            } else if ( element_name.compare("open space wind kWp") == 0 ) {
+                os_wind_kWp     = scenario_dict.get_value<float>();
+                os_wind_kWp_set = true;
+            } else if ( element_name.compare("expansion profile selection") == 0 ) {
+                exp_profile_mode       = scenario_dict.get_value<string>();
+                exp_profile_mode_set   = true;
+            } else if ( element_name.compare("CU selection mode for comp. add.") == 0 ) {
+                sac_planning_mode      = scenario_dict.get_value<string>();
+                sac_planning_mode_set  = true;
+            } else if ( element_name.compare("expansion PV kWp static") == 0 ) {
+                exp_pv_kWp_static      = scenario_dict.get_value<float>();
+                exp_pv_kWp_static_set  = true;
+            } else if ( element_name.compare("expansion PV min kWp for section usage") == 0 ) {
+                exp_pv_min_kWp         = scenario_dict.get_value<float>();
+                exp_pv_min_kWp_set     = true;
+            } else if ( element_name.compare("expansion PV max inst kWp per section") == 0 ) {
+                exp_pv_max_kWp         = scenario_dict.get_value<float>();
+                exp_pv_max_kWp_set     = true;
+            } else if ( element_name.compare("expansion PV kWp per roof area in m2") == 0 ) {
+                exp_pv_kWp_m2_roof     = scenario_dict.get_value<float>();
+                exp_pv_kWp_m2_roof_set = true;
+            } else if ( element_name.compare("expansion PV kWp static mode") == 0 ) {
+                exp_pv_mode_static     = scenario_dict.get_value<bool>();
+                exp_pv_mode_static_set = true;
+            }
+            return;
+        };
+
+        //
         // read default values
         for (auto& scenario_dict_all : tree_root.get_child("Default Scenario Values")) {
             string element_name = scenario_dict_all.first;
-            if ( element_name.compare("data input path") == 0 ) {
-                str_data_ipt    = scenario_dict_all.second.get_value<string>();
-                str_data_ipt_set= true;
-            } else if ( element_name.compare("data output path") == 0 ) {
-                str_data_opt    = scenario_dict_all.second.get_value<string>();
-                str_data_opt_set= true;
-            } else if ( element_name.compare("start") == 0 ) {
-                start_str       = scenario_dict_all.second.get_value<string>();
-                start_str_set   = true;
-            } else if ( element_name.compare("end") == 0 ) {
-                end_str         = scenario_dict_all.second.get_value<string>();
-                end_str_set     = true;
-            } else if ( element_name.compare("time steps per hour") == 0 ) {
-                ts_per_hour     = scenario_dict_all.second.get_value<int>();
-                ts_per_hour_set = true;
-            }
+            parse_element(element_name, scenario_dict_all.second);
         }
 
         //
@@ -96,61 +142,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 // ... we read all variables
                 for (auto& s : scenario_dict) {
                     string element_name = s.first;
-                    if ( element_name.compare("data input path") == 0 ) {
-                        str_data_ipt    = scenario_dict.get<string>("data input path");
-                        str_data_ipt_set= true;
-                    } else if ( element_name.compare("data output path") == 0 ) {
-                        str_data_opt    = scenario_dict.get<string>("data output path");
-                        str_data_opt_set= true;
-                    } else if ( element_name.compare("start") == 0 ) {
-                        start_str       = scenario_dict.get<string>("start");
-                        start_str_set   = true;
-                    } else if ( element_name.compare("end") == 0 ) {
-                        end_str         = scenario_dict.get<string>("end");
-                        end_str_set     = true;
-                    } else if ( element_name.compare("time steps per hour") == 0 ) {
-                        ts_per_hour     = scenario_dict.get<int>("time steps per hour");
-                        ts_per_hour_set = true;
-                    } else if ( element_name.compare("expansion id") == 0 ) {
-                        expansionID     = scenario_dict.get<int>("expansion id");
-                        expansionID_set = true;
-                    } else if ( element_name.compare("expansion BS P in kW") == 0 ) {
-                        exp_bs_kW       = scenario_dict.get<float>("expansion BS P in kW");
-                        exp_bs_kW_set   = true;
-                    } else if ( element_name.compare("expansion BS E in kWh") == 0 ) {
-                        exp_bs_kWh      = scenario_dict.get<float>("expansion BS E in kWh");
-                        exp_bs_kWh_set  = true;
-                    } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
-                        exp_bs_iSOC     = scenario_dict.get<float>("expansion BS initial SOC");
-                        exp_bs_iSOC_set = true;
-                    } else if ( element_name.compare("open space PV kWp") == 0 ) {
-                        os_pv_kWp       = scenario_dict.get<float>("open space PV kWp");
-                        os_pv_kWp_set   = true;
-                    } else if ( element_name.compare("open space wind kWp") == 0 ) {
-                        os_wind_kWp     = scenario_dict.get<float>("open space wind kWp");
-                        os_wind_kWp_set = true;
-                    } else if ( element_name.compare("expansion profile selection") == 0 ) {
-                        exp_profile_mode       = scenario_dict.get<string>("expansion profile selection");
-                        exp_profile_mode_set   = true;
-                    } else if ( element_name.compare("CU selection mode for comp. add.") == 0 ) {
-                        sac_planning_mode      = scenario_dict.get<string>("CU selection mode for comp. add.");
-                        sac_planning_mode_set  = true;
-                    } else if ( element_name.compare("expansion PV kWp static") == 0 ) {
-                        exp_pv_kWp_static      = scenario_dict.get<float>("expansion PV kWp static");
-                        exp_pv_kWp_static_set  = true;
-                    } else if ( element_name.compare("expansion PV min kWp for section usage") == 0 ) {
-                        exp_pv_min_kWp         = scenario_dict.get<float>("expansion PV min kWp for section usage");
-                        exp_pv_min_kWp_set     = true;
-                    } else if ( element_name.compare("expansion PV max inst kWp per section") == 0 ) {
-                        exp_pv_max_kWp         = scenario_dict.get<float>("expansion PV max inst kWp per section");
-                        exp_pv_max_kWp_set     = true;
-                    } else if ( element_name.compare("expansion PV kWp per roof area in m2") == 0 ) {
-                        exp_pv_kWp_m2_roof     = scenario_dict.get<float>("expansion PV kWp per roof area in m2");
-                        exp_pv_kWp_m2_roof_set = true;
-                    } else if ( element_name.compare("expansion PV kWp static mode") == 0 ) {
-                        exp_pv_mode_static     = scenario_dict.get<bool>("expansion PV kWp static mode");
-                        exp_pv_mode_static_set = true;
-                    }
+                    parse_element(element_name, s.second);
                 }
                 //
                 scenario_found = true;
@@ -315,61 +307,6 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
     return false; // as we have not found what we searched
 }
 
-/*
-//
-// open and parse the simulation scenario csv file
-//
-bool configld::parse_scenario_file(int scenario_id) {
-    const char* scenarios_input_path = "../config/simulation_scenarios.csv";
-    ifstream scenarios_input;
-    scenarios_input.open(scenarios_input_path);
-    if (!scenarios_input.good()) {
-        cerr << "Error when connecting to the simulation scenario file with path " << scenarios_input_path << endl;
-        return false;
-    } else {
-        string currLineString;
-        getline( scenarios_input, currLineString ); // jump first line, as this is the header
-        for (int r = 0; r < scenario_id; r++) {
-            // iterate over every row
-            getline( scenarios_input, currLineString );
-            stringstream currLineStream( currLineString );
-            string currLineSplitted[11];
-            for (int col = 0; col < 11; col++) {
-                // split this row on the ","
-                getline( currLineStream, currLineSplitted[col], ',' );
-            }
-            // convert individual strings to int / float / char
-            int currentLineID = stoi( currLineSplitted[0] );
-            if (currentLineID == scenario_id) {
-                // read and parse time info
-                //struct tm
-                struct tm* tm_start = new struct tm;
-                struct tm* tm_end   = new struct tm;
-                stringstream stream_val_t_start( currLineSplitted[1] );
-                stringstream stream_val_t_end(   currLineSplitted[2] );
-                stream_val_t_start >> get_time(tm_start, "%Y-%m-%d %H:%M:%S");
-                stream_val_t_end   >> get_time(tm_end,   "%Y-%m-%d %H:%M:%S");
-                Global::set_ts_start_tm( tm_start );
-                Global::set_ts_end_tm(   tm_end   );
-                // read other values
-                Global::set_tsteps_per_hour(stoi( currLineSplitted[3] ));
-                Global::set_expansion_scenario_id(stoi( currLineSplitted[4] ));
-                Global::set_exp_pv_kWp(        stof( currLineSplitted[5] ));
-                Global::set_exp_bess_kW(       stof( currLineSplitted[6] ));
-                Global::set_exp_bess_kWh(      stof( currLineSplitted[7] ));
-                Global::set_exp_bess_start_soc(stof( currLineSplitted[8] ));
-                Global::set_open_space_pv_kWp( stof( currLineSplitted[9] ));
-                Global::set_wind_kWp(          stof( currLineSplitted[10]));
-                break;
-            } else {
-                continue;
-            }
-        }
-        scenarios_input.close();
-    }
-    return true;
-}
-*/
 
 
 int load_data_from_central_database_callbackA(void* data, int argc, char** argv, char** colName) {
