@@ -160,7 +160,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         //
         // transform parameters if required (e.g. for exp_profile_mode)
         //   a) expansion profile allocation mode
-        global::ExpansionProfileAllocationMode exp_profile_mode_transf;
+        global::ExpansionProfileAllocationMode exp_profile_mode_transf = global::ExpansionProfileAllocationMode::Uninitialized;
         if (exp_profile_mode_set) {
             if      (exp_profile_mode == "as in data")
                 exp_profile_mode_transf = global::ExpansionProfileAllocationMode::AsInData;
@@ -172,14 +172,17 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             }
         }
         //   b) Control Unit Selectio Mode For Component Addition
-        expansion::CUSModeFCA sac_planning_mode_transl;
+        global::CUSModeFCA sac_planning_mode_transl = global::CUSModeFCA::Uninitialized;
         if (sac_planning_mode_set) {
             if (sac_planning_mode == "as in data")  {
-                sac_planning_mode_transl = expansion::CUSModeFCA::OrderAsInData;
+                sac_planning_mode_transl = global::CUSModeFCA::OrderAsInData;
             } else if (sac_planning_mode == "random")  {
-                sac_planning_mode_transl = expansion::CUSModeFCA::RandomSelection;
+                sac_planning_mode_transl = global::CUSModeFCA::RandomSelection;
             } else if (sac_planning_mode == "best SSR")  {
-                sac_planning_mode_transl = expansion::CUSModeFCA::BestSSR;
+                sac_planning_mode_transl = global::CUSModeFCA::BestSSR;
+            } else {
+                cerr << "Parameter 'CU selection mode for comp. add' is defined as '" << sac_planning_mode << "' in config-json, but this value is unknown." << endl;
+                throw runtime_error("Parameter 'CU selection mode for comp. add' as defined in config-json is unknown.");
             }
         }
 

@@ -88,7 +88,7 @@ string Global::input_path         = "";
 string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
-expansion::CUSModeFCA Global::cu_selection_mode_fca     = expansion::CUSModeFCA::OrderAsInData;
+global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -147,7 +147,8 @@ bool Global::AllVariablesInitialized() {
         input_path_init &&
         output_path_init &&
         output_mode_per_cu_init &&
-        exp_profile_mode_init)
+        exp_profile_mode_init &&
+        cu_selection_mode_fca_init)
     {
         if ( ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
@@ -420,7 +421,7 @@ void Global::set_exp_profile_mode(ExpansionProfileAllocationMode mode) {
         Global::exp_profile_mode_init = true;
     }
 }
-void Global::set_cu_selection_mode_fca(expansion::CUSModeFCA mode) {
+void Global::set_cu_selection_mode_fca(global::CUSModeFCA mode) {
     if (cu_selection_mode_fca_init) {
         cerr << "CU selection mode for component addition already set!" << endl;
     } else {

@@ -21,17 +21,6 @@ namespace expansion {
      * checking the expansion matrix itself.
      */
 
-    /*
-     * This struct defines the
-     * Control Unit Selectio Mode For Component Addition
-     * i.e. it defines how the control units are selected, that get simulatively added components (like PV, BS, HP, ...)
-     */
-    enum struct CUSModeFCA {
-        OrderAsInData,
-        RandomSelection,
-        BestSSR
-    };
-
     //
     // General information about the expansion matrix is defined here
     //
