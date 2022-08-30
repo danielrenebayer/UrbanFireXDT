@@ -2,6 +2,7 @@
 #include "simulation_logic.h"
 using namespace simulation;
 
+#include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <sstream>
@@ -9,6 +10,7 @@ using namespace simulation;
 #include "helper.h"
 #include "global.h"
 #include "output.h"
+#include "sac_planning.h"
 #include "units.h"
 
 
@@ -90,16 +92,19 @@ bool simulation::oneStep(int ts) {
     // and calculate total grid load
     Substation*const* subList = Substation::GetArrayOfInstances();
     const int nSubst = Substation::GetNumberOfInstances();
-    *(output::substation_output) << ts << ","; // add timestep to output
-    for (int i = 0; i < nSubst; i++) {
-        float current_station_load = subList[i]->calc_load();
-        total_load += current_station_load;
-        // stuff for output
-        *(output::substation_output) << current_station_load << ",";
+
+    if (output::substation_output != NULL) {
+        *(output::substation_output) << ts << ","; // add timestep to output
+        for (int i = 0; i < nSubst; i++) {
+            float current_station_load = subList[i]->calc_load();
+            total_load += current_station_load;
+            // stuff for output
+            *(output::substation_output) << current_station_load << ",";
+        }
+        *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
+        *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
+        *(output::substation_output) << total_load << "\n"; // add total load to output
     }
-    *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
-    *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
-    *(output::substation_output) << total_load << "\n"; // add total load to output
 
     std::cout << ".";
 
@@ -230,4 +235,76 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
     }
 
     return true;
+}
+
+bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16], int scenario_id) {
+    //
+    // This function executes the expansion / adds sim. added components to selected CUs
+    // and then calls runSimulationForAllVariations(int)
+    //
+    if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR) {
+        //
+        // 1) If selection mode is taking those with best SSR
+        //
+        // 1.0) initial checks
+        if (!Global::get_comp_eval_metrics()) {
+            cerr << "Error: Option 'metrics / m' not set even though CU selection for sim. add. components should be done according to best SSR.\nThis is impossible. Set 'metrics' as parameter or change CU selection mode." << endl;
+            return false;
+        }
+        // 1.1) plan expansion as they would happen, but with random shuffling whatever is selected
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id, true);
+        // 1.2a) add PV installations to all CUs, if they do not already have one
+        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+        const int nCUs = ControlUnit::GetNumberOfInstances();
+        for (int i = 0; i < nCUs; i++) {
+            if (!cuList[i]->has_pv())
+                cuList[i]->add_exp_pv();
+        }
+        // 1.2b) add Battery to all CUs (that have a sim. added PV-installation), if they do not already have a battery
+        for (int i = 0; i < nCUs; i++) {
+            if ( !cuList[i]->has_bs() && ( cuList[i]->get_exp_combi_bit_repr_sim_added() & expansion::MaskBS ) )
+                cuList[i]->add_exp_bs();
+        }
+        // 1.3) execute the simulation once for the given scenario
+        bool no_error = runSimulationForOneParamSetting();
+        if (!no_error) { 
+            cerr << "Error during selection of the CUs for adding simulated components." << endl;
+            return false;
+        }
+        // 1.4) sort control units according to the SSR which has been computed in 1.2)
+        // 1.4.a) Collect the SSR values
+        vector<pair<float, ControlUnit*>> ssr_cu_pair_vector( ControlUnit::GetNumberOfInstances() );
+        for (int i = 0; i < nCUs; i++) {
+            ssr_cu_pair_vector.emplace_back(cuList[i]->get_SSR(), cuList[i]); // SSR, pointer to the object
+        }
+        // 1.4.b) Sort the SSR / CU-Pointer vactor
+        sort(ssr_cu_pair_vector.begin(),
+             ssr_cu_pair_vector.end(),
+             [](pair<float, ControlUnit*> a, pair<float, ControlUnit*> b) { return a.first > b.first; });
+        //
+        // 1.4.c) output metrics
+        output::outputMetrics(true);
+        //
+        // 1.5) Reset internal variables
+        ControlUnit::ResetAllInternalStates();
+        //
+        // 1.6) Remove sim. added components from all CUs
+        ControlUnit::RemoveAllSimAddedComponents();
+        //
+        // 1.7) Plan expansion with the new order
+        vector<ControlUnit*> ordered_cu_list;
+        ordered_cu_list.reserve(ssr_cu_pair_vector.size());
+        transform(ssr_cu_pair_vector.begin(), ssr_cu_pair_vector.end(),
+                  back_inserter(ordered_cu_list),
+                  [](auto& pair){ return pair.second; });
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id, false, &ordered_cu_list);
+    } else {
+        //
+        // 2) add expansion to units in the other cases
+        //
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
+    }
+    //
+    // 3) run the simulation (for all parameter variations or a single run)
+    return runSimulationForAllVariations(scenario_id);
 }
