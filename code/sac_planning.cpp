@@ -226,11 +226,18 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
     return true;
 }
 
-void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], int expansion_matrix_abs_freq[16][16], int scenario_id) {
+void expansion::add_expansion_to_units(
+    float expansion_matrix_rel_freq[16][16],
+    int   expansion_matrix_abs_freq[16][16],
+    int   scenario_id,
+    bool  random_anyway_no_output /* = falsee */,
+    vector<ControlUnit*>* ordered_list /* = NULL */) {
     /*
      * This function adds the expansion given als relative counts in expansion_matrix_rel_freq
      * to the control units.
      * @param expansion_matrix_abs_freq contains the absolute counts afterwards
+     * @param random_anyway_no_output: do random selection (whatever the Global::get_cu_selection_mode_fca() says) but switch off output, if set to true
+     * @param ordered_list: if given, the order given in the list is taken (in this case, random selection is always neglected, regardeless of what random_anyway_no_output says)
      */
 
     int currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
@@ -289,8 +296,13 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
     for (int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
-        // shuffle list if CU selection mode for comp. add. tells so
-        if (Global::get_cu_selection_mode_fca() == expansion::CUSModeFCA::RandomSelection) {
+        if (ordered_list != NULL) {
+            //
+            // if ordered_list is given, this will be used
+            listOfCUs = ordered_list;
+        } else if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection || random_anyway_no_output) {
+            //
+            // shuffle list if CU selection mode for comp. add. tells so (or random anyway is selected)
             random_device rndDevice;
             mt19937 rndGen( rndDevice() );
             shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
@@ -331,6 +343,9 @@ void expansion::add_expansion_to_units(float expansion_matrix_rel_freq[16][16], 
         outer_loop_end:;
     }
 
+    // exit, if no output is selected
+    if (random_anyway_no_output)
+        return;
     //
     // finally: write expansion information to file
     // A. output expansion matrix with absolute numbers
