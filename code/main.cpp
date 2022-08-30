@@ -15,7 +15,6 @@
 #include "components.h"
 #include "units.h"
 #include "output.h"
-#include "sac_planning.h"
 #include "setup_and_dataloading.h"
 #include "simulation_logic.h"
 
@@ -162,17 +161,13 @@ int main(int argc, char* argv[]) {
     //
     output::initializeDirectoriesOnce(scenario_id);
 
-	//
-	// Add expansion[s] to the control units
-	//
-	expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
-
     //
-    // Run the simulation
+    // Plan and add which sim. added components should be added to which control units
+    // and Run the simulation
     // - once (if no parameter variation is selected) or
     // - multiple times, if param. vari. is selected
     //
-    if (!simulation::runSimulationForAllVariations(scenario_id)) {
+    if (!simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
         cerr << "Error during simulation run!" << endl;
         return 3;
     }
