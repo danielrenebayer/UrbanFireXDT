@@ -296,10 +296,21 @@ void expansion::add_expansion_to_units(
     for (int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
+        vector<ControlUnit*>* helperList = NULL;
         if (ordered_list != NULL) {
             //
             // if ordered_list is given, this will be used
-            listOfCUs = ordered_list;
+            // use the helper list that holds the filter elements of listOfCUs ...
+            // ... filtering is acually required, as we have to filter the elements with a given expansion at that point
+            helperList = new vector<ControlUnit*>();
+            helperList->reserve(listOfCUs->size());
+            for (ControlUnit* c : *ordered_list) {
+                if ( find( listOfCUs->begin(), listOfCUs->end(), c) != listOfCUs->end() ) {
+                    // listOfCUs contains c, so we add s to the new list
+                    helperList->push_back(c);
+                }
+            }
+            listOfCUs = helperList;
         } else if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection || random_anyway_no_output) {
             //
             // shuffle list if CU selection mode for comp. add. tells so (or random anyway is selected)
@@ -341,6 +352,8 @@ void expansion::add_expansion_to_units(
             }
         }
         outer_loop_end:;
+        if (helperList != NULL)
+            delete helperList;
     }
 
     // exit, if no output is selected
