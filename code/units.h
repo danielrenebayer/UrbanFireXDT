@@ -98,6 +98,7 @@ class ControlUnit {
         float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
+        float get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         string* get_metrics_string(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
         // modifiers
@@ -110,6 +111,7 @@ class ControlUnit {
         void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
+        void remove_sim_added_components(); ///< Remove all components that are added simulatively
         // for simulation runs
         bool compute_next_value(int ts);
         //
@@ -123,6 +125,7 @@ class ControlUnit {
         static const int GetNumberOfInstances() {return st__n_CUs;}
         // 3. modifiers for all created objects
         static void ResetAllInternalStates();
+        static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units
     private:
         // constant member variables (other languages might call this 'final')
         const int unitID;

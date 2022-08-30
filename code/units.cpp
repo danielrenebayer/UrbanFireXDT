@@ -291,6 +291,23 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
     return 0;
 }
 
+float ControlUnit::get_SSR() {
+    if (create_history_output) {
+        double sum_of_consumption_kWh    = 0;
+        double sum_of_selfconsumed_e_kWh = 0;
+        for (int i = 0; i < Global::get_n_timesteps(); i++) {
+            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
+            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
+        }
+        double SSR = 0.0;
+        if (sum_of_consumption_kWh > 0)
+            SSR = sum_of_selfconsumed_e_kWh / sum_of_consumption_kWh;
+        return SSR;
+    } else {
+        return 0.0;
+    }
+}
+
 string* ControlUnit::get_metrics_string() {
     if (create_history_output) {
         double sum_of_consumption_kWh    = 0;
@@ -404,6 +421,25 @@ void ControlUnit::set_exp_bs_maxE_kWh(float value) {
 void ControlUnit::set_exp_bs_maxP_kW(float value) {
     if (has_sim_bs)
         sim_comp_bs->set_maxP_kW(value);
+}
+
+void ControlUnit::remove_sim_added_components() {
+    if (has_sim_pv) {
+        has_sim_pv = false;
+        delete sim_comp_pv;
+    }
+	if (has_sim_bs) {
+        has_sim_bs = false;
+        delete sim_comp_bs;
+    }
+	if (has_sim_hp) {
+        has_sim_hp = false;
+        delete sim_comp_hp;
+    }
+	if (has_sim_wb) {
+        has_sim_wb = false;
+        delete sim_comp_wb;
+    }
 }
 
 bool ControlUnit::compute_next_value(int ts) {
@@ -551,9 +587,19 @@ void ControlUnit::ResetAllInternalStates() {
     //
     for (int i = 0; i < st__n_CUs; i++) {
         ControlUnit* e_i = st__cu_list[i];
+        //
+        e_i->current_load_vSM_kW = 0.0;
+        e_i->self_produced_load_kW = 0.0;
+        //
         if (e_i->has_sim_bs) {
             e_i->sim_comp_bs->resetInternalState();
         }
+    }
+}
+
+void ControlUnit::RemoveAllSimAddedComponents() {
+    for (int i = 0; i < st__n_CUs; i++) {
+        st__cu_list[i]->remove_sim_added_components();
     }
 }
 
