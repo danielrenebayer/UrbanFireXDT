@@ -228,7 +228,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
 
 void expansion::add_expansion_to_units(
     float expansion_matrix_rel_freq[16][16],
-    int   expansion_matrix_abs_freq[16][16],
+    long  expansion_matrix_abs_freq[16][16],
     int   scenario_id,
     bool  random_anyway_no_output /* = falsee */,
     vector<ControlUnit*>* ordered_list /* = NULL */) {
@@ -240,9 +240,9 @@ void expansion::add_expansion_to_units(
      * @param ordered_list: if given, the order given in the list is taken (in this case, random selection is always neglected, regardeless of what random_anyway_no_output says)
      */
 
-    int currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
-    int currExpCountsMatIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as in expansion matrix
-    int newExpCountsMatIndexed[16]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    long currExpCountsBitIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as given from bitwise representation (as this represents a sequential integer as well)
+    long currExpCountsMatIndexed[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // order as in expansion matrix
+    long newExpCountsMatIndexed[16]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     vector<vector<ControlUnit*>> cuRefLstVectBitOrder(16); // vector of 16 lists (actually also vectors), that contains the references to the CUs, where the index of the list in the vector corresponds to the expansion in bitwise order
 
     //
@@ -270,12 +270,12 @@ void expansion::add_expansion_to_units(
     //          are impossible, obviously)
     for (int i = 0; i < 16; i++) {
         for (int j = i+1; j < 16; j++) {
-            expansion_matrix_abs_freq[i][j] = expansion_matrix_rel_freq[i][j] * currExpCountsMatIndexed[i];
+            expansion_matrix_abs_freq[i][j] = (long) ( expansion_matrix_rel_freq[i][j] * (float) (currExpCountsMatIndexed[i]) );
         }
     }
     // calculate diagonal values
     for (int i = 0; i < 16; i++) {
-        int sum_expanded_i = 0;
+        long sum_expanded_i = 0;
         for (int j = i+1; j < 16; j++){
             sum_expanded_i += expansion_matrix_abs_freq[i][j];
         }
@@ -323,7 +323,7 @@ void expansion::add_expansion_to_units(
         // loop over all current expansion states
         for (int jExpTargetMatO = 0; jExpTargetMatO < 16; jExpTargetMatO++) {
             // get number of CUs that get the current expansion
-            int numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
+            long numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
             // find out, which units we have to add for this i/j-combination
             int iBitRepr = expCombiMatrixOrderToBitRepr(iMatO);
             int jBitRepr = expCombiMatrixOrderToBitRepr(jExpTargetMatO);
@@ -337,7 +337,7 @@ void expansion::add_expansion_to_units(
             if (ijXOR & MaskHP) expHP = true;
             if (ijXOR & MaskWB) expWB = true;
             // loop over this number
-            for (int n = 0; n < numThisCombi_i_j; n++) {
+            for (long n = 0; n < numThisCombi_i_j; n++) {
                 if (iter == listOfCUs->end()) {
                     cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
                     goto outer_loop_end;
