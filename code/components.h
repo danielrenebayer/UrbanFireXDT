@@ -17,10 +17,10 @@
 class RoofSectionPV {
     public:
         RoofSectionPV(float this_section_kWp, std::string& orientation);
-        float get_currentFeedin_kW(int ts);
-        const float        get_section_kWp()   const { return this_section_kWp; }
+        float get_currentFeedin_kW(unsigned long ts);
+        float get_section_kWp()    const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
-        const size_t       get_profile_index() const { return profile_index;    }
+        size_t get_profile_index() const { return profile_index;    }
     private:
         // constant member variables
         const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
@@ -44,7 +44,7 @@ class ComponentPV {
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         std::string* get_section_string(const std::string& prefix_per_line); ///< Returns a string listing information about all existing, simulated roof sections - one line per section
         // update / action methods
-        void  calculateCurrentFeedin(int ts);
+        void  calculateCurrentFeedin(unsigned long ts);
         //void  set_kWp(float value);
     private:
         // constant members
@@ -62,8 +62,8 @@ class ComponentBS {
         float get_SOC() const               { return SOC; }
         float get_currentCharge_kWh() const { return currentE_kWh; }
         float get_currentLoad_kW() const    { return currentP_kW;  }
-        const float get_maxE_kWh() const    { return maxE_kWh;     }
-        const float get_maxP_kW()  const    { return maxP_kW;      }
+        float get_maxE_kWh()       const    { return maxE_kWh;     }
+        float get_maxP_kW()        const    { return maxP_kW;      }
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_maxE_kWh(float value)     { maxE_kWh = value; }
@@ -92,7 +92,7 @@ class ComponentHP {
         // getter methods
         float get_currentDemand_kW() { return currentDemand_kW; }
         // update / action methods
-        void calculateCurrentFeedin(int ts);
+        void calculateCurrentFeedin(unsigned long ts);
         //
         // static methods for initializing the random generators
         static void InitializeRandomGenerator();

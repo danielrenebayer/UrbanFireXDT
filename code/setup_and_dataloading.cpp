@@ -350,13 +350,13 @@ int load_data_from_central_database_callbackB(void* data, int argc, char** argv,
     /* 
      * This is the callback function for loading the time indices
      */
-    static int callcounter = 1;
-    int pos = callcounter - 1; // current position in the array is one behind the count of calls
+    static size_t callcounter = 1;
+    size_t pos = callcounter - 1; // current position in the array is one behind the count of calls
     if (argc != 3) {
         cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
     }
-    int current_time_index = stoi(argv[0]);
+    size_t current_time_index = stoul(argv[0]);
     if (current_time_index != callcounter) {
         cerr << "Time indices are not ordered sequentially!" << endl;
         return 1;
@@ -382,7 +382,7 @@ int load_data_from_central_database_callbackC(void* data, int argc, char** argv,
         cerr << "Number of arguments not equal to 2 for one row!" << endl;
         return 1;
     }
-    int current_station_id = stoi(argv[0]);
+    size_t current_station_id = stoul(argv[0]);
     string* stationName = new string(argv[1]);
     try {
         Substation::InstantiateNewSubstation(current_station_id, stationName);
@@ -408,9 +408,9 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
         cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
     }
-    int current_cu_id = stoi(argv[0]);
-    int conn_to_subst_id = stoi(argv[1]);
-    int location_id      = stoul(argv[2]);
+    unsigned long current_cu_id    = stoul(argv[0]);
+    unsigned long conn_to_subst_id = stoul(argv[1]);
+    unsigned long location_id      = stoul(argv[2]);
     try {
         ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id);
     } catch (runtime_error& e) {
@@ -436,8 +436,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
         cerr << "Number of arguments not equal to 10 for one row!" << endl;
         return 1;
     }
-    int current_mu_id = stoi(argv[0]);
-    int conn_to_unitID = stoi(argv[1]);
+    size_t current_mu_id  = stoul(argv[0]);
+    size_t conn_to_unitID = stoul(argv[1]);
     string* mPointIDStr= new string(argv[2]);
     bool has_demand    = argv[3][0] == '1';
     bool has_feedin    = argv[4][0] == '1';
@@ -447,7 +447,7 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
     bool has_hp        = argv[8][0] == '1';
     bool has_wb        = false; // TODO: wallboxes not implemented jet
     bool has_chp       = argv[9][0] == '1';
-    int locID          = stoi(argv[10]);
+    size_t locID       = stoul(argv[10]);
 
     stringstream data_input_path;
     data_input_path << Global::get_input_path() << "SeparatedSmartMeterData/";
@@ -501,7 +501,7 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
      * 0           1             2            3
      * TimestepID  Value_Feedin  Orientation  SameOrientationTimeSeriesIndex
      */
-    static int callcounter_timestepID = 1; // internal counter for the timestep ID
+    static unsigned long callcounter_timestepID = 1; // internal counter for the timestep ID
     static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries
     static string last_orientation;
     static int last_same_orientation_ts_index = -1;
@@ -519,11 +519,11 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
     }
 
     // parse the current values
-    int current_timestepID;
+    unsigned long current_timestepID;
     int current_same_orientation_ts_index;
     string current_orientation;
     try {
-        current_timestepID = stoi(argv[0]);
+        current_timestepID = stoul(argv[0]);
         current_same_orientation_ts_index = stoi(argv[3]);
         current_orientation = argv[2];
     } catch (const exception& ex) {
@@ -550,7 +550,7 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
         return 1;
     }
 
-    int pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
+    size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
     ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
 
     if (callcounter_timestepID < Global::get_n_timesteps()) {
@@ -582,14 +582,14 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
      * 0           1
      * TimestepID  wind_profile_value
      */
-    static int callcounter = 1;
-    int pos = callcounter - 1; // the current position is one behind the callcounter
+    static size_t callcounter = 1;
+    size_t pos = callcounter - 1; // the current position is one behind the callcounter
     if (argc != 2) {
         cerr << "Number of arguments not equal to 2 for one row!" << endl;
         return 1;
     }
 
-    if (stoi(argv[0]) != callcounter) {
+    if (stoul(argv[0]) != callcounter) {
         cerr << "Wrong ordering of the global PV profile values!" << endl;
         return 1;
     }
@@ -609,7 +609,7 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
      * 0           1             2
      * TimestepID  Value_Demand  TimeSeriesIndex
      */
-    static int callcounter_timestepID = 1; // internal counter for the timestep ID
+    static unsigned long callcounter_timestepID = 1; // internal counter for the timestep ID
     static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
 
     // check callcounter
@@ -624,7 +624,7 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         return 1;
     }
 
-    if (stoi(argv[0]) != callcounter_timestepID) {
+    if (stoul(argv[0]) != callcounter_timestepID) {
         cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
         return 1;
     }
@@ -632,7 +632,7 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
         return 1;
     }
-    int pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
+    size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
     ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
 
     if (callcounter_timestepID < Global::get_n_timesteps()) {
@@ -678,7 +678,7 @@ int load_data_from_central_database_callback_address_data_B(void* data, int argc
     string orientation ( argv[2] );
     if (orientation == "flat_roof" || orientation == "f") {
         // compute new usable area as stated above
-        usable_area = usable_area / 0.707107;
+        usable_area = usable_area / 0.707107f;
         orientation = "S";
     }
     global::roof_section_orientations[ stoul(argv[0]) ].push_back( pair<float, std::string>(usable_area, orientation) );
@@ -706,7 +706,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         // Initialize global time list
         //
-        global::time_timestep_id = new int[Global::get_n_timesteps()];
+        global::time_timestep_id = new unsigned long[Global::get_n_timesteps()];
         global::time_localtime_str = new vector<struct tm*>();
         global::time_localtimezone_str = new vector<string>();
         //

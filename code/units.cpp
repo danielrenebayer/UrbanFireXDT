@@ -21,11 +21,11 @@ using namespace std;
 // ----------------------------- //
 
 bool Substation::st__substation_list_init    = false;
-int Substation::st__n_substations            = 0;
-int Substation::st__new_substation_position  = 0;
+size_t Substation::st__n_substations            = 0;
+size_t Substation::st__new_substation_position  = 0;
 Substation** Substation::st__substation_list = NULL;
 
-Substation::Substation(int id, string* name)
+Substation::Substation(unsigned long id, string* name)
 	: id(id), name(name)
 {
 	/*
@@ -76,7 +76,7 @@ float Substation::calc_load() {
 	return total_load;
 }
 
-void Substation::InitializeStaticVariables(int n_substations) {
+void Substation::InitializeStaticVariables(unsigned long n_substations) {
 	st__substation_list_init = true;
 	st__substation_list = new Substation*[n_substations];
 	st__n_substations   = n_substations;
@@ -84,7 +84,7 @@ void Substation::InitializeStaticVariables(int n_substations) {
 
 void Substation::VacuumInstancesAndStaticVariables() {
 	// delete all instances
-	for (int i = 0; i < st__new_substation_position; i++)
+	for (unsigned long i = 0; i < st__new_substation_position; i++)
 		delete st__substation_list[i];
 	// delete static variables and arrays
 	delete[] st__substation_list;
@@ -92,7 +92,7 @@ void Substation::VacuumInstancesAndStaticVariables() {
 	st__substation_list_init = false;
 }
 
-inline Substation* Substation::GetInstance(int id) {
+inline Substation* Substation::GetInstance(unsigned long id) {
 	if (id > 0 && id <= st__n_substations)
 		return st__substation_list[id - 1];
 	else
@@ -108,11 +108,11 @@ inline Substation* Substation::GetInstance(int id) {
 // ----------------------------- //
 
 bool ControlUnit::st__cu_list_init     = false;
-int ControlUnit::st__n_CUs             = 0;
-int ControlUnit::st__new_CU_position   = 0;
+size_t ControlUnit::st__n_CUs             = 0;
+size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
 
-ControlUnit::ControlUnit(int unitID, int substation_id, unsigned long locationID)
+ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID)
 {
 	//
@@ -291,11 +291,11 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
     return 0;
 }
 
-float ControlUnit::get_SSR() {
+double ControlUnit::get_SSR() {
     if (create_history_output) {
         double sum_of_consumption_kWh    = 0;
         double sum_of_selfconsumed_e_kWh = 0;
-        for (int i = 0; i < Global::get_n_timesteps(); i++) {
+        for (size_t i = 0; i < Global::get_n_timesteps(); i++) {
             sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
             sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
         }
@@ -313,7 +313,7 @@ string* ControlUnit::get_metrics_string() {
         double sum_of_consumption_kWh    = 0;
         double sum_of_selfconsumed_e_kWh = 0;
         double sum_of_pv_generated_e_kWh = 0;
-        for (int i = 0; i < Global::get_n_timesteps(); i++) {
+        for (size_t i = 0; i < Global::get_n_timesteps(); i++) {
             sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
             sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
             sum_of_pv_generated_e_kWh += history_pv_generation_kW[i]  * Global::get_time_step_size_in_h();
@@ -442,7 +442,7 @@ void ControlUnit::remove_sim_added_components() {
     }
 }
 
-bool ControlUnit::compute_next_value(int ts) {
+bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // This function computes the next value
     // for this complete control unit.
@@ -555,7 +555,7 @@ bool ControlUnit::compute_next_value(int ts) {
     return true;
 }
 
-void ControlUnit::InitializeStaticVariables(int n_CUs) {
+void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
     st__cu_list_init = true;
     st__cu_list = new ControlUnit*[n_CUs];
     st__n_CUs   = n_CUs;
@@ -563,7 +563,7 @@ void ControlUnit::InitializeStaticVariables(int n_CUs) {
 
 void ControlUnit::VacuumInstancesAndStaticVariables() {
     // delete all instances
-    for (int i = 0; i < st__new_CU_position; i++)
+    for (unsigned long i = 0; i < st__new_CU_position; i++)
         delete st__cu_list[i];
     // delete static variables and arrays
     delete[] st__cu_list;
@@ -571,7 +571,7 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
     st__cu_list_init = false;
 }
 
-inline ControlUnit* ControlUnit::GetInstance(int unitID) {
+inline ControlUnit* ControlUnit::GetInstance(unsigned long unitID) {
     if (unitID > 0 && unitID <= st__n_CUs)
         return st__cu_list[unitID - 1];
     else
@@ -585,7 +585,7 @@ void ControlUnit::ResetAllInternalStates() {
     // have interal states, like a battery has the current SOC
     // as internal state).
     //
-    for (int i = 0; i < st__n_CUs; i++) {
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
         ControlUnit* e_i = st__cu_list[i];
         //
         e_i->current_load_vSM_kW = 0.0;
@@ -598,7 +598,7 @@ void ControlUnit::ResetAllInternalStates() {
 }
 
 void ControlUnit::RemoveAllSimAddedComponents() {
-    for (int i = 0; i < st__n_CUs; i++) {
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
         st__cu_list[i]->remove_sim_added_components();
     }
 }
@@ -613,11 +613,11 @@ void ControlUnit::RemoveAllSimAddedComponents() {
 // ----------------------------- //
 
 bool MeasurementUnit::st__mu_list_init   = false;
-int MeasurementUnit::st__n_MUs           = 0;
-int MeasurementUnit::st__new_MU_position = 0;
+size_t MeasurementUnit::st__n_MUs           = 0;
+size_t MeasurementUnit::st__new_MU_position = 0;
 MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
 
-MeasurementUnit::MeasurementUnit(int meUID, int unitID, string * meterPointName, int locID,
+MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPointName, size_t locID,
                                  bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                                  bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) :
     meUID(meUID),
@@ -707,7 +707,7 @@ bool MeasurementUnit::load_data(const char * filepath) {
     } else {
         string currLineString;
         getline( smeter_input, currLineString ); // jump first line, as this is the header
-        for (int r = 0; r < Global::get_n_timesteps(); r++) {
+        for (size_t r = 0; r < Global::get_n_timesteps(); r++) {
             // iterate over every row
             getline( smeter_input, currLineString );
             stringstream currLineStream( currLineString );
@@ -743,25 +743,25 @@ inline const std::string * MeasurementUnit::get_meterPointName() const {
     return meterPointName;
 }
 
-inline const int MeasurementUnit::get_meUID() const{
+inline unsigned long MeasurementUnit::get_meUID() const{
     return meUID;
 }
 
-inline const int MeasurementUnit::get_locationID() const {
+inline unsigned long MeasurementUnit::get_locationID() const {
     return locationID;
 }
 
-bool MeasurementUnit::compute_next_value(int ts) {
+bool MeasurementUnit::compute_next_value(unsigned long ts) {
     if (ts <= 0 || ts > Global::get_n_timesteps()) {
         current_load_rsm_kW = 0.0;
         return false;
     }
-    int tsID = ts - 1;
+    unsigned long tsID = ts - 1;
     current_load_rsm_kW = data_value_demand[tsID] - data_value_feedin[tsID];
     return true;
 }
 
-void MeasurementUnit::InitializeStaticVariables(int n_MUs) {
+void MeasurementUnit::InitializeStaticVariables(unsigned long n_MUs) {
     st__mu_list_init = true;
     st__mu_list = new MeasurementUnit*[n_MUs];
     st__n_MUs   = n_MUs;
@@ -769,7 +769,7 @@ void MeasurementUnit::InitializeStaticVariables(int n_MUs) {
 
 void MeasurementUnit::VacuumInstancesAndStaticVariables() {
     // delete all instances
-    for (int i = 0; i < st__new_MU_position; i++)
+    for (size_t i = 0; i < st__new_MU_position; i++)
         delete st__mu_list[i];
     // delete static variables and arrays
     delete[] st__mu_list;
@@ -797,12 +797,12 @@ OpenSpacePVOrWind::OpenSpacePVOrWind(float kWp, OpenSpacePVOrWindType type)
     }
 }
 
-bool OpenSpacePVOrWind::compute_next_value(int ts) {
+bool OpenSpacePVOrWind::compute_next_value(unsigned long ts) {
     if (ts <= 0 || ts > Global::get_n_timesteps()) {
         current_feedin_kW = 0.0;
         return false;
     }
-    int tsID = ts - 1;
+    unsigned long tsID = ts - 1;
     current_feedin_kW = profile_data[tsID] * kWp;
     return true;
 }

@@ -35,7 +35,7 @@ namespace global {
     // inline float current_energy_feedin_price = 0.0;
     // inline float current_energy_supply_price = 0.0;
     // Time info (read from time_indices table in central values database)
-    inline int* time_timestep_id = NULL; ///< Reference to the list of time steps
+    inline unsigned long* time_timestep_id = NULL; ///< Reference to the list of time steps
     inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
     inline std::map<std::string, size_t> pv_profiles_information; ///< Map (orientation, number of time series) where the number of pv-profiles per orientation are given
@@ -126,10 +126,10 @@ class Global {
         static inline float get_exp_bess_kWh();
         static inline float get_exp_bess_start_soc();
         */
-        static int get_n_timesteps()   {  return n_timesteps; }
-        static int get_n_substations() {  return n_substations; }
-        static int get_n_CUs()         {  return n_CUs; }
-        static int get_n_MUs()         {  return n_MUs; }
+        static unsigned long get_n_timesteps()          { return n_timesteps; }
+        static unsigned long get_n_substations()        { return n_substations; }
+        static unsigned long get_n_CUs()                { return n_CUs; }
+        static unsigned long get_n_MUs()                { return n_MUs; }
         static unsigned long get_n_pv_profiles()        { return n_pv_ts; }
         static unsigned long get_n_heatpump_profiles()  { return n_hp_ts; }
         static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
@@ -156,10 +156,10 @@ class Global {
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         // setter methods
-        static void set_n_timesteps(int n_timesteps);
-        static void set_n_substations(int n_substations);
-        static void set_n_CUs(int n_CUs);
-        static void set_n_MUs(int n_MUs);
+        static void set_n_timesteps(unsigned long n_timesteps);
+        static void set_n_substations(unsigned long n_substations);
+        static void set_n_CUs(unsigned long n_CUs);
+        static void set_n_MUs(unsigned long n_MUs);
         static void set_n_pv_profiles(unsigned long n_pv_ts);
         static void set_n_heatpump_profiles(unsigned long n_hp_ts);
         static void set_comp_eval_metrics(bool value);
@@ -186,10 +186,10 @@ class Global {
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         // variables
-        static int n_timesteps;            ///< Total number of timesteps for which data is available
-        static int n_substations;          ///< Total number of substations for which data is available
-        static int n_CUs;                  ///< Total number of control units for which data is available
-        static int n_MUs;                  ///< Total number of meausrement units for which data is available
+        static unsigned long n_timesteps;  ///< Total number of timesteps for which data is available
+        static unsigned long n_substations;///< Total number of substations for which data is available
+        static unsigned long n_CUs;        ///< Total number of control units for which data is available
+        static unsigned long n_MUs;        ///< Total number of meausrement units for which data is available
         static unsigned long n_pv_ts;      ///< Total number of available normalized pv feedin time series that can be used for simulating new pv installations
         static unsigned long n_hp_ts;      ///< Total number of available normalized heat pump time series that can be used for simulating new heat pumps
         static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly

@@ -119,8 +119,8 @@ void output::initializeSubstationOutput(int scenario_id) {
     // add header to output file
     *(substation_output) << "Timestep";
     Substation*const* subList = Substation::GetArrayOfInstances();
-    const int nSubst = Substation::GetNumberOfInstances();
-    for (int i = 0; i < nSubst; i++) {
+    const size_t nSubst = Substation::GetNumberOfInstances();
+    for (size_t i = 0; i < nSubst; i++) {
         *(substation_output) << "," << subList[i]->get_name()->c_str();
     }
     *(substation_output) << ",open_space_pv_feedin,wind_feedin,total_load" << endl;
@@ -137,7 +137,7 @@ void output::initializeCUOutput(int scenario_id) {
         //
         // add reference to all CUs
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+        for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
             cuList[i]->set_output_object(cu_single_output);
         }
     } else if (Global::get_output_mode_per_cu() == global::OutputModePerCU::IndividualFile) {
@@ -158,7 +158,7 @@ void output::initializeCUOutput(int scenario_id) {
         n_cu_multi_outputs = Global::get_n_substations();
         cu_multi_outputs = new CUOutputOneFilePerSubstation*[n_cu_multi_outputs];
         Substation*const* substationList = Substation::GetArrayOfInstances();
-        for (int nSubst = 1; nSubst <= Global::get_n_substations(); nSubst++) {
+        for (size_t nSubst = 1; nSubst <= Global::get_n_substations(); nSubst++) {
             Substation* currentS = substationList[nSubst-1];
             cu_multi_outputs[nSubst-1] = new CUOutputOneFilePerSubstation(currentS->get_name(), dirpath);
             // add output file to all connected CUs
@@ -203,7 +203,7 @@ void output::closeOutputs() {
     //
     // remove references to output objects from all CUs
     ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
         cuList[i]->set_output_object(NULL);
     }
 }
@@ -272,7 +272,7 @@ void output::outputCurrentCUSettings() {
     ofs << "UnitID,PV kWp,BS P kW,BS E kWh\n";
     // now, iterate over all control units
     ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
         ControlUnit* cu = cuList[i];
         ofs << cu->get_unitID()            << ",";
         ofs << cu->get_sim_comp_pv_kWp()   << ",";
@@ -286,7 +286,7 @@ void output::outputCurrentCUSettings() {
     output_path /= "sim-added-roof-sections-per-cu.csv";
     ofstream ofs2(output_path, std::ofstream::out);
     ofs2 << "UnitID,roof_section_number,section_kWp,orientation,profile_index\n";
-    for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
         string* cu_string = cuList[i]->get_pv_section_string();
         ofs2 << *cu_string;
         delete cu_string;
@@ -314,7 +314,7 @@ void output::outputMetrics(bool alt_fname /* = false */) {
         //
         // loop over all CUs and get metrics output string
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        for (int i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
+        for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
             string* output_str = cuList[i]->get_metrics_string();
             if (output_str != NULL)
                 ofs << *output_str;
@@ -395,7 +395,7 @@ CUOutputOneFilePerSubstation::CUOutputOneFilePerSubstation(const string* substNa
 }
 
 void CUOutputSingleFile::output_for_one_cu(
-        int   cuID,     int   ts,            float load_vsm,
+        size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
         float load_wb)
@@ -405,7 +405,7 @@ void CUOutputSingleFile::output_for_one_cu(
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
-        int   cuID,     int   ts,            float load_vsm,
+        size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
         float load_wb)
@@ -414,7 +414,7 @@ void CUOutputOneFilePerCU::output_for_one_cu(
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
-        int   cuID,     int   ts,            float load_vsm,
+        size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
         float load_wb)

@@ -69,7 +69,7 @@ class CUOutput {
     public:
         virtual ~CUOutput();
         virtual void output_for_one_cu(
-                int cuID,            int ts,
+                size_t cuID,         size_t ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
@@ -94,7 +94,7 @@ class CUOutputSingleFile : public CUOutput {
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
-                int cuID,            int ts,
+                size_t cuID,         size_t ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
@@ -115,7 +115,7 @@ class CUOutputOneFilePerCU : public CUOutput {
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
-                int cuID,            int ts,
+                size_t cuID,         size_t ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
@@ -134,7 +134,7 @@ class CUOutputOneFilePerSubstation : public CUOutput {
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
-                int cuID,            int ts,
+                size_t cuID,         size_t ts,
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,

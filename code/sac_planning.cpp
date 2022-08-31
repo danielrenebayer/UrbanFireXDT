@@ -249,8 +249,8 @@ void expansion::add_expansion_to_units(
     // 1. count current expansion status (as it is in the given data)
     //    and store the references to the CUs for a given current expansion in a list
     ControlUnit *const * unit_list = ControlUnit::GetArrayOfInstances();
-    const int n_CUs = ControlUnit::GetNumberOfInstances();
-    for (int i = 0; i < n_CUs; i++) {
+    const size_t n_CUs = ControlUnit::GetNumberOfInstances();
+    for (size_t i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
         int expCombi = current_unit->get_exp_combi_bit_repr();
         currExpCountsBitIndexed[ expCombi ]++;
@@ -386,7 +386,7 @@ void expansion::add_expansion_to_units(
     ofstream output_per_cu(info_path_B, std::ofstream::out);
     output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,wb_orig,wb_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW" << endl;
     // n_CUs and unit_list defined above, at 1.
-    for (int i = 0; i < n_CUs; i++) {
+    for (unsigned long i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
         int expCombiAsInData    = current_unit->get_exp_combi_bit_repr_from_MUs();
         int expCombiAsSimulated = current_unit->get_exp_combi_bit_repr_sim_added();

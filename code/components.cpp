@@ -57,8 +57,8 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
     profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
 }
 
-float RoofSectionPV::get_currentFeedin_kW(int ts) {
-    int tsID = ts - 1;
+float RoofSectionPV::get_currentFeedin_kW(unsigned long ts) {
+    unsigned long tsID = ts - 1;
     return this_section_kWp * profile_data[tsID];
 }
 
@@ -87,8 +87,8 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
     float complete_roof_area = accumulate(
                 begin(roof_section_vec),
                 end(roof_section_vec),
-                0,
-                [](const size_t prev, const auto& elem){ return prev + elem.first; });;
+                0.0f,
+                [](const float prev, const auto& elem){ return prev + elem.first; });;
     // iterate over all roof sections
     // and get all orientations and areas per roof section
     for (auto& section_tuple : roof_section_vec) {
@@ -170,7 +170,7 @@ string* ComponentPV::get_section_string(const string& prefix_per_line) {
     return return_str;
 }
 
-void ComponentPV::calculateCurrentFeedin(int ts) {
+void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     currentGeneration_kW = 0.0;
     for (RoofSectionPV& section : roof_sections)
         currentGeneration_kW += section.get_currentFeedin_kW(ts);
@@ -262,7 +262,7 @@ std::uniform_int_distribution<size_t>* ComponentHP::distribution     = NULL;
 
 ComponentHP::ComponentHP(float yearly_econs_kWh)
     : yearly_electricity_consumption_kWh(yearly_econs_kWh),
-      scaling_factor(yearly_econs_kWh/1000.0)
+      scaling_factor(yearly_econs_kWh/1000.0f)
 {
     // select heat pump profile static or random
     size_t this_hp_profile_idx;
@@ -285,8 +285,8 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     currentDemand_kW = 0;
 }
 
-void ComponentHP::calculateCurrentFeedin(int ts) {
-    int tsID = ts - 1;
+void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
+    unsigned long tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
 }
 

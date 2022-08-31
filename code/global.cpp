@@ -60,10 +60,10 @@ void global::vacuum() {
 //            Global             //
 // ----------------------------- //
 
-int Global::n_timesteps           = 0;
-int Global::n_substations         = 0;
-int Global::n_CUs                 = 0;
-int Global::n_MUs                 = 0;
+unsigned long Global::n_timesteps = 0;
+unsigned long Global::n_substations = 0;
+unsigned long Global::n_CUs       = 0;
+unsigned long Global::n_MUs       = 0;
 unsigned long Global::n_pv_ts     = 0;
 unsigned long Global::n_hp_ts     = 0;
 bool Global::comp_eval_metrics    = 0;
@@ -202,7 +202,7 @@ inline float Global::get_exp_bess_start_soc() {
 }
 */
 
-void Global::set_n_timesteps(int n_timesteps) {
+void Global::set_n_timesteps(unsigned long n_timesteps) {
     if (n_timesteps_init) {
         cerr << "Global variable n_timesteps is already initialized!" << endl;
     } else {
@@ -210,7 +210,7 @@ void Global::set_n_timesteps(int n_timesteps) {
         Global::n_timesteps_init = true;
     }
 }
-void Global::set_n_substations(int n_substations) {
+void Global::set_n_substations(unsigned long n_substations) {
     if (n_substations_init) {
         cerr << "Global variable n_substations is already initialized!" << endl;
     } else {
@@ -218,7 +218,7 @@ void Global::set_n_substations(int n_substations) {
         Global::n_substations_init = true;
     }
 }
-void Global::set_n_CUs(int n_CUs) {
+void Global::set_n_CUs(unsigned long n_CUs) {
     if (n_CUs_init) {
         cerr << "Global variable n_CUs is already initialized!" << endl;
     } else {
@@ -242,7 +242,7 @@ void Global::set_n_heatpump_profiles(unsigned long n_hp_ts) {
         Global::n_hp_ts_init = true;
     }
 }
-void Global::set_n_MUs(int n_MUs) {
+void Global::set_n_MUs(unsigned long n_MUs) {
     if (n_MUs_init) {
         cerr << "Global variable n_MUs is already initialized!" << endl;
     } else {
@@ -294,7 +294,7 @@ void Global::set_tsteps_per_hour(int tsteps_per_hour) {
         Global::tsteps_per_hour = tsteps_per_hour;
         Global::tsteps_per_hour_init = true;
         // set set_tsteps_per_hour accordingly
-        Global::time_step_size_in_h = 1.0/tsteps_per_hour;
+        Global::time_step_size_in_h = 1.0f / (float)tsteps_per_hour;
         #ifdef DEBUG
         cout << "tsteps_per_hour = " << tsteps_per_hour << endl;
         cout << "Global::time_step_size_in_h = " << Global::time_step_size_in_h << endl;
