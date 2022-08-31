@@ -39,7 +39,7 @@ class Substation {
         ~Substation();
         // getter methods
         unsigned long get_id() { return id; }
-        const std::string *const get_name() { return name; }
+        const std::string * get_name() { return name; }
         // modifiers bevore simulation start
         void add_unit(ControlUnit* unit);
         // methods for simulation run

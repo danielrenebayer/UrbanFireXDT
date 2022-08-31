@@ -229,7 +229,6 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
 void expansion::add_expansion_to_units(
     float expansion_matrix_rel_freq[16][16],
     long  expansion_matrix_abs_freq[16][16],
-    int   scenario_id,
     bool  random_anyway_no_output /* = falsee */,
     vector<ControlUnit*>* ordered_list /* = NULL */) {
     /*

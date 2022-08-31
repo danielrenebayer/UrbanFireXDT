@@ -194,7 +194,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
 
             //
             // 2. open output files
-            output::initializeDirectoriesPerPVar(scenario_id);
+            output::initializeDirectoriesPerPVar();
             output::initializeSubstationOutput(scenario_id);
             output::initializeCUOutput(scenario_id);
             // 2.b output the current parameter variation combination
@@ -216,7 +216,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
     } else {
         //
         // 1. open output files
-        output::initializeDirectoriesPerPVar(scenario_id);
+        output::initializeDirectoriesPerPVar();
         output::initializeSubstationOutput(scenario_id);
         output::initializeCUOutput(scenario_id);
         // 1.b output the current parameter variation combination
@@ -252,7 +252,7 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
             return false;
         }
         // 1.1) plan expansion as they would happen, but with random shuffling whatever is selected
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id, true);
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, true);
         // 1.2a) add PV installations to all CUs, if they do not already have one
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
         const size_t nCUs = ControlUnit::GetNumberOfInstances();
@@ -297,12 +297,12 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
         transform(ssr_cu_pair_vector.begin(), ssr_cu_pair_vector.end(),
                   back_inserter(ordered_cu_list),
                   [](auto& pair){ return pair.second; });
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id, false, &ordered_cu_list);
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, false, &ordered_cu_list);
     } else {
         //
         // 2) add expansion to units in the other cases
         //
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
+        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
     }
     //
     // 3) run the simulation (for all parameter variations or a single run)

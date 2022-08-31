@@ -72,7 +72,7 @@ void output::initializeDirectoriesOnce(int scenario_id) {
     global::current_output_dir_prefix = new filesystem::path(param_vari_path);
 }
 
-void output::initializeDirectoriesPerPVar(int scenario_id) {
+void output::initializeDirectoriesPerPVar() {
     //
     // This function initializes the direcory (or directories)
     // for the current parameter variation (if selected).

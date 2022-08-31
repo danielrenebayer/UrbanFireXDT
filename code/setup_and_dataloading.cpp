@@ -311,6 +311,13 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
 }
 
 
+//
+// Switch off unused parameter warning for the following block,
+// as the parameter "data" is ignored most of the time
+//
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 
 int load_data_from_central_database_callbackA(void* data, int argc, char** argv, char** colName) {
     /* 
@@ -858,4 +865,6 @@ bool configld::load_data_from_central_database(const char* filepath) {
     }
 }
 
+
+#pragma GCC diagnostic pop /* activate all warnings again */
 

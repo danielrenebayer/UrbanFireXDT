@@ -31,7 +31,7 @@ namespace output {
     inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs
 
     void initializeDirectoriesOnce(int scenario_id);
-    void initializeDirectoriesPerPVar(int scenario_id);
+    void initializeDirectoriesPerPVar();
     void initializeSubstationOutput(int scenario_id);
     void initializeCUOutput(int scenario_id);
 
