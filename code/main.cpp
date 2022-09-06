@@ -153,6 +153,8 @@ int main(int argc, char* argv[]) {
 	//
 	if (!global::all_variables_initialized() || !Global::AllVariablesInitialized()) {
 		cout << "Some global variables are not initialized!" << endl;
+        Global::PrintUninitializedVariables();
+        global::print_uninitialized_variables();
 		return 3;
 	}
 

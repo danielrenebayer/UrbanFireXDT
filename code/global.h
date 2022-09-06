@@ -61,6 +61,7 @@ namespace global {
 
     bool all_variables_initialized(); ///< Checks if all variables are initialized
     void vacuum();  ///< Deletes all global variables in the end
+    void print_uninitialized_variables(); ///< Prints all variable names to stdout, that are not initialized
 
 
     /*
@@ -110,6 +111,7 @@ class Global {
         static void DeleteStaticVariables();
         //
         static bool AllVariablesInitialized();
+        static void PrintUninitializedVariables(); ///< Prints all variable names to stdout, that are not initialized
         //
         // getter methods
         /*

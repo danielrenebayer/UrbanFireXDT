@@ -51,6 +51,27 @@ void global::vacuum() {
     delete[] wind_profile; wind_profile = NULL;
 }
 
+void global::print_uninitialized_variables() {
+    if (!time_info_init) {
+        cout << "Variable time_info not initialized." << endl;
+    }
+    if (pv_profiles_data == NULL) {
+        cout << "PV profiles (variable pv_profiles_data) undefined." << endl;
+    }
+    if (hp_profiles == NULL) {
+        cout << "HP profiles (variable hp_profiles) undefined." << endl;
+    }
+    if (wind_profile == NULL) {
+        cout << "Wind profiles (variable wind_profile) undefined." << endl;
+    }
+    if (unit_open_space_pv == NULL) {
+        cout << "Open-space PV installations (variable unit_open_space_pv) undefined." << endl;
+    }
+    if (unit_open_space_wind == NULL) {
+        cout << "Open-space wind farms (variable unit_open_space_wind) undefined." << endl;
+    }
+}
+
 
 
 
@@ -161,6 +182,84 @@ bool Global::AllVariablesInitialized() {
         return false;
     }
         
+}
+
+void Global::PrintUninitializedVariables() {
+    if (!n_timesteps_init) {
+        cout << "Variable n_timesteps not initialized." << endl;
+    }
+    if (!n_substations_init) {
+        cout << "Variable n_substations not initialized." << endl;
+    }
+    if (!n_CUs_init) {
+        cout << "Variable n_CUs not initialized." << endl;
+    }
+    if (!n_MUs_init) {
+        cout << "Variable n_MUs not initialized." << endl;
+    }
+    if (!n_pv_ts_init) {
+        cout << "Variable n_pv_ts not initialized." << endl;
+    }
+    if (!n_hp_ts_init) {
+        cout << "Variable n_hp_ts not initialized." << endl;
+    }
+    if (!comp_eval_metrics_init) {
+        cout << "Variable comp_eval_metrics not initialized." << endl;
+    }
+    if (!pvar_set) {
+        cout << "Variable pvar not initialized." << endl;
+    }
+    if (!ts_start_str_init) {
+        cout << "Variable ts_start_str not initialized." << endl;
+    }
+    if (!ts_end_str_init) {
+        cout << "Variable ts_end_str not initialized." << endl;
+    }
+    if (!tsteps_per_hour_init) {
+        cout << "Variable tsteps_per_hour not initialized." << endl;
+    }
+    if (!expansion_scenario_id_init) {
+        cout << "Variable expansion_scenario_id not initialized." << endl;
+    }
+    if (!exp_pv_kWp_static_mode_init) {
+        cout << "Variable exp_pv_kWp_static_mode not initialized." << endl;
+    }
+    if (!exp_bess_kW_init) {
+        cout << "Variable exp_bess_kW not initialized." << endl;
+    }
+    if (!exp_bess_kWh_init) {
+        cout << "Variable exp_bess_kWh not initialized." << endl;
+    }
+    if (!exp_bess_start_soc_init) {
+        cout << "Variable exp_bess_start_soc not initialized." << endl;
+    }
+    if (!input_path_init) {
+        cout << "Variable input_path not initialized." << endl;
+    }
+    if (!output_path_init) {
+        cout << "Variable output_path not initialized." << endl;
+    }
+    if (!output_mode_per_cu_init) {
+        cout << "Variable output_mode_per_cu not initialized." << endl;
+    }
+    if (!exp_profile_mode_init) {
+        cout << "Variable exp_profile_mode not initialized." << endl;
+    }
+    if (!cu_selection_mode_fca_init) {
+        cout << "Variable cu_selection_mode_fca not initialized." << endl;
+    }
+    if (exp_pv_kWp_static_mode && !exp_pv_kWp_static_init) {
+        cout << "Variable exp_pv_kWp_static not initialized." << endl;
+    }
+    if (!exp_pv_kWp_static_mode && !exp_pv_kWp_per_m2_init) {
+        cout << "Variable exp_pv_kWp_per_m2 not initialized." << endl;
+    }
+    if (!exp_pv_kWp_static_mode && !exp_pv_min_kWp_roof_sec_init) {
+        cout << "Variable exp_pv_min_kWp_roof_sec not initialized." << endl;
+    }
+    if (!exp_pv_kWp_static_mode && !exp_pv_max_kWp_per_sec_init) {
+        cout << "Variable exp_pv_max_kWp_per_sec not initialized." << endl;
+    }
 }
 
 /*
