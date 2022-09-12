@@ -1,3 +1,0 @@
-[submodule "config"]
-	path = config
-	url = git@gitlab2.informatik.uni-wuerzburg.de:modsimu/danielbayer/simulation-digiswm-config.git
