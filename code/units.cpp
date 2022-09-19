@@ -346,6 +346,8 @@ string* ControlUnit::get_pv_section_string() {
 }
 
 void ControlUnit::add_exp_pv() {
+    if (has_pv())
+        cerr << "Warning: Control unit with location id " << locationID << " already has a PV installation!" << endl;
     if (!has_sim_pv) {
         has_sim_pv  = true;
         if (Global::get_exp_pv_static_mode()) {
@@ -360,6 +362,8 @@ void ControlUnit::add_exp_pv() {
 }
 
 void ControlUnit::add_exp_bs() {
+    if (has_bs())
+        cerr << "Warning: Control unit with location id " << locationID << " already has a battery!" << endl;
     if (!has_sim_bs) {
         has_sim_bs  = true;
         sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh(), Global::get_exp_bess_kW(), 0.0, 1.0, Global::get_exp_bess_start_soc());
@@ -367,6 +371,8 @@ void ControlUnit::add_exp_bs() {
 }
 
 void ControlUnit::add_exp_hp() {
+    if (has_hp())
+        cerr << "Warning: Control unit with location id " << locationID << " already has a heat pump!" << endl;
     if (!has_sim_hp) {
         //
         // get yearly electricity consumption
@@ -379,6 +385,8 @@ void ControlUnit::add_exp_hp() {
 }
 
 void ControlUnit::add_exp_wb() {
+    if (has_wb())
+        cerr << "Warning: Control unit with location id " << locationID << " already has a wallbox!" << endl;
     if (!has_sim_wb) {
         has_sim_wb  = true;
         sim_comp_wb = new ComponentWB();
