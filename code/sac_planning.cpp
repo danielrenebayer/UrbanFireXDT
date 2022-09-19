@@ -292,7 +292,7 @@ void expansion::add_expansion_to_units(
 
     //
     // 4. plan and execute expansion
-    for (int iMatO = 0; iMatO < 16; iMatO++) {
+    for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
         vector<ControlUnit*>* helperList = NULL;
@@ -319,8 +319,11 @@ void expansion::add_expansion_to_units(
         }
         // get the iterator
         vector<ControlUnit*>::iterator iter = listOfCUs->begin();
-        // loop over all current expansion states
-        for (int jExpTargetMatO = 0; jExpTargetMatO < 16; jExpTargetMatO++) {
+        // loop over all **target** expansion states
+        // start at iMatO + 1, as all combinations bevore are impossible / or do not need any expansion
+        // If one loops over them as well, the order of the ordered_list (in case it is set) would be useless!
+        for (unsigned int jExpTargetMatO = iMatO + 1; jExpTargetMatO < 16; jExpTargetMatO++) {
+            // 
             // get number of CUs that get the current expansion
             long numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
             // find out, which units we have to add for this i/j-combination

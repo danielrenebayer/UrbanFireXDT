@@ -273,7 +273,8 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
         }
         // 1.4) sort control units according to the SSR which has been computed in 1.2)
         // 1.4.a) Collect the SSR values
-        vector<pair<double, ControlUnit*>> ssr_cu_pair_vector( ControlUnit::GetNumberOfInstances() );
+        vector<pair<double, ControlUnit*>> ssr_cu_pair_vector;
+        ssr_cu_pair_vector.reserve( ControlUnit::GetNumberOfInstances() );
         for (size_t i = 0; i < nCUs; i++) {
             ssr_cu_pair_vector.emplace_back(cuList[i]->get_SSR(), cuList[i]); // SSR, pointer to the object
         }
