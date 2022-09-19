@@ -64,6 +64,7 @@ class ComponentBS {
         float get_currentLoad_kW() const    { return currentP_kW;  }
         float get_maxE_kWh()       const    { return maxE_kWh;     }
         float get_maxP_kW()        const    { return maxP_kW;      }
+        double get_current_EFC()   const    { return total_E_withdrawn_kWh / maxE_kWh; } ///< Returns the equivalent full cycles (EFC)
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_maxE_kWh(float value)     { maxE_kWh = value; }
@@ -84,6 +85,7 @@ class ComponentBS {
         float currentE_kWh;
         float currentP_kW;
         float charge_request_kW;
+        double total_E_withdrawn_kWh; ///< summation variable for EFC computation
 };
 
 class ComponentHP {

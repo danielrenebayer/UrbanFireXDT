@@ -320,17 +320,21 @@ string* ControlUnit::get_metrics_string() {
         }
         double SCR = 0.0;
         double SSR = 0.0;
+        double bat_EFC = 0.0;
         if (sum_of_pv_generated_e_kWh > 0)
             SCR = sum_of_selfconsumed_e_kWh / sum_of_pv_generated_e_kWh;
         if (sum_of_consumption_kWh > 0)
             SSR = sum_of_selfconsumed_e_kWh / sum_of_consumption_kWh;
+        if (has_sim_bs)
+            bat_EFC = sim_comp_bs->get_current_EFC();
         string* retstr = new string;
         *retstr += to_string(unitID) + ",";
         *retstr += to_string(SCR) + ",";
         *retstr += to_string(SSR) + ",";
         *retstr += to_string(sum_of_consumption_kWh) + ",";
         *retstr += to_string(sum_of_selfconsumed_e_kWh) + ",";
-        *retstr += to_string(sum_of_pv_generated_e_kWh);
+        *retstr += to_string(sum_of_pv_generated_e_kWh) + ",";
+        *retstr += to_string(bat_EFC);
         return retstr;
     } else {
         return NULL;

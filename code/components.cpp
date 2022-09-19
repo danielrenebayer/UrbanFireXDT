@@ -194,6 +194,7 @@ ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
     currentE_kWh      = 0;
     currentP_kW       = 0;
     charge_request_kW = 0;
+    total_E_withdrawn_kWh = 0.0;
 
     if (initial_SoC > 0) {
         SOC = initial_SoC;
@@ -230,8 +231,11 @@ void ComponentBS::calculateActions() {
         new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW;
         if (new_charge_kWh < 0)
             new_charge_kWh = 0;
-        currentP_kW  = (new_charge_kWh - currentE_kWh)/timestep_size_in_h;
+        float energy_taken_kWh = new_charge_kWh - currentE_kWh;
+        currentP_kW  = energy_taken_kWh / timestep_size_in_h;
         currentE_kWh = new_charge_kWh;
+        // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
+        total_E_withdrawn_kWh -= energy_taken_kWh;
     }
 
     // calculate new SOC value
@@ -244,6 +248,7 @@ void ComponentBS::resetInternalState() {
     //
     SOC = initial_SoC;
     currentE_kWh = maxE_kWh * initial_SoC;
+    total_E_withdrawn_kWh = 0.0;
 }
 
 
