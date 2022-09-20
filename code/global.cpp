@@ -279,23 +279,20 @@ void Global::PrintUninitializedVariables() {
     if (!exp_pv_kWp_static_mode && !exp_pv_max_kWp_per_sec_init) {
         cout << "Variable exp_pv_max_kWp_per_sec not initialized." << endl;
     }
-    if (demand_tariff_set) {
+    if (!demand_tariff_set) {
         cout << "Variable demand_tariff_set not initialized." << endl;
     }
-    if (npv_discount_rate_set) {
+    if (!npv_discount_rate_set) {
         cout << "Variable npv_discount_rate_set not initialized." << endl;
     }
-    if (npv_time_horizon_set) {
+    if (!npv_time_horizon_set) {
         cout << "Variable npv_time_horizon_set not initialized." << endl;
     }
-    if (inst_cost_PV_per_kWp_set) {
+    if (!inst_cost_PV_per_kWp_set) {
         cout << "Variable inst_cost_PV_per_kWp_set not initialized." << endl;
     }
-    if (inst_cost_BS_per_kWh_set) {
+    if (!inst_cost_BS_per_kWh_set) {
         cout << "Variable inst_cost_BS_per_kWh_set not initialized." << endl;
-    }
-    if (input_path_init) {
-        cout << "Variable input_path_init not initialized." << endl;
     }
 }
 
