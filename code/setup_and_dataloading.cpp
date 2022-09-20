@@ -205,6 +205,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 sac_planning_mode_transl = global::CUSModeFCA::RandomSelection;
             } else if (sac_planning_mode == "best SSR")  {
                 sac_planning_mode_transl = global::CUSModeFCA::BestSSR;
+            } else if (sac_planning_mode == "best NPV")  {
+                sac_planning_mode_transl = global::CUSModeFCA::BestNPV;
             } else {
                 cerr << "Parameter 'CU selection mode for comp. add' is defined as '" << sac_planning_mode << "' in config-json, but this value is unknown." << endl;
                 throw runtime_error("Parameter 'CU selection mode for comp. add' as defined in config-json is unknown.");

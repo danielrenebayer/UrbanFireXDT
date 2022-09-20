@@ -92,7 +92,8 @@ namespace global {
         Uninitialized,
         OrderAsInData,
         RandomSelection,
-        BestSSR
+        BestSSR,
+        BestNPV
     };
 
 }
