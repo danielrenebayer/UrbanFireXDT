@@ -99,6 +99,8 @@ class ControlUnit {
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
+        double  get_SCR(); ///< Returns the SCR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
+        double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         string* get_metrics_string(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
         // modifiers
@@ -142,10 +144,14 @@ class ControlUnit {
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
         CUOutput*    output_obj;
-        float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed
-        float* history_pv_generation_kW; ///< Array for later analysis, holding the historical values of the PV-generation
-        float* history_avg_consumption_load_kW; ///< Array for later analysis, holding the historical (average) consumption load for the corresponding time step
-        bool   create_history_output; ///< True, if a history output should be created for this control unit.
+        double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
+        double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
+        double sum_of_PV_generated_kWh;   ///< The sum of PV-generated energy in kWh starting from the beginning of the current simulation run
+        double sum_of_feed_into_grid_kWh; ///< The sum of energy in kWh, that is fed into the grid, starting from the beginning of the current simulation run
+        //float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed
+        //float* history_pv_generation_kW; ///< Array for later analysis, holding the historical values of the PV-generation
+        //float* history_avg_consumption_load_kW; ///< Array for later analysis, holding the historical (average) consumption load for the corresponding time step
+        //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
         float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units

@@ -247,10 +247,10 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
         // 1) If selection mode is taking those with best SSR
         //
         // 1.0) initial checks
-        if (!Global::get_comp_eval_metrics()) {
+        /*if (!Global::get_comp_eval_metrics()) {
             cerr << "Error: Option 'metrics / m' not set even though CU selection for sim. add. components should be done according to best SSR.\nThis is impossible. Set 'metrics' as parameter or change CU selection mode." << endl;
             return false;
-        }
+        }*/
         // 1.1) plan expansion as they would happen, but with random shuffling whatever is selected
         expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, true);
         // 1.2a) add PV installations to all CUs, if they do not already have one

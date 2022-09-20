@@ -62,6 +62,13 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         float  exp_pv_min_kWp     = 0.0; bool exp_pv_min_kWp_set      = false;
         float  exp_pv_max_kWp     = 0.0; bool exp_pv_max_kWp_set      = false;
         bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
+        // variables of NPV calculation
+        float  feed_in_tariff     = 0.0; bool feed_in_tariff_set      = false;
+        float  demand_tariff      = 0.0; bool demand_tariff_set       = false;
+        float  npv_discount_rate  = 0.0; bool npv_discount_rate_set   = false;
+        uint   npv_time_horizon   = 0.0; bool npv_time_horizon_set    = false;
+        float  icost_PV_per_kWp   = 0.0; bool icost_PV_per_kWp_set    = false;
+        float  icost_BS_per_kWh   = 0.0; bool icost_BS_per_kWh_set    = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -120,6 +127,24 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             } else if ( element_name.compare("expansion PV kWp static mode") == 0 ) {
                 exp_pv_mode_static     = scenario_dict.get_value<bool>();
                 exp_pv_mode_static_set = true;
+            } else if ( element_name.compare("tariff feed-in per kWh") == 0 ) {
+                feed_in_tariff         = scenario_dict.get_value<float>();
+                feed_in_tariff_set     = true;
+            } else if ( element_name.compare("tariff demand per kWh") == 0 ) {
+                demand_tariff          = scenario_dict.get_value<float>();
+                demand_tariff_set      = true;
+            } else if ( element_name.compare("net present value discount rate") == 0 ) {
+                npv_discount_rate      = scenario_dict.get_value<float>();
+                npv_discount_rate_set  = true;
+            } else if ( element_name.compare("net present value time horizon in years") == 0 ) {
+                npv_time_horizon       = scenario_dict.get_value<unsigned int>();
+                npv_time_horizon_set   = true;
+            } else if ( element_name.compare("installation cost PV per kWp") == 0 ) {
+                icost_PV_per_kWp       = scenario_dict.get_value<float>();
+                icost_PV_per_kWp_set   = true;
+            } else if ( element_name.compare("installation cost BS per kWh") == 0 ) {
+                icost_BS_per_kWh       = scenario_dict.get_value<float>();
+                icost_BS_per_kWh_set   = true;
             }
             return;
         };
@@ -292,6 +317,12 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (exp_pv_kWp_m2_roof_set) Global::set_exp_pv_kWp_per_m2(exp_pv_kWp_m2_roof);
             if (exp_pv_min_kWp_set)     Global::set_exp_pv_min_kWp_roof_sec(exp_pv_min_kWp);
             if (exp_pv_max_kWp_set)     Global::set_exp_pv_max_kWp_roof_sec(exp_pv_max_kWp);
+            if (feed_in_tariff_set)     Global::set_feed_in_tariff(feed_in_tariff);
+            if (demand_tariff_set)      Global::set_demand_tariff(demand_tariff);
+            if (npv_discount_rate_set)  Global::set_npv_discount_rate(npv_discount_rate);
+            if (npv_time_horizon_set)   Global::set_npv_time_horizon(npv_time_horizon);
+            if (icost_PV_per_kWp_set)   Global::set_inst_cost_PV_per_kWp(icost_PV_per_kWp);
+            if (icost_BS_per_kWh_set)   Global::set_inst_cost_BS_per_kWh(icost_BS_per_kWh);
             //
             // change current working dir to the location of the config file
             filesystem::path config_fp = filepath;

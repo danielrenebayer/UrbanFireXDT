@@ -87,7 +87,7 @@ unsigned long Global::n_CUs       = 0;
 unsigned long Global::n_MUs       = 0;
 unsigned long Global::n_pv_ts     = 0;
 unsigned long Global::n_hp_ts     = 0;
-bool Global::comp_eval_metrics    = 0;
+//bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
 struct tm* Global::ts_start_tm    = NULL;
@@ -105,6 +105,12 @@ float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_start_soc    = 0.0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
+float Global::feed_in_tariff        = 0.0;
+float Global::demand_tariff         = 0.0;
+float Global::inst_cost_PV_per_kWp  = 0.0;
+float Global::inst_cost_BS_per_kWh  = 0.0;
+float Global::npv_discount_rate     = 0.0;
+unsigned int Global::npv_time_horizon  = 0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
@@ -117,7 +123,7 @@ bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
 bool Global::n_pv_ts_init          = false;
 bool Global::n_hp_ts_init          = false;
-bool Global::comp_eval_metrics_init= false;
+//bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
 bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
@@ -133,6 +139,12 @@ bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_start_soc_init    = false;
 bool Global::open_space_pv_kWp_init= false;
 bool Global::wind_kWp_init         = false;
+bool Global::feed_in_tariff_set    = false;
+bool Global::demand_tariff_set     = false;
+bool Global::inst_cost_PV_per_kWp_set     = false;
+bool Global::inst_cost_BS_per_kWh_set     = false;
+bool Global::npv_discount_rate_set = false;
+bool Global::npv_time_horizon_set  = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
@@ -155,7 +167,7 @@ bool Global::AllVariablesInitialized() {
         n_MUs_init &&
         n_pv_ts_init &&
         n_hp_ts_init &&
-        comp_eval_metrics_init &&
+      //comp_eval_metrics_init &&
         pvar_set &&
         ts_start_str_init &&
         ts_end_str_init &&
@@ -169,7 +181,14 @@ bool Global::AllVariablesInitialized() {
         output_path_init &&
         output_mode_per_cu_init &&
         exp_profile_mode_init &&
-        cu_selection_mode_fca_init)
+        cu_selection_mode_fca_init &&
+        feed_in_tariff_set &&
+        demand_tariff_set &&
+        npv_discount_rate_set &&
+        npv_time_horizon_set &&
+        inst_cost_PV_per_kWp_set &&
+        inst_cost_BS_per_kWh_set &&
+        input_path_init)
     {
         if ( ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
@@ -203,9 +222,9 @@ void Global::PrintUninitializedVariables() {
     if (!n_hp_ts_init) {
         cout << "Variable n_hp_ts not initialized." << endl;
     }
-    if (!comp_eval_metrics_init) {
-        cout << "Variable comp_eval_metrics not initialized." << endl;
-    }
+    //if (!comp_eval_metrics_init) {
+    //    cout << "Variable comp_eval_metrics not initialized." << endl;
+    //}
     if (!pvar_set) {
         cout << "Variable pvar not initialized." << endl;
     }
@@ -259,6 +278,24 @@ void Global::PrintUninitializedVariables() {
     }
     if (!exp_pv_kWp_static_mode && !exp_pv_max_kWp_per_sec_init) {
         cout << "Variable exp_pv_max_kWp_per_sec not initialized." << endl;
+    }
+    if (demand_tariff_set) {
+        cout << "Variable demand_tariff_set not initialized." << endl;
+    }
+    if (npv_discount_rate_set) {
+        cout << "Variable npv_discount_rate_set not initialized." << endl;
+    }
+    if (npv_time_horizon_set) {
+        cout << "Variable npv_time_horizon_set not initialized." << endl;
+    }
+    if (inst_cost_PV_per_kWp_set) {
+        cout << "Variable inst_cost_PV_per_kWp_set not initialized." << endl;
+    }
+    if (inst_cost_BS_per_kWh_set) {
+        cout << "Variable inst_cost_BS_per_kWh_set not initialized." << endl;
+    }
+    if (input_path_init) {
+        cout << "Variable input_path_init not initialized." << endl;
     }
 }
 
@@ -349,14 +386,14 @@ void Global::set_n_MUs(unsigned long n_MUs) {
         Global::n_MUs_init = true;
     }
 }
-void Global::set_comp_eval_metrics(bool value) {
+/*void Global::set_comp_eval_metrics(bool value) {
     if (comp_eval_metrics_init) {
         cerr << "Global variable comp_eval_metrics is already initialized!" << endl;
     } else {
         Global::comp_eval_metrics = value;
         Global::comp_eval_metrics_init = true;
     }
-}
+}*/
 void Global::set_pvar_vals(bool pvar_val, int pvarID) {
     if (pvar_set) {
         cerr << "Values for parameter variation are already set!" << endl;
@@ -486,6 +523,54 @@ void Global::set_wind_kWp(float wind_kWp) {
     } else {
         Global::wind_kWp = wind_kWp;
         wind_kWp_init = true;
+    }
+}
+void Global::set_feed_in_tariff(float value) {
+    if (feed_in_tariff_set) {
+        cerr << "Global variable feed_in_tariff is already initialized!" << endl;
+    } else {
+        Global::feed_in_tariff = value;
+        feed_in_tariff_set = true;
+    }
+}
+void Global::set_demand_tariff(float value) {
+    if (demand_tariff_set) {
+        cerr << "Global variable demand_tariff is already initialized!" << endl;
+    } else {
+        Global::demand_tariff = value;
+        demand_tariff_set = true;
+    }
+}
+void Global::set_npv_discount_rate(float value) {
+    if (npv_discount_rate_set) {
+        cerr << "Global variable npv_discount_rate is already initialized!" << endl;
+    } else {
+        Global::npv_discount_rate = value;
+        npv_discount_rate_set = true;
+    }
+}
+void Global::set_npv_time_horizon(unsigned int value) {
+    if (npv_time_horizon_set) {
+        cerr << "Global variable npv_time_horizon is already initialized!" << endl;
+    } else {
+        Global::npv_time_horizon = value;
+        npv_time_horizon_set = true;
+    }
+}
+void Global::set_inst_cost_PV_per_kWp(float value) {
+    if (inst_cost_PV_per_kWp_set) {
+        cerr << "Global variable inst_cost_PV_per_kWp is already initialized!" << endl;
+    } else {
+        Global::inst_cost_PV_per_kWp = value;
+        inst_cost_PV_per_kWp_set = true;
+    }
+}
+void Global::set_inst_cost_BS_per_kWh(float value) {
+    if (inst_cost_BS_per_kWh_set) {
+        cerr << "Global variable inst_cost_BS_per_kWh is already initialized!" << endl;
+    } else {
+        Global::inst_cost_BS_per_kWh = value;
+        inst_cost_BS_per_kWh_set = true;
     }
 }
 void Global::set_input_path(string& path) {

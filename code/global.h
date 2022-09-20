@@ -134,7 +134,7 @@ class Global {
         static unsigned long get_n_MUs()                { return n_MUs; }
         static unsigned long get_n_pv_profiles()        { return n_pv_ts; }
         static unsigned long get_n_heatpump_profiles()  { return n_hp_ts; }
-        static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
+      //static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
         static bool is_parameter_variation()   { return pvar_selected;  }
         static int  get_parameter_varID()      { return pvar_id;        }
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
@@ -152,6 +152,12 @@ class Global {
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
+        static float get_feed_in_tariff()      { return feed_in_tariff; }
+        static float get_demand_tariff()       { return demand_tariff; }
+        static float get_inst_cost_PV_per_kWp(){ return inst_cost_PV_per_kWp; }
+        static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
+        static float get_npv_discount_rate()   { return npv_discount_rate; }
+        static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static global::OutputModePerCU get_output_mode_per_cu() { return output_mode_per_cu; }
@@ -164,7 +170,7 @@ class Global {
         static void set_n_MUs(unsigned long n_MUs);
         static void set_n_pv_profiles(unsigned long n_pv_ts);
         static void set_n_heatpump_profiles(unsigned long n_hp_ts);
-        static void set_comp_eval_metrics(bool value);
+      //static void set_comp_eval_metrics(bool value);
         static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
@@ -180,6 +186,12 @@ class Global {
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
+        static void set_feed_in_tariff(float value);
+        static void set_demand_tariff(float value);
+        static void set_inst_cost_PV_per_kWp(float value);
+        static void set_inst_cost_BS_per_kWh(float value);
+        static void set_npv_discount_rate(float value);
+        static void set_npv_time_horizon(unsigned int value);
         static void set_input_path(std::string& path);
         static void set_output_path(std::string& path);
         static void set_output_mode_per_cu(global::OutputModePerCU mode);
@@ -194,7 +206,7 @@ class Global {
         static unsigned long n_MUs;        ///< Total number of meausrement units for which data is available
         static unsigned long n_pv_ts;      ///< Total number of available normalized pv feedin time series that can be used for simulating new pv installations
         static unsigned long n_hp_ts;      ///< Total number of available normalized heat pump time series that can be used for simulating new heat pumps
-        static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
+      //static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
         static bool pvar_selected;         ///< True, if a parameter variation is selected
         static int  pvar_id;               ///< ID of the parameter variation
         static struct tm* ts_start_tm;     ///< struct tm of the start date
@@ -212,6 +224,12 @@ class Global {
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
+        static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid
+        static float demand_tariff;        ///< Tariff for demand from the grid
+        static float inst_cost_PV_per_kWp; ///< Installation cost of a PV installation per kWp installed
+        static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
+        static float npv_discount_rate;    ///< Discount rate for the net present value computation
+        static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static global::OutputModePerCU output_mode_per_cu; ///< Variable storing the selected output mode per CU
@@ -225,7 +243,7 @@ class Global {
         static bool n_MUs_init;
         static bool n_pv_ts_init;
         static bool n_hp_ts_init;
-        static bool comp_eval_metrics_init;
+      //static bool comp_eval_metrics_init;
         static bool pvar_set;
         static bool ts_start_str_init;
         static bool ts_end_str_init;
@@ -241,6 +259,12 @@ class Global {
         static bool exp_bess_start_soc_init;
         static bool open_space_pv_kWp_init;
         static bool wind_kWp_init;
+        static bool feed_in_tariff_set;
+        static bool demand_tariff_set;
+        static bool inst_cost_PV_per_kWp_set;
+        static bool inst_cost_BS_per_kWh_set;
+        static bool npv_discount_rate_set;
+        static bool npv_time_horizon_set;
         static bool input_path_init;
         static bool output_path_init;
         static bool output_mode_per_cu_init;

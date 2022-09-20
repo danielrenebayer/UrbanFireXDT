@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <list>
 
+#include <cmath> /* using: pow() */
+
 #include "global.h"
 #include "output.h"
 #include "sac_planning.h"
@@ -158,10 +160,14 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	higher_level_subst->add_unit(this);
 
     //
-    // If evaluation metrics (like SSC/SSR) should be computed directly
+    // For the computation of the evaluation metrics (like SSC/SSR/NPV)
     // one needs to store some information about every time step for the current
-    // parameter variation setting. So we create an array for storing this data
-    // for the complete simulation.
+    // parameter variation setting.
+    sum_of_consumption_kWh    = 0.0;
+    sum_of_self_cons_kWh      = 0.0;
+    sum_of_PV_generated_kWh   = 0.0;
+    sum_of_feed_into_grid_kWh = 0.0;
+    /*
     if (Global::get_comp_eval_metrics()) {
         create_history_output = true;
         history_self_prod_load_kW       = new float[Global::get_n_timesteps()];
@@ -172,7 +178,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
         history_self_prod_load_kW       = NULL;
         history_pv_generation_kW        = NULL;
         history_avg_consumption_load_kW = NULL;
-    }
+    }*/
 }
 
 ControlUnit::~ControlUnit() {
@@ -181,11 +187,12 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
 	if (has_sim_wb) delete sim_comp_wb;
+    /*
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
         delete[] history_pv_generation_kW;
         delete[] history_avg_consumption_load_kW;
-    }
+    }*/
 }
 
 void ControlUnit::add_unit(MeasurementUnit* unit) {
@@ -292,53 +299,56 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
 }
 
 double ControlUnit::get_SSR() {
-    if (create_history_output) {
-        double sum_of_consumption_kWh    = 0;
-        double sum_of_selfconsumed_e_kWh = 0;
-        for (size_t i = 0; i < Global::get_n_timesteps(); i++) {
-            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
-            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
-        }
-        double SSR = 0.0;
-        if (sum_of_consumption_kWh > 0)
-            SSR = sum_of_selfconsumed_e_kWh / sum_of_consumption_kWh;
-        return SSR;
-    } else {
-        return 0.0;
+    double SSR = 0.0;
+    if (sum_of_consumption_kWh > 0)
+        SSR = sum_of_self_cons_kWh / sum_of_consumption_kWh;
+    return SSR;
+}
+
+double ControlUnit::get_SCR() {
+    double SCR = 0.0;
+    if (sum_of_PV_generated_kWh > 0)
+        SCR = sum_of_self_cons_kWh / sum_of_PV_generated_kWh;
+    return SCR;
+}
+
+double ControlUnit::get_NPV() {
+    // 1. compute investment cost
+    double investemnt_costs = 0.0;
+    if (has_sim_pv)
+        investemnt_costs += sim_comp_pv->get_kWp() * Global::get_inst_cost_PV_per_kWp();
+    if (has_sim_bs)
+        investemnt_costs += sim_comp_bs->get_maxE_kWh() * Global::get_inst_cost_BS_per_kWh();
+    // 2. compute savings per year
+    const double& saved_energy_kWh = sum_of_self_cons_kWh; // energy in kWh for which no grid demand was required
+    double savings_per_year = 
+        saved_energy_kWh * Global::get_demand_tariff() +
+        sum_of_feed_into_grid_kWh * Global::get_feed_in_tariff();
+    // 3. compute total savings
+    double total_savings = 0.0;
+    for (unsigned int t = 1; t <= Global::get_npv_time_horizon(); t++) {
+        total_savings += savings_per_year / pow( (double)(1 + Global::get_npv_discount_rate()), (double) t );
     }
+    return - investemnt_costs + total_savings;
 }
 
 string* ControlUnit::get_metrics_string() {
-    if (create_history_output) {
-        double sum_of_consumption_kWh    = 0;
-        double sum_of_selfconsumed_e_kWh = 0;
-        double sum_of_pv_generated_e_kWh = 0;
-        for (size_t i = 0; i < Global::get_n_timesteps(); i++) {
-            sum_of_consumption_kWh    += history_avg_consumption_load_kW[i] * Global::get_time_step_size_in_h();
-            sum_of_selfconsumed_e_kWh += history_self_prod_load_kW[i] * Global::get_time_step_size_in_h();
-            sum_of_pv_generated_e_kWh += history_pv_generation_kW[i]  * Global::get_time_step_size_in_h();
-        }
-        double SCR = 0.0;
-        double SSR = 0.0;
+        double SCR = get_SCR();
+        double SSR = get_SSR();
+        double NPV = get_NPV();
         double bat_EFC = 0.0;
-        if (sum_of_pv_generated_e_kWh > 0)
-            SCR = sum_of_selfconsumed_e_kWh / sum_of_pv_generated_e_kWh;
-        if (sum_of_consumption_kWh > 0)
-            SSR = sum_of_selfconsumed_e_kWh / sum_of_consumption_kWh;
         if (has_sim_bs)
             bat_EFC = sim_comp_bs->get_current_EFC();
         string* retstr = new string;
         *retstr += to_string(unitID) + ",";
         *retstr += to_string(SCR) + ",";
         *retstr += to_string(SSR) + ",";
+        *retstr += to_string(NPV) + ",";
         *retstr += to_string(sum_of_consumption_kWh) + ",";
-        *retstr += to_string(sum_of_selfconsumed_e_kWh) + ",";
-        *retstr += to_string(sum_of_pv_generated_e_kWh) + ",";
+        *retstr += to_string(sum_of_self_cons_kWh)   + ",";
+        *retstr += to_string(sum_of_PV_generated_kWh)+ ",";
         *retstr += to_string(bat_EFC);
         return retstr;
-    } else {
-        return NULL;
-    }
 }
 
 string* ControlUnit::get_pv_section_string() {
@@ -545,13 +555,22 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         }
     }
 
+    double grid_feedin_kW = 0.0;
+    if (current_load_vSM_kW < 0) {
+        grid_feedin_kW = current_load_vSM_kW;
+    }
+
     //
-    // write values to history-arrays if this is selected
-    if (create_history_output) {
-        history_self_prod_load_kW[ts - 1]     = self_produced_load_kW;
+    // add values to summation variables
+    sum_of_consumption_kWh    += Global::get_time_step_size_in_h() * total_consumption;
+    sum_of_self_cons_kWh      += Global::get_time_step_size_in_h() * self_produced_load_kW;
+    sum_of_PV_generated_kWh   += Global::get_time_step_size_in_h() * load_pv;
+    sum_of_feed_into_grid_kWh += Global::get_time_step_size_in_h() * grid_feedin_kW;
+    /*if (create_history_output) {
+        history_self_prod_load_kW[ts - 1]     = ;
         history_pv_generation_kW[ ts - 1]     = load_pv;
         history_avg_consumption_load_kW[ts-1] = total_consumption;
-    }
+    }*/
 
     //
     // output current status
@@ -602,6 +621,10 @@ void ControlUnit::ResetAllInternalStates() {
         //
         e_i->current_load_vSM_kW = 0.0;
         e_i->self_produced_load_kW = 0.0;
+        e_i->sum_of_consumption_kWh    = 0.0;
+        e_i->sum_of_self_cons_kWh      = 0.0;
+        e_i->sum_of_PV_generated_kWh   = 0.0;
+        e_i->sum_of_feed_into_grid_kWh = 0.0;
         //
         if (e_i->has_sim_bs) {
             e_i->sim_comp_bs->resetInternalState();

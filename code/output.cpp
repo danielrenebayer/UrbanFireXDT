@@ -301,7 +301,7 @@ void output::outputCurrentCUSettings() {
 //
 void output::outputMetrics(bool alt_fname /* = false */) {
     filesystem::path output_path;
-    if (Global::get_comp_eval_metrics()) {
+    //if (Global::get_comp_eval_metrics()) { // option is disabled, check not required anymore
         if (alt_fname) {
             output_path  = *(global::current_global_output_dir);
             output_path /= "metric-of-sac-planning-per-cu.csv";
@@ -310,7 +310,7 @@ void output::outputMetrics(bool alt_fname /* = false */) {
             output_path /= "metrics-per-cu.csv";
         }
         ofstream ofs(output_path, std::ofstream::out);
-        ofs << "UnitID,SCR,SSR,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],BS EFC\n";
+        ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],BS EFC\n";
         //
         // loop over all CUs and get metrics output string
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
@@ -323,7 +323,7 @@ void output::outputMetrics(bool alt_fname /* = false */) {
         }
         //
         ofs.close();
-    }
+    //}
 }
 
 
