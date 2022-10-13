@@ -347,6 +347,7 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(sum_of_consumption_kWh) + ",";
         *retstr += to_string(sum_of_self_cons_kWh)   + ",";
         *retstr += to_string(sum_of_PV_generated_kWh)+ ",";
+        *retstr += to_string(sum_of_feed_into_grid_kWh)+ ",";
         *retstr += to_string(bat_EFC);
         return retstr;
 }
