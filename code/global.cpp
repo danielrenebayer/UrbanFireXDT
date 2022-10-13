@@ -102,6 +102,7 @@ float Global::exp_pv_min_kWp_roof_sec = 0.0;
 float Global::exp_pv_max_kWp_per_sec  = 0.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
+float Global::exp_bess_E_P_ratio    = 0.0;
 float Global::exp_bess_start_soc    = 0.0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
@@ -116,6 +117,7 @@ string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
+global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -136,6 +138,7 @@ bool Global::exp_pv_min_kWp_roof_sec_init = false;
 bool Global::exp_pv_max_kWp_per_sec_init  = false;
 bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
+bool Global::exp_bess_E_P_ratio_init    = false;
 bool Global::exp_bess_start_soc_init    = false;
 bool Global::open_space_pv_kWp_init= false;
 bool Global::wind_kWp_init         = false;
@@ -150,6 +153,7 @@ bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
 bool Global::exp_profile_mode_init      = false;
 bool Global::cu_selection_mode_fca_init = false;
+bool Global::bat_power_comp_mode_init   = false;
 
 void Global::InitializeStaticVariables() {
     // nothing to do anymore
@@ -174,7 +178,6 @@ bool Global::AllVariablesInitialized() {
         tsteps_per_hour_init &&
         expansion_scenario_id_init &&
         exp_pv_kWp_static_mode_init &&
-        exp_bess_kW_init &&
         exp_bess_kWh_init &&
         exp_bess_start_soc_init &&
         input_path_init &&
@@ -188,12 +191,18 @@ bool Global::AllVariablesInitialized() {
         npv_time_horizon_set &&
         inst_cost_PV_per_kWp_set &&
         inst_cost_BS_per_kWh_set &&
-        input_path_init)
+        input_path_init &&
+        bat_power_comp_mode_init)
     {
-        if ( ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
+        if ((
+             ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
                                       && exp_pv_min_kWp_roof_sec_init
-                                      && exp_pv_max_kWp_per_sec_init) )
+                                      && exp_pv_max_kWp_per_sec_init)
+            ) && (
+             ( bat_power_comp_mode == global::BatteryPowerComputationMode::AsDefinedByConfigVar && exp_bess_kW_init ) ||
+             ( bat_power_comp_mode == global::BatteryPowerComputationMode::UseEOverPRatio       && exp_bess_E_P_ratio_init )
+            ))
             return true;
         else
             return false;
@@ -243,9 +252,6 @@ void Global::PrintUninitializedVariables() {
     if (!exp_pv_kWp_static_mode_init) {
         cout << "Variable exp_pv_kWp_static_mode not initialized." << endl;
     }
-    if (!exp_bess_kW_init) {
-        cout << "Variable exp_bess_kW not initialized." << endl;
-    }
     if (!exp_bess_kWh_init) {
         cout << "Variable exp_bess_kWh not initialized." << endl;
     }
@@ -293,6 +299,15 @@ void Global::PrintUninitializedVariables() {
     }
     if (!inst_cost_BS_per_kWh_set) {
         cout << "Variable inst_cost_BS_per_kWh_set not initialized." << endl;
+    }
+    if (!bat_power_comp_mode_init) {
+        cout << "Variable bat_power_comp_mode not initialized." << endl;
+    }
+    if (bat_power_comp_mode == global::BatteryPowerComputationMode::AsDefinedByConfigVar && !exp_bess_kW_init) {
+        cout << "Variable exp_bess_kW not initialized." << endl;
+    }
+    if (bat_power_comp_mode == global::BatteryPowerComputationMode::UseEOverPRatio && !exp_bess_E_P_ratio_init) {
+        cout << "Variable exp_bess_E_P_ratio not initialized." << endl;
     }
 }
 
@@ -498,6 +513,14 @@ void Global::set_exp_bess_kWh(float exp_bess_kWh) {
         Global::exp_bess_kWh_init = true;
     }
 }
+void Global::set_exp_bess_E_P_ratio(float value) {
+    if (exp_bess_E_P_ratio_init) {
+        cerr << "Global variable exp_bess_E_P_ratio is already initialized!" << endl;
+    } else {
+        Global::exp_bess_E_P_ratio = value;
+        Global::exp_bess_E_P_ratio_init = true;
+    }
+}
 void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
     if (exp_bess_start_soc_init) {
         cerr << "Global variable exp_bess_start_soc is already initialized!" << endl;
@@ -608,6 +631,14 @@ void Global::set_cu_selection_mode_fca(global::CUSModeFCA mode) {
     } else {
         Global::cu_selection_mode_fca = mode;
         Global::cu_selection_mode_fca_init = true;
+    }
+}
+void Global::set_battery_power_computation_mode(global::BatteryPowerComputationMode mode) {
+    if (bat_power_comp_mode_init) {
+        cerr << "Battery power computation mode is already set!" << endl;
+    } else {
+        Global::bat_power_comp_mode = mode;
+        Global::bat_power_comp_mode_init = true;
     }
 }
 

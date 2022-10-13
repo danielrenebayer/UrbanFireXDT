@@ -381,7 +381,12 @@ void ControlUnit::add_exp_bs() {
         cerr << "Warning: Control unit with location id " << locationID << " already has a battery!" << endl;
     if (!has_sim_bs) {
         has_sim_bs  = true;
-        sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh(), Global::get_exp_bess_kW(), 0.0, 1.0, Global::get_exp_bess_start_soc());
+        sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh() /*maxE*/,
+                                      Global::get_exp_bess_kW()  /*maxP*/,
+                                      Global::get_exp_bess_E_P_ratio() /* E over P ratio */,
+                                      0.0 /* discharge rate per step */,
+                                      1.0 /* efficiency */,
+                                      Global::get_exp_bess_start_soc() /* inital SOC */);
     }
 }
 
@@ -444,6 +449,11 @@ void ControlUnit::set_exp_bs_maxE_kWh(float value) {
 void ControlUnit::set_exp_bs_maxP_kW(float value) {
     if (has_sim_bs)
         sim_comp_bs->set_maxP_kW(value);
+}
+
+void ControlUnit::set_exp_bs_E_P_ratio(float value) {
+    if (has_sim_bs)
+        sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
 void ControlUnit::remove_sim_added_components() {

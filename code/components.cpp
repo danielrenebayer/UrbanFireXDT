@@ -185,22 +185,56 @@ void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
 //         ComponentBS           //
 // ----------------------------- //
 
-ComponentBS::ComponentBS(float maxE_kWh, float maxP_kW,
-        float discharge_rate_per_step, float efficiency, float initial_SoC) : maxE_kWh(maxE_kWh),maxP_kW(maxP_kW),
-        discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency),
-        initial_SoC(initial_SoC) {
-
+ComponentBS::ComponentBS(
+    float maxE_kWh,
+    float maxP_kW,
+    float E_over_P_ratio,
+    float discharge_rate_per_step,
+    float efficiency,
+    float initial_SoC
+) : maxE_kWh(maxE_kWh),
+    discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency),
+    initial_SoC(initial_SoC)
+{
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
     charge_request_kW = 0;
     total_E_withdrawn_kWh = 0.0;
 
+    if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio) {
+        this->E_over_P_ratio = E_over_P_ratio;
+        this->maxP_kW = maxE_kWh / E_over_P_ratio;
+    } else {
+        this->E_over_P_ratio = maxE_kWh / maxP_kW;
+        this->maxP_kW = maxP_kW;
+    }
+
     if (initial_SoC > 0) {
         SOC = initial_SoC;
         currentE_kWh = maxE_kWh * initial_SoC;
     }
 
+}
+
+void ComponentBS::set_maxE_kWh(float value) {
+    maxE_kWh = value;
+    if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio)
+        this->maxP_kW = maxE_kWh / E_over_P_ratio;
+}
+
+void ComponentBS::set_maxP_kW(float value) {
+    if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::AsDefinedByConfigVar) {
+        maxP_kW  = value;
+        E_over_P_ratio = maxE_kWh / maxP_kW;
+    }
+}
+
+void ComponentBS::set_maxP_by_EPRatio(float EP_ratio) {
+    if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio) {
+        this->E_over_P_ratio = EP_ratio;
+        this->maxP_kW = this->maxE_kWh / EP_ratio;
+    }
 }
 
 void ComponentBS::calculateActions() {

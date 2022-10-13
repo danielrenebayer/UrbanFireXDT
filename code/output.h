@@ -50,6 +50,7 @@ namespace output {
         float exp_bs_maxP_kW  = 0.0;  bool exp_bs_maxP_kW_set  = false;
         float exp_bs_maxE_kWh = 0.0;  bool exp_bs_maxE_kWh_set = false;
         float exp_bs_init_SOC = 0.0;  bool exp_bs_init_SOC_set = false;
+        float exp_bs_EP_ratio = 0.0;  bool exp_bs_EP_ratio_set = false;
     };
     void outputCurrentParamVariCombi(CurrentParamValues&);
 

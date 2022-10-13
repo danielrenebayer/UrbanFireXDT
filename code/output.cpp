@@ -253,8 +253,8 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS E in kWh,";
     if (cParamVals.exp_bs_maxE_kWh_set) ofs << cParamVals.exp_bs_maxE_kWh; else ofs << Global::get_exp_bess_kWh();
     ofs << "\n";
-    ofs << "expansion BS P in kW,";
-    if (cParamVals.exp_bs_maxP_kW_set)  ofs << cParamVals.exp_bs_maxP_kW;  else ofs << Global::get_exp_bess_kW();
+    ofs << "expansion BS E:P ratio,";
+    if (cParamVals.exp_bs_EP_ratio_set) ofs << cParamVals.exp_bs_EP_ratio; else ofs << Global::get_exp_bess_E_P_ratio();
     ofs << "\n";
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();

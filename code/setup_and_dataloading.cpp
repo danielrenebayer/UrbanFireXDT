@@ -52,10 +52,12 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         float  exp_bs_kW    = 0.0; bool exp_bs_kW_set    = false;
         float  exp_bs_kWh   = 0.0; bool exp_bs_kWh_set   = false;
         float  exp_bs_iSOC  = 0.0; bool exp_bs_iSOC_set  = false;
+        float  exp_bs_E_P   = 0.0; bool exp_bs_E_P_set   = false;
         float  os_pv_kWp    = 0.0; bool os_pv_kWp_set    = false;
         float  os_wind_kWp  = 0.0; bool os_wind_kWp_set  = false;
         string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         string sac_planning_mode   = ""; bool sac_planning_mode_set   = false;
+        string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
         // variables for PV expansion
         float  exp_pv_kWp_static  = 0.0; bool exp_pv_kWp_static_set   = false;
         float  exp_pv_kWp_m2_roof = 0.0; bool exp_pv_kWp_m2_roof_set  = false;
@@ -100,6 +102,9 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
                 exp_bs_iSOC     = scenario_dict.get_value<float>();
                 exp_bs_iSOC_set = true;
+            } else if (element_name.compare("expansion BS E:P ratio") == 0) {
+                exp_bs_E_P      = scenario_dict.get_value<float>();
+                exp_bs_E_P_set  = true;
             } else if ( element_name.compare("open space PV kWp") == 0 ) {
                 os_pv_kWp       = scenario_dict.get_value<float>();
                 os_pv_kWp_set   = true;
@@ -145,6 +150,9 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             } else if ( element_name.compare("installation cost BS per kWh") == 0 ) {
                 icost_BS_per_kWh       = scenario_dict.get_value<float>();
                 icost_BS_per_kWh_set   = true;
+            } else if ( element_name.compare("expansion BS power computation mode") == 0 ) {
+                exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
+                exp_bs_P_comp_mode_set   = true;
             }
             return;
         };
@@ -210,6 +218,18 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             } else {
                 cerr << "Parameter 'CU selection mode for comp. add' is defined as '" << sac_planning_mode << "' in config-json, but this value is unknown." << endl;
                 throw runtime_error("Parameter 'CU selection mode for comp. add' as defined in config-json is unknown.");
+            }
+        }
+        //   c) Battery Power Computation Mode
+        global::BatteryPowerComputationMode exp_bs_P_comp_mode_transl = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
+        if (exp_bs_P_comp_mode_set) {
+            if (exp_bs_P_comp_mode == "Power as given") {
+                exp_bs_P_comp_mode_transl = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
+            } else if (exp_bs_P_comp_mode == "Use E:P-ratio") {
+                exp_bs_P_comp_mode_transl = global::BatteryPowerComputationMode::UseEOverPRatio;
+            } else {
+                cerr << "Parameter 'expansion BS power computation mode' is defined as '" << exp_bs_P_comp_mode << "' in config-json, but this value is unknown." << endl;
+                throw runtime_error("Parameter 'expansion BS power computation mode' as defined in config-json is unknown.");
             }
         }
 
@@ -310,6 +330,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (exp_bs_kW_set)    Global::set_exp_bess_kW(exp_bs_kW);
             if (exp_bs_kWh_set)   Global::set_exp_bess_kWh(exp_bs_kWh);
             if (exp_bs_iSOC_set)  Global::set_exp_bess_start_soc(exp_bs_iSOC);
+            if (exp_bs_E_P_set)   Global::set_exp_bess_E_P_ratio(exp_bs_E_P);
             if (os_pv_kWp_set)    Global::set_open_space_pv_kWp(os_pv_kWp);
             if (os_wind_kWp_set)  Global::set_wind_kWp(os_wind_kWp);
             if (exp_profile_mode_set)   Global::set_exp_profile_mode(exp_profile_mode_transf);
@@ -325,6 +346,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (npv_time_horizon_set)   Global::set_npv_time_horizon(npv_time_horizon);
             if (icost_PV_per_kWp_set)   Global::set_inst_cost_PV_per_kWp(icost_PV_per_kWp);
             if (icost_BS_per_kWh_set)   Global::set_inst_cost_BS_per_kWh(icost_BS_per_kWh);
+            if (exp_bs_P_comp_mode_set) Global::set_battery_power_computation_mode(exp_bs_P_comp_mode_transl);
             //
             // change current working dir to the location of the config file
             filesystem::path config_fp = filepath;

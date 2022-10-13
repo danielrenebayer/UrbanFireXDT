@@ -57,7 +57,7 @@ class ComponentPV {
 
 class ComponentBS {
     public:
-        ComponentBS(float maxE_kWh, float maxP_kW, float discharge_rate_per_step, float efficiency, float initial_SoC);
+        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency, float initial_SoC);
         // getter methods
         float get_SOC() const               { return SOC; }
         float get_currentCharge_kWh() const { return currentE_kWh; }
@@ -67,8 +67,9 @@ class ComponentBS {
         double get_current_EFC()   const    { return total_E_withdrawn_kWh / maxE_kWh; } ///< Returns the equivalent full cycles (EFC)
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
-        void  set_maxE_kWh(float value)     { maxE_kWh = value; }
-        void  set_maxP_kW (float value)     { maxP_kW  = value; }
+        void  set_maxE_kWh(float value);
+        void  set_maxP_kW (float value);
+        void  set_maxP_by_EPRatio(float ratio);
         // update / action methods
         void calculateActions();
         void resetInternalState();
@@ -76,6 +77,7 @@ class ComponentBS {
         // semi-constant member variables, i.e. they might change for parameter variations
         float maxE_kWh;
         float maxP_kW;
+        float E_over_P_ratio;
         // constant member variables (other languages might call this 'final')
         const float discharge_rate_per_step;
         const float efficiency;

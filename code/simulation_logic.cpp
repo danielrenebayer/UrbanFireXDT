@@ -170,6 +170,12 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
                     cParamVals.exp_bs_maxE_kWh = var_name_and_val.second;
                     cParamVals.exp_bs_maxE_kWh_set = true;
 
+                } else if (var_name_and_val.first.compare("expansion BS E:P ratio") == 0) {
+                    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
+                        cuList[i]->set_exp_bs_E_P_ratio(var_name_and_val.second);
+                    cParamVals.exp_bs_EP_ratio = var_name_and_val.second;
+                    cParamVals.exp_bs_EP_ratio_set = true;
+
                 } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
                     std::cerr << "This is not implemented!" << std::endl;
 

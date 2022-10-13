@@ -96,6 +96,18 @@ namespace global {
         BestNPV
     };
 
+    /*
+     * This enum defines how the battery storage power
+     * should be computet.
+     * There are two options:
+     * 1. by setting a given value, i.e. config-variable 'expansion BS P in kW' will be used.
+     * 2. by setting the E/P-ratio of the battery, i.e. battery P = E/P-ratio * selected E
+     */
+    enum struct BatteryPowerComputationMode {
+        AsDefinedByConfigVar,
+        UseEOverPRatio
+    };
+
 }
 
 class Global {
@@ -150,6 +162,7 @@ class Global {
         static float get_exp_pv_max_kWp_roof_sec()   { return exp_pv_max_kWp_per_sec;  }
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
+        static float get_exp_bess_E_P_ratio()  { return exp_bess_E_P_ratio; }
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
@@ -164,6 +177,7 @@ class Global {
         static global::OutputModePerCU get_output_mode_per_cu() { return output_mode_per_cu; }
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
+        static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         // setter methods
         static void set_n_timesteps(unsigned long n_timesteps);
         static void set_n_substations(unsigned long n_substations);
@@ -184,6 +198,7 @@ class Global {
         static void set_exp_pv_max_kWp_roof_sec(float value);
         static void set_exp_bess_kW(float exp_bess_kW);
         static void set_exp_bess_kWh(float exp_bess_kWh);
+        static void set_exp_bess_E_P_ratio(float value);
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
@@ -198,6 +213,7 @@ class Global {
         static void set_output_mode_per_cu(global::OutputModePerCU mode);
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
+        static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         // variables
@@ -222,6 +238,7 @@ class Global {
         static float exp_pv_max_kWp_per_sec;  ///< maximal size in kWp of a PV section on a given roof section, bigger roof sections will be cut to this value; only applicable when dynamic kWp calculation is selected
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
+        static float exp_bess_E_P_ratio;   ///< E:P-ratio for new battery storages, this or exp_bess_kW has to be defined!
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
@@ -236,6 +253,7 @@ class Global {
         static global::OutputModePerCU output_mode_per_cu; ///< Variable storing the selected output mode per CU
         static global::ExpansionProfileAllocationMode exp_profile_mode; ///< Variable storing the selected mode for assigning profiles to PV sections or heat pumps
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
+        static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;
@@ -257,6 +275,7 @@ class Global {
         static bool exp_pv_max_kWp_per_sec_init;
         static bool exp_bess_kW_init;
         static bool exp_bess_kWh_init;
+        static bool exp_bess_E_P_ratio_init;
         static bool exp_bess_start_soc_init;
         static bool open_space_pv_kWp_init;
         static bool wind_kWp_init;
@@ -271,6 +290,7 @@ class Global {
         static bool output_mode_per_cu_init;
         static bool exp_profile_mode_init;
         static bool cu_selection_mode_fca_init;
+        static bool bat_power_comp_mode_init;
 };
 
 #endif
