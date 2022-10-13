@@ -87,6 +87,7 @@ bool simulation::oneStep(unsigned long ts) {
     global::unit_open_space_wind->compute_next_value(ts);
     total_load -= global::unit_open_space_pv->get_current_feedin_kW();
     total_load -= global::unit_open_space_wind->get_current_feedin_kW();
+    total_load += global::residual_gridload_kW[ts-1];
     //
     // loop over all substations: compute new load values
     // and calculate total grid load

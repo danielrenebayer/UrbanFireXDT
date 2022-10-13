@@ -635,7 +635,7 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
 }
 int load_data_from_central_database_callback_Wind(void* data, int argc, char** argv, char** colName) {
     /*
-     * This is the callback function for geeting the global Wind profile.
+     * This is the callback function can be used for getting the global Wind profile.
      *
      * The first argument (data) holds the reference to the target array, where
      * data should be written into.
@@ -652,10 +652,20 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
     }
 
     if (stoul(argv[0]) != callcounter) {
-        cerr << "Wrong ordering of the global PV profile values!" << endl;
+        cerr << "Wrong ordering of the global wind profile values!" << endl;
         return 1;
     }
-    ((float*) data)[pos] = stof(argv[1]);
+    try {
+        if (argv[1] == NULL) {
+            ((float*) data)[pos] = 0.0;
+        } else {
+            ((float*) data)[pos] = stof(argv[1]);
+        }
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the wind profile.\n";
+        cerr << " - More details: At time step " << callcounter << endl;
+        return 1;
+    }
 
     callcounter++;
     return 0;
@@ -703,6 +713,43 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         callcounter_timestepID = 1;
         callcounter_timeseries++;
     }
+    return 0;
+}
+int load_data_from_central_database_callback_ResGridload(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function can be used for getting the global residual grid load (i.e. load that is not measured by simulated meters).
+     *
+     * The first argument (data) holds the reference to the target array, where
+     * data should be written into.
+     *
+     * Columns:
+     * 0           1
+     * TimestepID  P_residual_gridload
+     */
+    static size_t callcounter = 1;
+    size_t pos = callcounter - 1; // the current position is one behind the callcounter
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoul(argv[0]) != callcounter) {
+        cerr << "Wrong ordering of the residual grid load values!" << endl;
+        return 1;
+    }
+    try {
+        if (argv[1] == NULL) {
+            ((float*) data)[pos] = 0.0;
+        } else {
+            ((float*) data)[pos] = stof(argv[1]);
+        }
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the residual grid load series.\n";
+        cerr << " - More details: At time step " << callcounter << endl;
+        return 1;
+    }
+
+    callcounter++;
     return 0;
 }
 int load_data_from_central_database_callback_address_data_A(void* data, int argc, char** argv, char** colName) {
@@ -891,6 +938,19 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         global::hp_profiles = new_hp_profile_array;
+
+        //
+        // Load residual netload
+        //
+        float* new_res_gridload_array = new float[Global::get_n_timesteps()];
+        sql_query = "SELECT TimestepID,P_residual_gridload FROM residual_grid_load ORDER BY TimestepID;";
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_ResGridload, new_res_gridload_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::residual_gridload_kW = new_res_gridload_array;
 
         //
         // Load address data

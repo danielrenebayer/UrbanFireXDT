@@ -16,7 +16,8 @@ bool global::all_variables_initialized() {
         hp_profiles  != NULL &&
         wind_profile != NULL &&
         unit_open_space_pv   != NULL &&
-        unit_open_space_wind != NULL)
+        unit_open_space_wind != NULL &&
+        residual_gridload_kW != NULL)
     {
         return true;
     } else {
@@ -49,6 +50,7 @@ void global::vacuum() {
     delete   current_output_dir_prefix;current_output_dir_prefix   = NULL;
     delete   current_global_output_dir;current_global_output_dir   = NULL;
     delete[] wind_profile; wind_profile = NULL;
+    delete[] residual_gridload_kW;   residual_gridload_kW = NULL;
 }
 
 void global::print_uninitialized_variables() {
