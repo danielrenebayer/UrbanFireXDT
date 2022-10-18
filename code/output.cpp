@@ -1,5 +1,6 @@
 #include "output.h"
 
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -70,6 +71,25 @@ void output::initializeDirectoriesOnce(int scenario_id) {
     create_dir_del_if_exists(param_vari_path);
     // copy to global variable
     global::current_output_dir_prefix = new filesystem::path(param_vari_path);
+    //
+    // output build information and data information
+    ofstream build_info_output( param_vari_path /= "build_and_run_info.txt", std::ofstream::out );
+    build_info_output << "Simulation build at " << __DATE__ << " " << __TIME__ <<  "\n";
+    #ifdef __GNUC__
+    build_info_output << "GCC was used as compiler.\nGCC Version = " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << "\n";
+    #endif
+    #ifdef __VERSION__
+    build_info_output << "Compiler version = " << __VERSION__ << "\n";
+    #endif
+    #ifdef __OPTIMIZE__
+    build_info_output << "Optimization was enabled during compile time.\n";
+    #endif
+    build_info_output << "C++ standard = " << __cplusplus << "\n\n";
+    //
+    time_t current_time = time(nullptr);
+    build_info_output << "Time of simulation start = " << put_time(localtime(&current_time), "%F %T") << "\n";
+    // TODO: output information about when data was preprocessed
+    build_info_output.close();
 }
 
 void output::initializeDirectoriesPerPVar() {
