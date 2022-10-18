@@ -89,6 +89,7 @@ class ControlUnit {
         bool has_hp();
         bool has_wb();
         bool has_chp();
+        bool has_bs_sim_added();
         int  get_exp_combi_bit_repr();
         int  get_exp_combi_bit_repr_from_MUs();
         int  get_exp_combi_bit_repr_sim_added();
@@ -114,6 +115,7 @@ class ControlUnit {
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value
+        void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
         // for simulation runs
         bool compute_next_value(unsigned long ts);

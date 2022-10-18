@@ -247,6 +247,10 @@ bool ControlUnit::has_wb() {
 	return false;
 }
 
+bool ControlUnit::has_bs_sim_added() {
+	return has_sim_bs;
+}
+
 int ControlUnit::get_exp_combi_bit_repr() {
     return get_exp_combi_bit_repr_from_MUs() | get_exp_combi_bit_repr_sim_added();
 }
@@ -456,22 +460,36 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
         sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
+void ControlUnit::remove_sim_added_bs() {
+    if (has_sim_bs) {
+        has_sim_bs = false;
+        delete sim_comp_bs;
+        sim_comp_bs = NULL;
+    } else {
+        cerr << "Warning: A battery storage should be removed from one CU, but no one is sim. added!" << endl;
+    }
+}
+
 void ControlUnit::remove_sim_added_components() {
     if (has_sim_pv) {
         has_sim_pv = false;
         delete sim_comp_pv;
+        sim_comp_pv = NULL;
     }
 	if (has_sim_bs) {
         has_sim_bs = false;
         delete sim_comp_bs;
+        sim_comp_bs = NULL;
     }
 	if (has_sim_hp) {
         has_sim_hp = false;
         delete sim_comp_hp;
+        sim_comp_hp = NULL;
     }
 	if (has_sim_wb) {
         has_sim_wb = false;
         delete sim_comp_wb;
+        sim_comp_wb = NULL;
     }
 }
 
