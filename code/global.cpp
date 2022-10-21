@@ -114,6 +114,7 @@ float Global::inst_cost_PV_per_kWp  = 0.0;
 float Global::inst_cost_BS_per_kWh  = 0.0;
 float Global::npv_discount_rate     = 0.0;
 unsigned int Global::npv_time_horizon  = 0;
+bool  Global::use_BS_for_SSR_list = false;
 string Global::input_path         = "";
 string Global::output_path        = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
@@ -150,6 +151,7 @@ bool Global::inst_cost_PV_per_kWp_set     = false;
 bool Global::inst_cost_BS_per_kWh_set     = false;
 bool Global::npv_discount_rate_set = false;
 bool Global::npv_time_horizon_set  = false;
+bool Global::use_BS_for_SSR_list_set      = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
@@ -593,6 +595,14 @@ void Global::set_inst_cost_BS_per_kWh(float value) {
     } else {
         Global::inst_cost_BS_per_kWh = value;
         inst_cost_BS_per_kWh_set = true;
+    }
+}
+void Global::set_use_BS_for_SSR_list(bool mode) {
+    if (use_BS_for_SSR_list_set) {
+        cerr << "Global variable use_BS_for_SSR_list is already initialized!" << endl;
+    } else {
+        Global::use_BS_for_SSR_list = mode;
+        use_BS_for_SSR_list_set = true;
     }
 }
 void Global::set_input_path(string& path) {

@@ -268,10 +268,13 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
             if (!cuList[i]->has_pv())
                 cuList[i]->add_exp_pv();
         }
-        // 1.2b) add Battery to all CUs (that have a sim. added PV-installation), if they do not already have a battery
-        for (size_t i = 0; i < nCUs; i++) {
+        if (Global::get_use_BS_for_SSR_list()) {
+          // 1.2b) add Battery to all CUs (that have a sim. added PV-installation), if they do not already have a battery
+          // and if this is selected
+          for (size_t i = 0; i < nCUs; i++) {
             if ( !cuList[i]->has_bs() && ( cuList[i]->get_exp_combi_bit_repr_sim_added() & expansion::MaskBS ) )
                 cuList[i]->add_exp_bs();
+          }
         }
         // 1.3) execute the simulation once for the given scenario
         bool no_error = runSimulationForOneParamSetting();
@@ -296,7 +299,8 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
              [](pair<double, ControlUnit*> a, pair<double, ControlUnit*> b) { return a.first > b.first; });
         //
         // 1.4.c) output metrics
-        output::outputMetrics(true);
+        string file_name_postfix = "of-sac-planning-per-cu";
+        output::outputMetrics(true, &file_name_postfix);
         //
         // 1.5) Reset internal variables
         ControlUnit::ResetAllInternalStates();

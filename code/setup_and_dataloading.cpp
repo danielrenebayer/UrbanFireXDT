@@ -71,6 +71,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         uint   npv_time_horizon   = 0.0; bool npv_time_horizon_set    = false;
         float  icost_PV_per_kWp   = 0.0; bool icost_PV_per_kWp_set    = false;
         float  icost_BS_per_kWh   = 0.0; bool icost_BS_per_kWh_set    = false;
+        // variables, that always default to a value
+        bool   use_BS_for_SSR_list = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -153,6 +155,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             } else if ( element_name.compare("expansion BS power computation mode") == 0 ) {
                 exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
                 exp_bs_P_comp_mode_set   = true;
+            } else if ( element_name.compare("use BS for creating SSR list for SAC planning") == 0 ) {
+                use_BS_for_SSR_list     = scenario_dict.get_value<bool>();
             }
             return;
         };
@@ -347,6 +351,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (icost_PV_per_kWp_set)   Global::set_inst_cost_PV_per_kWp(icost_PV_per_kWp);
             if (icost_BS_per_kWh_set)   Global::set_inst_cost_BS_per_kWh(icost_BS_per_kWh);
             if (exp_bs_P_comp_mode_set) Global::set_battery_power_computation_mode(exp_bs_P_comp_mode_transl);
+            //
+            Global::set_use_BS_for_SSR_list(use_BS_for_SSR_list);
             //
             // change current working dir to the location of the config file
             filesystem::path config_fp = filepath;
