@@ -49,6 +49,7 @@ namespace global {
     inline unsigned long n_ts_between_flushs = 1000; ///< Number of timesteps between the flush of the output buffers
     inline std::map<unsigned long, float> yearly_hp_energy_demand_kWh; ///< Map storing the yearly energy demand for the heat pump in kWh (electric) [per location id]
     inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
+    inline unsigned int current_repetition_counter = 0; ///< Repetition counter, if repetitions is set as a command line argument
 
     inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 
@@ -151,6 +152,8 @@ class Global {
       //static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
         static bool is_parameter_variation()   { return pvar_selected;  }
         static int  get_parameter_varID()      { return pvar_id;        }
+        static bool get_repetitions_selected() { return repetitions_selected; }
+        static uint get_n_repetitions()        { return n_repetitions;  }
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
@@ -189,6 +192,8 @@ class Global {
         static void set_n_heatpump_profiles(unsigned long n_hp_ts);
       //static void set_comp_eval_metrics(bool value);
         static void set_pvar_vals(bool pvar_set, int pvarID);
+        static void set_repetitions_selected(bool value);
+        static void set_n_repetitions(unsigned int value);
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
@@ -229,6 +234,8 @@ class Global {
       //static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
         static bool pvar_selected;         ///< True, if a parameter variation is selected
         static int  pvar_id;               ///< ID of the parameter variation
+        static bool repetitions_selected;  ///< True, if complete twin (sac planning + param. vari. + simulation) should run more than once
+        static unsigned int n_repetitions; ///< Number of repetitions if repetitions_selected == True
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
@@ -268,6 +275,8 @@ class Global {
         static bool n_hp_ts_init;
       //static bool comp_eval_metrics_init;
         static bool pvar_set;
+        static bool repetitions_selected_set;
+        static bool n_repetitions_set;
         static bool ts_start_str_init;
         static bool ts_end_str_init;
         static bool tsteps_per_hour_init;

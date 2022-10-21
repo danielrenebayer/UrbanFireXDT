@@ -92,6 +92,8 @@ unsigned long Global::n_hp_ts     = 0;
 //bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
+bool Global::repetitions_selected = false;
+uint Global::n_repetitions        = 0;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
@@ -130,6 +132,8 @@ bool Global::n_pv_ts_init          = false;
 bool Global::n_hp_ts_init          = false;
 //bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
+bool Global::repetitions_selected_set     = false;
+bool Global::n_repetitions_set     = false;
 bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
 bool Global::tsteps_per_hour_init  = false;
@@ -177,6 +181,7 @@ bool Global::AllVariablesInitialized() {
         n_hp_ts_init &&
       //comp_eval_metrics_init &&
         pvar_set &&
+        repetitions_selected_set &&
         ts_start_str_init &&
         ts_end_str_init &&
         tsteps_per_hour_init &&
@@ -206,6 +211,8 @@ bool Global::AllVariablesInitialized() {
             ) && (
              ( bat_power_comp_mode == global::BatteryPowerComputationMode::AsDefinedByConfigVar && exp_bess_kW_init ) ||
              ( bat_power_comp_mode == global::BatteryPowerComputationMode::UseEOverPRatio       && exp_bess_E_P_ratio_init )
+            ) && (
+                repetitions_selected && n_repetitions_set
             ))
             return true;
         else
@@ -240,6 +247,12 @@ void Global::PrintUninitializedVariables() {
     //}
     if (!pvar_set) {
         cout << "Variable pvar not initialized." << endl;
+    }
+    if (!repetitions_selected_set) {
+        cout << "Variable repetitions_selected not initialized." << endl;
+    }
+    if (repetitions_selected && !n_repetitions_set) {
+        cout << "Variable n_repetitions_set not initialized." << endl;
     }
     if (!ts_start_str_init) {
         cout << "Variable ts_start_str not initialized." << endl;
@@ -417,6 +430,22 @@ void Global::set_pvar_vals(bool pvar_val, int pvarID) {
         Global::pvar_selected = pvar_val;
         Global::pvar_id  = pvarID;
         Global::pvar_set = true;
+    }
+}
+void Global::set_repetitions_selected(bool value) {
+    if (repetitions_selected_set){
+        cerr << "Global variable repetitions_selected is already initialized!" << endl;
+    } else {
+        Global::repetitions_selected = value;
+        Global::repetitions_selected_set = true;
+    }
+}
+void Global::set_n_repetitions(unsigned int value) {
+    if (n_repetitions_set){
+        cerr << "Global variable n_repetitions is already initialized!" << endl;
+    } else {
+        Global::n_repetitions = value;
+        Global::n_repetitions_set = true;
     }
 }
 void Global::set_ts_start_tm(struct tm* ts_start_tm) {
