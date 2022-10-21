@@ -403,7 +403,10 @@ void expansion::add_expansion_to_units(
         output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsSimulated));
         output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsInData));
         output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsSimulated));
-        output_per_cu << "," << endl;
+        output_per_cu << "," << current_unit->get_sim_comp_pv_kWp();
+        output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
+        output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW();
+        output_per_cu << "\n";
     }
     output_per_cu.close();
 }
