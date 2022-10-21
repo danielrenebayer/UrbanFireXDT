@@ -30,9 +30,35 @@ namespace output {
     inline CUOutputOneFilePerSubstation** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
     inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs
 
-    void initializeDirectoriesOnce(int scenario_id);
+    /**
+     * This function initializes the base direcory (or directories) for the output,
+     * for the current scenario but not for individual parameter variations.
+     * It has to be callen once (or multiple times if repetition is selected as
+     * cmd-line argument).
+     * It must be callen before initializeDirectoriesPerPVar().
+     * @param scenario_id The current scenario ID
+     */
+    void initializeDirectoriesBase(int scenario_id);
+    /**
+     * This function initializes the direcory (or directories)
+     * for the current parameter variation (if selected).
+     * Thus, it has to be callen for every parameter variation
+     * setting individually again.
+     * Even in the case of no parameter variation, it has to be callen once.
+     * It MUST be callen AFTER initializeDirectoriesBase().
+     */
     void initializeDirectoriesPerPVar();
+    /**
+     * This method initializes the substation output file.
+     * @param scenario_id The current scenario ID
+     */
     void initializeSubstationOutput(int scenario_id);
+    /**
+     * This method initializes the individual output files for the control
+     * units. Depending on the globally selected mode, one file per CU is
+     * created or some CUs share one output file.
+     * @param scenario_id The current scenario ID
+     */
     void initializeCUOutput(int scenario_id);
 
     void closeOutputs();

@@ -13,6 +13,11 @@ using namespace std;
 using namespace output;
 
 //
+// internal helper variables
+//
+bool base_directories_initialized = false;
+
+//
 // Helper function (not defined in header file).
 // It removes a directory if this already exists
 // and creates a new, empty directory
@@ -27,28 +32,33 @@ void create_dir_del_if_exists(filesystem::path dirpath) {
     filesystem::create_directory(dirpath);
 }
 
-void output::initializeDirectoriesOnce(int scenario_id) {
-    //
-    // This function initializes the direcory (or directories)
-    // for the output, for the current scenario.
-    // Thus, it has to be callen for every parameter variation
-    // setting individually again, if parameter variation
-    // is selected at all.
-    //
-    // MUST be callen BEFORE initializeDirectoriesPerPVar()
-    //
+void output::initializeDirectoriesBase(int scenario_id) {
     //
     // create a subfolder for the current scenario, if it does not exist
     filesystem::path dirpath = Global::get_output_path();
     if (!filesystem::is_directory(dirpath)) {
         filesystem::create_directory(dirpath);
     }
+    // create subfolder for selected scenario (if it does not exist)
     stringstream current_scenario_str;
     current_scenario_str << "S";
     current_scenario_str << setw(4) << setfill('0') << scenario_id;
     dirpath /= current_scenario_str.str();
     if (!filesystem::is_directory(dirpath)) {
         filesystem::create_directory(dirpath);
+    }
+    // if repetition is selected, create subfolder for repetitions
+    if (Global::get_repetitions_selected()) {
+        // create subfolder for all repetions as base dir
+        dirpath /= "repetitions";
+        if (!filesystem::is_directory(dirpath)) {
+            filesystem::create_directory(dirpath);
+        }
+        // create subfolder for current repetition
+        dirpath /= to_string(global::current_repetition_counter);
+        if (!filesystem::is_directory(dirpath)) {
+            filesystem::create_directory(dirpath);
+        }
     }
     // copy to global variable
     //delete global::current_global_output_dir;
@@ -90,18 +100,15 @@ void output::initializeDirectoriesOnce(int scenario_id) {
     build_info_output << "Time of simulation start = " << put_time(localtime(&current_time), "%F %T") << "\n";
     // TODO: output information about when data was preprocessed
     build_info_output.close();
+    base_directories_initialized = true;
 }
 
 void output::initializeDirectoriesPerPVar() {
     //
-    // This function initializes the direcory (or directories)
-    // for the current parameter variation (if selected).
-    // Thus, it has to be callen for every parameter variation
-    // setting individually again.
-    // Even in the case of no parameter variation, it has to be callen once.
-    //
-    // MUST be callen AFTER initializeDirectoriesOnce()
-    //
+    // check, if initializeDirectoriesBase() is already callen
+    if (!base_directories_initialized) {
+        throw logic_error("Error: output::initializeDirectoriesPerPVar() MUST be callen after output::initializeDirectoriesBase() has been callen.");
+    }
     //
     // in case of a parameter variation: create subfolder for
     // the current variation (and delete old ones if the still exist)
@@ -123,10 +130,6 @@ void output::initializeDirectoriesPerPVar() {
 }
 
 void output::initializeSubstationOutput(int scenario_id) {
-    //
-    // This method initializes the substation output
-    // file.
-    //
     //
     // initialize the output file
     stringstream output_path_subst;
