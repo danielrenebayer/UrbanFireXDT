@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
         ("config",   bpopts::value<string>(), "Path to the json configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
         ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
+        ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation shoud be repeated - only usefull is random variables are used.")
       //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit");
@@ -100,6 +101,17 @@ int main(int argc, char* argv[]) {
         }
     } else {
         Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
+    }
+    if (opts_vals.count("repetitions") > 0) {
+        unsigned int n_repetitions = opts_vals["repetitions"].as<unsigned int>();
+        if (n_repetitions > 1) {
+            Global::set_repetitions_selected(true);
+            Global::set_n_repetitions(n_repetitions);
+        } else {
+            Global::set_repetitions_selected(false);
+        }
+    } else {
+        Global::set_repetitions_selected(false);
     }
     /*
     if (opts_vals.count("metrics")) {
@@ -161,17 +173,12 @@ int main(int argc, char* argv[]) {
 	}
 
     //
-    // Initialize global output directories
-    //
-    output::initializeDirectoriesOnce(scenario_id);
-
-    //
     // Plan and add which sim. added components should be added to which control units
     // and Run the simulation
     // - once (if no parameter variation is selected) or
     // - multiple times, if param. vari. is selected
     //
-    if (!simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
+    if (!simulation::runCompleteSimulation(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
         cerr << "Error during simulation run!" << endl;
         return 3;
     }

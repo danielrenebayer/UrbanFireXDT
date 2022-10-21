@@ -325,3 +325,25 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     // 3) run the simulation (for all parameter variations or a single run)
     return runSimulationForAllVariations(scenario_id);
 }
+
+bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], long expansion_matrix_abs_freq[16][16], int scenario_id) {
+    if (Global::get_repetitions_selected()) {
+        // if repetition is selected, this function will handle it
+        for (unsigned int cRep = 1; cRep <= Global::get_n_repetitions(); cRep++) {
+            // set current repetion number to a global variable, so that output paths and so on can be adjusted
+            global::current_repetition_counter = cRep;
+            // Initialize global output directories
+            output::initializeDirectoriesBase(scenario_id);
+            // run the main part
+            if (!simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        // Initialize global output directories
+        output::initializeDirectoriesBase(scenario_id);
+        // run the main part
+        return simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
+    }
+}
