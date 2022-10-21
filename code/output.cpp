@@ -319,12 +319,14 @@ void output::outputCurrentCUSettings() {
 // after the simulation has been finished.
 // If no metric computetion is selected, the function does nothing
 //
-void output::outputMetrics(bool alt_fname /* = false */) {
+void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix /* = NULL */) {
     filesystem::path output_path;
     //if (Global::get_comp_eval_metrics()) { // option is disabled, check not required anymore
         if (alt_fname) {
+            if (fname_postfix == NULL)
+                throw logic_error("Parameter fname_postfix of function output::outputMetrics is NULL!");
             output_path  = *(global::current_global_output_dir);
-            output_path /= "metric-of-sac-planning-per-cu.csv";
+            output_path /= "metrics-" + *fname_postfix + ".csv";
         } else {
             output_path  = *(global::current_output_dir);
             output_path /= "metrics-per-cu.csv";
