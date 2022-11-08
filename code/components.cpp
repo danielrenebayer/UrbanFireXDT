@@ -5,6 +5,7 @@
 #include <numeric>
 #include <random>
 #include <string>
+#include <vector>
 
 // ----------------------------- //
 //      Implementation of        //
@@ -127,8 +128,10 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     // // float min_roof_area = min_kWp / kWp_per_m2;
     // // float max_roof_area = max_kWp / kWp_per_m2;
     auto& roof_section_vec = global::roof_section_orientations[locationID];
+    std::vector<std::pair<float,std::string>> vec_of_sections; // helper vector required to check, if Global::exp_pv_max_kWp_per_unit is reached
     // iterate over all roof sections
-    // and get all orientations and areas per roof section
+    // 1)
+    // get all orientations and areas per roof section
     for (auto& section_tuple : roof_section_vec) {
         float       section_roof_area   = section_tuple.first;
         std::string section_orientation = section_tuple.second;
@@ -144,7 +147,27 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         }
         total_kWp += section_kWp;
         // 2)
-        // create and add section to list
+        // add section to list
+        vec_of_sections.emplace_back(section_kWp, section_orientation);
+    }
+    // 2)
+    // only in the case of Global::exp_pv_max_kWp_per_unit_set
+    if (Global::get_exp_pv_max_kWp_per_unit_set()) {
+        // is total_kWp > Global::get_exp_pv_max_kWp_per_unit()
+        // if yes, lower installed power with the same percantage over all sections
+        if ( total_kWp > Global::get_exp_pv_max_kWp_per_unit() ) {
+            float reduction_factor = Global::get_exp_pv_max_kWp_per_unit() / total_kWp;
+            total_kWp = Global::get_exp_pv_max_kWp_per_unit();
+            for (auto& section_tuple : vec_of_sections) {
+                section_tuple.first = section_tuple.first * reduction_factor;
+            }
+        }
+    }
+    // 3)
+    // instanziate objects of roof sections
+    for (auto& section_tuple : vec_of_sections) {
+        float       section_kWp         = section_tuple.first;
+        std::string section_orientation = section_tuple.second;
         roof_sections.emplace_back(section_kWp, section_orientation);
     }
 }
