@@ -72,6 +72,9 @@ void global::print_uninitialized_variables() {
     if (unit_open_space_wind == NULL) {
         cout << "Open-space wind farms (variable unit_open_space_wind) undefined." << endl;
     }
+    if (residual_gridload_kW == NULL) {
+        cout << "List of residual grid load in kW per time step is undefined." << endl;
+    }
 }
 
 
@@ -311,6 +314,9 @@ void Global::PrintUninitializedVariables() {
     }
     if (!exp_pv_kWp_static_mode && !exp_pv_max_kWp_per_sec_init) {
         cout << "Variable exp_pv_max_kWp_per_sec not initialized." << endl;
+    }
+    if (!feed_in_tariff_set) {
+        cout << "Variable feed_in_tariff_set not initialized." << endl;
     }
     if (!demand_tariff_set) {
         cout << "Variable demand_tariff_set not initialized." << endl;
