@@ -317,6 +317,8 @@ void expansion::add_expansion_to_units(
             mt19937 rndGen( rndDevice() );
             shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
         }
+        // cummulative sum of added kWp of residential PV nominal power in (kWp)
+        double cumsum_added_pv_kWp = 0.0;
         // get the iterator
         vector<ControlUnit*>::iterator iter = listOfCUs->begin();
         // loop over all **target** expansion states
@@ -344,6 +346,11 @@ void expansion::add_expansion_to_units(
                     cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
                     goto outer_loop_end;
                 }
+                // 0. check, if max global kWp addition is reached
+                if (Global::get_exp_pv_max_kWp_total_set() &&
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                    goto outer_loop_end;
+                }
                 // 1. add components
                 if (expPV) (*iter)->add_exp_pv();
                 if (expBS) (*iter)->add_exp_bs();
@@ -351,6 +358,10 @@ void expansion::add_expansion_to_units(
                 if (expWB) (*iter)->add_exp_wb();
                 // 2. remove from list (would be good, but not required)
                 iter++;
+                // 3. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
+                if (Global::get_exp_pv_max_kWp_total_set()) {
+                    cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
+                }
             }
         }
         outer_loop_end:;
