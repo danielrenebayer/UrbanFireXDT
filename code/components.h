@@ -69,7 +69,7 @@ class ComponentBS {
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_maxE_kWh(float value);
         void  set_maxP_kW (float value);
-        void  set_maxP_by_EPRatio(float ratio);
+        void  set_maxP_by_EPRatio(float EP_ratio);
         // update / action methods
         void calculateActions();
         void resetInternalState();
