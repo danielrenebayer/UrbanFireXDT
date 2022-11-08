@@ -157,6 +157,10 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 exp_bs_P_comp_mode_set   = true;
             } else if ( element_name.compare("use BS for creating SSR list for SAC planning") == 0 ) {
                 use_BS_for_SSR_list     = scenario_dict.get_value<bool>();
+            } else if ( element_name.compare("id") == 0 ) {
+            } else if ( element_name.compare("comment") == 0 ) {
+            } else {
+                cout << "Unknonw config parameter " << element_name << endl;
             }
             return;
         };
