@@ -64,6 +64,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         float  exp_pv_min_kWp     = 0.0; bool exp_pv_min_kWp_set      = false;
         float  exp_pv_max_kWp     = 0.0; bool exp_pv_max_kWp_set      = false;
         bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
+        float  exp_pv_max_total_kWp = 0.0; bool exp_pv_max_total_kWp_set = false;
+        float  exp_pv_max_unit_kWp  = 0.0; bool exp_pv_max_unit_kWp_set  = false;
         // variables of NPV calculation
         float  feed_in_tariff     = 0.0; bool feed_in_tariff_set      = false;
         float  demand_tariff      = 0.0; bool demand_tariff_set       = false;
@@ -157,6 +159,12 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 exp_bs_P_comp_mode_set   = true;
             } else if ( element_name.compare("use BS for creating SSR list for SAC planning") == 0 ) {
                 use_BS_for_SSR_list     = scenario_dict.get_value<bool>();
+            } else if ( element_name.compare("expansion PV max inst kWp per unit") == 0 ) {
+                exp_pv_max_unit_kWp     = scenario_dict.get_value<float>();
+                exp_pv_max_unit_kWp_set = true;
+            } else if ( element_name.compare("expansion PV max total kWp addition") == 0 ) {
+                exp_pv_max_total_kWp    = scenario_dict.get_value<float>();
+                exp_pv_max_total_kWp_set= true;
             } else if ( element_name.compare("id") == 0 ) {
             } else if ( element_name.compare("comment") == 0 ) {
             } else {
@@ -346,6 +354,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (exp_pv_mode_static_set) Global::set_exp_pv_mode(exp_pv_mode_static);
             if (exp_pv_kWp_static_set)  Global::set_exp_pv_kWp_static(exp_pv_kWp_static);
             if (exp_pv_kWp_m2_roof_set) Global::set_exp_pv_kWp_per_m2(exp_pv_kWp_m2_roof);
+            if (exp_pv_max_unit_kWp_set)  Global::set_exp_pv_max_kWp_per_unit(exp_pv_max_unit_kWp);
+            if (exp_pv_max_total_kWp_set) Global::set_exp_pv_max_kWp_total(exp_pv_max_total_kWp);
             if (exp_pv_min_kWp_set)     Global::set_exp_pv_min_kWp_roof_sec(exp_pv_min_kWp);
             if (exp_pv_max_kWp_set)     Global::set_exp_pv_max_kWp_roof_sec(exp_pv_max_kWp);
             if (feed_in_tariff_set)     Global::set_feed_in_tariff(feed_in_tariff);
