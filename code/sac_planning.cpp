@@ -292,6 +292,10 @@ void expansion::add_expansion_to_units(
 
     //
     // 4. plan and execute expansion
+    //
+    // cummulative sum of added kWp of residential PV nominal power in (kWp)
+    double cumsum_added_pv_kWp = 0.0;
+    //
     for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
@@ -317,8 +321,6 @@ void expansion::add_expansion_to_units(
             mt19937 rndGen( rndDevice() );
             shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
         }
-        // cummulative sum of added kWp of residential PV nominal power in (kWp)
-        double cumsum_added_pv_kWp = 0.0;
         // get the iterator
         vector<ControlUnit*>::iterator iter = listOfCUs->begin();
         // loop over all **target** expansion states
@@ -349,6 +351,7 @@ void expansion::add_expansion_to_units(
                 // 0. check, if max global kWp addition is reached
                 if (Global::get_exp_pv_max_kWp_total_set() &&
                     cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                    cout << "Max added pv reached, with " << cumsum_added_pv_kWp << endl;
                     goto outer_loop_end;
                 }
                 // 1. add components
@@ -356,12 +359,13 @@ void expansion::add_expansion_to_units(
                 if (expBS) (*iter)->add_exp_bs();
                 if (expHP) (*iter)->add_exp_hp();
                 if (expWB) (*iter)->add_exp_wb();
-                // 2. remove from list (would be good, but not required)
-                iter++;
-                // 3. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
+                // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 if (Global::get_exp_pv_max_kWp_total_set()) {
                     cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
                 }
+                // 3. remove from list (would be good, but not required - right now it does not happen)
+                //    only the iterator is incremented
+                iter++;
             }
         }
         outer_loop_end:;
