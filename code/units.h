@@ -128,6 +128,7 @@ class ControlUnit {
         static inline ControlUnit* GetInstance(unsigned long unitID);
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static size_t GetNumberOfInstances() {return st__n_CUs;}
+        static size_t GetNumberOfCUsWithSimCompPV();
         // 3. modifiers for all created objects
         static void ResetAllInternalStates();
         static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units

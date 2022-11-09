@@ -13,6 +13,12 @@ using namespace simulation;
 #include "sac_planning.h"
 #include "units.h"
 
+//
+// Internal variables required for output control
+unsigned int output_counter = 0;
+// #define OUTPUT_STATUS_OUTPUT_FREQ 24*3
+#define OUTPUT_STATUS_OUTPUT_FREQ 24*24
+
 
 bool simulation::runSimulationForOneParamSetting() {
     //
@@ -37,7 +43,7 @@ bool simulation::runSimulationForOneParamSetting() {
         if (sim_started) {
             //if (difftime(t_end, mktime(current_tm)) <= 0) {
             if (compare_struct_tm(current_tm, tm_end) >= 0) {
-                std::cout << "End of the simulation range (as defined in the scenario) has been reached." << std::endl;
+                std::cout << "\nEnd of the simulation range (as defined in the scenario) has been reached." << std::endl;
                 break;
             }
         } else {
@@ -58,7 +64,7 @@ bool simulation::runSimulationForOneParamSetting() {
 
     }
 
-    std::cout << " ... run finished." << std::endl;
+    std::cout << "... run finished." << std::endl;
     return true;
 
 }
@@ -107,7 +113,14 @@ bool simulation::oneStep(unsigned long ts) {
         *(output::substation_output) << total_load << "\n"; // add total load to output
     }
 
-    std::cout << ".";
+    // Output current time step
+    output_counter++;
+    if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
+        output_counter = 0;
+        std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed." << std::endl;
+    } /*else {
+        std::cout << ".";
+    }*/
 
     return true;
 

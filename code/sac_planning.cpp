@@ -376,6 +376,13 @@ void expansion::add_expansion_to_units(
     // exit, if no output is selected
     if (random_anyway_no_output)
         return;
+
+    // additional output
+    cout << "Global::get_exp_pv_max_kWp_total_set()     = " << Global::get_exp_pv_max_kWp_total_set() << "\n";
+    cout << "Global::get_exp_pv_max_kWp_total()         = " << Global::get_exp_pv_max_kWp_total() << "\n";
+    cout << "Total cumsum of kWp                        = " << cumsum_added_pv_kWp << "\n";
+    cout << "ControlUnit::GetNumberOfCUsWithSimCompPV() = " << ControlUnit::GetNumberOfCUsWithSimCompPV() << "\n";
+
     //
     // finally: write expansion information to file
     // A. output expansion matrix with absolute numbers

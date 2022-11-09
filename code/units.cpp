@@ -667,6 +667,15 @@ void ControlUnit::RemoveAllSimAddedComponents() {
     }
 }
 
+size_t ControlUnit::GetNumberOfCUsWithSimCompPV() {
+    size_t counter = 0;
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        if (st__cu_list[i]->has_sim_pv)
+            counter++;
+    }
+    return counter;
+}
+
 
 
 
