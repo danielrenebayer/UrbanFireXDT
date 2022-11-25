@@ -157,6 +157,10 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	//
 	// add this control unit to the list of
 	// connected units in the connected substation
+    if (higher_level_subst == NULL) {
+        cerr << "Substation with ID " << substation_id << " is not available!" << endl;
+        throw runtime_error("Invalid substation ID given to constructor of ControlUnit class!");
+    }
 	higher_level_subst->add_unit(this);
 
     //
