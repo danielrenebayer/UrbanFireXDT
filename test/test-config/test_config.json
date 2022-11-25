@@ -4,41 +4,72 @@
         "data output path": "../test-output/",
         "start": "2020-01-01 00:00:00",
         "end":   "2020-01-02 00:00:00",
-        "time steps per hour": 1
+        "time steps per hour": 1,
+
+        "open space PV kWp":        0,
+        "open space wind kWp":      0,
+
+        "expansion PV min kWp for section usage":  0.1,
+        "expansion PV max inst kWp per section": 100.0,
+        "expansion PV max inst kWp per unit":    100.0,
+        "expansion PV kWp per roof area in m2":    0.01,
+        "expansion PV kWp static":                 0.0,
+        "expansion PV kWp static mode":          false,
+        "__disabled expansion PV max total kWp addition": 10000.0,
+        
+        "expansion BS P in kW":       10.0,
+        "expansion BS E in kWh":      10.0,
+        "expansion BS initial SOC":    0.0,
+        "expansion BS power computation mode": "Power as given",
+
+        "tariff feed-in per kWh": 0.04,
+        "tariff demand per kWh":  0.31,
+        "net present value discount rate": 0.04,
+        "net present value time horizon in years": 10,
+        "installation cost PV per kWp": 1120.0,
+        "installation cost BS per kWh": 1150.0,
+
+        "CU selection mode for comp. add.": "as in data",
+
+        "expansion profile selection":      "as in data",
+
+        "use BS for creating SSR list for SAC planning": false
     },
     "Scenarios": [
         {
             "id": 1,
-            "expanison id": 0,
-            "expanison PV kWp": 0,
-            "expansion BS P in kW":  0,
-            "expansion BS E in kWh": 0,
-            "expansion BS initial SOC": 0,
+            "expansion id": 0,
             "open space PV kWp":   0,
             "open space wind kWp": 0,
-            "comment": "no expanison, state as it is"
+            "comment": "no expansion, state as it is"
         },
         {
             "id": 2,
-            "expanison id": 1,
-            "expanison PV kWp": 10.0,
-            "expansion BS P in kW":   0.0,
-            "expansion BS E in kWh":  0.0,
-            "expansion BS initial SOC": 0.0,
+            "expansion id": 1,
             "open space PV kWp":   100,
             "open space wind kWp": 100,
             "comment": "All households without anything equipped with PV"
         },
         {
             "id": 3,
-            "expanison id": 2,
-            "expanison PV kWp": 10.0,
-            "expansion BS P in kW":  10.0,
-            "expansion BS E in kWh": 10.0,
-            "expansion BS initial SOC": 0.0,
+            "expansion id": 2,
             "open space PV kWp":   100,
             "open space wind kWp": 100,
             "comment": "All households without anything equipped with PV+BESS"
+        },
+        {
+            "id": 4,
+            "expansion id": 2,
+            "open space PV kWp":   100,
+            "open space wind kWp": 100,
+            "comment": "All households without anything equipped with a HP"
+        },
+        {
+            "id": 100,
+            "expansion id": 2,
+            "open space PV kWp":   100,
+            "open space wind kWp": 100,
+            "comment": "All households without anything equipped with a PV+BESS+HP"
         }
     ],
     "Parameter Variation": [
@@ -47,7 +78,7 @@
             "variations":
             [
                 {
-                    "variable": "expansion PV kWp",
+                    "variable": "expansion BS E in kWh",
                     "range start": 5.0,
                     "range end": 15.0,
                     "step": 5.0
@@ -59,13 +90,13 @@
             "variations":
             [
                 {
-                    "variable": "expansion PV kWp",
+                    "variable": "expansion BS E in kWh",
                     "range start": 5.0,
                     "range end": 15.0,
                     "step": 5.0
                 },
                 {
-                    "variable": "expansion BS E in kWh",
+                    "variable": "expansion BS P in kW",
                     "range start": 5.0,
                     "range end": 15.0,
                     "step": 5.0

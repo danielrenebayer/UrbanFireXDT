@@ -15,10 +15,12 @@ done
 
 mem_error_happend=0
 # 1. run simulations
-../code/main-opti -m --config ../test/test-config/test_config.json 1
-../code/main-opti -m --config ../test/test-config/test_config.json 2
+../code/main-opti --config ../test/test-config/test_config.json 1
+../code/main-opti --config ../test/test-config/test_config.json 2
+../code/main-opti --config ../test/test-config/test_config.json 3
+../code/main-opti --config ../test/test-config/test_config.json 4
 # use valgrind for last run
-valgrind ../code/main-opti -m --config ../test/test-config/test_config.json 3
+valgrind ../code/main-opti --config ../test/test-config/test_config.json 100
 if (( $? != 0 )); then
     mem_error_happend=1
 fi
