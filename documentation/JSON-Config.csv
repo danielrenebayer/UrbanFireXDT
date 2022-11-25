@@ -1,0 +1,35 @@
+Config Parameter Name,Type,Required,Default (if not set),Possible Values,Description,Can be used for parameter variations
+data input path,string,yes,,,Path (relative or absolute) to the input data,no
+data output path,string,yes,,,Path (relative or absolute) to the directory where the output should be saved,no
+start,string (encoding a datetime),yes,,,"Start date in the format YYYY-mm-dd HH:MM:SS - if the data start after start date, simulation will wait for the data to start",no
+end,string (encoding a datetime),yes,,,"End date in the format YYYY-mm-dd HH:MM:SS - if the data end earlier, simulation will stop there",no
+time steps per hour,integer,yes,,1 to infinity,Number of time steps per hour,no
+,,,,,,
+open space PV kWp ,float,yes,,0.0 to infinity,Additional open space PV power in kWp,no
+open space wind kWp ,float,yes,,0.0 to infinity,Additional open space wind power in kWp,no
+,,,,,,
+expansion PV min kWp for section usage ,float,yes,,,"Minimal size of a PV installation on a roof section, to include this section",yes
+expansion PV max inst kWp per section ,float,yes,,,Maximal size of a PV installation in kW per roof section,yes
+expansion PV max inst kWp per unit ,float,yes,,,Maximal size of the total PV installation in kW per control unit,no
+expansion PV kWp per roof area in m2 ,float,yes,,,kWp per roof area (how it is in the three dimensional space),yes
+expansion PV kWp static ,float,only if ‘expansion PV kWp static mode’ is set to true,,,see next variable,yes
+expansion PV kWp static mode ,float,yes,,,"If set to true, ignore all roof information and just add a static pv installation per roof",no
+expansion PV max total kWp addition ,float,no,no max. set,,Maximal size of all added PV installations over all control units,no
+,,,,,,
+expansion BS P in kW ,float,yes,,,Power in kW of the simulatively added batteries,yes
+expansion BS E in kWh ,float,yes,,,Capacity in kWh of the simulatively added batteries,yes
+expansion BS initial SOC ,float,yes,,,Initial SOC of the simulatively added batteries,yes
+expansion BS E:P ratio ,float,only if ‘expansion BS power computation mode’ == ‘Use E:P ratio’,,,E:P-ratio for setting the power of simulatively added batteries dependent of the capacity (interesting for parameter variations),yes
+expansion BS power computation mode,string,yes,,Power as given / Use E:P-ratio,"If set to ‘Use E:P ratio’ the variabel ‘expansion BS P in kW’ will be ignored, instead P will be E / this variable",no
+,,,,,,
+tariff feed-in per kWh ,float,yes,,,,no
+tariff demand per kWh ,float,yes,,,,no
+net present value discount rate ,float,yes,,,,no
+net present value time horizon in years ,float,yes,,,,no
+installation cost PV per kWp ,float,yes,,,,no
+installation cost BS per kWh ,float,yes,,,,no
+,,,,,,
+expansion profile selection ,string,yes,,as in data / random,Controls how the profiles (if there are more than one) should be assigned to a new created component,???
+CU selection mode for comp. add. ,,,,,,???
+,,,,,,
+use BS for creating SSR list for SAC planning ,bool,yes,,,Should a battery be added for creating the sorted list for the SAC planning?,no

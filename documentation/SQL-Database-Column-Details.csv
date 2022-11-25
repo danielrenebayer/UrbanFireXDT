@@ -51,3 +51,6 @@ address_data,YearlyHPElectricityDemand_kWh,REAL,Yearly electric energy demand in
 address_roof_data,LocID,INTEGER,ID of the referenced location [Foreign key]
 address_roof_data,Area_in_m2,REAL,Area of the roof section in square meter
 address_roof_data,Orientation,TEXT / VARCHAR(2),The orientation of the given roof section; for every orientation there has to exist a correspoding time series in the tabel 'global_profiles_pv'
+,,,
+residual_grid_load,TimestepID,INTEGER,"ID of the timestep, must start with 1 and must be numbered consecutively"
+residual_grid_load,P_residual_gridload,REAL,Residual grid load in kW during time step TimestepID
