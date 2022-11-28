@@ -9,10 +9,10 @@
         "open space PV kWp":        0,
         "open space wind kWp":      0,
 
-        "expansion PV min kWp for section usage":  0.1,
+        "expansion PV min kWp for section usage":  0.001,
         "expansion PV max inst kWp per section": 100.0,
         "expansion PV max inst kWp per unit":    100.0,
-        "expansion PV kWp per roof area in m2":    0.01,
+        "expansion PV kWp per roof area in m2":    0.1,
         "expansion PV kWp static":                 0.0,
         "expansion PV kWp static mode":          false,
         "__disabled expansion PV max total kWp addition": 10000.0,
@@ -22,12 +22,12 @@
         "expansion BS initial SOC":    0.0,
         "expansion BS power computation mode": "Power as given",
 
-        "tariff feed-in per kWh": 0.04,
-        "tariff demand per kWh":  0.31,
-        "net present value discount rate": 0.04,
+        "tariff feed-in per kWh": 0.10,
+        "tariff demand per kWh":  0.30,
+        "net present value discount rate": 0.05,
         "net present value time horizon in years": 10,
-        "installation cost PV per kWp": 1120.0,
-        "installation cost BS per kWh": 1150.0,
+        "installation cost PV per kWp": 1000.0,
+        "installation cost BS per kWh": 1000.0,
 
         "CU selection mode for comp. add.": "as in data",
 
@@ -39,37 +39,22 @@
         {
             "id": 1,
             "expansion id": 0,
-            "open space PV kWp":   0,
-            "open space wind kWp": 0,
             "comment": "no expansion, state as it is"
         },
         {
             "id": 2,
             "expansion id": 1,
-            "open space PV kWp":   100,
-            "open space wind kWp": 100,
             "comment": "All households without anything equipped with PV"
         },
         {
             "id": 3,
             "expansion id": 2,
-            "open space PV kWp":   100,
-            "open space wind kWp": 100,
             "comment": "All households without anything equipped with PV+BESS"
         },
         {
             "id": 4,
-            "expansion id": 2,
-            "open space PV kWp":   100,
-            "open space wind kWp": 100,
-            "comment": "All households without anything equipped with a HP"
-        },
-        {
-            "id": 100,
-            "expansion id": 2,
-            "open space PV kWp":   100,
-            "open space wind kWp": 100,
-            "comment": "All households without anything equipped with a PV+BESS+HP"
+            "expansion id": 4,
+            "comment": "All households without anything equipped with a PV+BESS HP"
         }
     ],
     "Parameter Variation": [
