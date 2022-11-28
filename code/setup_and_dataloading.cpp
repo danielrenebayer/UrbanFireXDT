@@ -914,6 +914,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
         float** new_pv_array = new float*[Global::get_n_pv_profiles()];
         for (size_t pv_idx = 0; pv_idx < Global::get_n_pv_profiles(); pv_idx++) {
             new_pv_array[pv_idx] = new float[Global::get_n_timesteps()];
+            // initialize with 0 by default
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
+                new_pv_array[pv_idx][l] = 0;
         }
         sql_query = "SELECT TimestepID,Value_Feedin,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
@@ -931,6 +934,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load central wind profile
         //
         float* new_wind_array = new float[Global::get_n_timesteps()];
+        // initialize with 0 by default
+        for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
+            new_wind_array[l] = 0;
+        // run query
         sql_query = "SELECT TimestepID,wind_profile_value FROM global_profile_wind;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_Wind, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
@@ -949,6 +956,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
         float** new_hp_profile_array = new float*[Global::get_n_heatpump_profiles()];
         for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
             new_hp_profile_array[hp_idx] = new float[Global::get_n_timesteps()];
+            // initialize with 0 by default
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
+                new_hp_profile_array[hp_idx][l] = 0;
         }
         sql_query = "SELECT TimestepID,Value_Demand,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_array/*Reference to the new array*/, &sqlErrorMsgF);
@@ -963,6 +973,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load residual netload
         //
         float* new_res_gridload_array = new float[Global::get_n_timesteps()];
+        // initialize with 0 by default
+        for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
+            new_res_gridload_array[l] = 0;
+        // run query
         sql_query = "SELECT TimestepID,P_residual_gridload FROM residual_grid_load ORDER BY TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_ResGridload, new_res_gridload_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
