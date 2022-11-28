@@ -321,6 +321,9 @@ double ControlUnit::get_SCR() {
 }
 
 double ControlUnit::get_NPV() {
+    // 0. return 0 if no PV or battery is available
+    if (!(has_sim_pv || has_sim_bs))
+        return 0;
     // 1. compute investment cost
     double investemnt_costs = 0.0;
     if (has_sim_pv)
@@ -590,7 +593,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
     double grid_feedin_kW = 0.0;
     if (current_load_vSM_kW < 0) {
-        grid_feedin_kW = current_load_vSM_kW;
+        grid_feedin_kW = -current_load_vSM_kW;
     }
 
     //
