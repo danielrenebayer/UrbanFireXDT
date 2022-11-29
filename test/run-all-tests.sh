@@ -7,7 +7,7 @@
 # change to the directory where this script is located
 cd $(dirname $0)
 
-dirs_to_compare="S0001 S0002 S0003"
+dirs_to_compare="S0001 S0002 S0003 S0004"
 # 0. delete output dirs if they already exist (e.g. from previous test runs)
 for di in $dirs_to_compare; do
     rm -rf test-output/$di
@@ -18,9 +18,8 @@ mem_error_happend=0
 ../code/main-opti --config ../test/test-config/test_config.json 1
 ../code/main-opti --config ../test/test-config/test_config.json 2
 ../code/main-opti --config ../test/test-config/test_config.json 3
-../code/main-opti --config ../test/test-config/test_config.json 4
 # use valgrind for last run
-valgrind ../code/main-opti --config ../test/test-config/test_config.json 100
+valgrind ../code/main-dbg --config ../test/test-config/test_config.json 4
 if (( $? != 0 )); then
     mem_error_happend=1
 fi
@@ -33,11 +32,11 @@ echo -e "------------------------------\n"
 error_happend=0
 for di in $dirs_to_compare; do
     #
-    diff -rq test-output/$di test-output-verified/$di
+    diff -rq --exclude=build_and_run_info.txt test-output/$di test-output-verified/$di
     #
     # check if dirs are the same, if yes, return value is 0
     if (( $? != 0 )); then
-        echo "ERROR for scenario $di: outputs do not match!"
+        echo -e "\n\033[01;31mERROR for scenario $di: outputs do not match!\033[0m\n"
         error_happend=1
     fi
 done
