@@ -13,16 +13,15 @@
 #include <string>
 
 
-
+/**
+ * This namespace contains all functions required for loading central
+ * infromation and the scenario file
+ **/
 namespace configld {
-    /*
-     * This namespace contains all functions required for loading central
-     * infromation and the scenario file
-     */
 
-    bool load_config_file(int scenario_id, std::string& filepath);
-    //bool parse_scenario_file(int scenario_id);
-    bool load_data_from_central_database(const char* filepath);
+    bool load_config_file(int scenario_id, std::string& filepath); ///< Load the config file, that is passed as command line argument
+
+    bool load_data_from_central_database(const char* filepath); ///< Load the complete simulation structure from the central database, and also load the recorded time series for the measurement units
 
 }
 

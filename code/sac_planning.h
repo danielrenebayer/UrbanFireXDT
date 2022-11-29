@@ -16,13 +16,12 @@
 
 #include "units.h"
 
-
+/**
+ * This namespace contains all functions required for loading the expansion matrix,
+ * storing information about which expansion possibility is possible and 
+ * checking the expansion matrix itself.
+ **/
 namespace expansion {
-    /*
-     * This namespace contains all functions required for loading the expansion matrix,
-     * storing information about which expansion possibility is possible and 
-     * checking the expansion matrix itself.
-     */
 
     //
     // General information about the expansion matrix is defined here

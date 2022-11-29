@@ -10,6 +10,7 @@
 #define GLOBAL_H
 
 #include <ctime>
+#include <filesystem>
 #include <list>
 #include <map>
 #include <string>
@@ -19,18 +20,18 @@
 #include "sac_planning.h"
 #include "units.h"
 
+/*!
+ * Namespace global
+ *
+ * It contains all global attributes and variables that
+ * might change during simulation execution.
+ * 
+ * Attention: There is no access protection for these variables!
+ * For access protection use class Global.
+ * 
+ * Attention: Do not confuse with class Global (mind the capital "G")!
+ */
 namespace global {
-    /*
-     * Namespace global
-     *
-     * It contains all global attributes and variables that
-     * might change during simulation execution.
-     * 
-     * Attention: There is no access protection for these variables!
-     * For access protection use class Global.
-     * 
-     * Attention: Do not confuse with class Global (mind the capital "G")!
-     */
 
     // inline float current_energy_feedin_price = 0.0;
     // inline float current_energy_supply_price = 0.0;
@@ -39,7 +40,7 @@ namespace global {
     inline std::vector<struct tm*>* time_localtime_str     = NULL; ///< Reference to the list of the time as struct tm - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
     inline std::map<std::string, size_t> pv_profiles_information; ///< Map (orientation, number of time series) where the number of pv-profiles per orientation are given
-    inline std::map<std::string, vector<const float*>> pv_profiles_per_ori; ///< Map (orientation, vector of references to the time series) where the available time series per orientation are given - same ordering as in data
+    inline std::map<std::string, std::vector<const float*>> pv_profiles_per_ori; ///< Map (orientation, vector of references to the time series) where the available time series per orientation are given - same ordering as in data
     inline const float* const* pv_profiles_data = NULL; ///< Reference to the list of global PV profiles (Two dimensional array with [n_pv_profiles, n_timesteps])
     inline const float* const* hp_profiles = NULL; ///< Reference to the list of global heat pump profiles (Two dimensional array with [n_heatpump_profiles, n_timesteps])
     inline const float* residual_gridload_kW = NULL; ///< Residual netload, i.e. amount of load that has to be added to the final netload, this is a load that is not measured by smart meters occuring in this simulation
@@ -51,12 +52,12 @@ namespace global {
     inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
     inline unsigned int current_repetition_counter = 0; ///< Repetition counter, if repetitions is set as a command line argument
 
-    inline std::list<std::list<std::pair<string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
+    inline std::list<std::list<std::pair<std::string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 
     inline unsigned int curr_param_vari_combi_index = 0; ///< The index of the current parameter variation combination, that is simulated (0, if no parameter variation is selected)
-    inline filesystem::path* current_output_dir  = NULL; ///< Reference to the object holding the current output path (maybe changed due to different parameter variations)
-    inline filesystem::path* current_output_dir_prefix = NULL; ///< Reference to the path of the output path where all parameter variations can be found (i.e. the top level of current_output_dir if param vari is selected; i.e.2. one level below current_global_output_dir)
-    inline filesystem::path* current_global_output_dir = NULL; ///< Reference to the object holding the current output dir for global information (i.e. information that does not change during parameter variations)
+    inline std::filesystem::path* current_output_dir  = NULL; ///< Reference to the object holding the current output path (maybe changed due to different parameter variations)
+    inline std::filesystem::path* current_output_dir_prefix = NULL; ///< Reference to the path of the output path where all parameter variations can be found (i.e. the top level of current_output_dir if param vari is selected; i.e.2. one level below current_global_output_dir)
+    inline std::filesystem::path* current_global_output_dir = NULL; ///< Reference to the object holding the current output dir for global information (i.e. information that does not change during parameter variations)
 
     inline bool time_info_init       = false;
 
@@ -66,7 +67,7 @@ namespace global {
     void print_uninitialized_variables(); ///< Prints all variable names to stdout, that are not initialized
 
 
-    /*
+    /*!
      * This enum defines different output modes per CU.
      * It corresponds to the --cu-output cmd line parameter.
      */
@@ -76,7 +77,7 @@ namespace global {
         NoOutput
     };
 
-    /*
+    /*!
      * This enum defines the different expansion profile allocation modes.
      */
     enum struct ExpansionProfileAllocationMode : short {
@@ -85,7 +86,7 @@ namespace global {
         Random
     };
 
-    /*
+    /*!
      * This struct defines the
      * Control Unit Selectio Mode For Component Addition
      * i.e. it defines how the control units are selected, that get simulatively added components (like PV, BS, HP, ...)
@@ -98,7 +99,7 @@ namespace global {
         BestNPV
     };
 
-    /*
+    /*!
      * This enum defines how the battery storage power
      * should be computet.
      * There are two options:
@@ -112,15 +113,16 @@ namespace global {
 
 }
 
+
+/*
+ * class Global
+ *
+ * This class contains all global variables that cannot change
+ * after they have been set once.
+ * 
+ * Attention: Not to be confused with namespace global (mind the lower case "g").
+ */
 class Global {
-    /*
-     * class Global
-     *
-     * This class contains all global variables that cannot change
-     * after they have been set once.
-     * 
-     * Attention: Not to be confused with namespace global (mind the lower case "g").
-     */
     public:
         static void InitializeStaticVariables();
         static void DeleteStaticVariables();
@@ -129,20 +131,6 @@ class Global {
         static void PrintUninitializedVariables(); ///< Prints all variable names to stdout, that are not initialized
         //
         // getter methods
-        /*
-        static inline int get_n_timesteps();
-        static inline int get_n_substations();
-        static inline int get_n_CUs();
-        static inline int get_n_MUs();
-        static inline std::string* get_ts_start_str();
-        static inline std::string* get_ts_end_str();
-        static inline int get_tsteps_per_hour();
-        static inline int get_expansion_scenario_id();
-        static inline float get_exp_pv_kWp();
-        static inline float get_exp_bess_kW();
-        static inline float get_exp_bess_kWh();
-        static inline float get_exp_bess_start_soc();
-        */
         static unsigned long get_n_timesteps()          { return n_timesteps; }
         static unsigned long get_n_substations()        { return n_substations; }
         static unsigned long get_n_CUs()                { return n_CUs; }

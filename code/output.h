@@ -15,12 +15,13 @@
 #include <sstream>
 #include <string>
 
-using namespace std;
-
+// The following classes are defined in this header file:
 class CUOutput;
 class CUOutputSingleFile;
 class CUOutputOneFilePerCU;
 class CUOutputOneFilePerSubstation;
+
+using namespace std;
 
 namespace output {
 
@@ -60,13 +61,23 @@ namespace output {
      * @param scenario_id The current scenario ID
      */
     void initializeCUOutput(int scenario_id);
-
+    /**
+     * This function closes all outputs that are opend by initializeCUOutput() or initializeSubstationOutput().
+     * It further informs all instances of the class ControlUnit that the output object is deleted.
+     */
     void closeOutputs();
-
+    /**
+     * This function flushes all buffers that are currently opend and were opened by initializeCUOutput() or initializeSubstationOutput().
+     */
     void flushBuffers();
 
-    // struct for the below defined funtion:
-    // it holds the current parameter values
+    /**
+     * The struct CurrentParamValues is used for storing the current parameter values.
+     * As they might change during a parameter variation, it is good to keep
+     * track of the currently processe values.
+     * 
+     * This struct is important especially for outputting the current parameter setting.
+     */ 
     struct CurrentParamValues {
         bool  exp_pv_static_mode    = false; bool exp_pv_static_mode_set      = false;
         float exp_pv_kWp_static       = 0.0; bool exp_pv_kWp_static_set       = false;
@@ -86,13 +97,13 @@ namespace output {
 
 }
 
+/**
+ * This (virtual) class represents the output for one (or more)
+ * control units.
+ * This is an abstract class, as most methods are 'implemented'
+ * as pure virtual functions here.
+ **/
 class CUOutput {
-    /*
-     * This (virtual) class represents the output for one (or more)
-     * control units.
-     * This is an abstract class, as most methods are 'implemented'
-     * as pure virtual functions here.
-     */
     public:
         virtual ~CUOutput();
         virtual void output_for_one_cu(
@@ -108,12 +119,12 @@ class CUOutput {
         std::ofstream*  output_stream; ///< output stream
 };
 
+/**
+ * This class represents the output for the
+ * control units, that is directed into one
+ * output file.
+ **/
 class CUOutputSingleFile : public CUOutput {
-    /*
-     * This class represents the output for the
-     * control units, that is directed into one
-     * output file.
-     */
     public:
         CUOutputSingleFile(int scenario_id);
         ~CUOutputSingleFile();
@@ -132,11 +143,11 @@ class CUOutputSingleFile : public CUOutput {
         char*  buffer; // buffer for speedup
 };
 
+/**
+ * This class represents the output for one
+ * individual control unit.
+ **/
 class CUOutputOneFilePerCU : public CUOutput {
-    /*
-     * This class represents the output for one
-     * individual control unit.
-     */
     public:
         CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath);
         //
@@ -150,12 +161,12 @@ class CUOutputOneFilePerCU : public CUOutput {
         void flush_buffer();
 };
 
+/**
+ * This class represents the output for all
+ * control units, that are connected to one
+ * substation.
+ **/
 class CUOutputOneFilePerSubstation : public CUOutput {
-    /*
-     * This class represents the output for all
-     * control units, that are connected to one
-     * substation.
-     */
     public:
         CUOutputOneFilePerSubstation(const string* substName, filesystem::path& dirpath);
         //

@@ -5,14 +5,22 @@
  *
  */
 
-#include "global.h"
-
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
 #include <random>
 #include <string>
 #include <vector>
+
+// The following classes are defined in this header file:
+class RoofSectionPV;
+class ComponentPV;
+class ComponentBS;
+class ComponentHP;
+class ComponentWB;
+
+#include "global.h"
+
 
 class RoofSectionPV {
     public:

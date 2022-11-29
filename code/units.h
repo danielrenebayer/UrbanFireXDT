@@ -8,27 +8,29 @@
  *
  */
 
+#ifndef UNITS_H
+#define UNITS_H
+
 #include <string>
 #include <list>
 #include <map>
+
+// The following classes are defined in this header file:
+class Substation;
+class ControlUnit;
+class MeasurementUnit;
+class OpenSpacePVOrWind;
 
 #include "global.h"
 #include "components.h"
 #include "output.h"
 
-#ifndef UNITS_H
-#define UNITS_H
 
-
-class Substation;
-class ControlUnit;
-class MeasurementUnit;
-
-
+/*!
+ * This class represents a substation.
+ * One or more control units are connected to one instance of this class.
+ */
 class Substation {
-    /*
-        This class represents a substation.
-    */
     public:
         static Substation* InstantiateNewSubstation(unsigned long id, std::string* name) {
             return new Substation(id, name);
@@ -69,11 +71,13 @@ class Substation {
 };
 
 
+/*!
+ * This class represents a control unit (i.e. a private house or a small company).
+ * As the name suggests it is the place where a central control is located (if any, or a rulebased otherwise).
+ * All simulatively added components are added in this control unit.
+ * It holds a set (at least one) of measurement units.
+ */
 class ControlUnit {
-    /*
-        This class represents a control unit
-        (i.e. a private house or a small company)
-    */
     public:
         static ControlUnit* InstantiateNewControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID) {
             return new ControlUnit(unitID, substation_id, locationID);
@@ -168,13 +172,12 @@ class ControlUnit {
 };
 
 
+/*!
+ *  The measurement unit represents an existing unit, which is measured by an existing
+ *  smart meter where we have real measured data for.
+ *  If there exist additional components, like PV, in reality, an instance of this class knows this.
+ */
 class MeasurementUnit {
-    /*
-        The measurement unit represents an existing unit, which is measured by an existing
-        smart meter where we have real measured data for.
-        It can have additional components, like PV, if it is known that these additional
-        components exists in the real unit as well.
-    */
     public:
         static MeasurementUnit* InstantiateNewMeasurementUnit(size_t meUID, size_t unitID, std::string * meterPointName, size_t locID, 
                 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
