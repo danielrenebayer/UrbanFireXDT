@@ -116,8 +116,8 @@ bool expansion::isExpCombiPossible(int currExpNumber, int newExpNumber) {
     */
     if (currExpNumber == newExpNumber)
         return false; // this is not a expansion by definition!
-    int currExpBitRepr = expCombiBitReprToMatrixOrder(currExpNumber);
-    int newExpBitRepr  = expCombiBitReprToMatrixOrder(newExpNumber);
+    int currExpBitRepr = expCombiMatrixOrderToBitRepr(currExpNumber);
+    int newExpBitRepr  = expCombiMatrixOrderToBitRepr(newExpNumber);
     // A combination is possible, if and only if
     //  - the bitwise and of curr and new state returns in the curr state
     // and
