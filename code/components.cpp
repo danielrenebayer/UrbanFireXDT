@@ -151,8 +151,8 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         vec_of_sections.emplace_back(section_kWp, section_orientation);
     }
     // 2)
-    // only in the case of Global::exp_pv_max_kWp_per_unit_set
-    if (Global::get_exp_pv_max_kWp_per_unit_set()) {
+    // only in the case of Global::exp_pv_max_kWp_per_unit is set (i.e. >= 0.0)
+    if (Global::get_exp_pv_max_kWp_per_unit() >= 0.0) {
         // is total_kWp > Global::get_exp_pv_max_kWp_per_unit()
         // if yes, lower installed power with the same percantage over all sections
         if ( total_kWp > Global::get_exp_pv_max_kWp_per_unit() ) {

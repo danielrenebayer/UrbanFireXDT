@@ -106,11 +106,9 @@ bool  Global::exp_pv_kWp_static_mode  = false;
 float Global::exp_pv_kWp_static       = 0.0;
 float Global::exp_pv_kWp_per_m2       = 0.0;
 float Global::exp_pv_min_kWp_roof_sec = 0.0;
-float Global::exp_pv_max_kWp_per_sec  = 0.0;
-float Global::exp_pv_max_kWp_per_unit = 0.0;
-bool  Global::exp_pv_max_kWp_per_unit_set = false;
-float Global::exp_pv_max_kWp_total    = 0.0;
-bool  Global::exp_pv_max_kWp_total_set= false;
+float Global::exp_pv_max_kWp_per_sec  =-1.0;
+float Global::exp_pv_max_kWp_per_unit =-1.0;
+float Global::exp_pv_max_kWp_total    =-1.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_E_P_ratio    = 0.0;
@@ -150,6 +148,8 @@ bool Global::exp_pv_kWp_static_init       = false;
 bool Global::exp_pv_kWp_per_m2_init       = false;
 bool Global::exp_pv_min_kWp_roof_sec_init = false;
 bool Global::exp_pv_max_kWp_per_sec_init  = false;
+bool Global::exp_pv_max_kWp_per_unit_init = false;
+bool Global::exp_pv_max_kWp_total_init    = false;
 bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_E_P_ratio_init    = false;
@@ -222,7 +222,7 @@ bool Global::AllVariablesInitialized() {
                 !repetitions_selected || ( repetitions_selected && n_repetitions_set )
             )) {
 
-                if (exp_pv_max_kWp_per_unit_set && exp_pv_kWp_static_mode) {
+                if (exp_pv_max_kWp_per_unit >= 0.0 && exp_pv_kWp_static_mode) {
                     cerr << "Warning: The combination of setting a maximal kWp per unit and using static mode does not make sens! The first will be ignored!" << endl;
                 }
 
@@ -547,19 +547,19 @@ void Global::set_exp_pv_max_kWp_roof_sec(float value) {
     }
 }
 void Global::set_exp_pv_max_kWp_per_unit(float value) {
-    if (Global::exp_pv_max_kWp_per_unit_set) {
+    if (Global::exp_pv_max_kWp_per_unit_init) {
         cerr << "Global variable exp_pv_max_kWp_per_unit is already initialized!" << endl;
     } else {
         Global::exp_pv_max_kWp_per_unit      = value;
-        Global::exp_pv_max_kWp_per_unit_set  = true;
+        Global::exp_pv_max_kWp_per_unit_init = true;
     }
 }
 void Global::set_exp_pv_max_kWp_total(float value) {
-    if (Global::exp_pv_max_kWp_total_set) {
+    if (Global::exp_pv_max_kWp_total_init) {
         cerr << "Global variable exp_pv_max_kWp_total is already initialized!" << endl;
     } else {
         Global::exp_pv_max_kWp_total      = value;
-        Global::exp_pv_max_kWp_total_set  = true;
+        Global::exp_pv_max_kWp_total_init = true;
     }
 }
 void Global::set_exp_bess_kW(float exp_bess_kW) {

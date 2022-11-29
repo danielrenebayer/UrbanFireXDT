@@ -162,12 +162,10 @@ class Global {
         static bool  get_exp_pv_static_mode()   { return exp_pv_kWp_static_mode; }
         static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
         static float get_exp_pv_kWp_per_m2()    { return exp_pv_kWp_per_m2;      }
-        static float get_exp_pv_min_kWp_roof_sec()   { return exp_pv_min_kWp_roof_sec; }
-        static float get_exp_pv_max_kWp_roof_sec()   { return exp_pv_max_kWp_per_sec;  }
-        static float get_exp_pv_max_kWp_per_unit()   { return exp_pv_max_kWp_per_unit;    }
-        static bool  get_exp_pv_max_kWp_per_unit_set(){return exp_pv_max_kWp_per_unit_set;}
-        static float get_exp_pv_max_kWp_total()      { return exp_pv_max_kWp_total;       }
-        static bool  get_exp_pv_max_kWp_total_set()  { return exp_pv_max_kWp_total_set;   }
+        static float get_exp_pv_min_kWp_roof_sec()   { return exp_pv_min_kWp_roof_sec; }  //!< Returns the min. kWp per roof section - smaller sections will be ignored, defaults to 0.0
+        static float get_exp_pv_max_kWp_roof_sec()   { return exp_pv_max_kWp_per_sec;  }  //!< Returns the max. kWp per roof section, or -1.0 if it is not set
+        static float get_exp_pv_max_kWp_per_unit()   { return exp_pv_max_kWp_per_unit; }  //!< Returns the max. kWp per unit, or -1.0 if it is not set
+        static float get_exp_pv_max_kWp_total()      { return exp_pv_max_kWp_total;    }  //!< Returns the max. kWp for all expanded units, or -1.0 if it is not set
         static float get_exp_bess_kW()         { return exp_bess_kW;    }
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
         static float get_exp_bess_E_P_ratio()  { return exp_bess_E_P_ratio; }
@@ -253,9 +251,7 @@ class Global {
         static float exp_pv_min_kWp_roof_sec; ///< minimal size in kWp that a PV section on a given roof section must have so that this section is used for expansion, only applicable with dynamic kWp calculation
         static float exp_pv_max_kWp_per_sec;  ///< maximal size in kWp of a PV section on a given roof section, bigger roof sections will be cut to this value; only applicable when dynamic kWp calculation is selected
         static float exp_pv_max_kWp_per_unit; ///< maximal size of a PV unit (sum over all sections); only applicable when dynamic kWp calculation is selected
-        static bool  exp_pv_max_kWp_per_unit_set; ///< is exp_pv_max_kWp_per_unit set? -> Init to false
         static float exp_pv_max_kWp_total;    ///< maximal size of all added PV units; only applicable when dynamic kWp calculation is selected
-        static bool  exp_pv_max_kWp_total_set;///< is exp_pv_max_kWp_total set? -> Init to false
         static float exp_bess_kW;          ///< P [kW] of in the simulation added BESS installations
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
         static float exp_bess_E_P_ratio;   ///< E:P-ratio for new battery storages, this or exp_bess_kW has to be defined!
@@ -296,8 +292,8 @@ class Global {
         static bool exp_pv_kWp_per_m2_init;
         static bool exp_pv_min_kWp_roof_sec_init;
         static bool exp_pv_max_kWp_per_sec_init;
-        // exp_pv_max_kWp_per_unit, exp_pv_max_kWp_per_unit_set
-        // exp_pv_max_kWp_total and exp_pv_max_kWp_total_set do not have a corresponding _init variable
+        static bool exp_pv_max_kWp_per_unit_init;
+        static bool exp_pv_max_kWp_total_init;
         static bool exp_bess_kW_init;
         static bool exp_bess_kWh_init;
         static bool exp_bess_E_P_ratio_init;

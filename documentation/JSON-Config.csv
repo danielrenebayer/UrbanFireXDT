@@ -8,9 +8,9 @@ time steps per hour,integer,yes,,1 to infinity,Number of time steps per hour,no
 open space PV kWp ,float,yes,,0.0 to infinity,Additional open space PV power in kWp,no
 open space wind kWp ,float,yes,,0.0 to infinity,Additional open space wind power in kWp,no
 ,,,,,,
-expansion PV min kWp for section usage ,float,yes,,,"Minimal size of a PV installation on a roof section, to include this section",yes
-expansion PV max inst kWp per section ,float,yes,,,Maximal size of a PV installation in kW per roof section,yes
-expansion PV max inst kWp per unit ,float,yes,,,Maximal size of the total PV installation in kW per control unit,no
+expansion PV min kWp for section usage ,float,no,0.0,,"Minimal size of a PV installation on a roof section, to include this section",yes
+expansion PV max inst kWp per section ,float,no,-1.0,,Maximal size of a PV installation in kW per roof section,yes
+expansion PV max inst kWp per unit ,float,no,-1.0,,Maximal size of the total PV installation in kW per control unit,no
 expansion PV kWp per roof area in m2 ,float,yes,,,kWp per roof area (how it is in the three dimensional space),yes
 expansion PV kWp static ,float,only if ‘expansion PV kWp static mode’ is set to true,,,see next variable,yes
 expansion PV kWp static mode ,float,yes,,,"If set to true, ignore all roof information and just add a static pv installation per roof",no
@@ -30,6 +30,6 @@ installation cost PV per kWp ,float,yes,,,,no
 installation cost BS per kWh ,float,yes,,,,no
 ,,,,,,
 expansion profile selection ,string,yes,,as in data / random,Controls how the profiles (if there are more than one) should be assigned to a new created component,???
-CU selection mode for comp. add. ,,,,,,???
+CU selection mode for comp. add. ,string,yes,,as in data / random / best SSR / best NPV,"Controls how to select the control units for expansion, in case of best SSR and best NPV a simulation is executed first, where all SSR and NPV values for every control unit are computed, then they are sorted and finally this sorted list is taken",???
 ,,,,,,
 use BS for creating SSR list for SAC planning ,bool,yes,,,Should a battery be added for creating the sorted list for the SAC planning?,no
