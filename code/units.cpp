@@ -525,6 +525,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     }
     current_load_vSM_kW = current_load_all_rSMs_kW;
     total_consumption   = current_load_all_rSMs_kW;
+    if (total_consumption < 0) total_consumption = 0;
     // // //float load_bevore_local_pv_bess = current_load_vSM_kW;
     //
     // 2. get PV feedin
