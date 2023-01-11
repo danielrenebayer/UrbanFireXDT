@@ -1,6 +1,7 @@
 
 #include "units.h"
 
+#include <algorithm> /* using min() */
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -559,37 +560,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
     //
     // compute self-produced load, that is directly consumed
-    self_produced_load_kW = 0;
-    if (load_pv > 0) {
-        if (current_load_vSM_kW >= 0) {
-            // less local production than than consumption -> additional supply from the grid
-            // complete PV feed-in is consumed locally
-            self_produced_load_kW = load_pv;
-        } else {
-            // current_load_vSM_kW < 0
-            // more (or equal) local production than consumption, or feedin caused by battery or wallbox
-            if (load_bs >= 0 && load_wb >= 0) {
-                // 1. case (most of the time)
-                // battery and wall box do nothing or show an energy demand
-                self_produced_load_kW = current_load_all_rSMs_kW + load_hp + load_bs + load_wb;
-            } else {
-                // 2. case
-                // battery or wallbox feed in (whatever the reason for this might be)
-                //
-                // now, A. compute balance of all components that show an energy demand
-                float selected_balance = 0.0;
-                if      (load_bs <  0 && load_wb >= 0) { selected_balance = current_load_all_rSMs_kW + load_hp + load_wb; }
-                else if (load_bs >= 0 && load_wb <  0) { selected_balance = current_load_all_rSMs_kW + load_hp + load_bs; }
-                else if (load_bs <  0 && load_wb <  0) { selected_balance = current_load_all_rSMs_kW + load_hp;           }
-                //
-                // B. check, if this balance is higher than PV production or not
-                if (selected_balance >= load_pv) {
-                    self_produced_load_kW = load_pv;
-                } else {
-                    self_produced_load_kW = selected_balance;
-                }
-            }
-        }
+    if (current_load_all_rSMs_kW < 0) {
+        self_produced_load_kW = std::min(load_hp, load_pv-load_bs);
+    } else {
+        self_produced_load_kW = std::min(current_load_all_rSMs_kW + load_hp, load_pv-load_bs);
     }
 
     double grid_feedin_kW = 0.0;
