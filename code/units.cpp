@@ -761,12 +761,47 @@ bool MeasurementUnit::load_data(const char * filepath) {
         return false;
     } else {
         string currLineString;
-        getline( smeter_input, currLineString ); // jump first line, as this is the header
+        // check first line (i.e. the header): do the columns equal what they should be?
+        getline( smeter_input, currLineString );
+        if ( std::count(currLineString.begin(), currLineString.end(), ',') != 4 ) {
+            #ifdef DEBUG
+            cerr << "DEBUG MESSAGE: std::count(currLineString.begin(), currLineString.end(), ',') = " << std::count(currLineString.begin(), currLineString.end(), ',') << endl;
+            #endif
+            cerr << "One smart meter data file header has not exactly 5 columns!" << endl;
+            cerr << "The data file must have the following columns (mind the order):" << endl;
+            cerr << "TimestepID,Value_Demand,Status_Demand,Value_Feedin,Status_Feedin" << endl;
+            return false; // destructor of smeter_input closes it by default
+        }
+        stringstream headerSStream(currLineString);
+        string headerSplitted[5];
+        for (uint col = 0; col < 5; col++) {
+            std::getline( headerSStream, headerSplitted[col], ',' );
+        }
+        if (
+            headerSplitted[0] != "TimestepID"    ||
+            headerSplitted[1] != "Value_Demand"  ||
+            headerSplitted[2] != "Status_Demand" ||
+            headerSplitted[3] != "Value_Feedin"  ||
+            headerSplitted[4] != "Status_Feedin"
+        ) {
+            cerr << "There is one smart meter data file with a wrong header!" << endl;
+            cerr << "The data file must have the following columns (mind the order):" << endl;
+            cerr << "TimestepID,Value_Demand,Status_Demand,Value_Feedin,Status_Feedin" << endl;
+            return false; // destructor of smeter_input closes it by default
+        }
+        //
+        // main loop for collecting all data
         for (size_t r = 0; r < Global::get_n_timesteps(); r++) {
             // iterate over every row
             getline( smeter_input, currLineString );
             stringstream currLineStream( currLineString );
             string currLineSplitted[5];
+            // Check if current line has more or less than 5 times an ',' -> throw an error!
+            if ( std::count(currLineString.begin(), currLineString.end(), ',') != 4 ) {
+                cerr << "One smart meter data file holds a row with not exactly 5 values!" << endl;
+                return false; // destructor of smeter_input closes it by default
+            }
+            // read the values
             for (int col = 0; col < 5; col++) {
                 // split this row on the ","
                 getline( currLineStream, currLineSplitted[col], ',' );
