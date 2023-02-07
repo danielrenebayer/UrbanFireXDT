@@ -496,7 +496,8 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
     try {
         ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id);
     } catch (runtime_error& e) {
-        cerr << "Error when creating a control unit:" << endl;
+        cerr << "Error when creating control unit with id " << current_cu_id << endl;
+        cerr << "Details:" << endl;
         cerr << e.what() << endl;
         return 1;
     }
@@ -541,9 +542,13 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
                                 current_mu_id, conn_to_unitID, mPointIDStr, locID,
                                 has_demand, has_feedin, has_pv_resid, has_pv_opens,
                                 has_bess,   has_hp,     has_wb,       has_chp);
-        newMU->load_data(data_input_path.str().c_str());
+        if (! (newMU->load_data(data_input_path.str().c_str())) ) {
+            cerr << "Error when loading data for measurement unit with id " << current_mu_id << endl;
+            return 1;
+        }
     } catch (runtime_error& e) {
-        cerr << "Error when creating a control unit:" << endl;
+        cerr << "Error when creating measurement unit with id " << current_mu_id << endl;
+        cerr << "Details:" << endl;
         cerr << e.what() << endl;
         return 1;
     }
