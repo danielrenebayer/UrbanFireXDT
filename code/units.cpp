@@ -844,6 +844,7 @@ OpenSpacePVOrWind::OpenSpacePVOrWind(float kWp, OpenSpacePVOrWindType type)
     if (type == OpenSpacePVOrWindType::PV) {
         if (global::pv_profiles_per_ori["S"].size() <= 0) {
             cerr << "Error: There is no south feed-in profile given!" << endl;
+            cerr << "It is required for open-space installations." << endl;
             throw runtime_error("There is no south feed-in profile given!");
         }
         profile_data = global::pv_profiles_per_ori["S"][0];
