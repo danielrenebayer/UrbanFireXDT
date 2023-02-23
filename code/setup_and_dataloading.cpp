@@ -995,7 +995,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load address data
         //
         // 1. yearly heat demand for heat pumps
-        sql_query = "SELECT LocID, YearlyHPElectricityDemand_kWh FROM address_data ORDER BY LocID;";
+        sql_query = "SELECT LocID, AnnualHPElectricityDemand_kWh FROM address_data ORDER BY LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
