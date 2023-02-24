@@ -103,6 +103,7 @@ class ControlUnit {
         float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
+        float get_annual_hp_el_cons(); ///< Returns the annual HP electricity consumption of a heat pump, if it would be added simulatively (regardless whether it is added or not)
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_SCR(); ///< Returns the SCR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run

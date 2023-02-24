@@ -307,6 +307,10 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
     return 0;
 }
 
+float ControlUnit::get_annual_hp_el_cons() {
+    return global::yearly_hp_energy_demand_kWh[locationID];
+}
+
 double ControlUnit::get_SSR() {
     double SSR = 0.0;
     if (sum_of_consumption_kWh > 0)
@@ -407,12 +411,9 @@ void ControlUnit::add_exp_hp() {
         cerr << "Warning: Control unit with location id " << locationID << " already has a heat pump!" << endl;
     if (!has_sim_hp) {
         //
-        // get yearly electricity consumption
-        float yearly_electricity_cons_kWh = global::yearly_hp_energy_demand_kWh[locationID];
-        //
         // create and link component
         has_sim_hp  = true;
-        sim_comp_hp = new ComponentHP(yearly_electricity_cons_kWh);
+        sim_comp_hp = new ComponentHP(this->get_annual_hp_el_cons());
     }
 }
 
