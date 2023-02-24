@@ -173,6 +173,11 @@ int main(int argc, char* argv[]) {
 	}
 
     //
+    // Output all variable values
+    //
+    configld::output_variable_values();
+
+    //
     // Plan and add which sim. added components should be added to which control units
     // and Run the simulation
     // - once (if no parameter variation is selected) or

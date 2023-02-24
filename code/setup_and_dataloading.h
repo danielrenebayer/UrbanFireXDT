@@ -23,6 +23,8 @@ namespace configld {
 
     bool load_data_from_central_database(const char* filepath); ///< Load the complete simulation structure from the central database, and also load the recorded time series for the measurement units
 
+    void output_variable_values(); ///< Outputs the configured variables to stdout
+
 }
 
 

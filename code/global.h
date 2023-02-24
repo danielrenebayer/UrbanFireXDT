@@ -111,6 +111,11 @@ namespace global {
         UseEOverPRatio
     };
 
+    /*!
+     * The string to delmitit output sections
+     */
+    const char* const output_section_delimiter = "*********************************************************************************";
+
 }
 
 

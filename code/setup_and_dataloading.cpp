@@ -1011,6 +1011,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
 
+        cout << "Finished loading data and system structure.\n";
+        cout << global::output_section_delimiter << endl;
+
         sqlite3_close(dbcon);
         return true;
     } else {
@@ -1021,4 +1024,77 @@ bool configld::load_data_from_central_database(const char* filepath) {
 
 
 #pragma GCC diagnostic pop /* activate all warnings again */
+
+#define PRINT_VAR(varname) cout << "    " << #varname << " = " << varname << "\n"
+
+//
+// Implementation of configld::output_variable_values()
+//
+void configld::output_variable_values() {
+    cout << "Simulation information:\n";
+    cout << "    Simulation build at " << __DATE__ << " " << __TIME__ <<  "\n";
+    #ifdef __GNUC__
+    cout << "    GCC was used as compiler.\n    GCC Version = " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << "\n";
+    #endif
+    #ifdef __VERSION__
+    cout << "    Compiler version = " << __VERSION__ << "\n";
+    #endif
+    #ifdef __OPTIMIZE__
+    cout << "    Optimization was enabled during compile time.\n";
+    #endif
+    cout << "    C++ standard = " << __cplusplus << "\n\n";
+    cout << "List of parameter settings:\n";
+    // Scenario selection
+    cout << "  Scenario selection:\n";
+    PRINT_VAR(Global::get_expansion_scenario_id());
+    PRINT_VAR(Global::is_parameter_variation());
+    PRINT_VAR(Global::get_parameter_varID());
+    PRINT_VAR(Global::get_repetitions_selected());
+    PRINT_VAR(Global::get_n_repetitions());
+    PRINT_VAR(Global::get_ts_start_tm());
+    PRINT_VAR(Global::get_ts_end_tm());
+    // Data
+    cout << "  Data:\n";
+    PRINT_VAR(Global::get_output_path());
+    PRINT_VAR(Global::get_input_path());
+    PRINT_VAR(Global::get_n_timesteps());
+    PRINT_VAR(Global::get_tsteps_per_hour());
+    PRINT_VAR(Global::get_n_substations());
+    PRINT_VAR(Global::get_n_CUs());
+    PRINT_VAR(Global::get_n_MUs());
+    PRINT_VAR(Global::get_n_pv_profiles());
+    PRINT_VAR(Global::get_n_heatpump_profiles());
+    // Selection settings
+    cout << "  Selection settings:\n";
+    Global::get_exp_profile_mode();
+    Global::get_cu_selection_mode_fca();
+    Global::get_battery_power_computation_mode();
+    // Scenario settings
+    cout << "  Scenario settings:\n";
+    PRINT_VAR(Global::get_exp_pv_static_mode());
+    PRINT_VAR(Global::get_exp_pv_kWp_static());
+    PRINT_VAR(Global::get_exp_pv_kWp_per_m2());
+    PRINT_VAR(Global::get_exp_pv_min_kWp_roof_sec());
+    PRINT_VAR(Global::get_exp_pv_max_kWp_roof_sec());
+    PRINT_VAR(Global::get_exp_pv_max_kWp_per_unit());
+    PRINT_VAR(Global::get_exp_pv_max_kWp_total());
+    PRINT_VAR(Global::get_exp_bess_kW());
+    PRINT_VAR(Global::get_exp_bess_kWh());
+    PRINT_VAR(Global::get_exp_bess_E_P_ratio());
+    PRINT_VAR(Global::get_exp_bess_start_soc());
+    PRINT_VAR(Global::get_open_space_pv_kWp());
+    PRINT_VAR(Global::get_wind_kWp());
+    PRINT_VAR(Global::get_feed_in_tariff());
+    PRINT_VAR(Global::get_demand_tariff());
+    PRINT_VAR(Global::get_inst_cost_PV_per_kWp());
+    PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
+    PRINT_VAR(Global::get_npv_discount_rate());
+    PRINT_VAR(Global::get_npv_time_horizon());
+    PRINT_VAR(Global::get_use_BS_for_SSR_list());
+    // Output settings
+    cout << "  Output settings:\n";
+    Global::get_output_mode_per_cu();
+    PRINT_VAR(global::n_ts_between_flushs);
+    cout << global::output_section_delimiter << "\n";
+}
 

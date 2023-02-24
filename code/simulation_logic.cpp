@@ -64,7 +64,8 @@ bool simulation::runSimulationForOneParamSetting() {
 
     }
 
-    std::cout << "... run finished." << std::endl;
+    std::cout << "... run finished." << "\n";
+    std::cout << global::output_section_delimiter << std::endl;
     return true;
 
 }
