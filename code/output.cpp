@@ -335,7 +335,7 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
             output_path /= "metrics-per-cu.csv";
         }
         ofstream ofs(output_path, std::ofstream::out);
-        ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],BS EFC\n";
+        ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC\n";
         //
         // loop over all CUs and get metrics output string
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();

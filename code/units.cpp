@@ -172,6 +172,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     sum_of_self_cons_kWh      = 0.0;
     sum_of_PV_generated_kWh   = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
+    sum_of_grid_demand_kWh    = 0.0;
     /*
     if (Global::get_comp_eval_metrics()) {
         create_history_output = true;
@@ -364,6 +365,7 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(sum_of_self_cons_kWh)   + ",";
         *retstr += to_string(sum_of_PV_generated_kWh)+ ",";
         *retstr += to_string(sum_of_feed_into_grid_kWh)+ ",";
+        *retstr += to_string(sum_of_grid_demand_kWh)+ ",";
         *retstr += to_string(bat_EFC);
         return retstr;
 }
@@ -571,6 +573,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     if (current_load_vSM_kW < 0) {
         grid_feedin_kW = -current_load_vSM_kW;
     }
+    double grid_demand_kW = 0.0;
+    if (current_load_vSM_kW > 0) {
+        grid_demand_kW = current_load_vSM_kW;
+    }
 
     //
     // add values to summation variables
@@ -578,6 +584,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     sum_of_self_cons_kWh      += Global::get_time_step_size_in_h() * self_produced_load_kW;
     sum_of_PV_generated_kWh   += Global::get_time_step_size_in_h() * load_pv;
     sum_of_feed_into_grid_kWh += Global::get_time_step_size_in_h() * grid_feedin_kW;
+    sum_of_grid_demand_kWh    += Global::get_time_step_size_in_h() * grid_demand_kW;
     /*if (create_history_output) {
         history_self_prod_load_kW[ts - 1]     = ;
         history_pv_generation_kW[ ts - 1]     = load_pv;
@@ -637,6 +644,7 @@ void ControlUnit::ResetAllInternalStates() {
         e_i->sum_of_self_cons_kWh      = 0.0;
         e_i->sum_of_PV_generated_kWh   = 0.0;
         e_i->sum_of_feed_into_grid_kWh = 0.0;
+        e_i->sum_of_grid_demand_kWh    = 0.0;
         //
         if (e_i->has_sim_bs) {
             e_i->sim_comp_bs->resetInternalState();

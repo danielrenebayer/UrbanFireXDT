@@ -157,6 +157,7 @@ class ControlUnit {
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_PV_generated_kWh;   ///< The sum of PV-generated energy in kWh starting from the beginning of the current simulation run
         double sum_of_feed_into_grid_kWh; ///< The sum of energy in kWh, that is fed into the grid, starting from the beginning of the current simulation run
+        double sum_of_grid_demand_kWh;    ///< The sum of energy in kWh, that is taken from the grid, starting from the beginning of the current simulation run
         //float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed
         //float* history_pv_generation_kW; ///< Array for later analysis, holding the historical values of the PV-generation
         //float* history_avg_consumption_load_kW; ///< Array for later analysis, holding the historical (average) consumption load for the corresponding time step
