@@ -166,7 +166,7 @@ bool expansion::load_expansion_matrix(float expansion_matrix[16][16]) {
                             current_value = stof( currLineSplittedElement );
                     }
                 } else {
-                    cout << "Warning: End of line reached before 16 elements are parsed in the expansion scenario file!" << endl;
+                    cout << "Warning: End of line reached before 16 elements are parsed in line " << i+2 << " in the expansion scenario file!" << endl;
                 }
                 expansion_matrix[i][col] = current_value;
             }
@@ -441,7 +441,7 @@ void expansion::add_expansion_to_units(
         output_per_cu << "," << current_unit->get_sim_comp_pv_kWp();
         output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
         output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW();
-        output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsSimulated)) ? current_unit->get_annual_hp_el_cons() : 0.0;
+        output_per_cu << "," << ((0 < (expansion::MaskHP & expCombiAsSimulated)) ? current_unit->get_annual_hp_el_cons() : 0.0);
         output_per_cu << "\n";
     }
     output_per_cu.close();
