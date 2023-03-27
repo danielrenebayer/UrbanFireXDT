@@ -512,8 +512,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
      * Columns:
      * 0      1       2             3           4           5
      * MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential
-     * 6                  7         8       9        10
-     * has_pv_open_space, has_bess, has_hp, has_chp, LocID
+     * 6                  7         8       9        10     11        12
+     * has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_biomass
      */
     if (argc != 11) {
         cerr << "Number of arguments not equal to 10 for one row!" << endl;
@@ -528,8 +528,9 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
     bool has_pv_opens  = argv[6][0] == '1';
     bool has_bess      = argv[7][0] == '1';
     bool has_hp        = argv[8][0] == '1';
-    bool has_wb        = false; // TODO: wallboxes not implemented jet
+    bool has_evchst    = false; // TODO: ev charging stations not implemented jet
     bool has_chp       = argv[9][0] == '1';
+    bool has_wind      = argv[11][0] == '1';
     size_t locID       = stoul(argv[10]);
 
     stringstream data_input_path;
@@ -541,7 +542,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
         MeasurementUnit* newMU = MeasurementUnit::InstantiateNewMeasurementUnit(
                                 current_mu_id, conn_to_unitID, mPointIDStr, locID,
                                 has_demand, has_feedin, has_pv_resid, has_pv_opens,
-                                has_bess,   has_hp,     has_wb,       has_chp);
+                                has_bess,   has_hp,     has_wind,     has_evchst,
+                                has_chp);
         if (! (newMU->load_data(data_input_path.str().c_str())) ) {
             cerr << "Error when loading data for measurement unit with id " << current_mu_id << endl;
             return 1;
@@ -888,7 +890,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 3. MUs
-        string sql_queryE = "SELECT MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID FROM list_of_measurement_units ORDER BY MeUID;";
+        string sql_queryE = "SELECT MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_biomass FROM list_of_measurement_units ORDER BY MeUID;";
         char* sqlErrorMsgE;
         int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
         if (ret_valE != 0) {

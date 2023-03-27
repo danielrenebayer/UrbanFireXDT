@@ -91,7 +91,7 @@ class ControlUnit {
         bool has_pv();
         bool has_bs();
         bool has_hp();
-        bool has_wb();
+        bool has_evchst(); ///< Checks, if the unit has an EV charging station connected (in data or simulated)
         bool has_chp();
         bool has_bs_sim_added();
         int  get_exp_combi_bit_repr();
@@ -113,7 +113,7 @@ class ControlUnit {
         void add_exp_pv();
         void add_exp_bs();
         void add_exp_hp();
-        void add_exp_wb();
+        void add_exp_evchst(); ///< Adds an EV charging station to the control unit
         void set_output_object(CUOutput* output_obj);
         void set_exp_pv_params_A(float kWp_static); ///< Set the kWp of expanded PV installations in the case of static kWp computation per section
         void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
@@ -147,11 +147,11 @@ class ControlUnit {
         bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added
         bool has_sim_bs; ///< boolean variable that states if a battery storage is simulatively added
         bool has_sim_hp; ///< boolean variable that states if a heap pump is simulatively added
-        bool has_sim_wb; ///< boolean variable that states if a wallbox is simulatively added
+        bool has_sim_ev; ///< boolean variable that states if an EV charging station is simulatively added
         ComponentPV* sim_comp_pv; ///< Reference to the simulated PV-Component (if it exists)
         ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
-        ComponentWB* sim_comp_wb; ///< Reference to the simulated Wallbox Component (if it exists)
+        ComponentWB* sim_comp_ev; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
@@ -183,14 +183,16 @@ class MeasurementUnit {
     public:
         static MeasurementUnit* InstantiateNewMeasurementUnit(size_t meUID, size_t unitID, std::string * meterPointName, size_t locID, 
                 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
-                bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) {
-                    return new MeasurementUnit(meUID, unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wb, has_chp);
+                bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
+                bool has_chp) {
+                    return new MeasurementUnit(meUID, unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wind, has_evchst, has_chp);
                 }
     private:
         // initialization and destruction
         MeasurementUnit(size_t meUID, size_t unitID, std::string * meterPointName, size_t locID, 
                         bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
-                        bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp);
+                        bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
+                        bool has_chp);
     public:
         ~MeasurementUnit();
         bool load_data(const char * filepath);
@@ -201,7 +203,7 @@ class MeasurementUnit {
         bool has_pv_open_space()  { return rsm_with_pv_open_space; }
         bool has_bs()     { return rsm_with_bess;}
         bool has_hp()     { return rsm_with_hp;  }
-        bool has_wb()     { return rsm_with_wb;  }
+        bool has_evchst() { return rsm_with_evchst;  }
         bool has_chp()    { return rsm_with_chp; }
         int  get_expansion_combination() { return expansion_combination; }
         inline const std::string * get_meterPointName() const;
@@ -232,7 +234,8 @@ class MeasurementUnit {
         bool rsm_with_pv_open_space;
         bool rsm_with_bess;
         bool rsm_with_hp;
-        bool rsm_with_wb;
+        bool rsm_with_evchst; ///< True, if an EV charging station is connected
+        bool rsm_with_wind;   ///< True, if a wind farm is connected
         bool rsm_with_chp;
         int expansion_combination;
         // member variables storing the data

@@ -369,7 +369,7 @@ void expansion::add_expansion_to_units(
                 if (expPV) (*iter)->add_exp_pv();
                 if (expBS) (*iter)->add_exp_bs();
                 if (expHP) (*iter)->add_exp_hp();
-                if (expWB) (*iter)->add_exp_wb();
+                if (expWB) (*iter)->add_exp_evchst();
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 if (Global::get_exp_pv_max_kWp_total() >= 0.0) {
                     cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();

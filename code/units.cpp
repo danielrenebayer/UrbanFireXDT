@@ -124,11 +124,11 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	has_sim_pv      = false;
 	has_sim_bs      = false;
 	has_sim_hp      = false;
-	has_sim_wb      = false;
+	has_sim_ev      = false;
 	sim_comp_pv     = NULL;
 	sim_comp_bs     = NULL;
 	sim_comp_hp     = NULL;
-	sim_comp_wb     = NULL;
+	sim_comp_ev     = NULL;
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
     output_obj      = NULL;
@@ -192,7 +192,7 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_pv) delete sim_comp_pv;
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
-	if (has_sim_wb) delete sim_comp_wb;
+	if (has_sim_ev) delete sim_comp_ev;
     /*
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
@@ -243,11 +243,11 @@ bool ControlUnit::has_hp() {
 	return false;
 }
 
-bool ControlUnit::has_wb() {
-	if (has_sim_wb)
+bool ControlUnit::has_evchst() {
+	if (has_sim_ev)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
-		if (mu->has_wb())
+		if (mu->has_evchst())
 			return true;
 	}
 	return false;
@@ -285,7 +285,7 @@ int ControlUnit::get_exp_combi_bit_repr_sim_added() {
         combination = combination | expansion::MaskBS;
     if (has_sim_hp)
         combination = combination | expansion::MaskHP;
-    if (has_sim_wb)
+    if (has_sim_ev)
         combination = combination | expansion::MaskWB;
     return combination;
 }
@@ -419,12 +419,12 @@ void ControlUnit::add_exp_hp() {
     }
 }
 
-void ControlUnit::add_exp_wb() {
-    if (has_wb())
-        cerr << "Warning: Control unit with location id " << locationID << " already has a wallbox!" << endl;
-    if (!has_sim_wb) {
-        has_sim_wb  = true;
-        sim_comp_wb = new ComponentWB();
+void ControlUnit::add_exp_evchst() {
+    if (has_evchst())
+        cerr << "Warning: Control unit with location id " << locationID << " already has an EV charging station!" << endl;
+    if (!has_sim_ev) {
+        has_sim_ev  = true;
+        sim_comp_ev = new ComponentWB();
     }
 }
 
@@ -497,10 +497,10 @@ void ControlUnit::remove_sim_added_components() {
         delete sim_comp_hp;
         sim_comp_hp = NULL;
     }
-	if (has_sim_wb) {
-        has_sim_wb = false;
-        delete sim_comp_wb;
-        sim_comp_wb = NULL;
+	if (has_sim_ev) {
+        has_sim_ev = false;
+        delete sim_comp_ev;
+        sim_comp_ev = NULL;
     }
 }
 
@@ -547,9 +547,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         total_consumption   += load_hp;
     }
     //
-    // 4. get the effect of the e-car / wallbox
+    // 4. get the effect of the EV charging station
     // TODO
-    // if load_wb > 0: total_consumption += load_wb; // ... only problem: wallbox feeds in energy taken from somewhere else
+    // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
     // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
@@ -683,7 +683,8 @@ MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
 
 MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPointName, size_t locID,
                                  bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
-                                 bool has_bess,   bool has_hp,     bool has_wb,       bool has_chp) :
+                                 bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
+                                 bool has_chp) :
     meUID(meUID),
     higher_level_cu(ControlUnit::GetInstance(unitID)),
     meterPointName(meterPointName), locationID(locID) {
@@ -696,7 +697,8 @@ MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPoin
     rsm_with_pv_open_space  = has_pv_opens;
     rsm_with_bess  = has_bess;
     rsm_with_hp    = has_hp;
-    rsm_with_wb    = has_wb;
+    rsm_with_evchst= has_evchst;
+    rsm_with_wind  = has_wind;
     rsm_with_chp   = has_chp;
     data_loaded       = false;
     data_timestepID   = NULL;
@@ -704,7 +706,7 @@ MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPoin
     data_value_feedin = NULL;
     //data_status_demand=NULL;
     //data_status_feedin=NULL;
-    expansion_combination = expansion::genExpCombiAsBitRepr(has_pv_resid||has_pv_opens, has_bess, has_hp, has_wb);
+    expansion_combination = expansion::genExpCombiAsBitRepr(has_pv_resid||has_pv_opens, has_bess, has_hp, has_evchst);
 
     //
     // add to class variables
