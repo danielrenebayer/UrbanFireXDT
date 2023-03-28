@@ -29,6 +29,7 @@ echo -e "\n-- 3. Simulation run --"
 ../code/main-opti --config ../test/test-config/test_config.json 3
 if (( $? != 0 )); then program_error=1; fi
 
+
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
     echo -e "\n-- 4. Simulation run (using valgrind) --"
@@ -56,7 +57,7 @@ done
 # 3. output results
 echo -e "\n--------------------------------------"
 echo "-- Simulation procedure:            --"
-if (( $output_error > 0 )); then
+if (( $program_error > 0 )); then
     echo -e "--\033[01;31m One or more errors occured     \033[0m  --"
     echo -e "--\033[01;31m during the simulation run.     \033[0m  --"
 else
@@ -71,11 +72,15 @@ else
 fi
 echo -e "--------------------------------------"
 echo "-- Memory check resuly:             --"
-if   (( $memory_error < 0 )); then
-    echo -e "--\033[01;33m Not checked due to prev. errors! \033[0m--"
-elif (( $memory_error > 0 )); then
-    echo -e "--\033[01;31m Failed! Memory lekage detected!  \033[0m--"
+if (( $program_error > 0 )); then
+  echo -e "-- not evaluated, as errors occured above   --"
 else
+  if   (( $memory_error < 0 )); then
+    echo -e "--\033[01;33m Not checked due to prev. errors! \033[0m--"
+  elif (( $memory_error > 0 )); then
+    echo -e "--\033[01;31m Failed! Memory lekage detected!  \033[0m--"
+  else
     echo -e "--\033[01;32m Everything passed!             \033[0m  --"
+  fi
 fi
 echo -e "--------------------------------------\n"
