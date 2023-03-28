@@ -132,6 +132,8 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
     output_obj      = NULL;
+    is_expandable_with_pv_hp_cache          = false;
+    is_expandable_with_pv_hp_cache_computed = false;
 
 	//
 	// add to class variables
@@ -154,6 +156,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	}
 	st__cu_list[st__new_CU_position] = this;
 	st__new_CU_position++;
+    //location_to_cu_map.insert({locationID, this});
 
 	//
 	// add this control unit to the list of
@@ -255,6 +258,29 @@ bool ControlUnit::has_evchst() {
 
 bool ControlUnit::has_bs_sim_added() {
 	return has_sim_bs;
+}
+
+bool ControlUnit::is_expandable_with_pv_hp() {
+    if (!is_expandable_with_pv_hp_cache_computed) {
+        // compute value first, if it has not been computed
+        is_expandable_with_pv_hp_cache_computed = true;
+        // computation itselfe
+        bool geodata_flag_set  = global::locations_with_geodata.contains(locationID);
+        bool roofdata_flag_set = global::roof_section_orientations.contains(locationID);
+        if (geodata_flag_set && roofdata_flag_set) {
+            is_expandable_with_pv_hp_cache = true;
+        } else if (geodata_flag_set && !roofdata_flag_set) {
+            is_expandable_with_pv_hp_cache = false;
+            cerr << "Warning: Geodata is claimed to be available for control unit with ID " << unitID << ", but still no roof data has been found!" << endl;
+        } else if (!geodata_flag_set && roofdata_flag_set) {
+            is_expandable_with_pv_hp_cache = false;
+            cerr << "Warning: Roofdata is available for control unit with ID " << unitID << ", even though it is claimed that there is no geodata for it!" << endl;
+        } else {
+            is_expandable_with_pv_hp_cache = false;
+        }
+    }
+
+    return is_expandable_with_pv_hp_cache;
 }
 
 int ControlUnit::get_exp_combi_bit_repr() {
@@ -621,12 +647,16 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
     st__cu_list_init = false;
 }
 
-inline ControlUnit* ControlUnit::GetInstance(unsigned long unitID) {
+ControlUnit* ControlUnit::GetInstance(unsigned long unitID) {
     if (unitID > 0 && unitID <= st__n_CUs)
         return st__cu_list[unitID - 1];
     else
         return NULL;
 }
+
+//ControlUnit* ControlUnit::GetInstanceAtLocationID(unsigned long locationID) {
+//    return location_to_cu_map[locationID];
+//}
 
 void ControlUnit::ResetAllInternalStates() {
     //

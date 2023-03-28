@@ -94,6 +94,7 @@ class ControlUnit {
         bool has_evchst(); ///< Checks, if the unit has an EV charging station connected (in data or simulated)
         bool has_chp();
         bool has_bs_sim_added();
+        bool is_expandable_with_pv_hp(); ///< Is a PV installation or a heat pump addable (yes, if geodata is available). This function uses caching.
         int  get_exp_combi_bit_repr();
         int  get_exp_combi_bit_repr_from_MUs();
         int  get_exp_combi_bit_repr_sim_added();
@@ -130,7 +131,8 @@ class ControlUnit {
         static void InitializeStaticVariables(unsigned long n_CUs);
         static void VacuumInstancesAndStaticVariables();
         // 2. getter functions
-        static inline ControlUnit* GetInstance(unsigned long unitID);
+        static ControlUnit* GetInstance(unsigned long unitID);
+        //static ControlUnit* GetInstanceAtLocationID(unsigned long locationID);
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static size_t GetNumberOfInstances() {return st__n_CUs;}
         static size_t GetNumberOfCUsWithSimCompPV();
@@ -166,11 +168,15 @@ class ControlUnit {
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
         float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units
         //
+        bool is_expandable_with_pv_hp_cache; ///< Cached value saying is this unit expandable with a (roof-top) PV installation or a heat pump (it requires geo data for this!)
+        bool is_expandable_with_pv_hp_cache_computed; ///< Boolean variable if cache has been computed
+        //
         // static list of CUs
         static bool st__cu_list_init;
         static unsigned long st__n_CUs;
         static unsigned long st__new_CU_position;
         static ControlUnit** st__cu_list;
+        //static std::map<unsigned long, ControlUnit*> location_to_cu_map;
 };
 
 

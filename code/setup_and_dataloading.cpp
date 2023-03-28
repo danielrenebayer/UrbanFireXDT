@@ -515,8 +515,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
      * 6                  7         8       9        10     11        12
      * has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_biomass
      */
-    if (argc != 11) {
-        cerr << "Number of arguments not equal to 10 for one row!" << endl;
+    if (argc != 13) {
+        cerr << "Number of arguments not equal to 13 for one row!" << endl;
         return 1;
     }
     size_t current_mu_id  = stoul(argv[0]);
@@ -784,14 +784,19 @@ int load_data_from_central_database_callback_address_data_A(void* data, int argc
      * This is the callback function for geeting the yearly heat pump electricity demand in kWh per Location ID.
      *
      * Columns:
-     * 0      1
-     * LocID  YearlyHPHeatDemand_kWh
+     * 0      1                       2
+     * LocID  YearlyHPHeatDemand_kWh, n_buildings
      */
-    if (argc != 2) {
-        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
         return 1;
     }
-    global::yearly_hp_energy_demand_kWh[ stoul(argv[0]) ] = stof(argv[1]);
+    size_t locationID = stoul(argv[0]);
+    float  annual_hp_e_demand = stof(argv[1]);
+
+    global::yearly_hp_energy_demand_kWh[ locationID ] = annual_hp_e_demand;
+    global::locations_with_geodata.insert( locationID );
+
     return 0;
 }
 int load_data_from_central_database_callback_address_data_B(void* data, int argc, char** argv, char** colName) {
@@ -996,8 +1001,8 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         // Load address data
         //
-        // 1. yearly heat demand for heat pumps
-        sql_query = "SELECT LocID, AnnualHPElectricityDemand_kWh FROM address_data ORDER BY LocID;";
+        // 1. annual heat demand for heat pumps AND buildings with available geo data?
+        sql_query = "SELECT LocID, AnnualHPElectricityDemand_kWh, n_buildings FROM address_data WHERE n_buildings >= 1 ORDER BY LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;

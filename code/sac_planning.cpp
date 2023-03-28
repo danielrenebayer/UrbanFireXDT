@@ -251,6 +251,10 @@ void expansion::add_expansion_to_units(
     const size_t n_CUs = ControlUnit::GetNumberOfInstances();
     for (size_t i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
+        // jump this unit, if it is not extensible
+        if (!current_unit->is_expandable_with_pv_hp())
+            continue;
+        //
         int expCombi = current_unit->get_exp_combi_bit_repr();
         currExpCountsBitIndexed[ expCombi ]++;
         cuRefLstVectBitOrder[ expCombi ].push_back( current_unit ); // add unit to reference list
@@ -421,7 +425,7 @@ void expansion::add_expansion_to_units(
     filesystem::path info_path_B (*(global::current_global_output_dir)); // same argument as 21 lines above
     info_path_B /= "expansion-per-cu.csv";
     ofstream output_per_cu(info_path_B, std::ofstream::out);
-    output_per_cu << "UnitID,n_MUs,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,wb_orig,wb_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh" << endl;
+    output_per_cu << "UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,evchst_orig,evchst_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh" << endl;
     // n_CUs and unit_list defined above, at 1.
     for (unsigned long i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
@@ -430,6 +434,7 @@ void expansion::add_expansion_to_units(
         // output information
         output_per_cu <<        current_unit->get_unitID();
         output_per_cu << "," << current_unit->get_n_MUs();
+        output_per_cu << "," << current_unit->is_expandable_with_pv_hp();
         output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsInData));
         output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsSimulated));
         output_per_cu << "," << (0 < (expansion::MaskBS & expCombiAsInData));
