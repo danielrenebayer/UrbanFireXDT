@@ -213,8 +213,7 @@ bool Global::AllVariablesInitialized() {
         if ((
              ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
-                                      && exp_pv_min_kWp_roof_sec_init
-                                      && exp_pv_max_kWp_per_sec_init)
+                                      && exp_pv_min_kWp_roof_sec_init)
             ) && (
              ( bat_power_comp_mode == global::BatteryPowerComputationMode::AsDefinedByConfigVar && exp_bess_kW_init ) ||
              ( bat_power_comp_mode == global::BatteryPowerComputationMode::UseEOverPRatio       && exp_bess_E_P_ratio_init )

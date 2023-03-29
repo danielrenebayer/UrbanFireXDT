@@ -118,7 +118,7 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     if (kWp_per_m2 <= 0.0) {
         throw runtime_error("Error in ComponentPV constructor: kWp_per_m2 <= 0!");
     }
-    if (min_kWp > max_kWp) {
+    if (max_kWp > 0 && min_kWp > max_kWp) {
         throw runtime_error("Error in ComponentPV constructor: min_kWp > max_kWp");
     }
 
@@ -142,7 +142,8 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
             // ignore this section
             continue;
         }
-        if (section_kWp > max_kWp) {
+        // if max_kWp == 0 -> ignore this value
+        if (max_kWp > 0 && section_kWp > max_kWp) {
             section_kWp = max_kWp;
         }
         total_kWp += section_kWp;
