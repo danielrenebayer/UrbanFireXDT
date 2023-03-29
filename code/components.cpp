@@ -214,11 +214,12 @@ ComponentBS::ComponentBS(
     float maxP_kW,
     float E_over_P_ratio,
     float discharge_rate_per_step,
-    float efficiency,
+    float efficiency_in,
+    float efficiency_out,
     float initial_SoC
 ) : maxE_kWh(maxE_kWh),
-    discharge_rate_per_step(discharge_rate_per_step), efficiency(efficiency),
-    initial_SoC(initial_SoC)
+    discharge_rate_per_step(discharge_rate_per_step), efficiency_in(efficiency_in),
+    efficiency_out(efficiency_out), initial_SoC(initial_SoC)
 {
     SOC               = 0;
     currentE_kWh      = 0;
@@ -269,28 +270,26 @@ void ComponentBS::calculateActions() {
 
     // Calculate Self-discharge
     currentE_kWh -= discharge_rate_per_step * currentE_kWh;
-    // Calculate efficiency
-    charge_request_kW = charge_request_kW * efficiency;
 
     // Charging and discharging
     if (charge_request_kW > 0) {
         // charging requested
         if (charge_request_kW > maxP_kW)
             charge_request_kW = maxP_kW;
-        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW;
+        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW*efficiency_in;
         if (new_charge_kWh > maxE_kWh)
             new_charge_kWh = maxE_kWh;
-        currentP_kW  = (new_charge_kWh - currentE_kWh)/timestep_size_in_h;
+        currentP_kW  = (new_charge_kWh - currentE_kWh)/timestep_size_in_h/efficiency_in;
         currentE_kWh = new_charge_kWh;
     } else if (charge_request_kW < 0) {
         // discharging requested
         if (-charge_request_kW > maxP_kW)
             charge_request_kW = -maxP_kW;
-        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW;
+        new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW/efficiency_out;
         if (new_charge_kWh < 0)
             new_charge_kWh = 0;
         float energy_taken_kWh = new_charge_kWh - currentE_kWh;
-        currentP_kW  = energy_taken_kWh / timestep_size_in_h;
+        currentP_kW  = energy_taken_kWh / timestep_size_in_h * efficiency_out;
         currentE_kWh = new_charge_kWh;
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
         total_E_withdrawn_kWh -= energy_taken_kWh;

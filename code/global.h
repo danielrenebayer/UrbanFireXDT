@@ -168,6 +168,9 @@ class Global {
         static float get_exp_bess_kWh()        { return exp_bess_kWh;    }
         static float get_exp_bess_E_P_ratio()  { return exp_bess_E_P_ratio; }
         static float get_exp_bess_start_soc()  { return exp_bess_start_soc;    }
+        static float get_exp_bess_effi_in()    { return exp_bess_effi_in;    }
+        static float get_exp_bess_effi_out()   { return exp_bess_effi_out;   }
+        static float get_exp_bess_self_ds_ts() { return exp_bess_self_ds_ts; }
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
@@ -209,6 +212,9 @@ class Global {
         static void set_exp_bess_kWh(float exp_bess_kWh);
         static void set_exp_bess_E_P_ratio(float value);
         static void set_exp_bess_start_soc(float exp_bess_start_soc);
+        static void set_exp_bess_effi_in(float value);
+        static void set_exp_bess_effi_out(float value);
+        static void set_exp_bess_self_ds_ts(float value);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
@@ -255,6 +261,9 @@ class Global {
         static float exp_bess_kWh;         ///< E [kWh] of in the simulation added BESS installations
         static float exp_bess_E_P_ratio;   ///< E:P-ratio for new battery storages, this or exp_bess_kW has to be defined!
         static float exp_bess_start_soc;   ///< SOC at the beginning of the simulation for newly added BESS installations
+        static float exp_bess_effi_in;     ///< efficiency for charging
+        static float exp_bess_effi_out;    ///< efficiency for discharging
+        static float exp_bess_self_ds_ts;  ///< self-discharge per time step of the battery
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid

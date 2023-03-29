@@ -428,8 +428,9 @@ void ControlUnit::add_exp_bs() {
         sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh() /*maxE*/,
                                       Global::get_exp_bess_kW()  /*maxP*/,
                                       Global::get_exp_bess_E_P_ratio() /* E over P ratio */,
-                                      0.0 /* discharge rate per step */,
-                                      1.0 /* efficiency */,
+                                      Global::get_exp_bess_self_ds_ts() /* discharge rate per step */,
+                                      Global::get_exp_bess_effi_in() /* efficiency in */,
+                                      Global::get_exp_bess_effi_out() /* efficiency out */,
                                       Global::get_exp_bess_start_soc() /* inital SOC */);
     }
 }

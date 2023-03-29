@@ -65,11 +65,11 @@ class ComponentPV {
 
 class ComponentBS {
     public:
-        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency, float initial_SoC);
+        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC);
         // getter methods
         float get_SOC() const               { return SOC; }
-        float get_currentCharge_kWh() const { return currentE_kWh; }
-        float get_currentLoad_kW() const    { return currentP_kW;  }
+        float get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
+        float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
         float get_maxE_kWh()       const    { return maxE_kWh;     }
         float get_maxP_kW()        const    { return maxP_kW;      }
         double get_current_EFC()   const    { return total_E_withdrawn_kWh / maxE_kWh; } ///< Returns the equivalent full cycles (EFC)
@@ -88,12 +88,13 @@ class ComponentBS {
         float E_over_P_ratio;
         // constant member variables (other languages might call this 'final')
         const float discharge_rate_per_step;
-        const float efficiency;
+        const float efficiency_in;
+        const float efficiency_out;
         const float initial_SoC;
         // member variables that can change over time
         float SOC;
-        float currentE_kWh;
-        float currentP_kW;
+        float currentE_kWh; ///< current energy inside the battery
+        float currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
         float charge_request_kW;
         double total_E_withdrawn_kWh; ///< summation variable for EFC computation
 };

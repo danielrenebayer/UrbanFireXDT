@@ -101,6 +101,18 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_exp_bess_E_P_ratio( scenario_dict.get_value<float>() );
             }
+            else if (element_name.compare("expansion BS efficiency in")  == 0)
+            {
+                Global::set_exp_bess_effi_in( scenario_dict.get_value<float>() );
+            }
+            else if (element_name.compare("expansion BS efficiency out") == 0)
+            {
+                Global::set_exp_bess_effi_out( scenario_dict.get_value<float>() );
+            }
+            else if (element_name.compare("expansion BS self-discharge per ts") == 0)
+            {
+                Global::set_exp_bess_self_ds_ts( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("open space PV kWp")         == 0 )
             {
                 Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );

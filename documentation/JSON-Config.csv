@@ -1,12 +1,14 @@
 Config Parameter Name,Type,Required,Default (if not set),Possible Values,Description,Can be used for parameter variations
 data input path,string,yes,,,Path (relative or absolute) to the input data,no
 data output path,string,yes,,,Path (relative or absolute) to the directory where the output should be saved,no
-start,string (encoding a datetime),yes,,,"Start date in the format YYYY-mm-dd HH:MM:SS - if the data start after start date, simulation will wait for the data to start",no
-end,string (encoding a datetime),yes,,,"End date in the format YYYY-mm-dd HH:MM:SS - if the data end earlier, simulation will stop there",no
+start,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"Start date in the format YYYY-mm-dd HH:MM:SS - if the data start after start date, simulation will wait for the data to start",no
+end,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"End date in the format YYYY-mm-dd HH:MM:SS - if the data end earlier, simulation will stop there",no
 time steps per hour,integer,yes,,1 to infinity,Number of time steps per hour,no
 ,,,,,,
 open space PV kWp ,float,yes,,0.0 to infinity,Additional open space PV power in kWp,no
 open space wind kWp ,float,yes,,0.0 to infinity,Additional open space wind power in kWp,no
+,,,,,,
+expansion id,integer,yes,,,ID of the scenario which defines the expansion,
 ,,,,,,
 expansion PV min kWp for section usage ,float,no,0.0,,"Minimal size of a PV installation on a roof section, to include this section",yes
 expansion PV max inst kWp per section ,float,no,-1.0,,Maximal size of a PV installation in kW per roof section,yes
@@ -21,6 +23,9 @@ expansion BS E in kWh ,float,yes,,,Capacity in kWh of the simulatively added bat
 expansion BS initial SOC ,float,yes,,,Initial SOC of the simulatively added batteries,yes
 expansion BS E:P ratio ,float,only if ‘expansion BS power computation mode’ == ‘Use E:P ratio’,,,E:P-ratio for setting the power of simulatively added batteries dependent of the capacity (interesting for parameter variations),yes
 expansion BS power computation mode,string,yes,,Power as given / Use E:P-ratio,"If set to ‘Use E:P ratio’ the variabel ‘expansion BS P in kW’ will be ignored, instead P will be E / this variable",no
+expansion BS efficiency in,float,no,1.0,0.0 to 1.0,Efficiency of the battery for charging in percent,
+expansion BS efficiency out,float,no,1.0,0.0 to 1.0,Efficiency of the battery for discharging in percent,
+expansion BS self-discharge per ts,float,no,0.0,0.0 to 1.0,Self-discharging rate in percent per time step,
 ,,,,,,
 tariff feed-in per kWh ,float,yes,,,,no
 tariff demand per kWh ,float,yes,,,,no
