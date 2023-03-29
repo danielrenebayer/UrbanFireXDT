@@ -137,6 +137,9 @@ class Global {
         static bool AllVariablesInitialized();
         static void PrintUninitializedVariables(); ///< Prints all variable names to stdout, that are not initialized
         //
+        static void LockAllVariables();   ///< No (set) variable can be overwritten after this call, unset variables can still be set / overwritten once
+        static void UnlockAllVariables(); ///< All variables can now be overwritten
+        //
         // getter methods
         static unsigned long get_n_timesteps()          { return n_timesteps; }
         static unsigned long get_n_substations()        { return n_substations; }
@@ -215,14 +218,15 @@ class Global {
         static void set_npv_discount_rate(float value);
         static void set_npv_time_horizon(unsigned int value);
         static void set_use_BS_for_SSR_list(bool mode);
-        static void set_input_path(std::string& path);
-        static void set_output_path(std::string& path);
+        static void set_input_path(std::string* path);
+        static void set_output_path(std::string* path);
         static void set_output_mode_per_cu(global::OutputModePerCU mode);
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
+        static bool is_locked;             ///< if set to true, values cannot be changed anymore
         // variables
         static unsigned long n_timesteps;  ///< Total number of timesteps for which data is available
         static unsigned long n_substations;///< Total number of substations for which data is available

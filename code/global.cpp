@@ -86,6 +86,7 @@ void global::print_uninitialized_variables() {
 //            Global             //
 // ----------------------------- //
 
+bool Global::is_locked            = false;
 unsigned long Global::n_timesteps = 0;
 unsigned long Global::n_substations = 0;
 unsigned long Global::n_CUs       = 0;
@@ -343,47 +344,16 @@ void Global::PrintUninitializedVariables() {
     }
 }
 
-/*
-inline int Global::get_n_timesteps() {
-	return n_timesteps;
+void Global::LockAllVariables() {
+    Global::is_locked = true;
 }
-inline int Global::get_n_substations() {
-	return n_substations;
+
+void Global::UnlockAllVariables() {
+    Global::is_locked = false;
 }
-inline int Global::get_n_CUs() {
-	return n_CUs;
-}
-inline int Global::get_n_MUs() {
-	return n_MUs;
-}
-inline std::string* Global::get_ts_start_str() {
-	return ts_start_str;
-}
-inline std::string* Global::get_ts_end_str() {
-	return ts_end_str;
-}
-inline int Global::get_tsteps_per_hour() {
-	return tsteps_per_hour;
-}
-inline int Global::get_expansion_scenario_id() {
-	return expansion_scenario_id;
-}
-inline float Global::get_exp_pv_kWp() {
-	return exp_pv_kWp;
-}
-inline float Global::get_exp_bess_kW() {
-	return exp_bess_kW;
-}
-inline float Global::get_exp_bess_kWh() {
-	return exp_bess_kWh;
-}
-inline float Global::get_exp_bess_start_soc() {
-	return exp_bess_start_soc;
-}
-*/
 
 void Global::set_n_timesteps(unsigned long n_timesteps) {
-    if (n_timesteps_init) {
+    if (is_locked && n_timesteps_init) {
         cerr << "Global variable n_timesteps is already initialized!" << endl;
     } else {
         Global::n_timesteps = n_timesteps;
@@ -391,7 +361,7 @@ void Global::set_n_timesteps(unsigned long n_timesteps) {
     }
 }
 void Global::set_n_substations(unsigned long n_substations) {
-    if (n_substations_init) {
+    if (is_locked && n_substations_init) {
         cerr << "Global variable n_substations is already initialized!" << endl;
     } else {
         Global::n_substations = n_substations;
@@ -399,7 +369,7 @@ void Global::set_n_substations(unsigned long n_substations) {
     }
 }
 void Global::set_n_CUs(unsigned long n_CUs) {
-    if (n_CUs_init) {
+    if (is_locked && n_CUs_init) {
         cerr << "Global variable n_CUs is already initialized!" << endl;
     } else {
         Global::n_CUs = n_CUs;
@@ -407,7 +377,7 @@ void Global::set_n_CUs(unsigned long n_CUs) {
     }
 }
 void Global::set_n_pv_profiles(unsigned long value) {
-    if (n_pv_ts_init) {
+    if (is_locked && n_pv_ts_init) {
         cerr << "Global variable n_pv_profiles is already initialized!" << endl;
     } else {
         Global::n_pv_ts = value;
@@ -415,7 +385,7 @@ void Global::set_n_pv_profiles(unsigned long value) {
     }
 }
 void Global::set_n_heatpump_profiles(unsigned long n_hp_ts) {
-    if (n_hp_ts_init) {
+    if (is_locked && n_hp_ts_init) {
         cerr << "Global variable n_heatpump_profiles is already initialized!" << endl;
     } else {
         Global::n_hp_ts = n_hp_ts;
@@ -423,7 +393,7 @@ void Global::set_n_heatpump_profiles(unsigned long n_hp_ts) {
     }
 }
 void Global::set_n_MUs(unsigned long n_MUs) {
-    if (n_MUs_init) {
+    if (is_locked && n_MUs_init) {
         cerr << "Global variable n_MUs is already initialized!" << endl;
     } else {
         Global::n_MUs = n_MUs;
@@ -431,7 +401,7 @@ void Global::set_n_MUs(unsigned long n_MUs) {
     }
 }
 /*void Global::set_comp_eval_metrics(bool value) {
-    if (comp_eval_metrics_init) {
+    if (is_locked && comp_eval_metrics_init) {
         cerr << "Global variable comp_eval_metrics is already initialized!" << endl;
     } else {
         Global::comp_eval_metrics = value;
@@ -439,7 +409,7 @@ void Global::set_n_MUs(unsigned long n_MUs) {
     }
 }*/
 void Global::set_pvar_vals(bool pvar_val, int pvarID) {
-    if (pvar_set) {
+    if (is_locked && pvar_set) {
         cerr << "Values for parameter variation are already set!" << endl;
     } else {
         Global::pvar_selected = pvar_val;
@@ -448,7 +418,7 @@ void Global::set_pvar_vals(bool pvar_val, int pvarID) {
     }
 }
 void Global::set_repetitions_selected(bool value) {
-    if (repetitions_selected_set){
+    if (is_locked && repetitions_selected_set){
         cerr << "Global variable repetitions_selected is already initialized!" << endl;
     } else {
         Global::repetitions_selected = value;
@@ -456,7 +426,7 @@ void Global::set_repetitions_selected(bool value) {
     }
 }
 void Global::set_n_repetitions(unsigned int value) {
-    if (n_repetitions_set){
+    if (is_locked && n_repetitions_set){
         cerr << "Global variable n_repetitions is already initialized!" << endl;
     } else {
         Global::n_repetitions = value;
@@ -464,7 +434,7 @@ void Global::set_n_repetitions(unsigned int value) {
     }
 }
 void Global::set_ts_start_tm(struct tm* ts_start_tm) {
-    if (ts_start_str_init) {
+    if (is_locked && ts_start_str_init) {
         cerr << "Global variable ts_start_str is already initialized!" << endl;
     } else {
         Global::ts_start_tm = ts_start_tm;
@@ -472,7 +442,7 @@ void Global::set_ts_start_tm(struct tm* ts_start_tm) {
     }
 }
 void Global::set_ts_end_tm(struct tm* ts_end_tm) {
-    if (ts_end_str_init) {
+    if (is_locked && ts_end_str_init) {
         cerr << "Global variable ts_end_str is already initialized!" << endl;
     } else {
         Global::ts_end_tm = ts_end_tm;
@@ -480,7 +450,7 @@ void Global::set_ts_end_tm(struct tm* ts_end_tm) {
     }
 }
 void Global::set_tsteps_per_hour(int tsteps_per_hour) {
-    if (tsteps_per_hour_init) {
+    if (is_locked && tsteps_per_hour_init) {
         cerr << "Global variable tsteps_per_hour is already initialized!" << endl;
     } else {
         if (tsteps_per_hour < 0) {
@@ -498,7 +468,7 @@ void Global::set_tsteps_per_hour(int tsteps_per_hour) {
     }
 }
 void Global::set_expansion_scenario_id(int expansion_scenario_id) {
-    if (expansion_scenario_id_init) {
+    if (is_locked && expansion_scenario_id_init) {
         cerr << "Global variable expansion_scenario_id is already initialized!" << endl;
     } else {
         Global::expansion_scenario_id = expansion_scenario_id;
@@ -506,7 +476,7 @@ void Global::set_expansion_scenario_id(int expansion_scenario_id) {
     }
 }
 void Global::set_exp_pv_mode(bool mode) {
-    if (exp_pv_kWp_static_mode_init) {
+    if (is_locked && exp_pv_kWp_static_mode_init) {
         cerr << "Global variable exp_pv_kWp_static_mode is already initialized!" << endl;
     } else {
         Global::exp_pv_kWp_static_mode      = mode;
@@ -514,7 +484,7 @@ void Global::set_exp_pv_mode(bool mode) {
     }
 }
 void Global::set_exp_pv_kWp_static(float value) {
-    if (exp_pv_kWp_static_init) {
+    if (is_locked && exp_pv_kWp_static_init) {
         cerr << "Global variable exp_pv_kWp_static is already initialized!" << endl;
     } else {
         Global::exp_pv_kWp_static      = value;
@@ -522,7 +492,7 @@ void Global::set_exp_pv_kWp_static(float value) {
     }
 }
 void Global::set_exp_pv_kWp_per_m2(float value) {
-    if (exp_pv_kWp_per_m2_init) {
+    if (is_locked && exp_pv_kWp_per_m2_init) {
         cerr << "Global variable exp_pv_kWp_per_m2 is already initialized!" << endl;
     } else {
         Global::exp_pv_kWp_per_m2      = value;
@@ -530,7 +500,7 @@ void Global::set_exp_pv_kWp_per_m2(float value) {
     }
 }
 void Global::set_exp_pv_min_kWp_roof_sec(float value) {
-    if (exp_pv_min_kWp_roof_sec_init) {
+    if (is_locked && exp_pv_min_kWp_roof_sec_init) {
         cerr << "Global variable exp_pv_min_kWp_roof_sec is already initialized!" << endl;
     } else {
         Global::exp_pv_min_kWp_roof_sec      = value;
@@ -538,7 +508,7 @@ void Global::set_exp_pv_min_kWp_roof_sec(float value) {
     }
 }
 void Global::set_exp_pv_max_kWp_roof_sec(float value) {
-    if (exp_pv_max_kWp_per_sec_init) {
+    if (is_locked && exp_pv_max_kWp_per_sec_init) {
         cerr << "Global variable exp_pv_max_kWp_per_sec is already initialized!" << endl;
     } else {
         Global::exp_pv_max_kWp_per_sec      = value;
@@ -546,7 +516,7 @@ void Global::set_exp_pv_max_kWp_roof_sec(float value) {
     }
 }
 void Global::set_exp_pv_max_kWp_per_unit(float value) {
-    if (Global::exp_pv_max_kWp_per_unit_init) {
+    if (is_locked && Global::exp_pv_max_kWp_per_unit_init) {
         cerr << "Global variable exp_pv_max_kWp_per_unit is already initialized!" << endl;
     } else {
         Global::exp_pv_max_kWp_per_unit      = value;
@@ -554,7 +524,7 @@ void Global::set_exp_pv_max_kWp_per_unit(float value) {
     }
 }
 void Global::set_exp_pv_max_kWp_total(float value) {
-    if (Global::exp_pv_max_kWp_total_init) {
+    if (is_locked && Global::exp_pv_max_kWp_total_init) {
         cerr << "Global variable exp_pv_max_kWp_total is already initialized!" << endl;
     } else {
         Global::exp_pv_max_kWp_total      = value;
@@ -562,7 +532,7 @@ void Global::set_exp_pv_max_kWp_total(float value) {
     }
 }
 void Global::set_exp_bess_kW(float exp_bess_kW) {
-    if (exp_bess_kW_init) {
+    if (is_locked && exp_bess_kW_init) {
         cerr << "Global variable exp_bess_kW is already initialized!" << endl;
     } else {
         Global::exp_bess_kW = exp_bess_kW;
@@ -570,7 +540,7 @@ void Global::set_exp_bess_kW(float exp_bess_kW) {
     }
 }
 void Global::set_exp_bess_kWh(float exp_bess_kWh) {
-    if (exp_bess_kWh_init) {
+    if (is_locked && exp_bess_kWh_init) {
         cerr << "Global variable exp_bess_kWh is already initialized!" << endl;
     } else {
         Global::exp_bess_kWh = exp_bess_kWh;
@@ -578,7 +548,7 @@ void Global::set_exp_bess_kWh(float exp_bess_kWh) {
     }
 }
 void Global::set_exp_bess_E_P_ratio(float value) {
-    if (exp_bess_E_P_ratio_init) {
+    if (is_locked && exp_bess_E_P_ratio_init) {
         cerr << "Global variable exp_bess_E_P_ratio is already initialized!" << endl;
     } else {
         Global::exp_bess_E_P_ratio = value;
@@ -586,7 +556,7 @@ void Global::set_exp_bess_E_P_ratio(float value) {
     }
 }
 void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
-    if (exp_bess_start_soc_init) {
+    if (is_locked && exp_bess_start_soc_init) {
         cerr << "Global variable exp_bess_start_soc is already initialized!" << endl;
     } else {
         Global::exp_bess_start_soc = exp_bess_start_soc;
@@ -594,7 +564,7 @@ void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
     }
 }
 void Global::set_open_space_pv_kWp(float open_space_kWp) {
-    if (open_space_pv_kWp_init) {
+    if (is_locked && open_space_pv_kWp_init) {
         cerr << "Global variable open_space_pv_kWp is already initialized!" << endl;
     } else {
         Global::open_space_pv_kWp = open_space_kWp;
@@ -602,7 +572,7 @@ void Global::set_open_space_pv_kWp(float open_space_kWp) {
     }
 }
 void Global::set_wind_kWp(float wind_kWp) {
-    if (wind_kWp_init) {
+    if (is_locked && wind_kWp_init) {
         cerr << "Global variable wind_kWp is already initialized!" << endl;
     } else {
         Global::wind_kWp = wind_kWp;
@@ -610,7 +580,7 @@ void Global::set_wind_kWp(float wind_kWp) {
     }
 }
 void Global::set_feed_in_tariff(float value) {
-    if (feed_in_tariff_set) {
+    if (is_locked && feed_in_tariff_set) {
         cerr << "Global variable feed_in_tariff is already initialized!" << endl;
     } else {
         Global::feed_in_tariff = value;
@@ -618,7 +588,7 @@ void Global::set_feed_in_tariff(float value) {
     }
 }
 void Global::set_demand_tariff(float value) {
-    if (demand_tariff_set) {
+    if (is_locked && demand_tariff_set) {
         cerr << "Global variable demand_tariff is already initialized!" << endl;
     } else {
         Global::demand_tariff = value;
@@ -626,7 +596,7 @@ void Global::set_demand_tariff(float value) {
     }
 }
 void Global::set_npv_discount_rate(float value) {
-    if (npv_discount_rate_set) {
+    if (is_locked && npv_discount_rate_set) {
         cerr << "Global variable npv_discount_rate is already initialized!" << endl;
     } else {
         Global::npv_discount_rate = value;
@@ -634,7 +604,7 @@ void Global::set_npv_discount_rate(float value) {
     }
 }
 void Global::set_npv_time_horizon(unsigned int value) {
-    if (npv_time_horizon_set) {
+    if (is_locked && npv_time_horizon_set) {
         cerr << "Global variable npv_time_horizon is already initialized!" << endl;
     } else {
         Global::npv_time_horizon = value;
@@ -642,7 +612,7 @@ void Global::set_npv_time_horizon(unsigned int value) {
     }
 }
 void Global::set_inst_cost_PV_per_kWp(float value) {
-    if (inst_cost_PV_per_kWp_set) {
+    if (is_locked && inst_cost_PV_per_kWp_set) {
         cerr << "Global variable inst_cost_PV_per_kWp is already initialized!" << endl;
     } else {
         Global::inst_cost_PV_per_kWp = value;
@@ -650,7 +620,7 @@ void Global::set_inst_cost_PV_per_kWp(float value) {
     }
 }
 void Global::set_inst_cost_BS_per_kWh(float value) {
-    if (inst_cost_BS_per_kWh_set) {
+    if (is_locked && inst_cost_BS_per_kWh_set) {
         cerr << "Global variable inst_cost_BS_per_kWh is already initialized!" << endl;
     } else {
         Global::inst_cost_BS_per_kWh = value;
@@ -658,31 +628,39 @@ void Global::set_inst_cost_BS_per_kWh(float value) {
     }
 }
 void Global::set_use_BS_for_SSR_list(bool mode) {
-    if (use_BS_for_SSR_list_set) {
+    if (is_locked && use_BS_for_SSR_list_set) {
         cerr << "Global variable use_BS_for_SSR_list is already initialized!" << endl;
     } else {
         Global::use_BS_for_SSR_list = mode;
         use_BS_for_SSR_list_set = true;
     }
 }
-void Global::set_input_path(string& path) {
-    if (input_path_init) {
+void Global::set_input_path(string* path) {
+    if (is_locked && input_path_init) {
         cerr << "Input path already set!" << endl;
     } else {
-        Global::input_path = path;
+        Global::input_path = *path;
         Global::input_path_init = true;
+        // check, if path ends with an "/", add it, if not
+        if (Global::input_path.back() != '/') {
+            Global::input_path += "/";
+        }
     }
 }
-void Global::set_output_path(string& path) {
-    if (output_path_init) {
+void Global::set_output_path(string* path) {
+    if (is_locked && output_path_init) {
         cerr << "Output path already set!" << endl;
     } else {
-        Global::output_path = path;
+        Global::output_path = *path;
         Global::output_path_init = true;
+        // check, if path ends with an "/", add it, if not
+        if (Global::output_path.back() != '/') {
+            Global::output_path += "/";
+        }
     }
 }
 void Global::set_output_mode_per_cu(OutputModePerCU mode) {
-    if (output_mode_per_cu_init) {
+    if (is_locked && output_mode_per_cu_init) {
         cerr << "Output mode already set!" << endl;
     } else {
         Global::output_mode_per_cu = mode;
@@ -690,7 +668,7 @@ void Global::set_output_mode_per_cu(OutputModePerCU mode) {
     }
 }
 void Global::set_exp_profile_mode(ExpansionProfileAllocationMode mode) {
-    if (exp_profile_mode_init) {
+    if (is_locked && exp_profile_mode_init) {
         cerr << "Expansion profile mode already set!" << endl;
     } else {
         Global::exp_profile_mode = mode;
@@ -698,7 +676,7 @@ void Global::set_exp_profile_mode(ExpansionProfileAllocationMode mode) {
     }
 }
 void Global::set_cu_selection_mode_fca(global::CUSModeFCA mode) {
-    if (cu_selection_mode_fca_init) {
+    if (is_locked && cu_selection_mode_fca_init) {
         cerr << "CU selection mode for component addition already set!" << endl;
     } else {
         Global::cu_selection_mode_fca = mode;
@@ -706,7 +684,7 @@ void Global::set_cu_selection_mode_fca(global::CUSModeFCA mode) {
     }
 }
 void Global::set_battery_power_computation_mode(global::BatteryPowerComputationMode mode) {
-    if (bat_power_comp_mode_init) {
+    if (is_locked && bat_power_comp_mode_init) {
         cerr << "Battery power computation mode is already set!" << endl;
     } else {
         Global::bat_power_comp_mode = mode;

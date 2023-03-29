@@ -43,131 +43,148 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         return false;
     }
     try {
-        string str_data_ipt = "";  bool str_data_ipt_set = false;
-        string str_data_opt = "";  bool str_data_opt_set = false;
+        // variables that need to be translated to another type
         string start_str    = "";  bool start_str_set    = false;
         string end_str      = "";  bool end_str_set      = false;
-        int    ts_per_hour  = 1;   bool ts_per_hour_set  = false;
-        int    expansionID  = 0;   bool expansionID_set  = false;
-        float  exp_bs_kW    = 0.0; bool exp_bs_kW_set    = false;
-        float  exp_bs_kWh   = 0.0; bool exp_bs_kWh_set   = false;
-        float  exp_bs_iSOC  = 0.0; bool exp_bs_iSOC_set  = false;
-        float  exp_bs_E_P   = 0.0; bool exp_bs_E_P_set   = false;
-        float  os_pv_kWp    = 0.0; bool os_pv_kWp_set    = false;
-        float  os_wind_kWp  = 0.0; bool os_wind_kWp_set  = false;
         string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         string sac_planning_mode   = ""; bool sac_planning_mode_set   = false;
         string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
         // variables for PV expansion
-        float  exp_pv_kWp_static  = 0.0; bool exp_pv_kWp_static_set   = false;
-        float  exp_pv_kWp_m2_roof = 0.0; bool exp_pv_kWp_m2_roof_set  = false;
-        float  exp_pv_min_kWp     = 0.0; bool exp_pv_min_kWp_set      = false;
-        float  exp_pv_max_kWp     = 0.0; bool exp_pv_max_kWp_set      = false;
         bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
-        float  exp_pv_max_total_kWp = 0.0; bool exp_pv_max_total_kWp_set = false;
-        float  exp_pv_max_unit_kWp  = 0.0; bool exp_pv_max_unit_kWp_set  = false;
-        // variables of NPV calculation
-        float  feed_in_tariff     = 0.0; bool feed_in_tariff_set      = false;
-        float  demand_tariff      = 0.0; bool demand_tariff_set       = false;
-        float  npv_discount_rate  = 0.0; bool npv_discount_rate_set   = false;
-        uint   npv_time_horizon   = 0.0; bool npv_time_horizon_set    = false;
-        float  icost_PV_per_kWp   = 0.0; bool icost_PV_per_kWp_set    = false;
-        float  icost_BS_per_kWh   = 0.0; bool icost_BS_per_kWh_set    = false;
         // variables, that always default to a value
         bool   use_BS_for_SSR_list = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
         auto parse_element = [&](string& element_name, boost::property_tree::ptree& scenario_dict) -> void {
-            if ( element_name.compare("data input path") == 0 ) {
-                str_data_ipt    = scenario_dict.get_value<string>();
-                str_data_ipt_set= true;
-            } else if ( element_name.compare("data output path") == 0 ) {
-                str_data_opt    = scenario_dict.get_value<string>();
-                str_data_opt_set= true;
-            } else if ( element_name.compare("start") == 0 ) {
+            if      ( element_name.compare("data input path")           == 0 )
+            {
+                string path = scenario_dict.get_value<string>();
+                Global::set_input_path( &path );
+            }
+            else if ( element_name.compare("data output path")          == 0 )
+            {
+                string path = scenario_dict.get_value<string>();
+                Global::set_output_path( &path );
+            }
+            else if ( element_name.compare("start")                     == 0 )
+            {
                 start_str       = scenario_dict.get_value<string>();
                 start_str_set   = true;
-            } else if ( element_name.compare("end") == 0 ) {
+            }
+            else if ( element_name.compare("end")                       == 0 )
+            {
                 end_str         = scenario_dict.get_value<string>();
                 end_str_set     = true;
-            } else if ( element_name.compare("time steps per hour") == 0 ) {
-                ts_per_hour     = scenario_dict.get_value<int>();
-                ts_per_hour_set = true;
-            } else if ( element_name.compare("expansion id") == 0 ) {
-                expansionID     = scenario_dict.get_value<int>();
-                expansionID_set = true;
-            } else if ( element_name.compare("expansion BS P in kW") == 0 ) {
-                exp_bs_kW       = scenario_dict.get_value<float>();
-                exp_bs_kW_set   = true;
-            } else if ( element_name.compare("expansion BS E in kWh") == 0 ) {
-                exp_bs_kWh      = scenario_dict.get_value<float>();
-                exp_bs_kWh_set  = true;
-            } else if ( element_name.compare("expansion BS initial SOC") == 0 ) {
-                exp_bs_iSOC     = scenario_dict.get_value<float>();
-                exp_bs_iSOC_set = true;
-            } else if (element_name.compare("expansion BS E:P ratio") == 0) {
-                exp_bs_E_P      = scenario_dict.get_value<float>();
-                exp_bs_E_P_set  = true;
-            } else if ( element_name.compare("open space PV kWp") == 0 ) {
-                os_pv_kWp       = scenario_dict.get_value<float>();
-                os_pv_kWp_set   = true;
-            } else if ( element_name.compare("open space wind kWp") == 0 ) {
-                os_wind_kWp     = scenario_dict.get_value<float>();
-                os_wind_kWp_set = true;
-            } else if ( element_name.compare("expansion profile selection") == 0 ) {
+            }
+            else if ( element_name.compare("time steps per hour")       == 0 )
+            {
+                Global::set_tsteps_per_hour( scenario_dict.get_value<int>() );
+            }
+            else if ( element_name.compare("expansion id")              == 0 )
+            {
+                Global::set_expansion_scenario_id( scenario_dict.get_value<int>() );
+            }
+            else if ( element_name.compare("expansion BS P in kW")      == 0 )
+            {
+                Global::set_exp_bess_kW( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion BS E in kWh")     == 0 )
+            {
+                Global::set_exp_bess_kWh( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion BS initial SOC")  == 0 )
+            {
+                Global::set_exp_bess_start_soc( scenario_dict.get_value<float>() );
+            }
+            else if (element_name.compare("expansion BS E:P ratio")     == 0)
+            {
+                Global::set_exp_bess_E_P_ratio( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("open space PV kWp")         == 0 )
+            {
+                Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("open space wind kWp")       == 0 )
+            {
+                Global::set_wind_kWp( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion profile selection")             == 0 )
+            {
                 exp_profile_mode       = scenario_dict.get_value<string>();
                 exp_profile_mode_set   = true;
-            } else if ( element_name.compare("CU selection mode for comp. add.") == 0 ) {
+            }
+            else if ( element_name.compare("CU selection mode for comp. add.")        == 0 )
+            {
                 sac_planning_mode      = scenario_dict.get_value<string>();
                 sac_planning_mode_set  = true;
-            } else if ( element_name.compare("expansion PV kWp static") == 0 ) {
-                exp_pv_kWp_static      = scenario_dict.get_value<float>();
-                exp_pv_kWp_static_set  = true;
-            } else if ( element_name.compare("expansion PV min kWp for section usage") == 0 ) {
-                exp_pv_min_kWp         = scenario_dict.get_value<float>();
-                exp_pv_min_kWp_set     = true;
-            } else if ( element_name.compare("expansion PV max inst kWp per section") == 0 ) {
-                exp_pv_max_kWp         = scenario_dict.get_value<float>();
-                exp_pv_max_kWp_set     = true;
-            } else if ( element_name.compare("expansion PV kWp per roof area in m2") == 0 ) {
-                exp_pv_kWp_m2_roof     = scenario_dict.get_value<float>();
-                exp_pv_kWp_m2_roof_set = true;
-            } else if ( element_name.compare("expansion PV kWp static mode") == 0 ) {
+            }
+            else if ( element_name.compare("expansion PV kWp static")                 == 0 )
+            {
+                Global::set_exp_pv_kWp_static( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV min kWp for section usage")  == 0 )
+            {
+                Global::set_exp_pv_min_kWp_roof_sec( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV max inst kWp per section")   == 0 )
+            {
+                Global::set_exp_pv_max_kWp_roof_sec( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV kWp per roof area in m2")    == 0 )
+            {
+                Global::set_exp_pv_kWp_per_m2( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV kWp static mode")            == 0 )
+            {
                 exp_pv_mode_static     = scenario_dict.get_value<bool>();
                 exp_pv_mode_static_set = true;
-            } else if ( element_name.compare("tariff feed-in per kWh") == 0 ) {
-                feed_in_tariff         = scenario_dict.get_value<float>();
-                feed_in_tariff_set     = true;
-            } else if ( element_name.compare("tariff demand per kWh") == 0 ) {
-                demand_tariff          = scenario_dict.get_value<float>();
-                demand_tariff_set      = true;
-            } else if ( element_name.compare("net present value discount rate") == 0 ) {
-                npv_discount_rate      = scenario_dict.get_value<float>();
-                npv_discount_rate_set  = true;
-            } else if ( element_name.compare("net present value time horizon in years") == 0 ) {
-                npv_time_horizon       = scenario_dict.get_value<unsigned int>();
-                npv_time_horizon_set   = true;
-            } else if ( element_name.compare("installation cost PV per kWp") == 0 ) {
-                icost_PV_per_kWp       = scenario_dict.get_value<float>();
-                icost_PV_per_kWp_set   = true;
-            } else if ( element_name.compare("installation cost BS per kWh") == 0 ) {
-                icost_BS_per_kWh       = scenario_dict.get_value<float>();
-                icost_BS_per_kWh_set   = true;
-            } else if ( element_name.compare("expansion BS power computation mode") == 0 ) {
+            }
+            else if ( element_name.compare("tariff feed-in per kWh")                  == 0 )
+            {
+                Global::set_feed_in_tariff( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("tariff demand per kWh")                   == 0 )
+            {
+                Global::set_demand_tariff( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("net present value discount rate")         == 0 )
+            {
+                Global::set_npv_discount_rate( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("net present value time horizon in years") == 0 )
+            {
+                Global::set_npv_time_horizon( scenario_dict.get_value<unsigned int>() );
+            }
+            else if ( element_name.compare("installation cost PV per kWp")            == 0 )
+            {
+                Global::set_inst_cost_PV_per_kWp( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("installation cost BS per kWh")            == 0 )
+            {
+                Global::set_inst_cost_BS_per_kWh( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion BS power computation mode")     == 0 )
+            {
                 exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
                 exp_bs_P_comp_mode_set   = true;
             } else if ( element_name.compare("use BS for creating SSR list for SAC planning") == 0 ) {
                 use_BS_for_SSR_list     = scenario_dict.get_value<bool>();
-            } else if ( element_name.compare("expansion PV max inst kWp per unit") == 0 ) {
-                exp_pv_max_unit_kWp     = scenario_dict.get_value<float>();
-                exp_pv_max_unit_kWp_set = true;
-            } else if ( element_name.compare("expansion PV max total kWp addition") == 0 ) {
-                exp_pv_max_total_kWp    = scenario_dict.get_value<float>();
-                exp_pv_max_total_kWp_set= true;
-            } else if ( element_name.compare("id") == 0 ) {
-            } else if ( element_name.compare("comment") == 0 ) {
-            } else {
+            }
+            else if ( element_name.compare("expansion PV max inst kWp per unit")      == 0 )
+            {
+                Global::set_exp_pv_max_kWp_per_unit( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV max total kWp addition")     == 0 )
+            {
+                Global::set_exp_pv_max_kWp_total( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("id") == 0 )
+            {}
+            else if ( element_name.compare("comment") == 0 )
+            {}
+            else
+            {
                 cout << "Unknonw config parameter " << element_name << endl;
             }
             return;
@@ -198,13 +215,6 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 break;
             }
         }
-        #ifdef DEBUG
-        cout << "str_data_ipt = " << str_data_ipt << endl;
-        cout << "str_data_opt = " << str_data_opt << endl;
-        cout << "start_str = " << start_str << endl;
-        cout << "end_str = " << end_str << endl;
-        cout << "ts_per_hour = " << ts_per_hour << endl;
-        #endif
 
         //
         // transform parameters if required (e.g. for exp_profile_mode)
@@ -316,19 +326,8 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         }
 
         //
-        // check, if path ends with an "/", add it, if not
-        if (str_data_ipt.back() != '/') {
-            str_data_ipt += "/";
-        }
-        if (str_data_opt.back() != '/') {
-            str_data_opt += "/";
-        }
-
-        //
         // Finally, add to global variable collection
         if (scenario_found) {
-            if (str_data_ipt_set) Global::set_input_path(str_data_ipt);
-            if (str_data_opt_set) Global::set_output_path(str_data_opt);
             // for start / end time: convert value bevore setting global variable
             if (start_str_set && end_str_set) {
                 struct tm* tm_start = new struct tm;
@@ -341,32 +340,14 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 Global::set_ts_end_tm(   tm_end   );
             }
             // other values
-            if (ts_per_hour_set)  Global::set_tsteps_per_hour(ts_per_hour);
-            if (expansionID_set)  Global::set_expansion_scenario_id(expansionID);
-            if (exp_bs_kW_set)    Global::set_exp_bess_kW(exp_bs_kW);
-            if (exp_bs_kWh_set)   Global::set_exp_bess_kWh(exp_bs_kWh);
-            if (exp_bs_iSOC_set)  Global::set_exp_bess_start_soc(exp_bs_iSOC);
-            if (exp_bs_E_P_set)   Global::set_exp_bess_E_P_ratio(exp_bs_E_P);
-            if (os_pv_kWp_set)    Global::set_open_space_pv_kWp(os_pv_kWp);
-            if (os_wind_kWp_set)  Global::set_wind_kWp(os_wind_kWp);
             if (exp_profile_mode_set)   Global::set_exp_profile_mode(exp_profile_mode_transf);
             if (sac_planning_mode_set)  Global::set_cu_selection_mode_fca(sac_planning_mode_transl);
             if (exp_pv_mode_static_set) Global::set_exp_pv_mode(exp_pv_mode_static);
-            if (exp_pv_kWp_static_set)  Global::set_exp_pv_kWp_static(exp_pv_kWp_static);
-            if (exp_pv_kWp_m2_roof_set) Global::set_exp_pv_kWp_per_m2(exp_pv_kWp_m2_roof);
-            if (exp_pv_max_unit_kWp_set)  Global::set_exp_pv_max_kWp_per_unit(exp_pv_max_unit_kWp);
-            if (exp_pv_max_total_kWp_set) Global::set_exp_pv_max_kWp_total(exp_pv_max_total_kWp);
-            if (exp_pv_min_kWp_set)     Global::set_exp_pv_min_kWp_roof_sec(exp_pv_min_kWp);
-            if (exp_pv_max_kWp_set)     Global::set_exp_pv_max_kWp_roof_sec(exp_pv_max_kWp);
-            if (feed_in_tariff_set)     Global::set_feed_in_tariff(feed_in_tariff);
-            if (demand_tariff_set)      Global::set_demand_tariff(demand_tariff);
-            if (npv_discount_rate_set)  Global::set_npv_discount_rate(npv_discount_rate);
-            if (npv_time_horizon_set)   Global::set_npv_time_horizon(npv_time_horizon);
-            if (icost_PV_per_kWp_set)   Global::set_inst_cost_PV_per_kWp(icost_PV_per_kWp);
-            if (icost_BS_per_kWh_set)   Global::set_inst_cost_BS_per_kWh(icost_BS_per_kWh);
             if (exp_bs_P_comp_mode_set) Global::set_battery_power_computation_mode(exp_bs_P_comp_mode_transl);
             //
             Global::set_use_BS_for_SSR_list(use_BS_for_SSR_list);
+            //
+            Global::LockAllVariables();
             //
             // change current working dir to the location of the config file
             filesystem::path config_fp = filepath;
