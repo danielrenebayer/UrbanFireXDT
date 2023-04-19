@@ -182,6 +182,7 @@ class Global {
         static bool  get_use_BS_for_SSR_list()      { return use_BS_for_SSR_list; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
+        static const std::string& get_structure_database_name() { return system_db_name; }
         static global::OutputModePerCU get_output_mode_per_cu() { return output_mode_per_cu; }
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
@@ -226,6 +227,7 @@ class Global {
         static void set_use_BS_for_SSR_list(bool mode);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
+        static void set_structure_database_name(std::string* fname);
         static void set_output_mode_per_cu(global::OutputModePerCU mode);
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
@@ -275,6 +277,7 @@ class Global {
         static bool  use_BS_for_SSR_list;  ///< Should a battery add to the CUs for the computation of best-SSR-list during SAC planning?
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
+        static std::string system_db_name; ///< String holding the name of the database that contains the system structure
         static global::OutputModePerCU output_mode_per_cu; ///< Variable storing the selected output mode per CU
         static global::ExpansionProfileAllocationMode exp_profile_mode; ///< Variable storing the selected mode for assigning profiles to PV sections or heat pumps
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components

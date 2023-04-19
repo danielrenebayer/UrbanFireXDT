@@ -67,6 +67,11 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 string path = scenario_dict.get_value<string>();
                 Global::set_output_path( &path );
             }
+            else if ( element_name.compare("database name")             == 0 )
+            {
+                string fname = scenario_dict.get_value<string>();
+                Global::set_structure_database_name( &fname );
+            }
             else if ( element_name.compare("start")                     == 0 )
             {
                 start_str       = scenario_dict.get_value<string>();
@@ -819,11 +824,17 @@ int load_data_from_central_database_callback_address_data_B(void* data, int argc
     return 0;
 }
 bool configld::load_data_from_central_database(const char* filepath) {
+    if (! filesystem::exists( filesystem::path(filepath) ) ) {
+        cerr << "Structure database file " << filepath << " not found!" << endl;
+        return false;
+    }
+
     sqlite3* dbcon;
     int rc = sqlite3_open(filepath, &dbcon);
 
     if (rc == 0) {
-        cout << "Retrieving information from Merged_Information.db ..." << endl;
+        cout << "Loading system structure from database ..." << endl;
+        cout << "Using database " << filepath << endl;
 
         //
         // Load general data
@@ -1011,7 +1022,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
 
-        cout << "Finished loading data and system structure.\n";
+        cout << "... finished loading data and system structure.\n";
         cout << global::output_section_delimiter << endl;
 
         sqlite3_close(dbcon);
@@ -1059,6 +1070,7 @@ void configld::output_variable_values() {
     cout << "  Data:\n";
     PRINT_VAR(Global::get_output_path());
     PRINT_VAR(Global::get_input_path());
+    PRINT_VAR(Global::get_structure_database_name());
     PRINT_VAR(Global::get_n_timesteps());
     PRINT_VAR(Global::get_tsteps_per_hour());
     PRINT_VAR(Global::get_n_substations());

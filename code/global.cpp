@@ -128,6 +128,7 @@ unsigned int Global::npv_time_horizon  = 0;
 bool  Global::use_BS_for_SSR_list = false;
 string Global::input_path         = "";
 string Global::output_path        = "";
+string Global::system_db_name     = "SystemStructure.db";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
@@ -697,6 +698,13 @@ void Global::set_output_path(string* path) {
         if (Global::output_path.back() != '/') {
             Global::output_path += "/";
         }
+    }
+}
+void Global::set_structure_database_name(std::string* fname) {
+    if (is_locked) {
+        cerr << "System structure database name already set!" << endl;
+    } else {
+        Global::system_db_name = *fname;
     }
 }
 void Global::set_output_mode_per_cu(OutputModePerCU mode) {

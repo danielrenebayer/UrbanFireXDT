@@ -1,6 +1,7 @@
 Config Parameter Name,Type,Required,Default (if not set),Possible Values,Description,Can be used for parameter variations
 data input path,string,yes,,,Path (relative or absolute) to the input data,no
 data output path,string,yes,,,Path (relative or absolute) to the directory where the output should be saved,no
+database name,string,no,SystemStructure.db,,Name of the database that contains the system structure,no
 start,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"Start date in the format YYYY-mm-dd HH:MM:SS - if the data start after start date, simulation will wait for the data to start",no
 end,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"End date in the format YYYY-mm-dd HH:MM:SS - if the data end earlier, simulation will stop there",no
 time steps per hour,integer,yes,,1 to infinity,Number of time steps per hour,no
