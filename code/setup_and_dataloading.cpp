@@ -1026,6 +1026,8 @@ bool configld::load_data_from_central_database(const char* filepath) {
 #pragma GCC diagnostic pop /* activate all warnings again */
 
 #define PRINT_VAR(varname) cout << "    " << #varname << " = " << varname << "\n"
+#define PRINT_TM_VAR(varname) cout << "    " << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
+#define PRINT_ENUM_VAR(varname, lambda_expr) cout << "    " << #varname << " = " << lambda_expr(varname) << "\n"
 
 //
 // Implementation of configld::output_variable_values()
@@ -1051,8 +1053,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_parameter_varID());
     PRINT_VAR(Global::get_repetitions_selected());
     PRINT_VAR(Global::get_n_repetitions());
-    PRINT_VAR(Global::get_ts_start_tm());
-    PRINT_VAR(Global::get_ts_end_tm());
+    PRINT_TM_VAR(Global::get_ts_start_tm());
+    PRINT_TM_VAR(Global::get_ts_end_tm());
     // Data
     cout << "  Data:\n";
     PRINT_VAR(Global::get_output_path());
@@ -1066,9 +1068,9 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_n_heatpump_profiles());
     // Selection settings
     cout << "  Selection settings:\n";
-    Global::get_exp_profile_mode();
-    Global::get_cu_selection_mode_fca();
-    Global::get_battery_power_computation_mode();
+    PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
+    PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
+    PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
     // Scenario settings
     cout << "  Scenario settings:\n";
     PRINT_VAR(Global::get_exp_pv_static_mode());
@@ -1081,6 +1083,9 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_bess_kW());
     PRINT_VAR(Global::get_exp_bess_kWh());
     PRINT_VAR(Global::get_exp_bess_E_P_ratio());
+    PRINT_VAR(Global::get_exp_bess_effi_in());
+    PRINT_VAR(Global::get_exp_bess_effi_out());
+    PRINT_VAR(Global::get_exp_bess_self_ds_ts());
     PRINT_VAR(Global::get_exp_bess_start_soc());
     PRINT_VAR(Global::get_open_space_pv_kWp());
     PRINT_VAR(Global::get_wind_kWp());
@@ -1093,7 +1098,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_use_BS_for_SSR_list());
     // Output settings
     cout << "  Output settings:\n";
-    Global::get_output_mode_per_cu();
+    PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});
     PRINT_VAR(global::n_ts_between_flushs);
     cout << global::output_section_delimiter << "\n";
 }
