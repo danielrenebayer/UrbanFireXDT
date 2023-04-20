@@ -352,6 +352,9 @@ bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], 
             if (!simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
                 return false;
             }
+            // Remove all added components and reset all internal states
+            ControlUnit::RemoveAllSimAddedComponents();
+            ControlUnit::ResetAllInternalStates();
         }
         return true;
     } else {
