@@ -498,6 +498,16 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
         sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
+void ControlUnit::remove_sim_added_pv() {
+    if (has_sim_pv) {
+        has_sim_pv = false;
+        delete sim_comp_pv;
+        sim_comp_pv = NULL;
+    } else {
+        cerr << "Warning: A PV installation should be removed from one CU, but no one is sim. added!" << endl;
+    }
+}
+
 void ControlUnit::remove_sim_added_bs() {
     if (has_sim_bs) {
         has_sim_bs = false;

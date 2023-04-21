@@ -121,6 +121,7 @@ class ControlUnit {
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value
+        void remove_sim_added_pv(); ///< Removes a simulatively added PV installation
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
         // for simulation runs
