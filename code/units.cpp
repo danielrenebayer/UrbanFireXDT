@@ -36,8 +36,11 @@ Substation::Substation(unsigned long id, string* name)
 	 *
 	 * It constructs a new instance and checks if id is the next id
 	 */
-	// initialize instance variables
-	connected_units = new list<ControlUnit*>();
+    // initialize instance variables
+    connected_units = new list<ControlUnit*>();
+    station_load    = 0.0;
+    resident_load   = 0.0;
+    resident_demand = 0.0;
 
 	//
 	// add to class variables
@@ -71,12 +74,19 @@ void Substation::add_unit(ControlUnit* unit) {
 	connected_units->push_back(unit);
 }
 
-float Substation::calc_load() {
-	float total_load = 0.0;
-	for (ControlUnit* cu : *connected_units) {
-		total_load += cu->get_current_load_vSMeter_kW();
-	}
-	return total_load;
+void Substation::calc_load() {
+    station_load    = 0.0;
+    resident_load   = 0.0; // Load only of residential buildings
+    resident_demand = 0.0; // Residential load, only demand
+    for (ControlUnit* cu : *connected_units) {
+        station_load += cu->get_current_load_vSMeter_kW();
+        if (cu->is_residential()) {
+            resident_load += cu->get_current_load_vSMeter_kW();
+            if (cu->get_current_load_vSMeter_kW() > 0) {
+                resident_demand += cu->get_current_load_vSMeter_kW();
+            }
+        }
+    }
 }
 
 void Substation::InitializeStaticVariables(unsigned long n_substations) {
@@ -115,8 +125,8 @@ size_t ControlUnit::st__n_CUs             = 0;
 size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
 
-ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID)
-    : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID)
+ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
+    : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
 {
 	//
 	// initialize instance variables

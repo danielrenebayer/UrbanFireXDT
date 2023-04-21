@@ -480,19 +480,20 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
      * This function also creates the control units.
      * 
      * Columns:
-     * 0       1              2
-     * UnitID  substation_id  LocID
+     * 0       1              2      3
+     * UnitID  substation_id  LocID  has_residential_buildings
      * 
      */
-    if (argc != 3) {
-        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+    if (argc != 4) {
+        cerr << "Number of arguments not equal to 4 for one row!" << endl;
         return 1;
     }
     unsigned long current_cu_id    = stoul(argv[0]);
     unsigned long conn_to_subst_id = stoul(argv[1]);
     unsigned long location_id      = stoul(argv[2]);
+    bool residential = (location_id > 0) && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
     try {
-        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id);
+        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential);
     } catch (runtime_error& e) {
         cerr << "Error when creating control unit with id " << current_cu_id << endl;
         cerr << "Details:" << endl;
@@ -890,7 +891,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 2. CUs
-        string sql_queryD = "SELECT UnitID, substation_id, LocID FROM list_of_control_units ORDER BY UnitID;";
+        string sql_queryD = "SELECT A.UnitID, A.substation_id, A.LocID, B.has_residential_buildings FROM list_of_control_units AS A LEFT JOIN (SELECT LocID, has_residential_buildings FROM address_data) AS B ON A.LocID = B.LocID ORDER BY UnitID;";
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {

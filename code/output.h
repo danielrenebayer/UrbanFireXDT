@@ -25,8 +25,8 @@ using namespace std;
 
 namespace output {
 
-    inline std::ofstream* substation_output;
-    inline bool substation_output_init = false;
+    inline std::ofstream* substation_output         = NULL; ///< The main file for the substation load time series
+    inline std::ofstream* substation_output_details = NULL; ///< The secondary file for additional information about the substations
     inline CUOutputSingleFile* cu_single_output = NULL; ///< Reference to the single_output object, if one output for all CUs is selected
     inline CUOutputOneFilePerSubstation** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
     inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs

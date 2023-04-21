@@ -131,6 +131,8 @@ void output::initializeDirectoriesPerPVar() {
 
 void output::initializeSubstationOutput(int scenario_id) {
     //
+    // Part 1: The main file for the substation load time series
+    //
     // initialize the output file
     stringstream output_path_subst;
     output_path_subst << setw(4) << setfill('0') << scenario_id;
@@ -147,7 +149,24 @@ void output::initializeSubstationOutput(int scenario_id) {
         *(substation_output) << "," << subList[i]->get_name()->c_str();
     }
     *(substation_output) << ",open_space_pv_feedin,wind_feedin,total_load" << endl;
-    substation_output_init = true;
+    //
+    //
+    // Part 2: The secondary file for additional information about the substations
+    //
+    // initialize the output file
+    stringstream output_path_subst2;
+    output_path_subst2 << "substation-detailed-time-series.csv";
+    filesystem::path output_path2 = *(global::current_output_dir);
+    output_path2 /= output_path_subst2.str();
+    substation_output_details = new ofstream(output_path2, std::ofstream::out);
+    //
+    // add header to output file
+    *(substation_output_details) << "Timestep";
+    for (size_t i = 0; i < nSubst; i++) {
+        *(substation_output_details) << "," << subList[i]->get_name()->c_str() << "_resident_load_kW";
+        *(substation_output_details) << "," << subList[i]->get_name()->c_str() << "_resident_demand_kW";
+    }
+    *(substation_output_details) << ",total_residential_load,total_residential_demand" << endl;
 }
 
 void output::initializeCUOutput(int scenario_id) {
@@ -202,11 +221,15 @@ void output::initializeCUOutput(int scenario_id) {
 
 void output::closeOutputs() {
     // close output file for substations
-    if (substation_output_init) {
+    if (substation_output != NULL) {
         substation_output->close();
         delete substation_output;
         substation_output = NULL;
-        substation_output_init = false;
+    }
+    if (substation_output_details != NULL) {
+        substation_output_details->close();
+        delete substation_output_details;
+        substation_output_details = NULL;
     }
     //
     // close outputs for CUs if existing
@@ -232,8 +255,11 @@ void output::closeOutputs() {
 }
 
 void output::flushBuffers() {
-    if (substation_output_init) {
+    if (substation_output != NULL) {
         substation_output->flush();
+    }
+    if (substation_output_details != NULL) {
+        substation_output_details->flush();
     }
     //
     // flush outputs of CUs if existing

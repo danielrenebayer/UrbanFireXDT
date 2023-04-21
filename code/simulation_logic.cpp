@@ -90,6 +90,8 @@ bool simulation::oneStep(unsigned long ts) {
     //
     // set new global radiation values for PV and wind speed
     float total_load = 0.0;
+    float total_residential_load   = 0.0;
+    float total_residential_demand = 0.0;
     global::unit_open_space_pv->compute_next_value(ts);
     global::unit_open_space_wind->compute_next_value(ts);
     total_load -= global::unit_open_space_pv->get_current_feedin_kW();
@@ -101,17 +103,27 @@ bool simulation::oneStep(unsigned long ts) {
     Substation*const* subList = Substation::GetArrayOfInstances();
     const size_t nSubst = Substation::GetNumberOfInstances();
 
-    if (output::substation_output != NULL) {
+    if (output::substation_output != NULL && output::substation_output_details != NULL) {
         *(output::substation_output) << ts << ","; // add timestep to output
+        *(output::substation_output_details) << ts << ",";
         for (size_t i = 0; i < nSubst; i++) {
-            float current_station_load = subList[i]->calc_load();
+            subList[i]->calc_load(); // TODO: This could be moved outside the test, if substation output exist -> Propably we need information on grid load later
+            float current_station_load = subList[i]->get_station_load();
+            float current_station_resident_load   = subList[i]->get_residential_load();
+            float current_station_resident_demand = subList[i]->get_residential_demand();
             total_load += current_station_load;
+            total_residential_load   += current_station_resident_load;
+            total_residential_demand += current_station_resident_demand;
             // stuff for output
             *(output::substation_output) << current_station_load << ",";
+            *(output::substation_output_details) << current_station_resident_load   << ",";
+            *(output::substation_output_details) << current_station_resident_demand << ",";
         }
         *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
         *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
         *(output::substation_output) << total_load << "\n"; // add total load to output
+        *(output::substation_output_details) << total_residential_load << ",";
+        *(output::substation_output_details) << total_residential_demand << "\n";
     }
 
     // Output current time step
