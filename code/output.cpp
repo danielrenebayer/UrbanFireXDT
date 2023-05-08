@@ -378,6 +378,22 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
 }
 
 
+void output::outputMetricsStrList(list<string*> &output_list) {
+    filesystem::path output_path;
+    output_path  = *(global::current_global_output_dir);
+    output_path /= "metrics-sac-planning-per-cu.csv";
+    ofstream ofs(output_path, std::ofstream::out);
+    ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,Added components\n";
+    //
+    // output all elements from the list
+    for (string* s : output_list) {
+        ofs << *s << "\n";
+    }
+    //
+    ofs.close();
+}
+
+
 /////////////////////////////////
 //    Implementation of all    //
 //       sub-classes of        //

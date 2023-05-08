@@ -285,80 +285,11 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     // This function executes the expansion / adds sim. added components to selected CUs
     // and then calls runSimulationForAllVariations(int)
     //
-    if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR ||
-        Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestNPV) {
-        //
-        // 1) If selection mode is taking those with best SSR
-        //
-        // 1.0) initial checks
-        /*if (!Global::get_comp_eval_metrics()) {
-            cerr << "Error: Option 'metrics / m' not set even though CU selection for sim. add. components should be done according to best SSR.\nThis is impossible. Set 'metrics' as parameter or change CU selection mode." << endl;
-            return false;
-        }*/
-        // 1.1) plan expansion as they would happen, but with random shuffling whatever is selected
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, true);
-        // 1.2a) add PV installations to all CUs, if they do not already have one
-        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        const size_t nCUs = ControlUnit::GetNumberOfInstances();
-        for (size_t i = 0; i < nCUs; i++) {
-            if (!cuList[i]->has_pv())
-                cuList[i]->add_exp_pv();
-        }
-        if (Global::get_use_BS_for_SSR_list()) {
-          // 1.2b) add Battery to all CUs (that have a sim. added PV-installation), if they do not already have a battery
-          // and if this is selected
-          for (size_t i = 0; i < nCUs; i++) {
-            if ( !cuList[i]->has_bs() && ( cuList[i]->get_exp_combi_bit_repr_sim_added() & expansion::MaskBS ) )
-                cuList[i]->add_exp_bs();
-          }
-        }
-        // 1.3) execute the simulation once for the given scenario
-        bool no_error = runSimulationForOneParamSetting();
-        if (!no_error) { 
-            cerr << "Error during selection of the CUs for adding simulated components." << endl;
-            return false;
-        }
-        // 1.4) sort control units according to the SSR which has been computed in 1.2)
-        // 1.4.a) Collect the SSR (or NPV) values
-        vector<pair<double, ControlUnit*>> ssr_cu_pair_vector;
-        ssr_cu_pair_vector.reserve( ControlUnit::GetNumberOfInstances() );
-        for (size_t i = 0; i < nCUs; i++) {
-            if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR) {
-                ssr_cu_pair_vector.emplace_back(cuList[i]->get_SSR(), cuList[i]); // pair of (SSR, pointer to the object)
-            } else { /* if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestNPV) */
-                ssr_cu_pair_vector.emplace_back(cuList[i]->get_NPV(), cuList[i]); // pair of (SSR, pointer to the object)
-            }
-        }
-        // 1.4.b) Sort the (SSR or NPV, CU-Pointer)-pair-vector according to first value
-        sort(ssr_cu_pair_vector.begin(),
-             ssr_cu_pair_vector.end(),
-             [](pair<double, ControlUnit*> a, pair<double, ControlUnit*> b) { return a.first > b.first; });
-        //
-        // 1.4.c) output metrics
-        string file_name_postfix = "of-sac-planning-per-cu";
-        output::outputMetrics(true, &file_name_postfix);
-        //
-        // 1.5) Reset internal variables
-        ControlUnit::ResetAllInternalStates();
-        //
-        // 1.6) Remove sim. added components from all CUs
-        ControlUnit::RemoveAllSimAddedComponents();
-        //
-        // 1.7) Plan expansion with the new order
-        vector<ControlUnit*> ordered_cu_list;
-        ordered_cu_list.reserve(ssr_cu_pair_vector.size());
-        transform(ssr_cu_pair_vector.begin(), ssr_cu_pair_vector.end(),
-                  back_inserter(ordered_cu_list),
-                  [](auto& pair){ return pair.second; });
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq, false, &ordered_cu_list);
-    } else {
-        //
-        // 2) add expansion to units in the other cases
-        //
-        expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
-    }
+    // 1) add expansion to units in the other cases
     //
-    // 3) run the simulation (for all parameter variations or a single run)
+    expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
+    //
+    // 2) run the simulation (for all parameter variations or a single run)
     return runSimulationForAllVariations(scenario_id);
 }
 

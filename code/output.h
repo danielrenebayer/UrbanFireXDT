@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <list>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -94,6 +95,14 @@ namespace output {
     void outputCurrentCUSettings(); ///< This function outputs current settings of the control units (like PV kWp, BS capacity and power, ...) and also which roof sections exist per sim. added PV component
 
     void outputMetrics(bool alt_fname = false, string * fname_postfix = NULL); ///< This function computed metrics for all control units after the simulation has been finished; if @param alt_fname is set to true, the output file will have the file name 'metrics-{fname_postfix}.csv' instead of 'metrics-per-cu.csv'
+
+    /**
+     * Outputs every line that is collected in 'output_list' to 'metrics-per-cu.csv'.
+     * The output holds an additional last column about the added components for computing the metrics.
+     * 
+     * @param output_list: Reference to the list containing each line as string (lines must not end with a new line)
+     */
+    void outputMetricsStrList(list<string*> &output_list);
 
 }
 
