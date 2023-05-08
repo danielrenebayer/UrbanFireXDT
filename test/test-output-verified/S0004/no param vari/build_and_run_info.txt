@@ -1,7 +1,0 @@
-Simulation build at Nov 29 2022 08:42:08
-GCC was used as compiler.
-GCC Version = 10.2.1
-Compiler version = 10.2.1 20210110
-C++ standard = 201709
-
-Time of simulation start = 2022-11-29 08:48:20

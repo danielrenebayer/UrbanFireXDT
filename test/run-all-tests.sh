@@ -28,12 +28,18 @@ if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 3. Simulation run --"
 ../code/main-opti --config ../test/test-config/test_config.json 3
 if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 4. Simulation run --"
+../code/main-opti --config ../test/test-config/test_config.json 4
+if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 5. Simulation run --"
+../code/main-opti --config ../test/test-config/test_config.json 5
+if (( $? != 0 )); then program_error=1; fi
 
 
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
-    echo -e "\n-- 4. Simulation run (using valgrind) --"
-    valgrind ../code/main-dbg --config ../test/test-config/test_config.json 4
+    echo -e "\n-- 6. Simulation run (using valgrind) --"
+    valgrind ../code/main-dbg --config ../test/test-config/test_config.json 6
     if (( $? != 0 )); then memory_error=1; else memory_error=0;  fi
 fi
 
