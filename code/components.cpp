@@ -226,6 +226,8 @@ ComponentBS::ComponentBS(
     currentP_kW       = 0;
     charge_request_kW = 0;
     total_E_withdrawn_kWh = 0.0;
+    n_ts_SOC_empty    = 0;
+    n_ts_SOC_full     = 0;
 
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio) {
         this->E_over_P_ratio = E_over_P_ratio;
@@ -297,6 +299,12 @@ void ComponentBS::calculateActions() {
 
     // calculate new SOC value
     SOC = currentE_kWh / maxE_kWh;
+
+    // calculate n_ts_SOC_empty or n_ts_SOC_full
+    if (currentE_kWh <= 0)
+        n_ts_SOC_empty++;
+    else if (currentE_kWh >= maxE_kWh)
+        n_ts_SOC_full++;
 }
 
 void ComponentBS::resetInternalState() {
@@ -306,6 +314,8 @@ void ComponentBS::resetInternalState() {
     SOC = initial_SoC;
     currentE_kWh = maxE_kWh * initial_SoC;
     total_E_withdrawn_kWh = 0.0;
+    n_ts_SOC_empty = 0;
+    n_ts_SOC_full  = 0;
 }
 
 

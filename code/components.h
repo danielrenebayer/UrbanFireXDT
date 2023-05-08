@@ -73,6 +73,8 @@ class ComponentBS {
         float get_maxE_kWh()       const    { return maxE_kWh;     }
         float get_maxP_kW()        const    { return maxP_kW;      }
         double get_current_EFC()   const    { return total_E_withdrawn_kWh / maxE_kWh; } ///< Returns the equivalent full cycles (EFC)
+        unsigned long get_n_ts_empty() const { return n_ts_SOC_empty; } ///< Returns the number of time steps where the battery is empty
+        unsigned long get_n_ts_full()  const { return n_ts_SOC_full;  } ///< Returns the number of time steps where the battery is fully charged
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_maxE_kWh(float value);
@@ -97,6 +99,8 @@ class ComponentBS {
         float currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
         float charge_request_kW;
         double total_E_withdrawn_kWh; ///< summation variable for EFC computation
+        unsigned long n_ts_SOC_empty; ///< Number of time steps where battery is empty
+        unsigned long n_ts_SOC_full;  ///< Number of time steps where battery is full
 };
 
 class ComponentHP {

@@ -390,8 +390,13 @@ string* ControlUnit::get_metrics_string() {
         double SSR = get_SSR();
         double NPV = get_NPV();
         double bat_EFC = 0.0;
-        if (has_sim_bs)
+        unsigned long bat_n_ts_empyt = 0;
+        unsigned long bat_n_ts_full  = 0;
+        if (has_sim_bs) {
             bat_EFC = sim_comp_bs->get_current_EFC();
+            bat_n_ts_empyt = sim_comp_bs->get_n_ts_empty();
+            bat_n_ts_full  = sim_comp_bs->get_n_ts_full();
+        }
         string* retstr = new string;
         *retstr += to_string(unitID) + ",";
         *retstr += to_string(SCR) + ",";
@@ -402,7 +407,9 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(sum_of_PV_generated_kWh)+ ",";
         *retstr += to_string(sum_of_feed_into_grid_kWh)+ ",";
         *retstr += to_string(sum_of_grid_demand_kWh)+ ",";
-        *retstr += to_string(bat_EFC);
+        *retstr += to_string(bat_EFC) + ",";
+        *retstr += to_string(bat_n_ts_empyt) + ",";
+        *retstr += to_string(bat_n_ts_full);
         return retstr;
 }
 
