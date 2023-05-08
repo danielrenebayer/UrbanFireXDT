@@ -51,8 +51,6 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
         // variables for PV expansion
         bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
-        // variables, that always default to a value
-        bool   use_BS_for_SSR_list = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -185,8 +183,6 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
                 exp_bs_P_comp_mode_set   = true;
-            } else if ( element_name.compare("use BS for creating SSR list for SAC planning") == 0 ) {
-                use_BS_for_SSR_list     = scenario_dict.get_value<bool>();
             }
             else if ( element_name.compare("expansion PV max inst kWp per unit")      == 0 )
             {
@@ -361,8 +357,6 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             if (sac_planning_mode_set)  Global::set_cu_selection_mode_fca(sac_planning_mode_transl);
             if (exp_pv_mode_static_set) Global::set_exp_pv_mode(exp_pv_mode_static);
             if (exp_bs_P_comp_mode_set) Global::set_battery_power_computation_mode(exp_bs_P_comp_mode_transl);
-            //
-            Global::set_use_BS_for_SSR_list(use_BS_for_SSR_list);
             //
             Global::LockAllVariables();
             //
@@ -1037,9 +1031,9 @@ bool configld::load_data_from_central_database(const char* filepath) {
 
 #pragma GCC diagnostic pop /* activate all warnings again */
 
-#define PRINT_VAR(varname) cout << "    " << #varname << " = " << varname << "\n"
-#define PRINT_TM_VAR(varname) cout << "    " << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
-#define PRINT_ENUM_VAR(varname, lambda_expr) cout << "    " << #varname << " = " << lambda_expr(varname) << "\n"
+#define PRINT_VAR(varname) cout << "    " << std::setw(44) << std::left << #varname << " = " << varname << "\n"
+#define PRINT_TM_VAR(varname) cout << "    " << std::setw(44) << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
+#define PRINT_ENUM_VAR(varname, lambda_expr) cout << "    " << std::setw(44) << #varname << " = " << lambda_expr(varname) << "\n"
 
 //
 // Implementation of configld::output_variable_values()
@@ -1108,7 +1102,6 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
-    PRINT_VAR(Global::get_use_BS_for_SSR_list());
     // Output settings
     cout << "  Output settings:\n";
     PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});

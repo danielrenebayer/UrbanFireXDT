@@ -38,4 +38,3 @@ installation cost BS per kWh ,float,yes,,,,no
 expansion profile selection ,string,yes,,as in data / random,Controls how the profiles (if there are more than one) should be assigned to a new created component,???
 CU selection mode for comp. add. ,string,yes,,as in data / random / best SSR / best NPV,"Controls how to select the control units for expansion, in case of best SSR and best NPV a simulation is executed first, where all SSR and NPV values for every control unit are computed, then they are sorted and finally this sorted list is taken",???
 ,,,,,,
-use BS for creating SSR list for SAC planning ,bool,yes,,,Should a battery be added for creating the sorted list for the SAC planning?,no

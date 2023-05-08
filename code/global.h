@@ -179,7 +179,6 @@ class Global {
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
-        static bool  get_use_BS_for_SSR_list()      { return use_BS_for_SSR_list; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static const std::string& get_structure_database_name() { return system_db_name; }
@@ -224,7 +223,6 @@ class Global {
         static void set_inst_cost_BS_per_kWh(float value);
         static void set_npv_discount_rate(float value);
         static void set_npv_time_horizon(unsigned int value);
-        static void set_use_BS_for_SSR_list(bool mode);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
         static void set_structure_database_name(std::string* fname);
@@ -274,7 +272,6 @@ class Global {
         static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
         static float npv_discount_rate;    ///< Discount rate for the net present value computation
         static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
-        static bool  use_BS_for_SSR_list;  ///< Should a battery add to the CUs for the computation of best-SSR-list during SAC planning?
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static std::string system_db_name; ///< String holding the name of the database that contains the system structure
@@ -317,7 +314,6 @@ class Global {
         static bool inst_cost_BS_per_kWh_set;
         static bool npv_discount_rate_set;
         static bool npv_time_horizon_set;
-        static bool use_BS_for_SSR_list_set;
         static bool input_path_init;
         static bool output_path_init;
         static bool output_mode_per_cu_init;
