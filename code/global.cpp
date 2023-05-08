@@ -132,6 +132,7 @@ OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
+bool Global::create_substation_output = true;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -727,6 +728,13 @@ void Global::set_battery_power_computation_mode(global::BatteryPowerComputationM
     } else {
         Global::bat_power_comp_mode = mode;
         Global::bat_power_comp_mode_init = true;
+    }
+}
+void Global::set_create_substation_output(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::create_substation_output = value;
     }
 }
 

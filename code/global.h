@@ -186,6 +186,7 @@ class Global {
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
+        static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
         // setter methods
         static void set_n_timesteps(unsigned long n_timesteps);
         static void set_n_substations(unsigned long n_substations);
@@ -230,6 +231,7 @@ class Global {
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
+        static void set_create_substation_output(bool value);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         static bool is_locked;             ///< if set to true, values cannot be changed anymore
@@ -279,6 +281,7 @@ class Global {
         static global::ExpansionProfileAllocationMode exp_profile_mode; ///< Variable storing the selected mode for assigning profiles to PV sections or heat pumps
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
+        static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;

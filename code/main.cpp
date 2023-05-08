@@ -51,7 +51,8 @@ int main(int argc, char* argv[]) {
         ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation shoud be repeated - only usefull is random variables are used.")
       //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
-        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit");
+        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units: 'no' switches off output completly, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
+        ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completly, 'on' substation output (default)");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
     bpopts::variables_map opts_vals;
@@ -94,13 +95,29 @@ int main(int argc, char* argv[]) {
             Global::set_output_mode_per_cu(global::OutputModePerCU::NoOutput);
         } else if (cu_output == "single") {
             Global::set_output_mode_per_cu(global::OutputModePerCU::SingleFile);
+        } else if (cu_output == "sl") {
+            Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
         } else {
             // invalid argument
-            cerr << "Error when parsing command line arguments: invalid option for --cu-output given!" << endl;
+            cerr << "Error when parsing command line arguments: invalid option for --cu-output / -c given!" << endl;
             return 1;
         }
     } else {
         Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
+    }
+    if (opts_vals.count("st-output") > 0) {
+        string cu_output = opts_vals["st-output"].as<string>();
+        if (cu_output == "no" || cu_output == "off") {
+            Global::set_create_substation_output(false);
+        } else if (cu_output == "on") {
+            Global::set_create_substation_output(true);
+        } else {
+            // invalid argument
+            cerr << "Error when parsing command line arguments: invalid option for --st-output / -t given!" << endl;
+            return 1;
+        }
+    } else {
+        Global::set_create_substation_output(true);
     }
     if (opts_vals.count("repetitions") > 0) {
         unsigned int n_repetitions = opts_vals["repetitions"].as<unsigned int>();

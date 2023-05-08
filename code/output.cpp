@@ -130,6 +130,9 @@ void output::initializeDirectoriesPerPVar() {
 }
 
 void output::initializeSubstationOutput(int scenario_id) {
+    // initial check: should a output be created?
+    if (!Global::get_create_substation_output())
+        return;
     //
     // Part 1: The main file for the substation load time series
     //
