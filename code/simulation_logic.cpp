@@ -6,6 +6,7 @@ using namespace simulation;
 #include <ctime>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "helper.h"
 #include "global.h"
@@ -20,7 +21,7 @@ unsigned int output_counter = 0;
 #define OUTPUT_STATUS_OUTPUT_FREQ 24*24
 
 
-bool simulation::runSimulationForOneParamSetting() {
+bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // This function loops over all time steps as they are defined in the data.
     // If multiple settings (e.g. a parameter variation) should be applied,
@@ -57,7 +58,7 @@ bool simulation::runSimulationForOneParamSetting() {
         }
         //
         // execute one step
-        if (!oneStep(ts)) return false;
+        if (!oneStep(ts, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
@@ -70,7 +71,7 @@ bool simulation::runSimulationForOneParamSetting() {
 
 }
 
-bool simulation::oneStep(unsigned long ts) {
+bool simulation::oneStep(unsigned long ts, std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -79,13 +80,22 @@ bool simulation::oneStep(unsigned long ts) {
 
     //int tsID = ts - 1;
 
+    // TODO: parallelization of the unit calls
     // loop over all control units:
     //    set new values and execute next actions
-    ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-    const size_t nCUs = ControlUnit::GetNumberOfInstances();
-    for (size_t i = 0; i < nCUs; i++) {
-        if (!cuList[i]->compute_next_value(ts))
-            return false;
+    if (subsection == NULL) {
+        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+        const size_t nCUs = ControlUnit::GetNumberOfInstances();
+        for (size_t i = 0; i < nCUs; i++) {
+            if (!cuList[i]->compute_next_value(ts))
+                return false;
+        }
+    } else {
+        // execute simulation only for selected units
+        for (ControlUnit* cu : *subsection) {
+            if (!cu->compute_next_value(ts))
+                return false;
+        }
     }
     //
     // set new global radiation values for PV and wind speed
