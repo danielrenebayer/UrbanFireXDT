@@ -7,7 +7,7 @@
 # change to the directory where this script is located
 cd $(dirname $0)
 
-dirs_to_compare="S0001 S0002 S0003 S0004"
+dirs_to_compare="S0001 S0002 S0003 S0004 S0005 S0006"
 # 0. delete output dirs if they already exist (e.g. from previous test runs)
 for di in $dirs_to_compare; do
     rm -rf test-output/$di
