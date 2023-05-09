@@ -612,8 +612,8 @@ void expansion::add_expansion_to_units(
     const size_t n_CUs = ControlUnit::GetNumberOfInstances();
     for (size_t i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
-        // jump this unit, if it is not extensible
-        if (!current_unit->is_expandable_with_pv_hp())
+        // jump this unit, if it is not extensible (only if exp pv static mode is not available)
+        if (!Global::get_exp_pv_static_mode() && !current_unit->is_expandable_with_pv_hp())
             continue;
         //
         int expCombi = current_unit->get_exp_combi_bit_repr();
