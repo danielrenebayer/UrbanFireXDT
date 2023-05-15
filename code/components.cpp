@@ -22,7 +22,13 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
     // 1)
     // take the correct profile
     profile_index = 0;
-    if (Global::get_exp_profile_mode() == global::ExpansionProfileAllocationMode::AsInData) {
+    if (Global::get_exp_pv_static_mode() &&
+        Global::get_exp_pv_static_profile_orientation() != "" &&
+        Global::get_exp_pv_static_profile_idx() >= 0)
+    {
+        profile_index = Global::get_exp_pv_static_profile_idx();
+    }
+    else if (Global::get_exp_profile_mode() == global::ExpansionProfileAllocationMode::AsInData) {
         // case: selection as it appears in data
         // look up next index for a given orientation
         // if this orientation is not in the map up to now, take the last available index and add this orientation to the map
@@ -82,9 +88,10 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
      *
      */
     currentGeneration_kW = 0;
-    /*
-    // TODO: add additional mode for different static PV sizing selection
 
+  if (Global::get_exp_pv_static_profile_orientation() == "") {
+    // Case 1: if no static profile is selected, use existing roof data
+    //
     // attach roof sections as defined in data
     auto& roof_section_vec = global::roof_section_orientations[locationID];
     //unsigned long number_of_sections = roof_section_vec.size();
@@ -106,10 +113,11 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
         float section_kWp = share_of_total_area * kWp;
         roof_sections.emplace_back(section_kWp, section_orientation);
     }
-    */
-    // place all PV panels facing south
-    string ori = "S";
+  } else {
+    // Case 2: Only use one component facing the given orientation
+    string ori = Global::get_exp_pv_static_profile_orientation();
     roof_sections.emplace_back(kWp, ori);
+  }
 }
 
 ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID)
@@ -312,6 +320,12 @@ void ComponentBS::calculateActions() {
         n_ts_SOC_empty++;
     else if (currentE_kWh >= maxE_kWh)
         n_ts_SOC_full++;
+
+    // add standby power if SOC == 0 or SOC == 1
+    if (SOC == 0 && Global::get_exp_bess_P_for_SOC_0() > 0)
+        currentP_kW = Global::get_exp_bess_P_for_SOC_0();
+    if (SOC == 1 && Global::get_exp_bess_P_for_SOC_1() > 0)
+        currentP_kW = Global::get_exp_bess_P_for_SOC_1();
 }
 
 void ComponentBS::resetInternalState() {

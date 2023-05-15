@@ -17,6 +17,8 @@ expansion PV max inst kWp per unit ,float,no,-1.0,,Maximal size of the total PV 
 expansion PV kWp per roof area in m2 ,float,yes,,,kWp per roof area (how it is in the three dimensional space),yes
 expansion PV kWp static ,float,only if ‘expansion PV kWp static mode’ is set to true,,,see next variable,yes
 expansion PV kWp static mode ,float,yes,,,"If set to true, ignore all roof information and just add a static pv installation per roof",no
+expansion PV static mode profile orientation,string,no,,,Profile orientation if static mode is selected,no
+expansion PV static mode profile index,integer,no,,,Profile index if static mode is selected. Especially usefull if an fixed orientation is given,no
 expansion PV max total kWp addition ,float,no,no max. set,,Maximal size of all added PV installations over all control units,no
 ,,,,,,
 expansion BS P in kW ,float,yes,,,Power in kW of the simulatively added batteries,yes
@@ -27,6 +29,8 @@ expansion BS power computation mode,string,yes,,Power as given / Use E:P-ratio,"
 expansion BS efficiency in,float,no,1.0,0.0 to 1.0,Efficiency of the battery for charging in percent,
 expansion BS efficiency out,float,no,1.0,0.0 to 1.0,Efficiency of the battery for discharging in percent,
 expansion BS self-discharge per ts,float,no,0.0,0.0 to 1.0,Self-discharging rate in percent per time step,
+expansion BS power for SOC 0,float,no,0.0,0.0 to inf,Power consumption of the battery controller if SOC is 0 in kW, 
+expansion BS power for SOC 1,float,no,0.0,0.0 to inf,Power consumption of the battery controller if SOC is 1 in kW,
 ,,,,,,
 tariff feed-in per kWh ,float,yes,,,,no
 tariff demand per kWh ,float,yes,,,,no

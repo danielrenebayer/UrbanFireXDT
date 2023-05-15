@@ -116,6 +116,14 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_exp_bess_self_ds_ts( scenario_dict.get_value<float>() );
             }
+            else if (element_name.compare("expansion BS power for SOC 0")             == 0)
+            {
+                Global::set_exp_bess_P_for_SOC_0( scenario_dict.get_value<float>() );
+            }
+            else if (element_name.compare("expansion BS power for SOC 1")             == 0)
+            {
+                Global::set_exp_bess_P_for_SOC_1( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("open space PV kWp")         == 0 )
             {
                 Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );
@@ -191,6 +199,15 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             else if ( element_name.compare("expansion PV max total kWp addition")     == 0 )
             {
                 Global::set_exp_pv_max_kWp_total( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion PV static mode profile orientation") == 0 )
+            {
+                string value = scenario_dict.get_value<string>();
+                Global::set_exp_pv_static_profile_orientation( &value );
+            }
+            else if ( element_name.compare("expansion PV static mode profile index") == 0 )
+            {
+                Global::set_exp_pv_static_profile_idx( scenario_dict.get_value<int>() );
             }
             else if ( element_name.compare("id") == 0 )
             {}

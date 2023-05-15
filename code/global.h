@@ -171,6 +171,8 @@ class Global {
         static float get_exp_bess_effi_in()    { return exp_bess_effi_in;    }
         static float get_exp_bess_effi_out()   { return exp_bess_effi_out;   }
         static float get_exp_bess_self_ds_ts() { return exp_bess_self_ds_ts; }
+        static float get_exp_bess_P_for_SOC_0(){ return exp_bess_P_for_SOC_0;}
+        static float get_exp_bess_P_for_SOC_1(){ return exp_bess_P_for_SOC_1;}
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
@@ -187,6 +189,8 @@ class Global {
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
+        static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
+        static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
         // setter methods
         static void set_n_timesteps(unsigned long n_timesteps);
         static void set_n_substations(unsigned long n_substations);
@@ -216,6 +220,8 @@ class Global {
         static void set_exp_bess_effi_in(float value);
         static void set_exp_bess_effi_out(float value);
         static void set_exp_bess_self_ds_ts(float value);
+        static void set_exp_bess_P_for_SOC_0(float value);
+        static void set_exp_bess_P_for_SOC_1(float value);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
@@ -232,6 +238,8 @@ class Global {
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
         static void set_create_substation_output(bool value);
+        static void set_exp_pv_static_profile_orientation(std::string* value);
+        static void set_exp_pv_static_profile_idx(int value);
     private:
         Global(); ///< Global cannot be initialized, it is a static only class
         static bool is_locked;             ///< if set to true, values cannot be changed anymore
@@ -266,6 +274,8 @@ class Global {
         static float exp_bess_effi_in;     ///< efficiency for charging
         static float exp_bess_effi_out;    ///< efficiency for discharging
         static float exp_bess_self_ds_ts;  ///< self-discharge per time step of the battery
+        static float exp_bess_P_for_SOC_0; ///< power consumption of battery if SOC is 0 in kW
+        static float exp_bess_P_for_SOC_1; ///< power consumption of battery if SOC is 1 in kW
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid
@@ -282,6 +292,8 @@ class Global {
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
+        static std::string exp_pv_static_profile_orientation; ///< fixed orientation for PV static selection mode (ignoring roof data)
+        static int exp_pv_static_profile_idx;                 ///< fixed profile ID for PV static selection mode (-1 if not defined)
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;

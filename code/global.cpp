@@ -117,6 +117,8 @@ float Global::exp_bess_start_soc    = 0.0;
 float Global::exp_bess_effi_in      = 1.0;
 float Global::exp_bess_effi_out     = 1.0;
 float Global::exp_bess_self_ds_ts   = 0.0;
+float Global::exp_bess_P_for_SOC_0  = 0.0;
+float Global::exp_bess_P_for_SOC_1  = 0.0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 float Global::feed_in_tariff        = 0.0;
@@ -133,6 +135,8 @@ ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAlloca
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 bool Global::create_substation_output = true;
+string Global::exp_pv_static_profile_orientation = "";
+int Global::exp_pv_static_profile_idx            = -1;
 //
 bool Global::n_timesteps_init      = false;
 bool Global::n_substations_init    = false;
@@ -603,6 +607,28 @@ void Global::set_exp_bess_self_ds_ts(float value) {
         Global::exp_bess_self_ds_ts = value;
     }
 }
+void Global::set_exp_bess_P_for_SOC_0(float value) {
+    if (is_locked) {
+        cerr << "Global variable exp_bess_P_for_SOC_0 cannot be overwritten at the moment!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable exp_bess_P_for_SOC_0 cannot be set to value " << value << " (allowed range: [0.0,inf) )" << endl;
+            return;
+        }
+        Global::exp_bess_P_for_SOC_0 = value;
+    }
+}
+void Global::set_exp_bess_P_for_SOC_1(float value) {
+    if (is_locked) {
+        cerr << "Global variable exp_bess_P_for_SOC_1 cannot be overwritten at the moment!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable exp_bess_P_for_SOC_1 cannot be set to value " << value << " (allowed range: [0.0,inf) )" << endl;
+            return;
+        }
+        Global::exp_bess_P_for_SOC_1 = value;
+    }
+}
 void Global::set_open_space_pv_kWp(float open_space_kWp) {
     if (is_locked && open_space_pv_kWp_init) {
         cerr << "Global variable open_space_pv_kWp is already initialized!" << endl;
@@ -735,6 +761,24 @@ void Global::set_create_substation_output(bool value) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
         Global::create_substation_output = value;
+    }
+}
+void Global::set_exp_pv_static_profile_orientation(std::string* value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::exp_pv_static_profile_orientation = *value;
+    }
+}
+void Global::set_exp_pv_static_profile_idx(int value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        if (value < 0) {
+            cerr << "Global variable exp_pv_static_profile_idx cannot be set to value " << value << " (allowed range: [0,inf) )" << endl;
+            return;
+        }
+        Global::exp_pv_static_profile_idx = value;
     }
 }
 
