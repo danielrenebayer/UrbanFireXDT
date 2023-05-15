@@ -82,6 +82,9 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
      *
      */
     currentGeneration_kW = 0;
+    /*
+    // TODO: add additional mode for different static PV sizing selection
+
     // attach roof sections as defined in data
     auto& roof_section_vec = global::roof_section_orientations[locationID];
     //unsigned long number_of_sections = roof_section_vec.size();
@@ -103,6 +106,10 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
         float section_kWp = share_of_total_area * kWp;
         roof_sections.emplace_back(section_kWp, section_orientation);
     }
+    */
+    // place all PV panels facing south
+    string ori = "S";
+    roof_sections.emplace_back(kWp, ori);
 }
 
 ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID)
