@@ -72,7 +72,7 @@ class ComponentBS {
         float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
         float get_maxE_kWh()       const    { return maxE_kWh;     }
         float get_maxP_kW()        const    { return maxP_kW;      }
-        double get_current_EFC()   const    { return total_E_withdrawn_kWh / maxE_kWh; } ///< Returns the equivalent full cycles (EFC)
+        double get_current_EFC()   const    { return (maxE_kWh > 0) ? total_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC)
         unsigned long get_n_ts_empty() const { return n_ts_SOC_empty; } ///< Returns the number of time steps where the battery is empty
         unsigned long get_n_ts_full()  const { return n_ts_SOC_full;  } ///< Returns the number of time steps where the battery is fully charged
         // setter methods
