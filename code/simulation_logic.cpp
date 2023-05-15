@@ -29,6 +29,10 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
     //
     std::cout << "Run simulation for a complete episode ..." << std::endl;
 
+    // get variable values that remain equal during this simulation run
+    double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
+
+    // get time data
     unsigned long n_tsteps = Global::get_n_timesteps();
     struct tm* tm_start = Global::get_ts_start_tm();
     struct tm* tm_end   = Global::get_ts_end_tm();
@@ -58,7 +62,7 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
         }
         //
         // execute one step
-        if (!oneStep(ts, subsection)) return false;
+        if (!oneStep(ts, totalBatteryCapacity_kWh, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
@@ -71,7 +75,7 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
 
 }
 
-bool simulation::oneStep(unsigned long ts, std::vector<ControlUnit*>* subsection /* = NULL */) {
+bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -114,6 +118,15 @@ bool simulation::oneStep(unsigned long ts, std::vector<ControlUnit*>* subsection
     const size_t nSubst = Substation::GetNumberOfInstances();
 
     if (output::substation_output != NULL && output::substation_output_details != NULL) {
+        //
+        // compute SOC over all batteries
+        // TODO: inlcude batteries that are directly attached to an substation
+        double totalBatteryCharge_kWh = ControlUnit::GetAllSimCompBatteriesCharge_kWh();
+        double totalBatterySOC = 0.0;
+        if (totalBatteryCapacity_kWh > 0)
+            totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
+        //
+        // generate output
         *(output::substation_output) << ts << ","; // add timestep to output
         *(output::substation_output_details) << ts << ",";
         for (size_t i = 0; i < nSubst; i++) {
@@ -131,6 +144,7 @@ bool simulation::oneStep(unsigned long ts, std::vector<ControlUnit*>* subsection
         }
         *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
         *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
+        *(output::substation_output) << totalBatterySOC << ",";
         *(output::substation_output) << total_load << "\n"; // add total load to output
         *(output::substation_output_details) << total_residential_load << ",";
         *(output::substation_output_details) << total_residential_demand << "\n";

@@ -144,6 +144,8 @@ class ControlUnit {
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static size_t GetNumberOfInstances() {return st__n_CUs;}
         static size_t GetNumberOfCUsWithSimCompPV();
+        static double GetAllSimCompBatteriesCharge_kWh();   ///< Returns the charge of all simulatively added battery storage systems at the current ts
+        static double GetAllSimCompBatteriesCapacity_kWh(); ///< Returns the capacity of all simulatively added battery storage systems
         // 3. modifiers for all created objects
         static void ResetAllInternalStates();
         static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units
