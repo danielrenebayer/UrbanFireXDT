@@ -67,6 +67,13 @@
             "expansion id": 6,
             "CU selection mode for comp. add.": "best SSR",
             "comment": "Test for simulatively added components"
+        },
+        {
+            "id": 7,
+            "expansion id": 2,
+            "expansion BS P in kW": 20,
+            "expansion PV kWp static mode": true,
+            "comment": "Test scenario for parameter variation, based on Scnario 2"
         }
     ],
     "Parameter Variation": [
@@ -75,28 +82,16 @@
             "variations":
             [
                 {
-                    "variable": "expansion BS E in kWh",
-                    "range start": 5.0,
-                    "range end": 15.0,
-                    "step": 5.0
-                }
-            ]
-        },
-        {
-            "id": 2,
-            "variations":
-            [
-                {
-                    "variable": "expansion BS E in kWh",
-                    "range start": 5.0,
-                    "range end": 15.0,
-                    "step": 5.0
+                    "variable":   "expansion BS E in kWh",
+                    "range start": 10.0,
+                    "range end":   20.0,
+                    "step":        10.0
                 },
                 {
-                    "variable": "expansion BS P in kW",
-                    "range start": 5.0,
-                    "range end": 15.0,
-                    "step": 5.0
+                    "variable":   "expansion PV kWp static",
+                    "range start": 10.0,
+                    "range end":   20.0,
+                    "step":        10.0
                 }
             ]
         }

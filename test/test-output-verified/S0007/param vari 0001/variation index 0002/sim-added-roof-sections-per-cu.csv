@@ -1,0 +1,4 @@
+UnitID,roof_section_number,section_kWp,orientation,profile_index
+1,1,10.000000,S,0
+2,1,5.000000,S,0
+2,2,5.000000,W,0

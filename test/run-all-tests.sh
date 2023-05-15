@@ -7,7 +7,7 @@
 # change to the directory where this script is located
 cd $(dirname $0)
 
-dirs_to_compare="S0001 S0002 S0003 S0004 S0005 S0006"
+dirs_to_compare="S0001 S0002 S0003 S0004 S0005 S0006 S0007"
 # 0. delete output dirs if they already exist (e.g. from previous test runs)
 for di in $dirs_to_compare; do
     rm -rf test-output/$di
@@ -34,11 +34,14 @@ if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 5. Simulation run --"
 ../code/main-opti --config ../test/test-config/test_config.json 5
 if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 6. Simulation run --"
+../code/main-opti --config ../test/test-config/test_config.json --pvar 1 7
+if (( $? != 0 )); then program_error=1; fi
 
 
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
-    echo -e "\n-- 6. Simulation run (using valgrind) --"
+    echo -e "\n-- 7. Simulation run (using valgrind) --"
     valgrind ../code/main-dbg --config ../test/test-config/test_config.json 6
     if (( $? != 0 )); then memory_error=1; else memory_error=0;  fi
 fi
