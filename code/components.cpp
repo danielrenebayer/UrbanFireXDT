@@ -320,12 +320,6 @@ void ComponentBS::calculateActions() {
         n_ts_SOC_empty++;
     else if (currentE_kWh >= maxE_kWh)
         n_ts_SOC_full++;
-
-    // add standby power if SOC == 0 or SOC == 1
-    if (SOC == 0 && Global::get_exp_bess_P_for_SOC_0() > 0)
-        currentP_kW = Global::get_exp_bess_P_for_SOC_0();
-    if (SOC == 1 && Global::get_exp_bess_P_for_SOC_1() > 0)
-        currentP_kW = Global::get_exp_bess_P_for_SOC_1();
 }
 
 void ComponentBS::resetInternalState() {
