@@ -550,7 +550,7 @@ double add_expansion_to_units_orderd_by_metric(
                 iter_pv_only++;
                 n1_done++;
             }
-            // add PV+BS to those units, where PV is better than PV only
+            // add PV+BS to those units, where PV+BS is better than PV only
             while (n2 > n2_done && iter_pv_and_bs != sorted_list_pv_and_bs.end()) {
                 if (expPV2)
                     iter_pv_and_bs->second->add_exp_pv();
@@ -560,18 +560,19 @@ double add_expansion_to_units_orderd_by_metric(
                 n2_done++;
             }
             // check, if we still have to add units to combinations, that are not locally optimal
-            // A) PV
+            // we add them to the other list, as this situation can only occure, if one of the lists is empty
+            // A) PV (using the list of units where PV+BS would be better, i.e. iter_pv_and_bs)
             while (expPV1 && n1 > n1_done && iter_pv_and_bs != sorted_list_pv_and_bs.end()) {
                 iter_pv_and_bs->second->add_exp_pv();
                 iter_pv_and_bs++;
                 n1_done++;
             }
-            // B) PV + BS
+            // B) PV + BS (using the list where PV would be better, i.e. iter_pv)
             while (n2 > n2_done && iter_pv_only != sorted_list_pv_only.end()) {
                 if (expPV2)
-                    iter_pv_and_bs->second->add_exp_pv();
+                    iter_pv_only->second->add_exp_pv();
                 if (expBS2)
-                    iter_pv_and_bs->second->add_exp_bs();
+                    iter_pv_only->second->add_exp_bs();
                 iter_pv_only++;
                 n2_done++;
             }
