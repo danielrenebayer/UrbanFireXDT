@@ -143,7 +143,9 @@ class ControlUnit {
         //static ControlUnit* GetInstanceAtLocationID(unsigned long locationID);
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static size_t GetNumberOfInstances() {return st__n_CUs;}
-        static size_t GetNumberOfCUsWithSimCompPV();
+        static size_t GetNumberOfCUsWithSimCompPV();        ///< Returns the number of control units that hold a simulatively added PV installation
+        static size_t GetNumberOfCUsWithSimCompHP();        ///< Returns the number of control units that hold a simulatively added heat pump
+        static size_t GetNumberOfCUsWithSimCompEV();        ///< Returns the number of control units that hold a simulatively added (private) EV charging stations
         static double GetAllSimCompBatteriesCharge_kWh();   ///< Returns the charge of all simulatively added battery storage systems at the current ts
         static double GetAllSimCompBatteriesCapacity_kWh(); ///< Returns the capacity of all simulatively added battery storage systems
         // 3. modifiers for all created objects

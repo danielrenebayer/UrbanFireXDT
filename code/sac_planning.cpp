@@ -703,6 +703,8 @@ void expansion::add_expansion_to_units(
     if (Global::get_exp_pv_max_kWp_total() >= 0.0)
     cout << "    Total cumsum of kWp                        = " << cumsum_added_pv_kWp << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompPV() = " << ControlUnit::GetNumberOfCUsWithSimCompPV() << "\n";
+    cout << "    ControlUnit::GetNumberOfCUsWithSimCompHP() = " << ControlUnit::GetNumberOfCUsWithSimCompHP() << "\n";
+    cout << "    ControlUnit::GetNumberOfCUsWithSimCompEV() = " << ControlUnit::GetNumberOfCUsWithSimCompEV() << "\n";
     cout << global::output_section_delimiter << endl;
 
     //

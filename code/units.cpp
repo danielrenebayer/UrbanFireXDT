@@ -725,6 +725,24 @@ size_t ControlUnit::GetNumberOfCUsWithSimCompPV() {
     return counter;
 }
 
+size_t ControlUnit::GetNumberOfCUsWithSimCompHP() {
+    size_t counter = 0;
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        if (st__cu_list[i]->has_sim_hp)
+            counter++;
+    }
+    return counter;
+}
+
+size_t ControlUnit::GetNumberOfCUsWithSimCompEV() {
+    size_t counter = 0;
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        if (st__cu_list[i]->has_sim_ev)
+            counter++;
+    }
+    return counter;
+}
+
 double ControlUnit::GetAllSimCompBatteriesCharge_kWh() {
     double sum_kWh = 0.0;
     for (unsigned long i = 0; i < st__n_CUs; i++) {
