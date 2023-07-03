@@ -49,7 +49,8 @@ namespace global {
     inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit
     inline OpenSpacePVOrWind* unit_open_space_wind = NULL; ///< Reference to the global open space wind unit
     inline unsigned long n_ts_between_flushs = 1000; ///< Number of timesteps between the flush of the output buffers
-    inline std::map<unsigned long, float> yearly_hp_energy_demand_kWh; ///< Map storing the yearly energy demand for the heat pump in kWh (electric) [per location id]
+    inline std::map<unsigned long, float> annual_heat_demand_kWh; ///< Map storing the annaul heat demand for the buildings in kWh (thermal) [per location id]
+    inline std::map<unsigned long, float> building_volumes_m3;    ///< Map storing the volume of the biggest building at a given location in cubic-meters (m^3)
     inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
     inline std::set<unsigned long> locations_with_geodata; ///< List / Set storing all locations for which geodata is available
     inline unsigned int current_repetition_counter = 0; ///< Repetition counter, if repetitions is set as a command line argument
@@ -181,6 +182,9 @@ class Global {
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
+        static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
+        static float get_hp_E_estimation_param_m()            { return hp_E_estimation_param_m; }
+        static float get_hp_E_estimation_param_t()            { return hp_E_estimation_param_t; }
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static const std::string& get_structure_database_name() { return system_db_name; }
@@ -230,6 +234,9 @@ class Global {
         static void set_inst_cost_BS_per_kWh(float value);
         static void set_npv_discount_rate(float value);
         static void set_npv_time_horizon(unsigned int value);
+        static void set_heat_demand_thermalE_to_hpE_conv_f(float value);
+        static void set_hp_E_estimation_param_m(float value);
+        static void set_hp_E_estimation_param_t(float value);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
         static void set_structure_database_name(std::string* fname);
@@ -284,6 +291,9 @@ class Global {
         static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
         static float npv_discount_rate;    ///< Discount rate for the net present value computation
         static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
+        static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
+        static float hp_E_estimation_param_m; ///< Parameter of linear regression (coefficient) for estimating heat pump electricity demand if no data is given
+        static float hp_E_estimation_param_t; ///< Parameter of linear regression (intercept) for estimating heat pump electricity demand if no data is given
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static std::string system_db_name; ///< String holding the name of the database that contains the system structure
@@ -329,6 +339,9 @@ class Global {
         static bool inst_cost_BS_per_kWh_set;
         static bool npv_discount_rate_set;
         static bool npv_time_horizon_set;
+        static bool heat_demand_thermalE_to_hpE_conv_f_set;
+        static bool hp_E_estimation_param_m_set;
+        static bool hp_E_estimation_param_t_set;
         static bool input_path_init;
         static bool output_path_init;
         static bool output_mode_per_cu_init;

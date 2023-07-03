@@ -11,5 +11,6 @@ global_profiles_pv_info,Information about how many global PV feedin time series 
 global_profile_wind,Global wind farm feedin (normalized)
 global_profiles_heatpumps,Global heap pump demand profiles (normalized)
 address_data,List of all known addresses with yearly energy demand in case of heat pump heating
+heat_demand_per_location,Information about the heat demand that is converted using gas consumption data (if available)
 address_roof_data,List of all roof sections of all buildings (with orientation and size)
 residual_grid_load,"Time series of the residual grid load, that is not measured by any smart meter, but still present"

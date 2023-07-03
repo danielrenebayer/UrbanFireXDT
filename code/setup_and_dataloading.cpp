@@ -209,6 +209,18 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_exp_pv_static_profile_idx( scenario_dict.get_value<int>() );
             }
+            else if ( element_name.compare("th. E to HP el. E conversion factor") == 0 )
+            {
+                Global::set_heat_demand_thermalE_to_hpE_conv_f( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("HP el. E estimation m") == 0 )
+            {
+                Global::set_hp_E_estimation_param_m( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("HP el. E estimation t") == 0 )
+            {
+                Global::set_hp_E_estimation_param_t( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.compare("comment") == 0 )
@@ -794,17 +806,27 @@ int load_data_from_central_database_callback_address_data_A(void* data, int argc
      * This is the callback function for geeting the yearly heat pump electricity demand in kWh per Location ID.
      *
      * Columns:
-     * 0      1                       2
-     * LocID  YearlyHPHeatDemand_kWh, n_buildings
+     * 0      1            2           3
+     * LocID  n_buildings  max_volume  Heat Demand in kWh per year
      */
-    if (argc != 3) {
-        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+    if (argc != 4) {
+        cerr << "Number of arguments not equal to 4 for one row!" << endl;
         return 1;
     }
+    
     size_t locationID = stoul(argv[0]);
-    float  annual_hp_e_demand = stof(argv[1]);
+    float  annual_hp_e_demand = -1.0;
+    float  volume = 0.0;
 
-    global::yearly_hp_energy_demand_kWh[ locationID ] = annual_hp_e_demand;
+    if (argv[2] != NULL) {
+        volume = stof(argv[2]);
+    }
+    if (argv[3] != NULL) {
+        annual_hp_e_demand = stof(argv[3]);
+    }
+
+    global::annual_heat_demand_kWh[ locationID ] = annual_hp_e_demand;
+    global::building_volumes_m3[    locationID ] = volume;
     global::locations_with_geodata.insert( locationID );
 
     return 0;
@@ -1018,7 +1040,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load address data
         //
         // 1. annual heat demand for heat pumps AND buildings with available geo data?
-        sql_query = "SELECT LocID, AnnualHPElectricityDemand_kWh, n_buildings FROM address_data WHERE n_buildings >= 1 ORDER BY LocID;";
+        sql_query = "SELECT A.LocID, A.n_buildings, A.max_volume, B.MeanHeatEnergy_kWh FROM address_data as A LEFT JOIN heat_demand_per_location as B ON A.LocID = B.LocID WHERE n_buildings >= 1 ORDER BY A.LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
@@ -1119,6 +1141,9 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
+    PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
+    PRINT_VAR(Global::get_hp_E_estimation_param_m());
+    PRINT_VAR(Global::get_hp_E_estimation_param_t());
     // Output settings
     cout << "  Output settings:\n";
     PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});

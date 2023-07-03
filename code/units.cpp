@@ -345,7 +345,13 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
 }
 
 float ControlUnit::get_annual_hp_el_cons() {
-    return global::yearly_hp_energy_demand_kWh[locationID];
+    float heat_demand = global::annual_heat_demand_kWh[locationID];
+    if (heat_demand <= 0) {
+        // heat demand not given by gas or other data, so we need to approximate it based on a linear regression
+        return Global::get_hp_E_estimation_param_m() * global::building_volumes_m3[locationID] + Global::get_hp_E_estimation_param_t();
+    } else {
+        return heat_demand / Global::get_heat_demand_thermalE_to_hpE_conv_f();
+    }
 }
 
 double ControlUnit::get_SSR() {

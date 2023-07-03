@@ -127,6 +127,9 @@ float Global::inst_cost_PV_per_kWp  = 0.0;
 float Global::inst_cost_BS_per_kWh  = 0.0;
 float Global::npv_discount_rate     = 0.0;
 unsigned int Global::npv_time_horizon  = 0;
+float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
+float Global::hp_E_estimation_param_m = 0.0;
+float Global::hp_E_estimation_param_t = 0.0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -171,6 +174,9 @@ bool Global::inst_cost_PV_per_kWp_set     = false;
 bool Global::inst_cost_BS_per_kWh_set     = false;
 bool Global::npv_discount_rate_set = false;
 bool Global::npv_time_horizon_set  = false;
+bool Global::heat_demand_thermalE_to_hpE_conv_f_set = false;
+bool Global::hp_E_estimation_param_m_set = false;
+bool Global::hp_E_estimation_param_t_set = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
 bool Global::output_mode_per_cu_init    = false;
@@ -213,6 +219,9 @@ bool Global::AllVariablesInitialized() {
         demand_tariff_set &&
         npv_discount_rate_set &&
         npv_time_horizon_set &&
+        heat_demand_thermalE_to_hpE_conv_f_set &&
+        hp_E_estimation_param_m_set &&
+        hp_E_estimation_param_t_set &&
         inst_cost_PV_per_kWp_set &&
         inst_cost_BS_per_kWh_set &&
         input_path_init &&
@@ -333,6 +342,15 @@ void Global::PrintUninitializedVariables() {
     }
     if (!npv_time_horizon_set) {
         cout << "Variable npv_time_horizon_set not initialized." << endl;
+    }
+    if (!heat_demand_thermalE_to_hpE_conv_f_set) {
+        cout << "Variable heat_demand_thermalE_to_hpE_conv_f not initialized." << endl;
+    }
+    if (!hp_E_estimation_param_m_set) {
+        cout << "Variable hp_E_estimation_param_m  not initialized." << endl;
+    }
+    if (!hp_E_estimation_param_t_set) {
+        cout << "Variable hp_E_estimation_param_t not initialized." << endl;
     }
     if (!inst_cost_PV_per_kWp_set) {
         cout << "Variable inst_cost_PV_per_kWp_set not initialized." << endl;
@@ -691,6 +709,30 @@ void Global::set_inst_cost_BS_per_kWh(float value) {
     } else {
         Global::inst_cost_BS_per_kWh = value;
         inst_cost_BS_per_kWh_set = true;
+    }
+}
+void Global::set_heat_demand_thermalE_to_hpE_conv_f(float value) {
+    if (is_locked && heat_demand_thermalE_to_hpE_conv_f_set) {
+        cerr << "Global variable heat_demand_thermalE_to_hpE_conv_f is already initialized!" << endl;
+    } else {
+        Global::heat_demand_thermalE_to_hpE_conv_f = value;
+        heat_demand_thermalE_to_hpE_conv_f_set = true;
+    }
+}
+void Global::set_hp_E_estimation_param_m(float value) {
+    if (is_locked && hp_E_estimation_param_m_set) {
+        cerr << "Global variable hp_E_estimation_param_m is already initialized!" << endl;
+    } else {
+        Global::hp_E_estimation_param_m = value;
+        hp_E_estimation_param_m_set = true;
+    }
+}
+void Global::set_hp_E_estimation_param_t(float value) {
+    if (is_locked && hp_E_estimation_param_t_set) {
+        cerr << "Global variable hp_E_estimation_param_t is already initialized!" << endl;
+    } else {
+        Global::hp_E_estimation_param_t = value;
+        hp_E_estimation_param_t_set = true;
     }
 }
 void Global::set_input_path(string* path) {

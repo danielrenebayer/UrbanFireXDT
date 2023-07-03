@@ -42,3 +42,7 @@ installation cost BS per kWh ,float,yes,,,,no
 expansion profile selection ,string,yes,,as in data / random,Controls how the profiles (if there are more than one) should be assigned to a new created component,???
 CU selection mode for comp. add. ,string,yes,,as in data / random / best SSR / best NPV,"Controls how to select the control units for expansion, in case of best SSR and best NPV a simulation is executed first, where all SSR and NPV values for every control unit are computed, then they are sorted and finally this sorted list is taken",???
 ,,,,,,
+th. E to HP el. E conversion factor,float,yes,,,Factor for converting a thermal energy per building into a heat pump electricity consumption,no
+HP el. E estimation m,float,yes,,,Parameter for estimating the heat pump consumption if no data is given for a building in the data (param: coef. of the linear regression),no
+HP el. E estimation t,float,yes,,,Parameter for estimating the heat pump consumption if no data is given for a building in the data (param: intercept of the linear regression),no
+,,,,,,
