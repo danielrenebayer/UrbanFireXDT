@@ -33,7 +33,11 @@
 
         "expansion profile selection":      "as in data",
 
-        "use BS for creating SSR list for SAC planning": false
+        "use BS for creating SSR list for SAC planning": false,
+
+        "th. E to HP el. E conversion factor":   2,
+        "HP el. E estimation m":   2,
+        "HP el. E estimation t": 200
     },
     "Scenarios": [
         {
