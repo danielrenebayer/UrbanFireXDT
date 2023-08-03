@@ -235,7 +235,10 @@ double add_expansion_to_units_random_or_data_order(
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
     double cumsum_added_pv_kWp = 0.0;
     //
-    for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
+    // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
+    for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
+        unsigned int iMatO = (unsigned int) iMatOlong; // this is required, as an unsigned int cannot be negative!
+    //for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
         if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection) {
@@ -250,7 +253,8 @@ double add_expansion_to_units_random_or_data_order(
         // loop over all **target** expansion states
         // start at iMatO + 1, as all combinations bevore are impossible / or do not need any expansion
         // If one loops over them as well, the order of the ordered_list (in case it is set) would be useless!
-        for (unsigned int jExpTargetMatO = iMatO + 1; jExpTargetMatO < 16; jExpTargetMatO++) {
+        for (unsigned int jExpTargetMatO = 15; jExpTargetMatO >= iMatO + 1; jExpTargetMatO--) {
+        //for (unsigned int jExpTargetMatO = iMatO + 1; jExpTargetMatO < 16; jExpTargetMatO++) {
             // 
             // get number of CUs that get the current expansion
             long numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
@@ -296,9 +300,7 @@ double add_expansion_to_units_random_or_data_order(
                 if (expHP) (*iter)->add_exp_hp();
                 if (expEV) (*iter)->add_exp_evchst();
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
-                if (Global::get_exp_pv_max_kWp_total() >= 0.0) {
-                    cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
-                }
+                cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
                 // 3. remove from list (would be good, but not required - right now it does not happen)
                 //    only the iterator is incremented
                 iter++;
@@ -335,7 +337,10 @@ double add_expansion_to_units_orderd_by_metric(
     list<string*> output_str_collection;
     //
     // Loop over every current expansion / component combination
-    for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
+    // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
+    for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
+        unsigned int iMatO = (unsigned int) iMatOlong; // this is required, as an unsigned int cannot be negative!
+    //for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         int iBitRepr = expCombiMatrixOrderToBitRepr(iMatO);
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
@@ -351,6 +356,7 @@ double add_expansion_to_units_orderd_by_metric(
         list<ControlUnit*> list_of_CUs_added_EV_only;
         list<ControlUnit*> list_of_CUs_added_HP_EV;
         list<ControlUnit*> list_of_CUs_nothing_added (listOfCUs->begin(), listOfCUs->end()) ; // copy of the existing list (which is a vector actually)
+        //for (unsigned int jExpTargetMatO = 15; jExpTargetMatO >= iMatO + 1; jExpTargetMatO--) {
         for (unsigned int jExpTargetMatO = iMatO + 1; jExpTargetMatO < 16; jExpTargetMatO++) {
             // 
             // get number of CUs that get the current expansion
@@ -544,39 +550,74 @@ double add_expansion_to_units_orderd_by_metric(
             bool expPV1 = (iBitRepr ^ jBitRepr1) & MaskPV;
             bool expPV2 = (iBitRepr ^ jBitRepr2) & MaskPV;
             bool expBS2 = (iBitRepr ^ jBitRepr2) & MaskBS;
-            // add PV to those units, where PV is better than PV + BS
-            while (expPV1 && n1 > n1_done && iter_pv_only != sorted_list_pv_only.end()) {
-                iter_pv_only->second->add_exp_pv();
-                iter_pv_only++;
-                n1_done++;
-            }
+            // limits for addition reached?
+            bool pv_add_limit = false;
             // add PV+BS to those units, where PV+BS is better than PV only
             while (n2 > n2_done && iter_pv_and_bs != sorted_list_pv_and_bs.end()) {
-                if (expPV2)
+                if (expPV2) {
                     iter_pv_and_bs->second->add_exp_pv();
+                    cumsum_added_pv_kWp += iter_pv_and_bs->second->get_sim_comp_pv_kWp(); // calculate new cumsum
+                }
                 if (expBS2)
                     iter_pv_and_bs->second->add_exp_bs();
+                // increment iterators
                 iter_pv_and_bs++;
                 n2_done++;
+                // test if addition limits are reached
+                if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                        pv_add_limit = true;
+                        break;
+                }
+            }
+            // add PV to those units, where PV is better than PV + BS
+            while (expPV1 && n1 > n1_done && iter_pv_only != sorted_list_pv_only.end() && !pv_add_limit) {
+                iter_pv_only->second->add_exp_pv();
+                cumsum_added_pv_kWp += iter_pv_only->second->get_sim_comp_pv_kWp(); // calculate new cumsum
+                // increment iterators
+                iter_pv_only++;
+                n1_done++;
+                // test if addition limits are reached
+                if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                        pv_add_limit = true;
+                        break;
+                }
             }
             // check, if we still have to add units to combinations, that are not locally optimal
             // we add them to the other list, as this situation can only occure, if one of the lists is empty
             // A) PV (using the list of units where PV+BS would be better, i.e. iter_pv_and_bs)
-            while (expPV1 && n1 > n1_done && iter_pv_and_bs != sorted_list_pv_and_bs.end()) {
+            while (expPV1 && n1 > n1_done && iter_pv_and_bs != sorted_list_pv_and_bs.end() && !pv_add_limit) {
                 iter_pv_and_bs->second->add_exp_pv();
+                cumsum_added_pv_kWp += iter_pv_and_bs->second->get_sim_comp_pv_kWp(); // calculate new cumsum
+                // increment iterators
                 iter_pv_and_bs++;
                 n1_done++;
+                // test if addition limits are reached
+                if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                        pv_add_limit = true;
+                        break;
+                }
             }
             // B) PV + BS (using the list where PV would be better, i.e. iter_pv)
-            while (n2 > n2_done && iter_pv_only != sorted_list_pv_only.end()) {
-                if (expPV2)
+            while (n2 > n2_done && iter_pv_only != sorted_list_pv_only.end() && !pv_add_limit) {
+                if (expPV2) {
                     iter_pv_only->second->add_exp_pv();
+                    cumsum_added_pv_kWp += iter_pv_only->second->get_sim_comp_pv_kWp(); // calculate new cumsum
+                }
                 if (expBS2)
                     iter_pv_only->second->add_exp_bs();
+                // increment iterators
                 iter_pv_only++;
                 n2_done++;
+                // test if addition limits are reached
+                if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
+                        pv_add_limit = true;
+                        break;
+                }
             }
-            // TODO: Respect total addition limits for PV
             // increment combination_idx
             combination_idx++;
         }
