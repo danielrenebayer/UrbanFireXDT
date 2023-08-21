@@ -174,6 +174,7 @@ class Global {
         static float get_exp_bess_self_ds_ts() { return exp_bess_self_ds_ts; }
         static float get_exp_bess_P_for_SOC_0(){ return exp_bess_P_for_SOC_0;}
         static float get_exp_bess_P_for_SOC_1(){ return exp_bess_P_for_SOC_1;}
+        static float get_exp_bess_max_E_total(){ return exp_bess_max_E_total;}  //!< Returns the upper limit of (resid.) battery capacity for installation, or -1.0 if it is not set
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
@@ -226,6 +227,7 @@ class Global {
         static void set_exp_bess_self_ds_ts(float value);
         static void set_exp_bess_P_for_SOC_0(float value);
         static void set_exp_bess_P_for_SOC_1(float value);
+        static void set_exp_bess_max_E_total(float value);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
@@ -283,6 +285,7 @@ class Global {
         static float exp_bess_self_ds_ts;  ///< self-discharge per time step of the battery
         static float exp_bess_P_for_SOC_0; ///< power consumption of battery if SOC is 0 in kW
         static float exp_bess_P_for_SOC_1; ///< power consumption of battery if SOC is 1 in kW
+        static float exp_bess_max_E_total; ///< Upper limit of installed battery storage capacity (only residential)
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid

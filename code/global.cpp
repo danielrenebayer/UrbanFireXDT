@@ -119,6 +119,7 @@ float Global::exp_bess_effi_out     = 1.0;
 float Global::exp_bess_self_ds_ts   = 0.0;
 float Global::exp_bess_P_for_SOC_0  = 0.0;
 float Global::exp_bess_P_for_SOC_1  = 0.0;
+float Global::exp_bess_max_E_total  =-1.0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 float Global::feed_in_tariff        = 0.0;
@@ -645,6 +646,17 @@ void Global::set_exp_bess_P_for_SOC_1(float value) {
             return;
         }
         Global::exp_bess_P_for_SOC_1 = value;
+    }
+}
+void Global::set_exp_bess_max_E_total(float value) {
+    if (is_locked) {
+        cerr << "Global variable exp_bess_max_E_total cannot be overwritten at the moment!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable exp_bess_max_E_total cannot be set to value " << value << " (allowed range: [0.0,inf) )" << endl;
+            return;
+        }
+        Global::exp_bess_max_E_total = value;
     }
 }
 void Global::set_open_space_pv_kWp(float open_space_kWp) {

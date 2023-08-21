@@ -124,6 +124,10 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_exp_bess_P_for_SOC_1( scenario_dict.get_value<float>() );
             }
+            else if (element_name.compare("expansion BS max total E addition")        == 0)
+            {
+                Global::set_exp_bess_max_E_total( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("open space PV kWp")         == 0 )
             {
                 Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );

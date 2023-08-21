@@ -234,6 +234,7 @@ double add_expansion_to_units_random_or_data_order(
 ) {
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
     double cumsum_added_pv_kWp = 0.0;
+    double cumsum_added_bs_kWh = 0.0;
     //
     // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
     for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
@@ -280,8 +281,15 @@ double add_expansion_to_units_random_or_data_order(
                 if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
                     expPV &&
                     cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
-                    cout << "Max added pv reached, with " << cumsum_added_pv_kWp << endl;
+                    cout << "Maximum of added roof-top PV power reached with " << cumsum_added_pv_kWp << " kWp" << endl;
                     break; // goto outer_loop_end;
+                }
+                if (Global::get_exp_bess_max_E_total() >= 0.0 &&
+                    expBS &&
+                    cumsum_added_bs_kWh >= Global::get_exp_bess_max_E_total())
+                {
+                    cout << "Max added battery storage capacity reached with " << cumsum_added_bs_kWh << " kWh" << endl;
+                    break;
                 }
                 // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
                 if (expHP) {
@@ -301,6 +309,7 @@ double add_expansion_to_units_random_or_data_order(
                 if (expEV) (*iter)->add_exp_evchst();
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
+                cumsum_added_bs_kWh += (*iter)->get_sim_comp_bs_E_kWh();
                 // 3. remove from list (would be good, but not required - right now it does not happen)
                 //    only the iterator is incremented
                 iter++;
@@ -334,6 +343,7 @@ double add_expansion_to_units_orderd_by_metric(
 ) {
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
     double cumsum_added_pv_kWp = 0.0;
+    double cumsum_added_bs_kWh = 0.0;
     list<string*> output_str_collection;
     //
     // Loop over every current expansion / component combination
@@ -552,14 +562,17 @@ double add_expansion_to_units_orderd_by_metric(
             bool expBS2 = (iBitRepr ^ jBitRepr2) & MaskBS;
             // limits for addition reached?
             bool pv_add_limit = false;
+            bool bs_add_limit = false;
             // add PV+BS to those units, where PV+BS is better than PV only
             while (n2 > n2_done && iter_pv_and_bs != sorted_list_pv_and_bs.end()) {
                 if (expPV2) {
                     iter_pv_and_bs->second->add_exp_pv();
                     cumsum_added_pv_kWp += iter_pv_and_bs->second->get_sim_comp_pv_kWp(); // calculate new cumsum
                 }
-                if (expBS2)
+                if (expBS2) {
                     iter_pv_and_bs->second->add_exp_bs();
+                    cumsum_added_bs_kWh += iter_pv_and_bs->second->get_sim_comp_bs_E_kWh();
+                }
                 // increment iterators
                 iter_pv_and_bs++;
                 n2_done++;
@@ -568,6 +581,12 @@ double add_expansion_to_units_orderd_by_metric(
                     cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
                         pv_add_limit = true;
                         break;
+                }
+                if (Global::get_exp_bess_max_E_total() >= 0.0 &&
+                    cumsum_added_bs_kWh >= Global::get_exp_bess_max_E_total())
+                {
+                    bs_add_limit = true;
+                    break;
                 }
             }
             // add PV to those units, where PV is better than PV + BS
@@ -601,13 +620,15 @@ double add_expansion_to_units_orderd_by_metric(
                 }
             }
             // B) PV + BS (using the list where PV would be better, i.e. iter_pv)
-            while (n2 > n2_done && iter_pv_only != sorted_list_pv_only.end() && !pv_add_limit) {
+            while (n2 > n2_done && iter_pv_only != sorted_list_pv_only.end() && !pv_add_limit && !bs_add_limit) {
                 if (expPV2) {
                     iter_pv_only->second->add_exp_pv();
                     cumsum_added_pv_kWp += iter_pv_only->second->get_sim_comp_pv_kWp(); // calculate new cumsum
                 }
-                if (expBS2)
+                if (expBS2) {
                     iter_pv_only->second->add_exp_bs();
+                    cumsum_added_bs_kWh += iter_pv_and_bs->second->get_sim_comp_bs_E_kWh();
+                }
                 // increment iterators
                 iter_pv_only++;
                 n2_done++;
@@ -616,6 +637,12 @@ double add_expansion_to_units_orderd_by_metric(
                     cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
                         pv_add_limit = true;
                         break;
+                }
+                if (Global::get_exp_bess_max_E_total() >= 0.0 &&
+                    cumsum_added_bs_kWh >= Global::get_exp_bess_max_E_total())
+                {
+                    bs_add_limit = true;
+                    break;
                 }
             }
             // increment combination_idx
