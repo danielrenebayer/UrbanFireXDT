@@ -139,7 +139,8 @@ class ControlUnit {
         static void InitializeStaticVariables(unsigned long n_CUs);
         static void VacuumInstancesAndStaticVariables();
         // 2. getter functions
-        static ControlUnit* GetInstance(unsigned long unitID);
+        static ControlUnit* GetInstance(unsigned long unitID);   ///< Returns instance with unitID or NULL, if unitID is out of the given range
+        static ControlUnit* GetInstanceWE(unsigned long unitID); ///< Returns instance with unitID or throws an error, if untiID is not defined
         //static ControlUnit* GetInstanceAtLocationID(unsigned long locationID);
         static ControlUnit*const * GetArrayOfInstances() {return st__cu_list;}
         static size_t GetNumberOfInstances() {return st__n_CUs;}

@@ -688,6 +688,13 @@ ControlUnit* ControlUnit::GetInstance(unsigned long unitID) {
         return NULL;
 }
 
+ControlUnit* ControlUnit::GetInstanceWE(unsigned long unitID) {
+    if (unitID > 0 && unitID <= st__n_CUs)
+        return st__cu_list[unitID - 1];
+    else
+        throw runtime_error("ControlUnitID " + std::to_string(unitID) + " is out of range!");
+}
+
 //ControlUnit* ControlUnit::GetInstanceAtLocationID(unsigned long locationID) {
 //    return location_to_cu_map[locationID];
 //}
