@@ -138,7 +138,6 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	sim_comp_pv     = NULL;
 	sim_comp_bs     = NULL;
 	sim_comp_hp     = NULL;
-	sim_comp_ev     = NULL;
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
     output_obj      = NULL;
@@ -198,6 +197,9 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
         history_pv_generation_kW        = NULL;
         history_avg_consumption_load_kW = NULL;
     }*/
+
+    // Generate new instance for the EV charging station (regardless if it is required or not)
+    sim_comp_ev = new ComponentCS();
 }
 
 ControlUnit::~ControlUnit() {
@@ -205,7 +207,7 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_pv) delete sim_comp_pv;
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
-	if (has_sim_ev) delete sim_comp_ev;
+	delete sim_comp_ev;
     /*
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
@@ -474,8 +476,12 @@ void ControlUnit::add_exp_evchst() {
         cerr << "Warning: Control unit with location id " << locationID << " already has an EV charging station!" << endl;
     if (!has_sim_ev) {
         has_sim_ev  = true;
-        sim_comp_ev = new ComponentWB();
+        sim_comp_ev->enable_station();
     }
+}
+
+void ControlUnit::add_ev(unsigned long carID) {
+    sim_comp_ev->add_ev(carID);
 }
 
 void ControlUnit::set_output_object(CUOutput* output_obj) {
@@ -559,8 +565,7 @@ void ControlUnit::remove_sim_added_components() {
     }
 	if (has_sim_ev) {
         has_sim_ev = false;
-        delete sim_comp_ev;
-        sim_comp_ev = NULL;
+        sim_comp_ev->disable_station();
     }
 }
 
@@ -608,7 +613,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     }
     //
     // 4. get the effect of the EV charging station
-    // TODO
+    if (sim_comp_ev->is_enabled()) {
+        // TODO
+    }
     // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
     // 5. send situation to battery storage and get its resulting action
@@ -720,6 +727,7 @@ void ControlUnit::ResetAllInternalStates() {
         if (e_i->has_sim_bs) {
             e_i->sim_comp_bs->resetInternalState();
         }
+        e_i->sim_comp_ev->resetInternalState();
     }
 }
 

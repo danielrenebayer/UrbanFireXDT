@@ -121,7 +121,8 @@ class ControlUnit {
         void add_exp_pv();
         void add_exp_bs();
         void add_exp_hp();
-        void add_exp_evchst(); ///< Adds an EV charging station to the control unit
+        void add_exp_evchst(); ///< Activates / enables the EV charging station at the control unit
+        void add_ev(unsigned long carID); ///< Adds an EV to the charging station (regardless if the charging station is enabled or not)
         void set_output_object(CUOutput* output_obj);
         void set_exp_pv_params_A(float kWp_static); ///< Set the kWp of expanded PV installations in the case of static kWp computation per section
         void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
@@ -167,7 +168,7 @@ class ControlUnit {
         ComponentPV* sim_comp_pv; ///< Reference to the simulated PV-Component (if it exists)
         ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
-        ComponentWB* sim_comp_ev; ///< Reference to the simulated EV charging station Component (if it exists)
+        ComponentCS* sim_comp_ev; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run

@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "vehicles.h"
+
 // ----------------------------- //
 //      Implementation of        //
 //        RoofSectionPV          //
@@ -259,6 +261,31 @@ ComponentBS::ComponentBS(
 
 }
 
+ComponentBS::ComponentBS(
+    float maxE_kWh,
+    float discharge_rate_per_step,
+    float efficiency_in,
+    float initial_SoC
+) : maxE_kWh(maxE_kWh),
+    discharge_rate_per_step(discharge_rate_per_step),
+    efficiency_in(efficiency_in),
+    efficiency_out(1.0),
+    initial_SoC(initial_SoC)
+{
+    SOC               = 0;
+    currentE_kWh      = 0;
+    currentP_kW       = 0;
+    charge_request_kW = 0;
+    total_E_withdrawn_kWh = 0.0;
+    n_ts_SOC_empty    = 0;
+    n_ts_SOC_full     = 0;
+
+    if (initial_SoC > 0) {
+        SOC = initial_SoC;
+        currentE_kWh = maxE_kWh * initial_SoC;
+    }
+}
+
 void ComponentBS::set_maxE_kWh(float value) {
     maxE_kWh = value;
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio)
@@ -393,4 +420,37 @@ void ComponentHP::VacuumStaticVariables() {
         delete random_generator;
         delete distribution;
     }
+}
+
+
+
+
+// ----------------------------- //
+//      Implementation of        //
+//         ComponentCS           //
+// ----------------------------- //
+
+ComponentCS::ComponentCS() {
+    enabled = false;
+}
+
+ComponentCS::~ComponentCS() {
+    for (EVFSM* ev : listOfEVs)
+        delete ev;
+}
+
+void ComponentCS::enable_station() {
+    enabled = true;
+}
+
+void ComponentCS::disable_station() {
+    enabled = false;
+}
+
+void ComponentCS::resetInternalState() {
+    // TODO
+}
+
+void ComponentCS::add_ev(unsigned long carID) {
+    listOfEVs.push_back(new EVFSM(carID, this));
 }

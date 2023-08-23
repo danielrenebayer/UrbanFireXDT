@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include <map>
 #include <random>
 #include <string>
 #include <vector>
@@ -17,9 +18,10 @@ class RoofSectionPV;
 class ComponentPV;
 class ComponentBS;
 class ComponentHP;
-class ComponentWB;
+class ComponentCS;
 
 #include "global.h"
+#include "vehicles.h"
 
 
 class RoofSectionPV {
@@ -65,9 +67,10 @@ class ComponentPV {
 
 class ComponentBS {
     public:
-        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC);
+        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC); ///< Default constructor if the battery should represent a large-scale or household-style battery system
+        ComponentBS(float maxE_kWh, float discharge_rate_per_step, float efficiency_in, float initial_SoC); ///< Constructor to use if it is the battery of an EV
         // getter methods
-        float get_SOC() const               { return SOC; }
+        float get_SOC() const               { return SOC; }          ///< Returns the current state of charge of the battery
         float get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
         float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
         float get_maxE_kWh()       const    { return maxE_kWh;     }
@@ -129,8 +132,26 @@ class ComponentHP {
         static std::uniform_int_distribution<size_t>* distribution;
 };
 
-class ComponentWB {
-    // TODO: Implement Wallboxes
+/**
+ * This class represents a charging station.
+ * Every control unit holds a charging station by default, which is disabled.
+ * Enabling a station in the simulation represents to build such a station in
+ * the reality.
+ */
+class ComponentCS {
+    public:
+        ComponentCS();
+        ~ComponentCS();
+        // getters
+        bool is_enabled() const { return enabled; }
+        // modifieres
+        void enable_station();
+        void disable_station();
+        void resetInternalState();
+        void add_ev(unsigned long carID);
+    private:
+        bool enabled;
+        std::vector<EVFSM*> listOfEVs;
 };
 
 #endif
