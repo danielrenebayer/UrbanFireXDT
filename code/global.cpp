@@ -134,6 +134,7 @@ float Global::hp_E_estimation_param_t = 0.0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
+string Global::ev_data_path       = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
@@ -776,6 +777,17 @@ void Global::set_structure_database_name(std::string* fname) {
         cerr << "System structure database name already set!" << endl;
     } else {
         Global::system_db_name = *fname;
+    }
+}
+void Global::set_ev_data_path(string* path) {
+    if (is_locked) {
+        cerr << "EV data path is already set!" << endl;
+    } else {
+        Global::ev_data_path = *path;
+        // check, if path ends with an "/", add it, if not
+        if (Global::ev_data_path.back() != '/') {
+            Global::ev_data_path += "/";
+        }
     }
 }
 void Global::set_output_mode_per_cu(OutputModePerCU mode) {

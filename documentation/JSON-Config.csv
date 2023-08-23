@@ -5,6 +5,7 @@ database name,string,no,SystemStructure.db,,Name of the database that contains t
 start,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"Start date in the format YYYY-mm-dd HH:MM:SS - if the data start after start date, simulation will wait for the data to start",no
 end,string (encoding a datetime),yes,,YYYY-mm-dd HH:MM:SS,"End date in the format YYYY-mm-dd HH:MM:SS - if the data end earlier, simulation will stop there",no
 time steps per hour,integer,yes,,1 to infinity,Number of time steps per hour,no
+ev data path,string,no,,,Path (relative or absolute) to the EV driving profiles and other EV related data,no
 ,,,,,,
 open space PV kWp ,float,yes,,0.0 to infinity,Additional open space PV power in kWp,no
 open space wind kWp ,float,yes,,0.0 to infinity,Additional open space wind power in kWp,no

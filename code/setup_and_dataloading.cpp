@@ -29,6 +29,10 @@ namespace bpt = boost::property_tree;
 #include "units.h"
 
 
+bool helper_read_ev_info_json_data(const std::string&);
+bool helper_read_ev_profile_data(const std::string&);
+
+
 //
 // loads the global config file
 //
@@ -224,6 +228,11 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             else if ( element_name.compare("HP el. E estimation t") == 0 )
             {
                 Global::set_hp_E_estimation_param_t( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("ev data path")         == 0 )
+            {
+                string value = scenario_dict.get_value<string>();
+                Global::set_ev_data_path( &value );
             }
             else if ( element_name.compare("id") == 0 )
             {}
@@ -1060,6 +1069,20 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
 
+        //
+        // Load EV profiles
+        //
+        if (Global::get_ev_data_path().length() > 0) {
+            cout << "    Start parsing mobility data ...\n";
+            // A) Load car data
+            if (!helper_read_ev_info_json_data(Global::get_ev_data_path() + "car_info.json"))
+                return false;
+            // B) Load home-ceneterd car driving profiles
+            if (!helper_read_ev_profile_data(Global::get_ev_data_path() + "car_tours.json"))
+                return false;
+            cout << "    ... finished loading mobility data.\n";
+        }
+
         cout << "... finished loading data and system structure.\n";
         cout << global::output_section_delimiter << endl;
 
@@ -1073,6 +1096,74 @@ bool configld::load_data_from_central_database(const char* filepath) {
 
 
 #pragma GCC diagnostic pop /* activate all warnings again */
+
+
+//
+// Helper function for parsing the EV data from JSON files
+bool helper_read_ev_info_json_data(const std::string& filepath) {
+    bpt::ptree tree_root;
+    try {
+        bpt::read_json(filepath, tree_root);
+    } catch (bpt::json_parser_error& j) {
+        cerr << "Error when reading EV json file: " << j.what() << endl;
+        return false;
+    }
+    try {
+        //
+        // parse json file per element
+        for (auto& scenario_dict_all : tree_root) {
+            if (scenario_dict_all.first != "") {
+                cerr << "Error when parsing EV json file: Wrong formatting of file 'car_info.json'!" << endl;
+                return false;
+            }
+            unsigned long carID = scenario_dict_all.second.get_child("carID").get_value<unsigned long>();
+            unsigned long cuID  = scenario_dict_all.second.get_child("ControlUnitID").get_value<unsigned long>();
+            ControlUnit::GetInstanceWE(cuID)->add_ev(carID);
+        }
+    } catch (bpt::ptree_bad_path& j) {
+        cerr << "Error when parsing EV json file: " << j.what() << endl;
+        return false;
+    }
+    return true;
+}
+
+//
+// Helper function for parsing home-ceneterd car driving profiles
+bool helper_read_ev_profile_data(const std::string& filepath) {
+    bpt::ptree tree_root;
+    try {
+        bpt::read_json(filepath, tree_root);
+    } catch (bpt::json_parser_error& j) {
+        cerr << "Error when reading EV-profiles json file: " << j.what() << endl;
+        return false;
+    }
+    try {
+        //
+        // parse json file per element
+        for (auto& scenario_dict_all : tree_root) {
+            if (scenario_dict_all.first != "") {
+                cerr << "Error when parsing EV-profiles json file: Wrong formatting of file 'car_tours.json'!" << endl;
+                return false;
+            }
+            unsigned long carID          = scenario_dict_all.second.get_child("carID").get_value<unsigned long>();
+            unsigned short weekday       = scenario_dict_all.second.get_child("weekday").get_value<unsigned short>();
+            unsigned int  hour_departure = scenario_dict_all.second.get_child("hour_departure").get_value<unsigned int>();
+            unsigned int  duration_in_ts = scenario_dict_all.second.get_child("duration_in_ts").get_value<unsigned int>();
+            double        trip_length_km = scenario_dict_all.second.get_child("trip_length_km").get_value<double>();
+            short         with_work      = scenario_dict_all.second.get_child("with_work").get_value<short>();
+            //
+            EVFSM::AddWeeklyTour(carID, weekday, hour_departure, duration_in_ts, trip_length_km, with_work > 0);
+        }
+    } catch (bpt::ptree_bad_path& j) {
+        cerr << "Error when parsing EV-profiles json file: " << j.what() << endl;
+        return false;
+    }
+    return true;
+}
+
+
+
+
 
 #define PRINT_VAR(varname) cout << "    " << std::setw(44) << std::left << #varname << " = " << varname << "\n"
 #define PRINT_TM_VAR(varname) cout << "    " << std::setw(44) << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
@@ -1116,6 +1207,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_n_MUs());
     PRINT_VAR(Global::get_n_pv_profiles());
     PRINT_VAR(Global::get_n_heatpump_profiles());
+    PRINT_VAR(Global::get_ev_data_path());
     // Selection settings
     cout << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
@@ -1137,6 +1229,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_bess_effi_out());
     PRINT_VAR(Global::get_exp_bess_self_ds_ts());
     PRINT_VAR(Global::get_exp_bess_start_soc());
+    PRINT_VAR(Global::get_exp_bess_max_E_total());
     PRINT_VAR(Global::get_open_space_pv_kWp());
     PRINT_VAR(Global::get_wind_kWp());
     PRINT_VAR(Global::get_feed_in_tariff());
