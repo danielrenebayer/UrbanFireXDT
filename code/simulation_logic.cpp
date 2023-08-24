@@ -21,13 +21,14 @@ unsigned int output_counter = 0;
 #define OUTPUT_STATUS_OUTPUT_FREQ 24*24
 
 
-bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection /* = NULL */) {
+bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection /* = NULL */, const char* output_prefix /* = "" */) {
     //
     // This function loops over all time steps as they are defined in the data.
     // If multiple settings (e.g. a parameter variation) should be applied,
     // one has to call this function more often.
     //
-    std::cout << "Run simulation for a complete episode ..." << std::endl;
+    if (output_prefix[0] == '\0')
+        std::cout << output_prefix << "Run simulation for a complete episode ..." << std::endl;
 
     // get variable values that remain equal during this simulation run
     double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
@@ -48,34 +49,38 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
         if (sim_started) {
             //if (difftime(t_end, mktime(current_tm)) <= 0) {
             if (compare_struct_tm(current_tm, tm_end) >= 0) {
-                std::cout << "\nEnd of the simulation range (as defined in the scenario) has been reached." << std::endl;
+                if (output_prefix[0] == '\0')
+                    std::cout << output_prefix << "\rEnd of the simulation range (as defined in the scenario) has been reached." << std::endl;
                 break;
             }
         } else {
             //if (difftime(mktime(current_tm), t_start) >= 0) {
             if (compare_struct_tm(current_tm, tm_start) >= 0) {
                 sim_started = true;
-                std::cout << "Start of the simulation range (as defined in the scenario) is reached." << std::endl;
+                if (output_prefix[0] == '\0')
+                    std::cout << output_prefix << "Start of the simulation range (as defined in the scenario) is reached." << std::endl;
             } else {
                 continue;
             }
         }
         //
         // execute one step
-        if (!oneStep(ts, totalBatteryCapacity_kWh, subsection)) return false;
+        if (!oneStep(ts, totalBatteryCapacity_kWh, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
 
     }
 
-    std::cout << "... run finished." << "\n";
-    std::cout << global::output_section_delimiter << std::endl;
+    if (output_prefix[0] == '\0') {
+        std::cout << output_prefix << "... run finished." << "\n";
+        std::cout << global::output_section_delimiter << std::endl;
+    }
     return true;
 
 }
 
-bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, std::vector<ControlUnit*>* subsection /* = NULL */) {
+bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, const char* output_prefix /* = "" */, std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -154,7 +159,13 @@ bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, std:
     output_counter++;
     if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
         output_counter = 0;
-        std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed." << std::endl;
+        if (output_prefix[0] != '\0')
+            std::cout << "\r" << output_prefix;
+        std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed.";
+        if (output_prefix[0] != '\0')
+            std::cout << std::flush;
+        else
+            std::cout << std::endl;
     } /*else {
         std::cout << ".";
     }*/
@@ -176,6 +187,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         // in case of a parameter variation:
         // loop over all parameter combinations
         unsigned int param_vari_combi_ind = 0;
+        unsigned long n_param_vari_combis = global::parameter_var_list->size();
         for (auto& list_of_variables : *(global::parameter_var_list)) {
             //
             // 0. set global variable
@@ -259,6 +271,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
             output::outputCurrentCUSettings();
             //
             // 3. run the simulation
+            cout << "Simulation run for parameter variation " << std::to_string(param_vari_combi_ind+1) << " of " << std::to_string(n_param_vari_combis) << "\n";
             bool no_error = runSimulationForOneParamSetting();
             if (!no_error) return false;
             //
@@ -282,6 +295,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         output::outputCurrentCUSettings();
         //
         // 2. Run the simulation
+        cout << "Main simulation run:\n";
         bool no_error = runSimulationForOneParamSetting();
         if (!no_error) return false;
         //

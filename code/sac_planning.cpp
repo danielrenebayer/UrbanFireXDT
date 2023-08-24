@@ -127,6 +127,29 @@ bool expansion::isExpCombiPossible(int currExpNumber, int newExpNumber) {
     return (currExpBitRepr & newExpBitRepr) == currExpBitRepr;
 }
 
+std::string expansion::expCombiMatrixOrderToString(int indexMatO) {
+    switch (indexMatO) {
+        case  0: return std::string("Nothing");
+        case  1: return std::string("PV only");
+        case  2: return std::string("BS only");
+        case  3: return std::string("HP only");
+        case  4: return std::string("CS only");
+        case  5: return std::string("PV+BS");
+        case  6: return std::string("PV+HP");
+        case  7: return std::string("PV+CS");
+        case  8: return std::string("BS+HP");
+        case  9: return std::string("BS+CS");
+        case 10: return std::string("HP+CS");
+        case 11: return std::string("PV+BS+HP");
+        case 12: return std::string("PV+BS+CS");
+        case 13: return std::string("PV+HP+CS");
+        case 14: return std::string("BS+HP+CS");
+        case 15: return std::string("BS+HP+CS");
+    }
+    throw logic_error("Impossible index passed to function!");
+    return std::string("");
+}
+
 
 /*
 Loads the expansion matrix into the first argument.
@@ -350,6 +373,7 @@ double add_expansion_to_units_orderd_by_metric(
     // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
     for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
         unsigned int iMatO = (unsigned int) iMatOlong; // this is required, as an unsigned int cannot be negative!
+        string iStrO = expansion::expCombiMatrixOrderToString(iMatO); // used for later output
     //for (unsigned int iMatO = 0; iMatO < 16; iMatO++) {
         int iBitO = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
         int iBitRepr = expCombiMatrixOrderToBitRepr(iMatO);
@@ -459,7 +483,8 @@ double add_expansion_to_units_orderd_by_metric(
             }
         }
         // 2.1.2) Execute the simulation once
-        bool no_error = simulation::runSimulationForOneParamSetting(listOfCUs);
+        cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: +PV, no BS \n";
+        bool no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
         if (!no_error) { 
             cerr << "Error during selection of the CUs for adding simulated components." << endl;
             return false;
@@ -490,7 +515,8 @@ double add_expansion_to_units_orderd_by_metric(
             }
         }
         // 2.2.2) Execute the simulation once
-        /*bool*/ no_error = simulation::runSimulationForOneParamSetting(listOfCUs);
+        cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: +PV+BS \n";
+        /*bool*/ no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
         if (!no_error) { 
             cerr << "Error during selection of the CUs for adding simulated components." << endl;
             return false;
@@ -653,6 +679,8 @@ double add_expansion_to_units_orderd_by_metric(
     // output metrics
     output::outputMetricsStrList(output_str_collection);
     for (string* s : output_str_collection) delete s;
+    // make nice output
+    cout << "\r" << global::output_section_delimiter << std::endl;
 
     return cumsum_added_pv_kWp;
 }
@@ -693,6 +721,8 @@ void expansion::add_expansion_to_units(
     for (int i = 0; i < 16; i++) {
         currExpCountsMatIndexed[i] = currExpCountsBitIndexed[ expCombiMatrixOrderToBitRepr(i) ];
     }
+    // output delimiter for nice output
+    std::cout << global::output_section_delimiter << std::endl;
 
     //
     // 2. calculate expansion matrix with absolute values based

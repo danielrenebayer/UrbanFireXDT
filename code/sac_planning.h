@@ -12,6 +12,7 @@
 #ifndef SAC_PLANNING_H
 #define SAC_PLANNING_H
 
+#include <string>
 #include <vector>
 
 #include "units.h"
@@ -38,6 +39,7 @@ namespace expansion {
     int expCombiBitReprToMatrixOrder(int bitRepr);
     int genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);
     bool isExpCombiPossible(int current_scenario_number, int b);
+    std::string expCombiMatrixOrderToString(int indexMatO); ///< Converts a expansion combination in matrix order to a human-readable string
 
     bool load_expansion_matrix(float expansion_matrix[16][16]);
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
