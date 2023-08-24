@@ -481,10 +481,15 @@ int load_data_from_central_database_callbackB(void* data, int argc, char** argv,
     struct tm* time_value = new struct tm;
     stringstream stream_time_value(argv[1]);
     stream_time_value >> get_time(time_value, "%Y-%m-%d %H:%M:%S");
+    string timezone_str { argv[2] };
+    if (timezone_str == "CEST")
+        time_value->tm_isdst = 1;
+    else
+        time_value->tm_isdst = 0;
     // add time values to global list
     global::time_timestep_id[pos] = current_time_index;
     global::time_localtime_str->push_back(time_value);
-    global::time_localtimezone_str->push_back(string(argv[2]));
+    global::time_localtimezone_str->push_back(timezone_str);
     callcounter++;
     return 0;
 }
