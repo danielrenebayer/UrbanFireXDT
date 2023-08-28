@@ -112,6 +112,8 @@ class ControlUnit {
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_annual_hp_el_cons(); ///< Returns the annual HP electricity consumption of a heat pump, if it would be added simulatively (regardless whether it is added or not)
+        float get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)
+        size_t get_sim_comp_cs_n_EVs() const;   ///< Returns the number of connected EVs if the charging station component is enabled, otherwise 0 is returned.
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_SCR(); ///< Returns the SCR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
@@ -172,7 +174,7 @@ class ControlUnit {
         CUOutput*    output_obj;
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
-        double sum_of_PV_generated_kWh;   ///< The sum of PV-generated energy in kWh starting from the beginning of the current simulation run
+        //double sum_of_PV_generated_kWh;   ///< The sum of PV-generated energy in kWh starting from the beginning of the current simulation run
         double sum_of_feed_into_grid_kWh; ///< The sum of energy in kWh, that is fed into the grid, starting from the beginning of the current simulation run
         double sum_of_grid_demand_kWh;    ///< The sum of energy in kWh, that is taken from the grid, starting from the beginning of the current simulation run
         //float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed

@@ -120,7 +120,8 @@ class CUOutput {
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
-                float load_hp,       float load_wb) = 0;
+                float load_hp,       float load_cs,
+                size_t n_cars_pc,    size_t n_cars_pnc) = 0;
         virtual void flush_buffer() = 0;
         void close_buffer();
     protected:
@@ -145,7 +146,8 @@ class CUOutputSingleFile : public CUOutput {
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
-                float load_hp,       float load_wb);
+                float load_hp,       float load_cs,
+                size_t n_cars_pc,    size_t n_cars_pnc);
         void flush_buffer();
     private:
         mutex  single_file_mutex; ///< If a single file is selected as CU output, this variable holds the mutex to ensure correct concurrency behavior
@@ -166,7 +168,8 @@ class CUOutputOneFilePerCU : public CUOutput {
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
-                float load_hp,       float load_wb);
+                float load_hp,       float load_cs,
+                size_t n_cars_pc,    size_t n_cars_pnc);
         void flush_buffer();
 };
 
@@ -185,7 +188,8 @@ class CUOutputOneFilePerSubstation : public CUOutput {
                 float load_vsm,      float load_rsm,
                 float load_selfprod, float load_pv,
                 float bs_SOC,        float load_bs,
-                float load_hp,       float load_wb);
+                float load_hp,       float load_cs,
+                size_t n_cars_pc,    size_t n_cars_pnc);
         void flush_buffer();
 };
 

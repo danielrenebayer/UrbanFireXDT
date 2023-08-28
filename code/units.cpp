@@ -182,7 +182,6 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     // parameter variation setting.
     sum_of_consumption_kWh    = 0.0;
     sum_of_self_cons_kWh      = 0.0;
-    sum_of_PV_generated_kWh   = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
     /*
@@ -356,6 +355,14 @@ float ControlUnit::get_annual_hp_el_cons() {
     }
 }
 
+float ControlUnit::get_sim_comp_cs_max_P_kW() const {
+    return sim_comp_ev->get_max_P_kW();
+}
+
+size_t ControlUnit::get_sim_comp_cs_n_EVs() const {
+    return sim_comp_ev->get_n_EVs();
+}
+
 double ControlUnit::get_SSR() {
     double SSR = 0.0;
     if (sum_of_consumption_kWh > 0)
@@ -365,8 +372,8 @@ double ControlUnit::get_SSR() {
 
 double ControlUnit::get_SCR() {
     double SCR = 0.0;
-    if (sum_of_PV_generated_kWh > 0)
-        SCR = sum_of_self_cons_kWh / sum_of_PV_generated_kWh;
+    if (has_sim_pv && sim_comp_pv->get_total_generation_kWh() > 0)
+        SCR = sum_of_self_cons_kWh / sim_comp_pv->get_total_generation_kWh();
     return SCR;
 }
 
@@ -397,6 +404,10 @@ string* ControlUnit::get_metrics_string() {
         double SCR = get_SCR();
         double SSR = get_SSR();
         double NPV = get_NPV();
+        double sum_of_PV_generated_kWh = 0.0;
+        if (has_sim_pv) {
+            sum_of_PV_generated_kWh = sim_comp_pv->get_total_generation_kWh();
+        }
         double bat_EFC = 0.0;
         unsigned long bat_n_ts_empyt = 0;
         unsigned long bat_n_ts_full  = 0;
@@ -417,7 +428,9 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(sum_of_grid_demand_kWh)+ ",";
         *retstr += to_string(bat_EFC) + ",";
         *retstr += to_string(bat_n_ts_empyt) + ",";
-        *retstr += to_string(bat_n_ts_full);
+        *retstr += to_string(bat_n_ts_full) + ",";
+        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_ev) ? sim_comp_ev->get_total_demand_kWh() : 0.0);
         return retstr;
 }
 
@@ -581,9 +594,11 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
     float total_consumption = 0.0;
     float load_pv = 0.0;
     float load_hp = 0.0;
-    float load_wb = 0.0;
+    float load_cs = 0.0;
     float load_bs = 0.0;
     float bs_SOC  = 0.0;
+    unsigned long n_cars_pc  = 0; // Number of cars parking at home, and connected
+    unsigned long n_cars_pnc = 0; // Number of cars parking at home, but not connected
 
     //
     // 1. get sum of all real smart meter values
@@ -617,7 +632,11 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
         sim_comp_ev->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
         double max_power = sim_comp_ev->get_max_curr_charging_power_kW();
         sim_comp_ev->set_charging_value(max_power);
-        total_consumption += sim_comp_ev->get_currentDemand_kW();
+        load_cs = sim_comp_ev->get_currentDemand_kW();
+        total_consumption += load_cs;
+        // information for output
+        n_cars_pc  = sim_comp_ev->get_n_EVs_pc();
+        n_cars_pnc = sim_comp_ev->get_n_EVs_pnc();
     }
     // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
@@ -652,7 +671,6 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
     // add values to summation variables
     sum_of_consumption_kWh    += Global::get_time_step_size_in_h() * total_consumption;
     sum_of_self_cons_kWh      += Global::get_time_step_size_in_h() * self_produced_load_kW;
-    sum_of_PV_generated_kWh   += Global::get_time_step_size_in_h() * load_pv;
     sum_of_feed_into_grid_kWh += Global::get_time_step_size_in_h() * grid_feedin_kW;
     sum_of_grid_demand_kWh    += Global::get_time_step_size_in_h() * grid_demand_kW;
     /*if (create_history_output) {
@@ -670,7 +688,8 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
             current_load_all_rSMs_kW,
             self_produced_load_kW,
             load_pv, bs_SOC, load_bs,
-            load_hp, load_wb);
+            load_hp, load_cs,
+            n_cars_pc, n_cars_pnc);
 
     return true;
 }
@@ -723,12 +742,17 @@ void ControlUnit::ResetAllInternalStates() {
         e_i->self_produced_load_kW = 0.0;
         e_i->sum_of_consumption_kWh    = 0.0;
         e_i->sum_of_self_cons_kWh      = 0.0;
-        e_i->sum_of_PV_generated_kWh   = 0.0;
         e_i->sum_of_feed_into_grid_kWh = 0.0;
         e_i->sum_of_grid_demand_kWh    = 0.0;
         //
+        if (e_i->has_sim_pv) {
+            e_i->sim_comp_pv->resetInternalState();
+        }
         if (e_i->has_sim_bs) {
             e_i->sim_comp_bs->resetInternalState();
+        }
+        if (e_i->has_sim_hp) {
+            e_i->sim_comp_hp->resetInternalState();
         }
         e_i->sim_comp_ev->resetInternalState();
     }

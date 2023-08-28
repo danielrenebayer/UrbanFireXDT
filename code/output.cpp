@@ -321,7 +321,7 @@ void output::outputCurrentCUSettings() {
     filesystem::path output_path {*(global::current_output_dir)};
     output_path /= "cu-parameters.csv";
     ofstream ofs(output_path, std::ofstream::out);
-    ofs << "UnitID,PV kWp,BS P kW,BS E kWh\n";
+    ofs << "UnitID,PV kWp,BS P kW,BS E kWh,n_EVs,CS_max_P_kW\n";
     // now, iterate over all control units
     ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
     for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
@@ -329,7 +329,9 @@ void output::outputCurrentCUSettings() {
         ofs << cu->get_unitID()            << ",";
         ofs << cu->get_sim_comp_pv_kWp()   << ",";
         ofs << cu->get_sim_comp_bs_P_kW()  << ",";
-        ofs << cu->get_sim_comp_bs_E_kWh() << "\n";
+        ofs << cu->get_sim_comp_bs_E_kWh() << ",";
+        ofs << cu->get_sim_comp_cs_n_EVs() << ",";
+        ofs << cu->get_sim_comp_cs_max_P_kW() << "\n";
     }
     ofs.close();
     // 2)
@@ -364,7 +366,7 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
             output_path /= "metrics-per-cu.csv";
         }
         ofstream ofs(output_path, std::ofstream::out);
-        ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full\n";
+        ofs << "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,Sum of HP demand [kWh],Sum of CS demand [kWh]\n";
         //
         // loop over all CUs and get metrics output string
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
@@ -433,7 +435,7 @@ CUOutputSingleFile::CUOutputSingleFile(int scenario_id) {
     output_stream->rdbuf()->pubsetbuf(buffer, bufferSize);
     //
     // add header to output file
-    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW" << endl;
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,CS_load_kW,CS_n_EVs_conn,CS_n_EVs_not_conn" << endl;
     buffer_open = true;
 }
 
@@ -449,7 +451,7 @@ CUOutputOneFilePerCU::CUOutputOneFilePerCU(int cuID, filesystem::path& dirpath) 
     filepath_i /= dirpath;
     filepath_i /= filename_i.str();
     output_stream = new ofstream(filepath_i, std::ofstream::out);
-    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,WB_load_kW\n";
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,CS_load_kW,CS_n_EVs_conn,CS_n_EVs_not_conn\n";
     buffer_open = true;
 }
 
@@ -460,7 +462,7 @@ CUOutputOneFilePerSubstation::CUOutputOneFilePerSubstation(const string* substNa
     filepath_i /= dirpath;
     filepath_i /= filename_i.str();
     output_stream = new ofstream(filepath_i, std::ofstream::out);
-    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,WB_load_kW\n";
+    *(output_stream) << "Timestep,ControlUnitID,Load_vSmartMeter_kW,Load_rSmartMeters_kW,Load_self_produced_kW,PVFeedin_simulated_kW,BS_SOC,BS_load_kW,HP_load_kW,CS_load_kW,CS_n_EVs_conn,CS_n_EVs_not_conn\n";
     buffer_open = true;
 }
 
@@ -468,28 +470,28 @@ void CUOutputSingleFile::output_for_one_cu(
         size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
-        float load_wb)
+        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
         size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
-        float load_wb)
+        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
         size_t cuID,    size_t ts,           float load_vsm,
         float load_rsm, float load_selfprod, float load_pv,
         float bs_SOC,   float load_bs,       float load_hp,
-        float load_wb)
+        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_wb << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputSingleFile::flush_buffer() {
