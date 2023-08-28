@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -430,13 +431,25 @@ void ComponentHP::VacuumStaticVariables() {
 //         ComponentCS           //
 // ----------------------------- //
 
-ComponentCS::ComponentCS() {
+ComponentCS::ComponentCS() : max_charging_power(11) { // TODO: make max charging power configurable, or at least dependent of the number of flats in a building
     enabled = false;
+    current_demand_kW = 0.0;
+    total_demand_kWh  = 0.0;
+    charging_power_required_kW = 0.0;
+    charging_power_possible_kW = 0.0;
 }
 
 ComponentCS::~ComponentCS() {
     for (EVFSM* ev : listOfEVs)
         delete ev;
+}
+
+double ComponentCS::get_max_curr_charging_power_kW() const {
+    if (charging_power_required_kW + charging_power_possible_kW >= max_charging_power) {
+        return max_charging_power;
+    } else {
+        return charging_power_required_kW + charging_power_possible_kW;
+    }
 }
 
 void ComponentCS::enable_station() {
@@ -448,9 +461,84 @@ void ComponentCS::disable_station() {
 }
 
 void ComponentCS::resetInternalState() {
-    // TODO
+    current_demand_kW = 0.0;
+    total_demand_kWh  = 0.0;
+    charging_power_required_kW = 0.0;
+    charging_power_possible_kW = 0.0;
+    charging_order_req.clear();
+    charging_order_pos.clear();
+    //
+    for (EVFSM* ev : listOfEVs) {
+        ev->resetInternalState();
+    }
 }
 
 void ComponentCS::add_ev(unsigned long carID) {
     listOfEVs.push_back(new EVFSM(carID, this));
+}
+
+void ComponentCS::setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
+    // 1. set new car states
+    for (EVFSM* ev : listOfEVs) {
+        ev->setCarStateForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+    }
+    // 2. iterate over all cars currently at home -> how much energy do they require to charge?
+    charging_power_required_kW = 0.0;
+    charging_power_possible_kW = 0.0;
+    charging_order_req.clear();
+    charging_order_pos.clear();
+    // 2a. The cars that require charging
+    for (EVFSM* ev : listOfEVs
+                   | std::views::filter(
+                        [](EVFSM* ev) {
+                            return ev->get_current_state() == EVState::ConnectedAtHome &&
+                                   ev->get_current_state_icah() == EVStateIfConnAtHome::ChargingRequired;
+                        }))
+    {
+        charging_power_required_kW += ev->get_max_curr_charging_power_kW();
+        charging_order_req.push_back(ev);
+    }
+    // 2b. The cars that can charge
+    for (EVFSM* ev : listOfEVs
+                   | std::views::filter(
+                        [](EVFSM* ev) {
+                            return ev->get_current_state() == EVState::ConnectedAtHome &&
+                                   ( ev->get_current_state_icah() == EVStateIfConnAtHome::ChargingPossible ||
+                                     ev->get_current_state_icah() == EVStateIfConnAtHome::BothPossible);
+                        }))
+    {
+        charging_power_possible_kW += ev->get_max_curr_charging_power_kW();
+        charging_order_pos.push_back(ev);
+    }
+}
+
+void ComponentCS::set_charging_value(double power_kW) {
+    current_demand_kW = 0.0;
+    double remaining_power_kW = max_charging_power - current_demand_kW; // The remaining power
+    for (EVFSM* ev : charging_order_req) {
+        // max. 11 kW per car
+        // Set charging request
+        if (remaining_power_kW >= 11.0) {
+            ev->set_current_charging_power(11.0);
+        } else {
+            ev->set_current_charging_power(remaining_power_kW);
+        }
+        // get actual charging power
+        remaining_power_kW -= ev->get_current_charging_power();
+    }
+    if (remaining_power_kW > 0) {
+        for (EVFSM* ev : charging_order_pos) {
+            // max. 11 kW per car
+            // Set charging request
+            if (remaining_power_kW >= 11.0) {
+                ev->set_current_charging_power(11.0);
+            } else {
+                ev->set_current_charging_power(remaining_power_kW);
+            }
+            // get actual charging power
+            remaining_power_kW -= ev->get_current_charging_power();
+        }
+    }
+    // compute cumulative sum
+    total_demand_kWh += current_demand_kW * Global::get_time_step_size_in_h();
 }

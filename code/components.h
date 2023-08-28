@@ -144,14 +144,31 @@ class ComponentCS {
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
-        // modifieres
+        double get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
+        double get_total_demand_kWh() const { return total_demand_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
+        //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
+        double get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
+        // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();
         void resetInternalState();
         void add_ev(unsigned long carID);
+        // modifiers (in the course of simulation time)
+        void setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l);
+        void set_charging_value(double power_kW); ///< Sets the charging value in kW that should be charged into the connected EVs
     private:
+        // constant members
+        const float max_charging_power;
+        // variable members, constant during one simulation run
         bool enabled;
         std::vector<EVFSM*> listOfEVs;
+        // variable members, variable during simulation run
+        double current_demand_kW;
+        double total_demand_kWh;
+        double charging_power_required_kW;
+        double charging_power_possible_kW;
+        std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
+        std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
 };
 
 #endif
