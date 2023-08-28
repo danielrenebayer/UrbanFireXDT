@@ -133,7 +133,7 @@ class ControlUnit {
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
         // for simulation runs
-        bool compute_next_value(unsigned long ts);
+        bool compute_next_value(unsigned long ts, int dayOfWeek_l, int hourOfDay_l); ///< Computes the value for the (next) time step. The additional parameters dayOfWeek and hourOfDay are only required for passing them to the Charging Station. Mind: Both values are "left-aligned", i.e., they are the labels for the start of the current time step (in contrast to global::time_localtime_str)
         //
         // static functions
         // 1. Initializers and destructors

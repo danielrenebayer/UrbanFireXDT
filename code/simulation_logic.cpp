@@ -88,6 +88,19 @@ bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, cons
     //
 
     //int tsID = ts - 1;
+    struct tm* current_tm = global::time_localtime_str->at(ts-1);
+    int dayOfWeek_r = (current_tm->tm_wday + 6) % 7; // get day of week in the format 0->Monday, 6->Sunday
+    int hourOfDay_r =  current_tm->tm_hour;
+    // convert from rigth-alignment to left-alignment
+    int dayOfWeek_l = dayOfWeek_r;
+    int hourOfDay_l = hourOfDay_r - 1;
+    if (hourOfDay_r <= 0) {
+        hourOfDay_l = 23;
+        if (dayOfWeek_r >= 1)
+            dayOfWeek_l = dayOfWeek_r - 1;
+        else
+            dayOfWeek_l = 6;
+    }
 
     // TODO: parallelization of the unit calls
     // loop over all control units:
@@ -96,13 +109,13 @@ bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, cons
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
         const size_t nCUs = ControlUnit::GetNumberOfInstances();
         for (size_t i = 0; i < nCUs; i++) {
-            if (!cuList[i]->compute_next_value(ts))
+            if (!cuList[i]->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
                 return false;
         }
     } else {
         // execute simulation only for selected units
         for (ControlUnit* cu : *subsection) {
-            if (!cu->compute_next_value(ts))
+            if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
                 return false;
         }
     }

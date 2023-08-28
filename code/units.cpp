@@ -569,7 +569,7 @@ void ControlUnit::remove_sim_added_components() {
     }
 }
 
-bool ControlUnit::compute_next_value(unsigned long ts) {
+bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
     //
     // This function computes the next value
     // for this complete control unit.
@@ -614,7 +614,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // 4. get the effect of the EV charging station
     if (sim_comp_ev->is_enabled()) {
-        // TODO
+        sim_comp_ev->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+        double max_power = sim_comp_ev->get_max_curr_charging_power_kW();
+        sim_comp_ev->set_charging_value(max_power);
+        total_consumption += sim_comp_ev->get_currentDemand_kW();
     }
     // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
