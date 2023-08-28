@@ -24,6 +24,32 @@ class ComponentCS;
 #include "vehicles.h"
 
 
+/*!
+ * An abstract class acting as a super-class for all existing components.
+ */
+class BaseComponent {
+    public:
+		virtual ~BaseComponent() {}
+        // modifieres (on structural level of the simulation)
+        virtual void resetInternalState() = 0; ///< Resets the internal simulation state (like counters), but retains the structural state like attached sub-components
+        // modifiers (in the course of simulation time)
+        //
+};
+
+/*!
+ * An abstract class acting as super-class for all components that can be controlled, but still have to fulfil a task.
+ * An example would be a heat pump or a charging station. Both offer flexibility to some extend, but their main purpose
+ * is to generate heat or charge a EV. Thus their control is semi-flexible, as the main purpose still has to be fulfilled.
+ * 
+ * Instead, a battery storage is a fully-flexible controlable element, as it has no other task to fulfil.
+ */
+class BaseComponentSemiFlexible : public BaseComponent {
+    public:
+		virtual ~BaseComponentSemiFlexible() {}
+        virtual double get_currentDemand_kW() const = 0;
+};
+
+
 class RoofSectionPV {
     public:
         RoofSectionPV(float this_section_kWp, std::string& orientation);
@@ -45,16 +71,20 @@ class RoofSectionPV {
         static std::map<std::string, std::uniform_int_distribution<size_t>> distributions;
 };
 
-class ComponentPV {
+class ComponentPV : public BaseComponent {
     public:
         ComponentPV(float kWp_static, unsigned long locationID); ///< Constructor in the case of static kWp computation
         ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
         // getter methods
         float get_kWp() const            { return total_kWp; }
         float get_currentGeneration_kW() { return currentGeneration_kW; }
+        double get_total_generation_kWh(){ return total_generation_kWh; } ///< Returns the total produced energy in kWh from the start of the simulation run until the current time step
         std::string* get_section_string(const std::string& prefix_per_line); ///< Returns a string listing information about all existing, simulated roof sections - one line per section
-        // update / action methods
+        // update / action methods during simulation run
         void  calculateCurrentFeedin(unsigned long ts);
+        // methods for simulation reset
+        void resetInternalState();
+        // modification methods for structural modifications
         //void  set_kWp(float value);
     private:
         // constant members
@@ -63,9 +93,10 @@ class ComponentPV {
         float total_kWp;
         // member variables that can change over time
         float currentGeneration_kW;
+        double total_generation_kWh; ///< Total generation over the complete simulation run
 };
 
-class ComponentBS {
+class ComponentBS : public BaseComponent {
     public:
         ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC); ///< Default constructor if the battery should represent a large-scale or household-style battery system
         ComponentBS(float maxE_kWh, float discharge_rate_per_step, float efficiency_in, float initial_SoC); ///< Constructor to use if it is the battery of an EV
@@ -106,13 +137,16 @@ class ComponentBS {
         unsigned long n_ts_SOC_full;  ///< Number of time steps where battery is full
 };
 
-class ComponentHP {
+class ComponentHP : public BaseComponentSemiFlexible {
     public:
         ComponentHP(float yearly_econs_kWh);
         // getter methods
-        float get_currentDemand_kW() { return currentDemand_kW; }
+        using BaseComponentSemiFlexible::get_currentDemand_kW;
+        double get_currentDemand_kW() const { return currentDemand_kW; }
+        double get_total_demand_kWh() const { return total_demand_kWh; }
         // update / action methods
         void calculateCurrentFeedin(unsigned long ts);
+        void resetInternalState();
         //
         // static methods for initializing the random generators
         static void InitializeRandomGenerator();
@@ -124,6 +158,7 @@ class ComponentHP {
         const float* profile_data; ///< Reference to the profile, should be one of global::hp_profiles
         // member variables that can change over time
         float currentDemand_kW;
+        double total_demand_kWh; ///< Total demand since the beginning of the simulation period
         //
         // static data for selecting the next time series for expansion
         static size_t next_hp_idx;
@@ -138,16 +173,21 @@ class ComponentHP {
  * Enabling a station in the simulation represents to build such a station in
  * the reality.
  */
-class ComponentCS {
+class ComponentCS : public BaseComponentSemiFlexible {
     public:
         ComponentCS();
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
+        float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW
+        using BaseComponentSemiFlexible::get_currentDemand_kW;
         double get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_demand_kWh() const { return total_demand_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
         double get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
+        unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
+        unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
+        unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();

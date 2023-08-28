@@ -1,6 +1,7 @@
 
 #include "components.h"
 
+#include <algorithm>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -91,6 +92,7 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
      *
      */
     currentGeneration_kW = 0;
+    total_generation_kWh = 0.0;
 
   if (Global::get_exp_pv_static_profile_orientation() == "") {
     // Case 1: if no static profile is selected, use existing roof data
@@ -141,6 +143,7 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     }
 
     currentGeneration_kW = 0;
+    total_generation_kWh = 0.0;
     total_kWp = 0;
     // attach roof sections as defined in data
     // // float min_roof_area = min_kWp / kWp_per_m2;
@@ -216,6 +219,13 @@ void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     currentGeneration_kW = 0.0;
     for (RoofSectionPV& section : roof_sections)
         currentGeneration_kW += section.get_currentFeedin_kW(ts);
+    // compute total generation
+    total_generation_kWh += Global::get_time_step_size_in_h() * currentGeneration_kW;
+}
+
+void ComponentPV::resetInternalState() {
+    total_generation_kWh = 0.0;
+    currentGeneration_kW = 0.0;
 }
 
 
@@ -275,7 +285,7 @@ ComponentBS::ComponentBS(
 {
     SOC               = 0;
     currentE_kWh      = 0;
-    currentP_kW       = 0;
+    currentP_kW       = maxE_kWh; // This is required so that the battery can be emptied in one single step at the arrival
     charge_request_kW = 0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty    = 0;
@@ -398,11 +408,17 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     profile_data = global::hp_profiles[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
+    total_demand_kWh = 0.0;
 }
 
 void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
     unsigned long tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
+}
+
+void ComponentHP::resetInternalState() {
+    currentDemand_kW = 0.0;
+    total_demand_kWh = 0.0;
 }
 
 void ComponentHP::InitializeRandomGenerator() {
@@ -444,12 +460,32 @@ ComponentCS::~ComponentCS() {
         delete ev;
 }
 
+float ComponentCS::get_max_P_kW() const {
+    if (enabled)
+        return max_charging_power;
+    return 0.0;
+}
+
 double ComponentCS::get_max_curr_charging_power_kW() const {
     if (charging_power_required_kW + charging_power_possible_kW >= max_charging_power) {
         return max_charging_power;
     } else {
         return charging_power_required_kW + charging_power_possible_kW;
     }
+}
+
+unsigned long ComponentCS::get_n_EVs_pc() const {
+    return std::ranges::count_if(listOfEVs, [](EVFSM* ev){return ev->get_current_state() == EVState::ConnectedAtHome;});
+}
+
+unsigned long ComponentCS::get_n_EVs_pnc() const {
+    return std::ranges::count_if(listOfEVs.begin(), listOfEVs.end(), [](EVFSM* ev){return ev->get_current_state() == EVState::DisconnectedAtHome;});
+}
+
+unsigned long ComponentCS::get_n_EVs() const {
+    if (enabled)
+        return listOfEVs.size();
+    return 0;
 }
 
 void ComponentCS::enable_station() {
