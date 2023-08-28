@@ -1,4 +1,4 @@
-UnitID,PV kWp,BS P kW,BS E kWh
-1,20,20,10
-2,20,20,10
-3,0,0,0
+UnitID,PV kWp,BS P kW,BS E kWh,n_EVs,CS_max_P_kW
+1,20,20,10,0,0
+2,20,20,10,0,0
+3,0,0,0,0,0
