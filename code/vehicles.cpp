@@ -75,20 +75,20 @@ void EVFSM::add_weekly_tour(
         }
         // Check, if tours are overlapping
         // A) For the previous tour
-        float atime_of_week_prev = Global::get_time_step_size_in_h() * last_know_tour->day_of_week + (float) (last_know_tour->departure_ts_of_day) + (float) (last_know_tour->ts_duration); // arrival time of week of the previous trip
-        float dtime_of_week_new  = Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day); // departure time of week of the trip to add
+        float atime_of_week_prev = 24 * Global::get_time_step_size_in_h() * last_know_tour->day_of_week + (float) (last_know_tour->departure_ts_of_day) + (float) (last_know_tour->ts_duration); // arrival time of week of the previous trip
+        float dtime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day); // departure time of week of the trip to add
         if (atime_of_week_prev > dtime_of_week_new) {
-            std::cerr << "Warning: A tour is overlapping with previous tour. Ignoring the second tour\n";
+            std::cerr << "Warning: A tour is overlapping with its previous tour. Ignoring the second tour (carID=" << carID << ", weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
             return;
         }
         // B) For the first tour in the next week
         VehicleTour* first_known_tour = list_of_all_tours.front();
         unsigned long ts_of_a_week = (unsigned long) std::floor(((double) (7 * 24) / (double) Global::get_time_step_size_in_h()));
-        float atime_of_week_new  = Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day) + (float) (ts_duration); // arrival time of week of the trip to add
+        float atime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day) + (float) (ts_duration); // arrival time of week of the trip to add
         if ((unsigned long) atime_of_week_new > ts_of_a_week) {
             float atime_of_week_first = Global::get_time_step_size_in_h() * first_known_tour->day_of_week + (float) (first_known_tour->departure_ts_of_day);
             if ((unsigned long) (atime_of_week_new) % ts_of_a_week > (unsigned long) atime_of_week_first) {
-                std::cerr << "Warning: A tour is overlapping with first tour. Ignoring the second tour\n";
+                std::cerr << "Warning: A tour is overlapping with the first known tour. Ignoring the second tour (carID=" << carID << ", weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
                 return;
             }
         }
