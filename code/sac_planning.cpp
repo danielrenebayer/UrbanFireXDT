@@ -270,6 +270,8 @@ double add_expansion_to_units_random_or_data_order(
             // shuffle list if CU selection mode for comp. add. tells so (or random anyway is selected)
             random_device rndDevice;
             mt19937 rndGen( rndDevice() );
+            if (Global::is_seed_set())
+                rndGen.seed(Global::get_seed());
             shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
         }
         // get the iterator
@@ -382,6 +384,8 @@ double add_expansion_to_units_orderd_by_metric(
         // shuffle list (for random addition of HP and EV Ch. St.)
         random_device rndDevice;
         mt19937 rndGen( rndDevice() );
+        if (Global::is_seed_set())
+            rndGen.seed(Global::get_seed());
         shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
         //
         // 1) Add HP and EV Ch. St. to the units (if required)

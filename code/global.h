@@ -148,6 +148,8 @@ class Global {
         static unsigned long get_n_MUs()                { return n_MUs; }
         static unsigned long get_n_pv_profiles()        { return n_pv_ts; }
         static unsigned long get_n_heatpump_profiles()  { return n_hp_ts; }
+        static unsigned int  get_seed()                 { return seed; }
+        static bool          is_seed_set()              { return seed_set; }
       //static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
         static bool is_parameter_variation()   { return pvar_selected;  }
         static int  get_parameter_varID()      { return pvar_id;        }
@@ -205,6 +207,7 @@ class Global {
         static void set_n_MUs(unsigned long n_MUs);
         static void set_n_pv_profiles(unsigned long n_pv_ts);
         static void set_n_heatpump_profiles(unsigned long n_hp_ts);
+        static void set_seed(unsigned int value);
       //static void set_comp_eval_metrics(bool value);
         static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_repetitions_selected(bool value);
@@ -263,6 +266,7 @@ class Global {
         static unsigned long n_MUs;        ///< Total number of meausrement units for which data is available
         static unsigned long n_pv_ts;      ///< Total number of available normalized pv feedin time series that can be used for simulating new pv installations
         static unsigned long n_hp_ts;      ///< Total number of available normalized heat pump time series that can be used for simulating new heat pumps
+        static unsigned int  seed;         ///< The seed for all random number generators
       //static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
         static bool pvar_selected;         ///< True, if a parameter variation is selected
         static int  pvar_id;               ///< ID of the parameter variation
@@ -321,6 +325,7 @@ class Global {
         static bool n_MUs_init;
         static bool n_pv_ts_init;
         static bool n_hp_ts_init;
+        static bool seed_set;
       //static bool comp_eval_metrics_init;
         static bool pvar_set;
         static bool repetitions_selected_set;

@@ -1201,6 +1201,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::is_parameter_variation());
     PRINT_VAR(Global::get_parameter_varID());
     PRINT_VAR(Global::get_repetitions_selected());
+    PRINT_VAR(Global::is_seed_set());
+    if (Global::is_seed_set()) { PRINT_VAR(Global::get_seed()); }
     PRINT_VAR(Global::get_n_repetitions());
     PRINT_TM_VAR(Global::get_ts_start_tm());
     PRINT_TM_VAR(Global::get_ts_end_tm());

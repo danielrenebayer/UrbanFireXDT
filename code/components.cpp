@@ -50,6 +50,7 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
         // case random selection
         if (!random_generators.contains(orientation)) {
             random_generators[orientation] = std::default_random_engine{};
+            if (Global::is_seed_set()) random_generators[orientation].seed(Global::get_seed());
             distributions[orientation] = std::uniform_int_distribution<size_t>(0, global::pv_profiles_information[orientation]-1);
         }
         profile_index = distributions[orientation](random_generators[orientation]);
@@ -430,6 +431,9 @@ void ComponentHP::InitializeRandomGenerator() {
     } else {
         random_generator_init = true;
         random_generator = new std::default_random_engine();
+        if (Global::is_seed_set()) {
+            random_generator->seed(Global::get_seed());
+        }
         distribution     = new std::uniform_int_distribution<size_t>(0, Global::get_n_heatpump_profiles()-1);
     }
 }

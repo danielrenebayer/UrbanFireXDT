@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
       //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completly, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
-        ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completly, 'on' substation output (default)");
+        ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completly, 'on' substation output (default)")
+        ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used.");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
     bpopts::variables_map opts_vals;
@@ -130,6 +131,11 @@ int main(int argc, char* argv[]) {
         }
     } else {
         Global::set_repetitions_selected(false);
+    }
+    if (opts_vals.count("seed") > 0) {
+        unsigned int seed = opts_vals["seed"].as<unsigned int>();
+        Global::set_seed(seed);
+        EVFSM::SetSeed(seed);
     }
     /*
     if (opts_vals.count("metrics")) {

@@ -93,6 +93,7 @@ unsigned long Global::n_CUs       = 0;
 unsigned long Global::n_MUs       = 0;
 unsigned long Global::n_pv_ts     = 0;
 unsigned long Global::n_hp_ts     = 0;
+unsigned int  Global::seed        = 0;
 //bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
@@ -150,6 +151,7 @@ bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
 bool Global::n_pv_ts_init          = false;
 bool Global::n_hp_ts_init          = false;
+bool Global::seed_set              = false;
 //bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
 bool Global::repetitions_selected_set     = false;
@@ -426,6 +428,14 @@ void Global::set_n_MUs(unsigned long n_MUs) {
     } else {
         Global::n_MUs = n_MUs;
         Global::n_MUs_init = true;
+    }
+}
+void Global::set_seed(unsigned int value) {
+    if (is_locked && seed_set) {
+        cerr << "Global variable seed is already initialized!" << endl;
+    } else {
+        Global::seed = seed;
+        Global::seed_set = true;
     }
 }
 /*void Global::set_comp_eval_metrics(bool value) {

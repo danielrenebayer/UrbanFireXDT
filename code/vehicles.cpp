@@ -187,3 +187,7 @@ void EVFSM::AddWeeklyTour(
 void EVFSM::VaccuumStaticVariables() {
     EVFSM::list_of_cars.clear();
 }
+
+void EVFSM::SetSeed(unsigned int seed) {
+    random_generator->seed(seed);
+}

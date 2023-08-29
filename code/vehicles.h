@@ -87,6 +87,7 @@ class EVFSM {
         // static methods
         static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double trip_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
         static void VaccuumStaticVariables();
+        static void SetSeed(unsigned int seed); ///< Sets the seed for the EVFSM-class random number generator
 
     private:
         // constant members
