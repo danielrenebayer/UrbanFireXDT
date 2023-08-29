@@ -416,6 +416,7 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
 void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
     unsigned long tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
+    total_demand_kWh += currentDemand_kW * Global::get_time_step_size_in_h();
 }
 
 void ComponentHP::resetInternalState() {
