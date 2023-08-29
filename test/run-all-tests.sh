@@ -38,14 +38,14 @@ echo -e "\n-- 6. Simulation run --"
 ../code/main-opti --config ../test/test-config/test_config.json --pvar 1 7
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 7. Simulation run --"
-../code/main-opti --config ../test/test-config/test_config.json 8
+../code/main-opti --config ../test/test-config/test_config.json --seed 1234 8
 if (( $? != 0 )); then program_error=1; fi
 
 
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
     echo -e "\n-- 8. Simulation run (using valgrind) --"
-    valgrind ../code/main-dbg --config ../test/test-config/test_config.json 6
+    valgrind ../code/main-dbg --config ../test/test-config/test_config.json --seed 1234 6
     if (( $? != 0 )); then memory_error=1; else memory_error=0;  fi
 fi
 
