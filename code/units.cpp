@@ -124,6 +124,7 @@ bool ControlUnit::st__cu_list_init     = false;
 size_t ControlUnit::st__n_CUs             = 0;
 size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
+const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh]";
 
 ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
@@ -182,6 +183,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     // parameter variation setting.
     sum_of_consumption_kWh    = 0.0;
     sum_of_self_cons_kWh      = 0.0;
+    sum_of_mu_cons_kWh        = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
     /*
@@ -409,19 +411,24 @@ string* ControlUnit::get_metrics_string() {
             sum_of_PV_generated_kWh = sim_comp_pv->get_total_generation_kWh();
         }
         double bat_EFC = 0.0;
+        double bat_E_withdrawn = 0.0;
         unsigned long bat_n_ts_empyt = 0;
         unsigned long bat_n_ts_full  = 0;
         if (has_sim_bs) {
             bat_EFC = sim_comp_bs->get_current_EFC();
+            bat_E_withdrawn= sim_comp_bs->get_total_withdrawn_E_kWh();
             bat_n_ts_empyt = sim_comp_bs->get_n_ts_empty();
             bat_n_ts_full  = sim_comp_bs->get_n_ts_full();
         }
+        // See ControlUnit::MetricsStringHeader for the header definition
+        //
         string* retstr = new string;
         *retstr += to_string(unitID) + ",";
         *retstr += to_string(SCR) + ",";
         *retstr += to_string(SSR) + ",";
         *retstr += to_string(NPV) + ",";
         *retstr += to_string(sum_of_consumption_kWh) + ",";
+        *retstr += to_string(sum_of_mu_cons_kWh)     + ",";
         *retstr += to_string(sum_of_self_cons_kWh)   + ",";
         *retstr += to_string(sum_of_PV_generated_kWh)+ ",";
         *retstr += to_string(sum_of_feed_into_grid_kWh)+ ",";
@@ -429,6 +436,7 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(bat_EFC) + ",";
         *retstr += to_string(bat_n_ts_empyt) + ",";
         *retstr += to_string(bat_n_ts_full) + ",";
+        *retstr += to_string(bat_E_withdrawn) + ",";
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
         *retstr += to_string((has_sim_ev) ? sim_comp_ev->get_total_demand_kWh() : 0.0);
         return retstr;
@@ -672,6 +680,8 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
     // add values to summation variables
     sum_of_consumption_kWh    += Global::get_time_step_size_in_h() * total_consumption;
     sum_of_self_cons_kWh      += Global::get_time_step_size_in_h() * self_produced_load_kW;
+    if (current_load_all_rSMs_kW > 0)
+        sum_of_mu_cons_kWh    += Global::get_time_step_size_in_h() * current_load_all_rSMs_kW;
     sum_of_feed_into_grid_kWh += Global::get_time_step_size_in_h() * grid_feedin_kW;
     sum_of_grid_demand_kWh    += Global::get_time_step_size_in_h() * grid_demand_kW;
     /*if (create_history_output) {
@@ -743,6 +753,7 @@ void ControlUnit::ResetAllInternalStates() {
         e_i->self_produced_load_kW = 0.0;
         e_i->sum_of_consumption_kWh    = 0.0;
         e_i->sum_of_self_cons_kWh      = 0.0;
+        e_i->sum_of_mu_cons_kWh        = 0.0;
         e_i->sum_of_feed_into_grid_kWh = 0.0;
         e_i->sum_of_grid_demand_kWh    = 0.0;
         //
