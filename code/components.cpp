@@ -285,11 +285,13 @@ ComponentBS::ComponentBS(
 {
     SOC               = 0;
     currentE_kWh      = 0;
-    currentP_kW       = maxE_kWh; // This is required so that the battery can be emptied in one single step at the arrival
+    currentP_kW       = 0;
     charge_request_kW = 0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty    = 0;
     n_ts_SOC_full     = 0;
+
+    maxP_kW = maxE_kWh / Global::get_time_step_size_in_h(); // This is required so that the battery can be emptied in one single step at the arrival
 
     if (initial_SoC > 0) {
         SOC = initial_SoC;
@@ -550,7 +552,7 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int
 
 void ComponentCS::set_charging_value(double power_kW) {
     current_demand_kW = 0.0;
-    double remaining_power_kW = max_charging_power - current_demand_kW; // The remaining power
+    double remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
     for (EVFSM* ev : charging_order_req) {
         // max. 11 kW per car
         // Set charging request
@@ -575,6 +577,7 @@ void ComponentCS::set_charging_value(double power_kW) {
             remaining_power_kW -= ev->get_current_charging_power();
         }
     }
-    // compute cumulative sum
+    // compute current demand and cumulative sum
+    current_demand_kW = max_charging_power - remaining_power_kW;
     total_demand_kWh += current_demand_kW * Global::get_time_step_size_in_h();
 }

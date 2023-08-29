@@ -127,7 +127,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOf
                 current_state = EVState::ConnectedAtHome;
             } else {
                 // sample randomly if car will be conntected or not
-                if ((*distribution)(*random_generator) > 0.75)
+                if (Global::get_ev_plugin_probability() >= 1.0 || (*distribution)(*random_generator) <= Global::get_ev_plugin_probability())
                     current_state = EVState::ConnectedAtHome;
                 else
                     current_state = EVState::DisconnectedAtHome;
@@ -135,7 +135,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOf
         }
     }
     // does a new tour start?
-    if (current_tour != NULL) {
+    if (current_tour == NULL) {
         // loop over all tours on this day, is there a tour starting right now?
         for ( VehicleTour &vt : *(list_of_tours_pd)[dayOfWeek_l] ) {
             if (vt.departure_ts_of_day == hourOfDay_l) { // mind the shift: Car tours are left-aligned, hours are right aligned
@@ -144,6 +144,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOf
                 // compute (mean) energy demand per tour time step
                 energy_demand_per_tour_ts = (float) (vt.trip_length_km * econs_kWh_per_km) / (float) (vt.ts_duration);
                 next_tour = list_of_all_tours[vt.next_tour_id];
+                current_state = EVState::Driving;
                 break;
             }
         }

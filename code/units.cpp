@@ -633,6 +633,7 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
         double max_power = sim_comp_ev->get_max_curr_charging_power_kW();
         sim_comp_ev->set_charging_value(max_power);
         load_cs = sim_comp_ev->get_currentDemand_kW();
+        current_load_vSM_kW += load_cs;
         total_consumption += load_cs;
         // information for output
         n_cars_pc  = sim_comp_ev->get_n_EVs_pc();
