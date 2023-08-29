@@ -229,6 +229,10 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_hp_E_estimation_param_t( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("EV plugin probability") == 0)
+            {
+                Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev data path")         == 0 )
             {
                 string value = scenario_dict.get_value<string>();

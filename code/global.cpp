@@ -131,6 +131,7 @@ unsigned int Global::npv_time_horizon  = 0;
 float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::hp_E_estimation_param_m = 0.0;
 float Global::hp_E_estimation_param_t = 0.0;
+float Global::ev_plugin_probability   = 0.25;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -746,6 +747,17 @@ void Global::set_hp_E_estimation_param_t(float value) {
     } else {
         Global::hp_E_estimation_param_t = value;
         hp_E_estimation_param_t_set = true;
+    }
+}
+void Global::set_ev_plugin_probability(float value) {
+    if (is_locked) {
+        cerr << "Global variable ev_plugin_probability cannot be set!" << endl;
+    } else {
+        if (value > 1.0 || value < 0.0) {
+            cerr << "Global variable ev_plugin_probability cannot be set to value " << value << " (allowed range: [0.0,1.0] )" << endl;
+            return;
+        }
+        Global::ev_plugin_probability = value;
     }
 }
 void Global::set_input_path(string* path) {

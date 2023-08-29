@@ -34,6 +34,8 @@ expansion BS power for SOC 0,float,no,0.0,0.0 to inf,Power consumption of the ba
 expansion BS power for SOC 1,float,no,0.0,0.0 to inf,Power consumption of the battery controller if SOC is 1 in kW,
 expansion BS max total E addition,float,no,no max. set,,Upper limit for the capacity of all added resid. battery storage systems,no
 ,,,,,,
+EV plugin probability,float,no,0.25,0.0 to 1.0,The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded),no
+,,,,,,
 tariff feed-in per kWh ,float,yes,,,,no
 tariff demand per kWh ,float,yes,,,,no
 net present value discount rate ,float,yes,,,,no
