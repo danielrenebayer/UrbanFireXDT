@@ -1,0 +1,26 @@
+[
+    {
+        "carID": 1,
+        "ControlUnitID": 1
+    },
+    {
+        "carID": 2,
+        "ControlUnitID": 2
+    },
+    {
+        "carID": 3,
+        "ControlUnitID": 2
+    },
+    {
+        "carID": 4,
+        "ControlUnitID": 3
+    },
+    {
+        "carID": 5,
+        "ControlUnitID": 3
+    },
+    {
+        "carID": 6,
+        "ControlUnitID": 3
+    }
+]

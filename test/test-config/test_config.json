@@ -2,8 +2,8 @@
     "Default Scenario Values": {
         "data input path":  "../test-data/",
         "data output path": "../test-output/",
-        "start": "2020-01-01 00:00:00",
-        "end":   "2020-01-02 00:00:00",
+        "start": "2023-05-10 04:00:00",
+        "end":   "2023-05-11 06:00:00",
         "time steps per hour": 1,
 
         "open space PV kWp":        0,
@@ -78,6 +78,13 @@
             "expansion BS P in kW": 20,
             "expansion PV kWp static mode": true,
             "comment": "Test scenario for parameter variation, based on Scnario 2"
+        },
+        {
+            "id": 8,
+            "expansion id": 8,
+            "ev data path": "../test-data/ev-data/",
+            "EV plugin probability": 1.0,
+            "comment": "EV test; All households are equipped charging station"
         }
     ],
     "Parameter Variation": [
