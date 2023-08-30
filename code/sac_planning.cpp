@@ -331,7 +331,7 @@ double add_expansion_to_units_random_or_data_order(
                 if (expPV) (*iter)->add_exp_pv();
                 if (expBS) (*iter)->add_exp_bs();
                 if (expHP) (*iter)->add_exp_hp();
-                if (expEV) (*iter)->add_exp_evchst();
+                if (expEV) (*iter)->add_exp_cs();
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
                 cumsum_added_bs_kWh += (*iter)->get_sim_comp_bs_E_kWh();
@@ -435,7 +435,7 @@ double add_expansion_to_units_orderd_by_metric(
                 }
                 // 1. add components
                 if (expHP) (*iter)->add_exp_hp();
-                if (expEV) (*iter)->add_exp_evchst();
+                if (expEV) (*iter)->add_exp_cs();
                 // 2. add element to correct lists (and remove from nothing_added-list)
                 if      ( expHP || !expEV) list_of_CUs_added_HP_only.push_back(*iter);
                 else if (!expHP ||  expEV) list_of_CUs_added_EV_only.push_back(*iter);
@@ -834,7 +834,7 @@ void expansion::add_expansion_to_units(
     filesystem::path info_path_B (*(global::current_global_output_dir)); // same argument as 21 lines above
     info_path_B /= "expansion-per-cu.csv";
     ofstream output_per_cu(info_path_B, std::ofstream::out);
-    output_per_cu << "UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,evchst_orig,evchst_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh" << endl;
+    output_per_cu << "UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,cs_orig,cs_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh,added_n_EVs" << endl;
     // n_CUs and unit_list defined above, at 1.
     for (unsigned long i = 0; i < n_CUs; i++) {
         ControlUnit* current_unit = unit_list[i];
@@ -856,6 +856,7 @@ void expansion::add_expansion_to_units(
         output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
         output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW();
         output_per_cu << "," << ((0 < (expansion::MaskHP & expCombiAsSimulated)) ? current_unit->get_annual_hp_el_cons() : 0.0);
+        output_per_cu << "," << current_unit->get_sim_comp_cs_n_EVs();
         output_per_cu << "\n";
     }
     output_per_cu.close();

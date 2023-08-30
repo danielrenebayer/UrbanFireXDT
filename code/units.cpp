@@ -135,7 +135,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
 	has_sim_pv      = false;
 	has_sim_bs      = false;
 	has_sim_hp      = false;
-	has_sim_ev      = false;
+    has_sim_cs      = false;
 	sim_comp_pv     = NULL;
 	sim_comp_bs     = NULL;
 	sim_comp_hp     = NULL;
@@ -200,7 +200,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     }*/
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
-    sim_comp_ev = new ComponentCS();
+    sim_comp_cs = new ComponentCS();
 }
 
 ControlUnit::~ControlUnit() {
@@ -208,7 +208,7 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_pv) delete sim_comp_pv;
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
-	delete sim_comp_ev;
+    delete sim_comp_cs;
     /*
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
@@ -259,8 +259,8 @@ bool ControlUnit::has_hp() {
 	return false;
 }
 
-bool ControlUnit::has_evchst() {
-	if (has_sim_ev)
+bool ControlUnit::has_cs() {
+	if (has_sim_cs)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
 		if (mu->has_evchst())
@@ -324,7 +324,7 @@ int ControlUnit::get_exp_combi_bit_repr_sim_added() {
         combination = combination | expansion::MaskBS;
     if (has_sim_hp)
         combination = combination | expansion::MaskHP;
-    if (has_sim_ev)
+    if (has_sim_cs)
         combination = combination | expansion::MaskWB;
     return combination;
 }
@@ -358,11 +358,11 @@ float ControlUnit::get_annual_hp_el_cons() {
 }
 
 float ControlUnit::get_sim_comp_cs_max_P_kW() const {
-    return sim_comp_ev->get_max_P_kW();
+    return sim_comp_cs->get_max_P_kW();
 }
 
 size_t ControlUnit::get_sim_comp_cs_n_EVs() const {
-    return sim_comp_ev->get_n_EVs();
+    return sim_comp_cs->get_n_EVs();
 }
 
 double ControlUnit::get_SSR() {
@@ -438,7 +438,7 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(bat_n_ts_full) + ",";
         *retstr += to_string(bat_E_withdrawn) + ",";
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
-        *retstr += to_string((has_sim_ev) ? sim_comp_ev->get_total_demand_kWh() : 0.0);
+        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_demand_kWh() : 0.0);
         return retstr;
 }
 
@@ -492,17 +492,17 @@ void ControlUnit::add_exp_hp() {
     }
 }
 
-void ControlUnit::add_exp_evchst() {
-    if (has_evchst())
+void ControlUnit::add_exp_cs() {
+    if (has_cs())
         cerr << "Warning: Control unit with location id " << locationID << " already has an EV charging station!" << endl;
-    if (!has_sim_ev) {
-        has_sim_ev  = true;
-        sim_comp_ev->enable_station();
+    if (!has_sim_cs) {
+        has_sim_cs  = true;
+        sim_comp_cs->enable_station();
     }
 }
 
 void ControlUnit::add_ev(unsigned long carID) {
-    sim_comp_ev->add_ev(carID);
+    sim_comp_cs->add_ev(carID);
 }
 
 void ControlUnit::set_output_object(CUOutput* output_obj) {
@@ -584,9 +584,9 @@ void ControlUnit::remove_sim_added_components() {
         delete sim_comp_hp;
         sim_comp_hp = NULL;
     }
-	if (has_sim_ev) {
-        has_sim_ev = false;
-        sim_comp_ev->disable_station();
+	if (has_sim_cs) {
+        has_sim_cs = false;
+        sim_comp_cs->disable_station();
     }
 }
 
@@ -636,16 +636,16 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
     }
     //
     // 4. get the effect of the EV charging station
-    if (sim_comp_ev->is_enabled()) {
-        sim_comp_ev->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
-        double max_power = sim_comp_ev->get_max_curr_charging_power_kW();
-        sim_comp_ev->set_charging_value(max_power);
-        load_cs = sim_comp_ev->get_currentDemand_kW();
+    if (sim_comp_cs->is_enabled()) {
+        sim_comp_cs->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+        double max_power = sim_comp_cs->get_max_curr_charging_power_kW();
+        sim_comp_cs->set_charging_value(max_power);
+        load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;
         total_consumption += load_cs;
         // information for output
-        n_cars_pc  = sim_comp_ev->get_n_EVs_pc();
-        n_cars_pnc = sim_comp_ev->get_n_EVs_pnc();
+        n_cars_pc  = sim_comp_cs->get_n_EVs_pc();
+        n_cars_pnc = sim_comp_cs->get_n_EVs_pnc();
     }
     // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
@@ -766,7 +766,7 @@ void ControlUnit::ResetAllInternalStates() {
         if (e_i->has_sim_hp) {
             e_i->sim_comp_hp->resetInternalState();
         }
-        e_i->sim_comp_ev->resetInternalState();
+        e_i->sim_comp_cs->resetInternalState();
     }
 }
 
@@ -797,7 +797,7 @@ size_t ControlUnit::GetNumberOfCUsWithSimCompHP() {
 size_t ControlUnit::GetNumberOfCUsWithSimCompEV() {
     size_t counter = 0;
     for (unsigned long i = 0; i < st__n_CUs; i++) {
-        if (st__cu_list[i]->has_sim_ev)
+        if (st__cu_list[i]->has_sim_cs)
             counter++;
     }
     return counter;

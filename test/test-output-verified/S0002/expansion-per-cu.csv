@@ -1,4 +1,4 @@
-UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,evchst_orig,evchst_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh
-1,1,1,0,1,0,0,0,0,0,0,1,0,0,0
-2,2,1,0,1,0,0,0,0,0,0,1,0,0,0
-3,1,1,1,0,0,0,0,0,0,0,0,0,0,0
+UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,cs_orig,cs_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh,added_n_EVs
+1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0
+2,2,1,0,1,0,0,0,0,0,0,1,0,0,0,0
+3,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
