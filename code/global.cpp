@@ -434,7 +434,7 @@ void Global::set_seed(unsigned int value) {
     if (is_locked && seed_set) {
         cerr << "Global variable seed is already initialized!" << endl;
     } else {
-        Global::seed = seed;
+        Global::seed = value;
         Global::seed_set = true;
     }
 }
