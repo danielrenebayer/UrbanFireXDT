@@ -45,7 +45,7 @@ if (( $? != 0 )); then program_error=1; fi
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
     echo -e "\n-- 8. Simulation run (using valgrind) --"
-    valgrind ../code/main-dbg --config ../test/test-config/test_config.json --seed 1234 6
+    valgrind --error-exitcode=1 ../code/main-dbg --config ../test/test-config/test_config.json --seed 1234 6
     if (( $? != 0 )); then memory_error=1; else memory_error=0;  fi
 fi
 
