@@ -198,6 +198,7 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
         history_pv_generation_kW        = NULL;
         history_avg_consumption_load_kW = NULL;
     }*/
+    is_sim_expanded = false;
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
     sim_comp_cs = new ComponentCS();
@@ -588,6 +589,27 @@ void ControlUnit::remove_sim_added_components() {
         has_sim_cs = false;
         sim_comp_cs->disable_station();
     }
+    is_sim_expanded = false;
+}
+
+void ControlUnit::reset_internal_state() {
+    current_load_vSM_kW = 0.0;
+    self_produced_load_kW = 0.0;
+    sum_of_consumption_kWh    = 0.0;
+    sum_of_self_cons_kWh      = 0.0;
+    sum_of_mu_cons_kWh        = 0.0;
+    sum_of_feed_into_grid_kWh = 0.0;
+    sum_of_grid_demand_kWh    = 0.0;
+    if (has_sim_pv) {
+        sim_comp_pv->resetInternalState();
+    }
+    if (has_sim_bs) {
+        sim_comp_bs->resetInternalState();
+    }
+    if (has_sim_hp) {
+        sim_comp_hp->resetInternalState();
+    }
+    sim_comp_cs->resetInternalState();
 }
 
 bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
@@ -747,26 +769,7 @@ void ControlUnit::ResetAllInternalStates() {
     // as internal state).
     //
     for (unsigned long i = 0; i < st__n_CUs; i++) {
-        ControlUnit* e_i = st__cu_list[i];
-        //
-        e_i->current_load_vSM_kW = 0.0;
-        e_i->self_produced_load_kW = 0.0;
-        e_i->sum_of_consumption_kWh    = 0.0;
-        e_i->sum_of_self_cons_kWh      = 0.0;
-        e_i->sum_of_mu_cons_kWh        = 0.0;
-        e_i->sum_of_feed_into_grid_kWh = 0.0;
-        e_i->sum_of_grid_demand_kWh    = 0.0;
-        //
-        if (e_i->has_sim_pv) {
-            e_i->sim_comp_pv->resetInternalState();
-        }
-        if (e_i->has_sim_bs) {
-            e_i->sim_comp_bs->resetInternalState();
-        }
-        if (e_i->has_sim_hp) {
-            e_i->sim_comp_hp->resetInternalState();
-        }
-        e_i->sim_comp_cs->resetInternalState();
+        st__cu_list[i]->reset_internal_state();
     }
 }
 

@@ -7,7 +7,8 @@ using namespace expansion;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-/*#include <list>*/
+#include <limits>
+#include <list>
 #include <random>
 #include <sstream>
 #include <string>
@@ -362,7 +363,211 @@ struct Combination {
  * @param expansion_matrix_abs_freq: Expansion matrix with absolute values
  * @param cuRefLstVectBitOrder: List of all control units per expansion combination
  */
-double add_expansion_to_units_orderd_by_metric(
+bool add_expansion_to_units_orderd_by_metric(
+    long  expansion_matrix_abs_freq[16][16],
+    vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
+) {
+    // cummulative sum of added kWp of residential PV nominal power in (kWp)
+    double cumsum_added_pv_kWp = 0.0;
+    double cumsum_added_bs_kWh = 0.0;
+    bool pv_addition_limit     = false;
+    bool bs_addition_limit     = false;
+    //
+    list<string*> output_str_collection; // only a string list required for the output
+    auto sort_lambda = [](const pair<double, ControlUnit*> &a, const pair<double, ControlUnit*> &b) { return a.first >= b.first; };
+    //
+    // Loop over every current expansion / component combination
+    // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
+    for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
+        unsigned int iMatO = (unsigned int) iMatOlong; // this is required, as an unsigned int cannot be negative!
+        string iStrO = expansion::expCombiMatrixOrderToString(iMatO); // used for later output
+        int iBitO    = expCombiMatrixOrderToBitRepr( iMatO ); // get index in Bitwise Order (BitO)
+        int iBitRepr = expCombiMatrixOrderToBitRepr(iMatO);
+        vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
+        // skip if empty
+        if (listOfCUs->size() == 0) {
+            cout << "Skipping iMatO " << iMatO << endl;
+            continue;
+        }
+        //
+        // create a vector of lists 
+        // This represents the following structure:
+        // [ ( Target_Combination_Matrix_Order, [ (metric, corresponding CU reference) ] ) ]
+        vector< pair< int, list<pair<double, ControlUnit*>>* > > sorted_target_vectors;
+        //
+        // Loop over every target combination
+        for (unsigned int jExpTargetMatO = iMatO + 1; jExpTargetMatO < 16; jExpTargetMatO++) {
+            // get number of CUs that get the current expansion
+            long numThisCombi_i_j = expansion_matrix_abs_freq[iMatO][jExpTargetMatO];
+            #ifdef DEBUG
+            cout << "iMatO = " << iMatO << ", jExpTargetMatO = " << jExpTargetMatO << ": numThisCombi_i_j = " << numThisCombi_i_j << endl;
+            #endif
+            // jump loop, if no HP or EVCh St has to be added
+            if (numThisCombi_i_j == 0)
+                continue;
+            // get current list of (metric, CU reference)
+            list<pair<double, ControlUnit*>>* current_target_list = new list<pair<double, ControlUnit*>>();
+            sorted_target_vectors.push_back(std::make_pair(jExpTargetMatO,  current_target_list));
+            // find out, which units we have to add for this i/j-combination
+            int jBitRepr = expCombiMatrixOrderToBitRepr(jExpTargetMatO);
+            int ijXOR = iBitRepr ^ jBitRepr;
+            bool expPV = false;
+            bool expBS = false;
+            bool expHP = false;
+            bool expCS = false;
+            if (ijXOR & MaskPV) expPV = true;
+            if (ijXOR & MaskBS) expBS = true;
+            if (ijXOR & MaskHP) expHP = true;
+            if (ijXOR & MaskWB) expCS = true;
+            string jStrO = expansion::expCombiMatrixOrderToString(jExpTargetMatO);
+            // add the missing elements
+            for (ControlUnit* cu : *listOfCUs) {
+                if (expPV) cu->add_exp_pv();
+                if (expBS) cu->add_exp_bs();
+                if (expHP) cu->add_exp_hp();
+                if (expCS) cu->add_exp_cs();
+            }
+            // run simulation for this combination
+            cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: " << jStrO << "\n";
+            bool no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
+            if (!no_error) { 
+                cerr << "Error during selection of the CUs for adding simulated components." << endl;
+                return false;
+            }
+            // get metric for later sorting
+            for (ControlUnit* cu : *listOfCUs) {
+                double metric_result = (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR) ? cu->get_SSR() : cu->get_NPV();
+                current_target_list->push_back(std::make_pair(metric_result, cu));
+                // add to complete metrics output
+                string * metrics_string = cu->get_metrics_string();
+                metrics_string->append(",");
+                if (expPV) metrics_string->append("+PV");
+                if (expBS) metrics_string->append("+BS");
+                if (expHP) metrics_string->append("+HP");
+                if (expCS) metrics_string->append("+CS");
+                output_str_collection.push_back(metrics_string);
+            }
+            // sort the current_target_list
+            current_target_list->sort(sort_lambda);
+            // remove the added elements
+            for (ControlUnit* cu : *listOfCUs) {
+                cu->remove_sim_added_components();
+                cu->reset_internal_state();
+            }
+        }
+        //
+        // Take always the uppermost element of every list and add the missing elements
+        // Also respect addition limits
+        size_t n_target_combinations = sorted_target_vectors.size();
+        size_t n_already_expanded_CUs[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        // main loop, loop until as many CUs are expanded as it should be
+        bool all_targets_reached = false;
+        while (!all_targets_reached) {
+            // for every target list, remove the uppermost elements that were already expanded
+            for (size_t idx = 0; idx < n_target_combinations; idx++) {
+                while (sorted_target_vectors[idx].second->size() > 0 &&
+                       sorted_target_vectors[idx].second->front().second->is_sim_expanded)
+                {
+                    sorted_target_vectors[idx].second->pop_front();
+                }
+            }
+            // get the control unit where the metric is maxmizied and expand this as it is required
+            size_t max_metric_idx = 0; // the index of the target where the control unit with maximal metric is there
+            bool   max_found      = false;
+            double max_metric_val = -std::numeric_limits<double>::infinity(); // the maximal value of the metric up to now
+            for (size_t idx = 0; idx < n_target_combinations; idx++) {
+                if (sorted_target_vectors[idx].second->size() > 0) {
+                    double curr_metric_val = sorted_target_vectors[idx].second->front().first;
+                    if (max_metric_val < curr_metric_val) {
+                        max_metric_val = curr_metric_val;
+                        max_metric_idx = idx;
+                        max_found      = true;
+                    }
+                }
+            }
+            // break loop if no min is found (as there are no elements left)
+            if (!max_found)
+                break;
+            // take the uppermost element, if there are remaining elements
+            if (sorted_target_vectors[max_metric_idx].second->size() > 0) {
+                // get the current control unit which should be simulatively expanded and remove this from the list
+                auto& first_pair = sorted_target_vectors[max_metric_idx].second->front();
+                ControlUnit* cu_for_addition = first_pair.second;
+                sorted_target_vectors[max_metric_idx].second->pop_front(); // this invalidates the reference first_pair
+                // find out, which elements have to be added, Part 1
+                int jExpTargetMatO = sorted_target_vectors[max_metric_idx].first;
+                // find out, which elements have to be added, Part 2
+                int jBitRepr = expCombiMatrixOrderToBitRepr(jExpTargetMatO);
+                int ijXOR = iBitRepr ^ jBitRepr;
+                bool expPV = false;
+                bool expBS = false;
+                bool expHP = false;
+                bool expCS = false;
+                if (ijXOR & MaskPV) expPV = true;
+                if (ijXOR & MaskBS) expBS = true;
+                if (ijXOR & MaskHP) expHP = true;
+                if (ijXOR & MaskWB) expCS = true;
+                // are already enough elements added?
+                if ( n_already_expanded_CUs[jExpTargetMatO] >= expansion_matrix_abs_freq[iMatO][jExpTargetMatO] ) {
+                    // empty this 'column'
+                    sorted_target_vectors[max_metric_idx].second->clear();
+                    continue;
+                }
+                // are global limits reached?
+                if (expPV && pv_addition_limit) {
+                    continue;
+                }
+                if (expBS && bs_addition_limit) {
+                    continue;
+                }
+                // add the missing elements
+                if (expPV) {
+                    cu_for_addition->add_exp_pv();
+                    cumsum_added_pv_kWp += cu_for_addition->get_sim_comp_pv_kWp(); // calculate new cumsum
+                }
+                if (expBS) {
+                    cu_for_addition->add_exp_bs();
+                    cumsum_added_bs_kWh += cu_for_addition->get_sim_comp_bs_E_kWh(); // calculate new cumsum
+                }
+                if (expHP) cu_for_addition->add_exp_hp();
+                if (expCS) cu_for_addition->add_exp_cs();
+                cu_for_addition->is_sim_expanded = true;
+                n_already_expanded_CUs[jExpTargetMatO]++;
+            }
+            // check, if addition limits are reached
+            if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
+                cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total())
+            {
+                pv_addition_limit = true;
+            }
+            if (Global::get_exp_bess_max_E_total() >= 0.0 &&
+                cumsum_added_bs_kWh >= Global::get_exp_bess_max_E_total())
+            {
+                bs_addition_limit = true;
+            }
+            // check, if all expansion targets are reached?
+            all_targets_reached = true;
+            for (size_t idx = 0; idx < n_target_combinations; idx++) {
+                int jExpTargetMatO = sorted_target_vectors[idx].first;
+                if (n_already_expanded_CUs[jExpTargetMatO] < expansion_matrix_abs_freq[iMatO][jExpTargetMatO])
+                    all_targets_reached = false;
+            }
+        }
+        // delete list
+        for (auto &obj : sorted_target_vectors) {
+            delete obj.second;
+        }
+    }
+    //
+    // output metrics
+    output::outputMetricsStrList(output_str_collection);
+    for (string* s : output_str_collection) delete s;
+    // make nice output
+    cout << "\r" << global::output_section_delimiter << std::endl;
+
+    return true;
+}
+double add_expansion_to_units_orderd_by_metric_OLD(
     long  expansion_matrix_abs_freq[16][16],
     vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
 ) {
@@ -772,7 +977,8 @@ void expansion::add_expansion_to_units(
         );
     } else /* if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR ||
         Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestNPV)*/ {
-        cumsum_added_pv_kWp = add_expansion_to_units_orderd_by_metric(
+        cumsum_added_pv_kWp = 0.0; // TODO
+        add_expansion_to_units_orderd_by_metric(
             expansion_matrix_abs_freq,
             cuRefLstVectBitOrder
         );
@@ -801,9 +1007,12 @@ void expansion::add_expansion_to_units(
     //
     // additional output
     cout << "Overview of simulatively added components:\n";
-    cout << "    Global::get_exp_pv_max_kWp_total()         = " << Global::get_exp_pv_max_kWp_total() << "\n";
     if (Global::get_exp_pv_max_kWp_total() >= 0.0)
-    cout << "    Total cumsum of kWp                        = " << cumsum_added_pv_kWp << "\n";
+    cout << "    Global::get_exp_pv_max_kWp_total()         = " << Global::get_exp_pv_max_kWp_total() << "\n";
+    if (Global::get_exp_bess_max_E_total() >= 0.0)
+    cout << "    Global::get_exp_bess_max_E_total()         = " << Global::get_exp_bess_max_E_total() << "\n";
+    cout << "    Total cumsum of PV kWp                     = " << cumsum_added_pv_kWp << "\n";
+    // TODO Output cumsum of added BS capacity [kWh]
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompPV() = " << ControlUnit::GetNumberOfCUsWithSimCompPV() << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompHP() = " << ControlUnit::GetNumberOfCUsWithSimCompHP() << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompEV() = " << ControlUnit::GetNumberOfCUsWithSimCompEV() << "\n";

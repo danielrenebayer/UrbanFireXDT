@@ -119,6 +119,8 @@ class ControlUnit {
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         string* get_metrics_string(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
+        // public members
+        bool is_sim_expanded; ///< Puplicly accessible member, weather the control unit is expanded or not (required for SAC Planning). This flag has no internal effect inside the class.
         // modifiers
         void add_exp_pv();
         void add_exp_bs();
@@ -134,6 +136,7 @@ class ControlUnit {
         void remove_sim_added_pv(); ///< Removes a simulatively added PV installation
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
+        void reset_internal_state(); ///< Resets the internal state of the object, without removing added components
         // for simulation runs
         bool compute_next_value(unsigned long ts, int dayOfWeek_l, int hourOfDay_l); ///< Computes the value for the (next) time step. The additional parameters dayOfWeek and hourOfDay are only required for passing them to the Charging Station. Mind: Both values are "left-aligned", i.e., they are the labels for the start of the current time step (in contrast to global::time_localtime_str)
         //
