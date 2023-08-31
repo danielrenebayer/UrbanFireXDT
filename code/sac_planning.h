@@ -35,6 +35,9 @@ namespace expansion {
     const int MaskHP      = 0b0100;
     const int MaskWB      = 0b1000;
 
+    inline double final_cumsum_of_added_pv_kWp; ///< The cummulative sum of added roof-top PV power in kWp after the SAC planning
+    inline double final_cumsum_of_added_bs_kWh; ///< The cummulative sum of added battery capacity in kWh after the SAC planning
+
     int expCombiMatrixOrderToBitRepr(int indexMatO);
     int expCombiBitReprToMatrixOrder(int bitRepr);
     int genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool bas_wb);

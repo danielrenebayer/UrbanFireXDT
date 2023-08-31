@@ -252,7 +252,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
 }
 
 
-double add_expansion_to_units_random_or_data_order(
+bool add_expansion_to_units_random_or_data_order(
     long  expansion_matrix_abs_freq[16][16],
     vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
 ) {
@@ -343,8 +343,11 @@ double add_expansion_to_units_random_or_data_order(
         }
         outer_loop_end:;
     }
+    //
+    final_cumsum_of_added_pv_kWp = cumsum_added_pv_kWp;
+    final_cumsum_of_added_bs_kWh = cumsum_added_bs_kWh;
 
-    return cumsum_added_pv_kWp;
+    return true;
 }
 
 struct Combination {
@@ -564,6 +567,9 @@ bool add_expansion_to_units_orderd_by_metric(
     for (string* s : output_str_collection) delete s;
     // make nice output
     cout << "\r" << global::output_section_delimiter << std::endl;
+    //
+    final_cumsum_of_added_pv_kWp = cumsum_added_pv_kWp;
+    final_cumsum_of_added_bs_kWh = cumsum_added_bs_kWh;
 
     return true;
 }
@@ -966,18 +972,16 @@ void expansion::add_expansion_to_units(
     //
     // 4. plan and execute expansion
     //
-    // cummulative sum of added kWp of residential PV nominal power in (kWp)
-    double cumsum_added_pv_kWp = 0.0;
     if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection ||
         Global::get_cu_selection_mode_fca() == global::CUSModeFCA::OrderAsInData)
     {
-        cumsum_added_pv_kWp = add_expansion_to_units_random_or_data_order(
+        add_expansion_to_units_random_or_data_order(
             expansion_matrix_abs_freq,
             cuRefLstVectBitOrder
         );
     } else /* if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR ||
         Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestNPV)*/ {
-        cumsum_added_pv_kWp = 0.0; // TODO
+        // TODO process return value (false -> simulation error)
         add_expansion_to_units_orderd_by_metric(
             expansion_matrix_abs_freq,
             cuRefLstVectBitOrder
@@ -1011,8 +1015,8 @@ void expansion::add_expansion_to_units(
     cout << "    Global::get_exp_pv_max_kWp_total()         = " << Global::get_exp_pv_max_kWp_total() << "\n";
     if (Global::get_exp_bess_max_E_total() >= 0.0)
     cout << "    Global::get_exp_bess_max_E_total()         = " << Global::get_exp_bess_max_E_total() << "\n";
-    cout << "    Total cumsum of PV kWp                     = " << cumsum_added_pv_kWp << "\n";
-    // TODO Output cumsum of added BS capacity [kWh]
+    cout << "    Total cumsum of PV kWp                     = " << final_cumsum_of_added_pv_kWp << "\n";
+    cout << "    Total cumsum of BS capazity in kWh         = " << final_cumsum_of_added_bs_kWh << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompPV() = " << ControlUnit::GetNumberOfCUsWithSimCompPV() << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompHP() = " << ControlUnit::GetNumberOfCUsWithSimCompHP() << "\n";
     cout << "    ControlUnit::GetNumberOfCUsWithSimCompEV() = " << ControlUnit::GetNumberOfCUsWithSimCompEV() << "\n";
