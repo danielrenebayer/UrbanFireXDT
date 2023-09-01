@@ -189,6 +189,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
+        unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();

@@ -9,6 +9,7 @@ using namespace expansion;
 #include <iostream>
 #include <limits>
 #include <list>
+#include <ranges>
 #include <random>
 #include <sstream>
 #include <string>
@@ -423,8 +424,15 @@ bool add_expansion_to_units_orderd_by_metric(
             if (ijXOR & MaskHP) expHP = true;
             if (ijXOR & MaskWB) expCS = true;
             string jStrO = expansion::expCombiMatrixOrderToString(jExpTargetMatO);
+            // filter listOfCUs -> Only select those units where an addition of the selected components is possible
+            auto filterLambda = [expPV,expHP,expCS](ControlUnit* cu){ 
+                return 
+                    ( (expPV || expHP) ? cu->is_expandable_with_pv_hp() > 0 : true ) &&
+                    ( (expCS)          ? cu->get_sim_comp_cs_possible_n_EVs() > 0 : true );
+            };
+            auto filteredListOfCUs = *listOfCUs | std::views::filter(filterLambda);
             // add the missing elements
-            for (ControlUnit* cu : *listOfCUs) {
+            for (ControlUnit* cu : filteredListOfCUs) {
                 if (expPV) cu->add_exp_pv();
                 if (expBS) cu->add_exp_bs();
                 if (expHP) cu->add_exp_hp();
@@ -438,7 +446,7 @@ bool add_expansion_to_units_orderd_by_metric(
                 return false;
             }
             // get metric for later sorting
-            for (ControlUnit* cu : *listOfCUs) {
+            for (ControlUnit* cu : filteredListOfCUs) {
                 double metric_result = (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR) ? cu->get_SSR() : cu->get_NPV();
                 current_target_list->push_back(std::make_pair(metric_result, cu));
                 // add to complete metrics output

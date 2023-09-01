@@ -366,6 +366,10 @@ size_t ControlUnit::get_sim_comp_cs_n_EVs() const {
     return sim_comp_cs->get_n_EVs();
 }
 
+size_t ControlUnit::get_sim_comp_cs_possible_n_EVs() const {
+    return sim_comp_cs->get_possible_n_EVs();
+}
+
 double ControlUnit::get_SSR() {
     double SSR = 0.0;
     if (sum_of_consumption_kWh > 0)

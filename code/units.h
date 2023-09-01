@@ -114,6 +114,7 @@ class ControlUnit {
         float get_annual_hp_el_cons(); ///< Returns the annual HP electricity consumption of a heat pump, if it would be added simulatively (regardless whether it is added or not)
         float get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)
         size_t get_sim_comp_cs_n_EVs() const;   ///< Returns the number of connected EVs if the charging station component is enabled, otherwise 0 is returned.
+        size_t get_sim_comp_cs_possible_n_EVs() const; ///< Returns the number of EVs that would be connected to the charging station component, if it would be enablede
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_SCR(); ///< Returns the SCR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run

@@ -495,6 +495,10 @@ unsigned long ComponentCS::get_n_EVs() const {
     return 0;
 }
 
+unsigned long ComponentCS::get_possible_n_EVs() const {
+    return listOfEVs.size();
+}
+
 void ComponentCS::enable_station() {
     enabled = true;
 }
