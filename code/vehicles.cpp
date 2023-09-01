@@ -78,7 +78,8 @@ void EVFSM::add_weekly_tour(
         float atime_of_week_prev = 24 * Global::get_time_step_size_in_h() * last_know_tour->day_of_week + (float) (last_know_tour->departure_ts_of_day) + (float) (last_know_tour->ts_duration); // arrival time of week of the previous trip
         float dtime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day); // departure time of week of the trip to add
         if (atime_of_week_prev > dtime_of_week_new) {
-            std::cerr << "Warning: A tour is overlapping with its previous tour. Ignoring the second tour (carID=" << carID << ", weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
+            std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with its previous tour (weekday=" << last_know_tour->day_of_week << ", dep. ts=" << last_know_tour->departure_ts_of_day << ", ts. dur=" << last_know_tour->ts_duration << "). ";
+            std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
             return;
         }
         // B) For the first tour in the next week
@@ -88,7 +89,8 @@ void EVFSM::add_weekly_tour(
         if ((unsigned long) atime_of_week_new > ts_of_a_week) {
             float atime_of_week_first = Global::get_time_step_size_in_h() * first_known_tour->day_of_week + (float) (first_known_tour->departure_ts_of_day);
             if ((unsigned long) (atime_of_week_new) % ts_of_a_week > (unsigned long) atime_of_week_first) {
-                std::cerr << "Warning: A tour is overlapping with the first known tour. Ignoring the second tour (carID=" << carID << ", weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
+                std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with the first known tour (weekday=" << first_known_tour->day_of_week << ", dep. ts=" << first_known_tour->departure_ts_of_day << "). ";
+                std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ", ts. dur=" << ts_duration << ").\n";
                 return;
             }
         }
