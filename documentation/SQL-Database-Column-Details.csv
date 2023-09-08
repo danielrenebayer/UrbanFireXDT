@@ -61,3 +61,10 @@ address_roof_data,Orientation,TEXT / VARCHAR(2),The orientation of the given roo
 ,,,
 residual_grid_load,TimestepID,INTEGER,"ID of the timestep, must start with 1 and must be numbered consecutively"
 residual_grid_load,P_residual_gridload,REAL,Residual grid load in kW during time step TimestepID
+,,,
+electricity_emissions,TimestepID,INTEGER,"ID of the timestep, must have the same alignment as time_indices.TimestepID"
+electricity_emissions,emissions_g_kWh,REAL,CO2eq. emissions of one kWh of electiricty that is taken from the transmission grid
+,,,
+electricity_prices,TimestepID,INTEGER,"ID of the timestep, must have the same alignment as time_indices.TimestepID"
+electricity_prices,local_price,REAL,The local (dynamic) price for residential households for a dynamic tariff in ct/kWh
+electricity_prices,spotmarket_price,REAL,The (dynamic) price at the spot market (without vat or taxes) in ct/kWh

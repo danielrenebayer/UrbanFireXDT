@@ -14,3 +14,5 @@ address_data,List of all known addresses with yearly energy demand in case of he
 heat_demand_per_location,Information about the heat demand that is converted using gas consumption data (if available)
 address_roof_data,List of all roof sections of all buildings (with orientation and size)
 residual_grid_load,"Time series of the residual grid load, that is not measured by any smart meter, but still present"
+electricity_emissions,"Time series of the CO2 emissions (optional table, is used, if present, otherwise ignored)"
+electricity_prices,"Time series of the hourly electricity prices (optional table, is used, if present)"

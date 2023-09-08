@@ -879,6 +879,90 @@ int load_data_from_central_database_callback_address_data_B(void* data, int argc
     global::roof_section_orientations[ stoul(argv[0]) ].push_back( pair<float, std::string>(usable_area, orientation) );
     return 0;
 }
+int load_data_from_central_database_callback_emissions(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the emission time series.
+     *
+     * Columns:
+     * 0           1
+     * TimestepID  emissions_g_kWh
+     */
+    static size_t callcounter = 1;
+    size_t pos = callcounter - 1; // the current position is one behind the callcounter
+    if (argc != 2) {
+        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoul(argv[0]) != callcounter) {
+        cerr << "Wrong ordering, duplicated or missing items in the emissions time series!" << endl;
+        return 1;
+    }
+    try {
+        if (argv[1] == NULL) {
+            ((float*) data)[pos] = 0.0;
+        } else {
+            ((float*) data)[pos] = stof(argv[1]);
+        }
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the emissions time series.\n";
+        cerr << " - More details: At time step " << callcounter << endl;
+        return 1;
+    }
+    callcounter++;
+    return 0;
+}
+int load_data_from_central_database_callback_prices(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for geeting the emission time series.
+     *
+     * Columns:
+     * 0           1            2
+     * TimestepID  local_price  spotmarket_price
+     */
+    static size_t callcounter = 1;
+    size_t pos = callcounter - 1; // the current position is one behind the callcounter
+    if (argc != 3) {
+        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+        return 1;
+    }
+
+    if (stoul(argv[0]) != callcounter) {
+        cerr << "Wrong ordering, duplicated or missing items in the prices time series!" << endl;
+        return 1;
+    }
+    try {
+        if (argv[1] == NULL) {
+            ((float*) (((float**)data)[0]) )[pos] = 0.0;
+        } else {
+            ((float*) (((float**)data)[0]) )[pos] = stof(argv[1]);
+        }
+        if (argv[2] == NULL) {
+            ((float*) (((float**)data)[1]) )[pos] = 0.0;
+        } else {
+            ((float*) (((float**)data)[1]) )[pos] = stof(argv[2]);
+        }
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the prices time series.\n";
+        cerr << " - More details: At time step " << callcounter << endl;
+        return 1;
+    }
+    callcounter++;
+    return 0;
+}
+int sql_check_if_table_exists_callback(void* data, int argc, char** argv, char** colName) {
+    /*
+     * This is the callback function for checking, if a table exists or not
+     *
+     * @param data: A reference to a boolean variable that will be set to true if the table exists
+     *
+     * Columns:
+     * 0
+     * table_name
+     */
+    *((bool*) data) = true;
+    return 0;
+}
 bool configld::load_data_from_central_database(const char* filepath) {
     if (! filesystem::exists( filesystem::path(filepath) ) ) {
         cerr << "Structure database file " << filepath << " not found!" << endl;
@@ -1076,6 +1160,57 @@ bool configld::load_data_from_central_database(const char* filepath) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
+        }
+
+        //
+        // emissions time series (if available)
+        //
+        bool table_exists = false;
+        sql_query = "SELECT name FROM sqlite_master WHERE type='table' AND name='electricity_emissions';";
+        sqlite3_exec(dbcon, sql_query.c_str(), sql_check_if_table_exists_callback, &table_exists, &sqlErrorMsgF);
+        if (table_exists) {
+            cout << "Loading time series on emission data as this table is present.\n";
+            float* new_array = new float[Global::get_n_timesteps()];
+            // initialize with 0 by default
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
+                new_array[l] = 0;
+            // run query
+            sql_query = "SELECT TimestepID,emissions_g_kWh FROM electricity_emissions ORDER BY TimestepID;";
+            ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_emissions, new_array, &sqlErrorMsgF);
+            if (ret_valF != 0) {
+                cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+                sqlite3_free(sqlErrorMsgF);
+                return false;
+            }
+            global::emission_ts = new_array;
+        }
+
+        //
+        // prices time series (if available)
+        //
+        /*bool*/ table_exists = false;
+        sql_query = "SELECT name FROM sqlite_master WHERE type='table' AND name='electricity_prices';";
+        sqlite3_exec(dbcon, sql_query.c_str(), sql_check_if_table_exists_callback, &table_exists, &sqlErrorMsgF);
+        if (table_exists) { // TODO -> check if available
+            cout << "Loading time series on electricity prices as this table is present.\n";
+            float* new_arrayA = new float[Global::get_n_timesteps()];
+            float* new_arrayB = new float[Global::get_n_timesteps()];
+            // initialize with 0 by default
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
+                new_arrayA[l] = 0;
+                new_arrayB[l] = 0;
+            }
+            float* new_arrays[2] = {new_arrayA, new_arrayB};
+            // run query
+            sql_query = "SELECT TimestepID,local_price,spotmarket_price FROM electricity_prices ORDER BY TimestepID;";
+            ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_prices, new_arrays, &sqlErrorMsgF);
+            if (ret_valF != 0) {
+                cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+                sqlite3_free(sqlErrorMsgF);
+                return false;
+            }
+            global::eprices_local_ts = new_arrayA;
+            global::eprices_spotm_ts = new_arrayB;
         }
 
         //

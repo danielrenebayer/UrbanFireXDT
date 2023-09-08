@@ -54,6 +54,9 @@ namespace global {
     inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
     inline std::set<unsigned long> locations_with_geodata; ///< List / Set storing all locations for which geodata is available
     inline unsigned int current_repetition_counter = 0; ///< Repetition counter, if repetitions is set as a command line argument
+    inline const float* emission_ts      = NULL; ///< Reference to the emission time series for grid demanded energy (if present)
+    inline const float* eprices_local_ts = NULL; ///< Reference to the time series of the energy prices (for residential customers) for grid demanded energy (if present)
+    inline const float* eprices_spotm_ts = NULL; ///< Reference to the time series of the energy prices at the spot market (for non-residential customers, without vat or taxes) (if present)
 
     inline std::list<std::list<std::pair<std::string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 

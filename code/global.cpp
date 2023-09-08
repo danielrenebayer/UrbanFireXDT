@@ -51,6 +51,10 @@ void global::vacuum() {
     delete   current_global_output_dir;current_global_output_dir   = NULL;
     delete[] wind_profile; wind_profile = NULL;
     delete[] residual_gridload_kW;   residual_gridload_kW = NULL;
+
+    if (emission_ts      != NULL) { delete[] emission_ts;      emission_ts      = NULL; }
+    if (eprices_local_ts != NULL) { delete[] eprices_local_ts; eprices_local_ts = NULL; }
+    if (eprices_spotm_ts != NULL) { delete[] eprices_spotm_ts; eprices_spotm_ts = NULL; }
 }
 
 void global::print_uninitialized_variables() {
