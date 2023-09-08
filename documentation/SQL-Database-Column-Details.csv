@@ -31,6 +31,8 @@ list_of_measurement_units,has_chp,INTEGER,"Holds the value 1, iff a CHP is conne
 list_of_measurement_units,LocID,INTEGER,ID of the location where the measurement unit is located at [Foreign key]
 list_of_measurement_units,has_wind,INTEGER,"Holds the value 1, iff a wind farm is connected (exclusivley and not exclusivley) to the measuremt unit"
 list_of_measurement_units,has_biomass,INTEGER,"Holds the value 1, iff a bio mass power plant is connected (exclusivley and not exclusivley) to the measuremt unit"
+list_of_measurement_units,has_evcs,INTEGER,"Holds the value 1, iff a residential EV charging station is connected (exclusivley and not exclusivley) to the measuremt unit"
+list_of_measurement_units,has_public_evcs,INTEGER,"Holds the value 1, iff a public EV charging station is connected (exclusivley and not exclusivley) to the measuremt unit"
 ,,,
 global_profiles_pv,TimestepID,INTEGER,The time step for which the dataset is valid [Foreign key]
 global_profiles_pv,Value_Feedin,REAL,The normalized feed-in value at the given timestep
