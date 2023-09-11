@@ -559,22 +559,18 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int
     }
 }
 
-void ComponentCS::set_charging_value(double power_kW) {
+void ComponentCS::set_charging_value(double requested_power_kW) {
     current_demand_kW = 0.0;
     double remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
-    for (EVFSM* ev : charging_order_req) {
-        // max. 11 kW per car
-        // Set charging request
-        if (remaining_power_kW >= 11.0) {
-            ev->set_current_charging_power(11.0);
-        } else {
-            ev->set_current_charging_power(remaining_power_kW);
+    // check, if charging request is positive
+    if (requested_power_kW > 0) {
+        if (requested_power_kW < max_charging_power) {
+            remaining_power_kW = requested_power_kW;
         }
-        // get actual charging power
-        remaining_power_kW -= ev->get_current_charging_power();
-    }
-    if (remaining_power_kW > 0) {
-        for (EVFSM* ev : charging_order_pos) {
+        for (EVFSM* ev : charging_order_req) {
+            if (remaining_power_kW <= 0.0) {
+                break;
+            }
             // max. 11 kW per car
             // Set charging request
             if (remaining_power_kW >= 11.0) {
@@ -584,9 +580,26 @@ void ComponentCS::set_charging_value(double power_kW) {
             }
             // get actual charging power
             remaining_power_kW -= ev->get_current_charging_power();
+            current_demand_kW  += ev->get_current_charging_power();
         }
+        for (EVFSM* ev : charging_order_pos) {
+            if (remaining_power_kW <= 0.0) {
+                break;
+            }
+            // max. 11 kW per car
+            // Set charging request
+            if (remaining_power_kW >= 11.0) {
+                ev->set_current_charging_power(11.0);
+            } else {
+                ev->set_current_charging_power(remaining_power_kW);
+            }
+            // get actual charging power
+            remaining_power_kW -= ev->get_current_charging_power();
+            current_demand_kW  += ev->get_current_charging_power();
+        }
+        // compute current demand and cumulative sum
+        total_demand_kWh += current_demand_kW * Global::get_time_step_size_in_h();
+    } else if (requested_power_kW < 0) {
+        // TODO bidirectional charging
     }
-    // compute current demand and cumulative sum
-    current_demand_kW = max_charging_power - remaining_power_kW;
-    total_demand_kWh += current_demand_kW * Global::get_time_step_size_in_h();
 }
