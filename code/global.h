@@ -184,6 +184,7 @@ class Global {
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
         static float get_demand_tariff()       { return demand_tariff; }
+        static float get_emissions_per_kWh()   { return emissions_per_kWh; } ///!< Returns the mean emissions in CO2eq for one kWh of grid demanded energy. If a time series is available, use the latter one!
         static float get_inst_cost_PV_per_kWp(){ return inst_cost_PV_per_kWp; }
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
         static float get_npv_discount_rate()   { return npv_discount_rate; }
@@ -240,6 +241,7 @@ class Global {
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
         static void set_demand_tariff(float value);
+        static void set_emissions_per_kWh(float value);
         static void set_inst_cost_PV_per_kWp(float value);
         static void set_inst_cost_BS_per_kWh(float value);
         static void set_npv_discount_rate(float value);
@@ -301,6 +303,7 @@ class Global {
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid
         static float demand_tariff;        ///< Tariff for demand from the grid
+        static float emissions_per_kWh;    ///< The emissions in CO2eq for one kWh of energy taken from the grid
         static float inst_cost_PV_per_kWp; ///< Installation cost of a PV installation per kWp installed
         static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
         static float npv_discount_rate;    ///< Discount rate for the net present value computation

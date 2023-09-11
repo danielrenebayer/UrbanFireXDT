@@ -27,17 +27,18 @@ expansion BS E in kWh ,float,yes,,,Capacity in kWh of the simulatively added bat
 expansion BS initial SOC ,float,yes,,,Initial SOC of the simulatively added batteries,yes
 expansion BS E:P ratio ,float,only if ‘expansion BS power computation mode’ == ‘Use E:P ratio’,,,E:P-ratio for setting the power of simulatively added batteries dependent of the capacity (interesting for parameter variations),yes
 expansion BS power computation mode,string,yes,,Power as given / Use E:P-ratio,"If set to ‘Use E:P ratio’ the variabel ‘expansion BS P in kW’ will be ignored, instead P will be E / this variable",no
-expansion BS efficiency in,float,no,1.0,0.0 to 1.0,Efficiency of the battery for charging in percent,
-expansion BS efficiency out,float,no,1.0,0.0 to 1.0,Efficiency of the battery for discharging in percent,
-expansion BS self-discharge per ts,float,no,0.0,0.0 to 1.0,Self-discharging rate in percent per time step,
-expansion BS power for SOC 0,float,no,0.0,0.0 to inf,Power consumption of the battery controller if SOC is 0 in kW, 
-expansion BS power for SOC 1,float,no,0.0,0.0 to inf,Power consumption of the battery controller if SOC is 1 in kW,
+expansion BS efficiency in,float,no,1,0.0 to 1.0,Efficiency of the battery for charging in percent,
+expansion BS efficiency out,float,no,1,0.0 to 1.0,Efficiency of the battery for discharging in percent,
+expansion BS self-discharge per ts,float,no,0,0.0 to 1.0,Self-discharging rate in percent per time step,
+expansion BS power for SOC 0,float,no,0,0.0 to inf,Power consumption of the battery controller if SOC is 0 in kW, 
+expansion BS power for SOC 1,float,no,0,0.0 to inf,Power consumption of the battery controller if SOC is 1 in kW,
 expansion BS max total E addition,float,no,no max. set,,Upper limit for the capacity of all added resid. battery storage systems,no
 ,,,,,,
 EV plugin probability,float,no,0.25,0.0 to 1.0,The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded),no
 ,,,,,,
 tariff feed-in per kWh ,float,yes,,,,no
-tariff demand per kWh ,float,yes,,,,no
+tariff demand per kWh ,float,yes,,,The demand per kWh energy taken from the grid - This parameter is ignored if a time series on the demand prices is given,no
+emissions per kWh,float,no,100.0,,The emissions in CO2eq per kWh of energy taken from the grid - This parameter is ignored if a time series on emissions is given,no
 net present value discount rate ,float,yes,,,,no
 net present value time horizon in years ,float,yes,,,,no
 installation cost PV per kWp ,float,yes,,,,no

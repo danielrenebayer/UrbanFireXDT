@@ -129,6 +129,7 @@ float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 float Global::feed_in_tariff        = 0.0;
 float Global::demand_tariff         = 0.0;
+float Global::emissions_per_kWh     = 100.0;
 float Global::inst_cost_PV_per_kWp  = 0.0;
 float Global::inst_cost_BS_per_kWh  = 0.0;
 float Global::npv_discount_rate     = 0.0;
@@ -705,6 +706,13 @@ void Global::set_demand_tariff(float value) {
     } else {
         Global::demand_tariff = value;
         demand_tariff_set = true;
+    }
+}
+void Global::set_emissions_per_kWh(float value) {
+    if (is_locked) {
+        cerr << "Global variable emissions_per_kWh cannot be set at the moment!" << endl;
+    } else {
+        Global::emissions_per_kWh = value;
     }
 }
 void Global::set_npv_discount_rate(float value) {
