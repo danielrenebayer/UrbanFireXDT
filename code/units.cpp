@@ -186,6 +186,11 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     sum_of_mu_cons_kWh        = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
+    sum_of_rem_pow_costs_EUR    = 0.0;
+    sum_of_saved_pow_costs_EUR  = 0.0;
+    sum_of_feedin_revenue_EUR   = 0.0;
+    sum_of_emissions_bgd_CO2eq  = 0.0;
+    sum_of_emissions_avoi_CO2eq = 0.0;
     /*
     if (Global::get_comp_eval_metrics()) {
         create_history_output = true;
@@ -384,7 +389,7 @@ double ControlUnit::get_SCR() {
     return SCR;
 }
 
-double ControlUnit::get_NPV() {
+double ControlUnit::get_NPV() { // TODO update computation of NPV !!!
     // 0. return 0 if no PV or battery is available
     if (!(has_sim_pv || has_sim_bs))
         return 0;
@@ -395,15 +400,13 @@ double ControlUnit::get_NPV() {
     if (has_sim_bs)
         investemnt_costs += sim_comp_bs->get_maxE_kWh() * Global::get_inst_cost_BS_per_kWh();
     // 2. compute savings per year
-    const double& saved_energy_kWh = sum_of_self_cons_kWh; // energy in kWh for which no grid demand was required
-    double savings_per_year = 
-        saved_energy_kWh * Global::get_demand_tariff() +
-        sum_of_feed_into_grid_kWh * Global::get_feed_in_tariff();
+    //const double& saved_energy_kWh = sum_of_self_cons_kWh; // energy in kWh for which no grid demand was required
+    double savings_per_year = sum_of_saved_pow_costs_EUR + sum_of_feedin_revenue_EUR;
     // 3. compute total savings
-    double total_savings = 0.0;
-    for (unsigned int t = 1; t <= Global::get_npv_time_horizon(); t++) {
+    double total_savings = savings_per_year * Global::get_npv_factor_if_const(); // new computation rule using the present value of annuity formula
+    /*for (unsigned int t = 1; t <= Global::get_npv_time_horizon(); t++) {
         total_savings += savings_per_year / pow( (double)(1 + Global::get_npv_discount_rate()), (double) t );
-    }
+    }*/
     return - investemnt_costs + total_savings;
 }
 
@@ -604,6 +607,11 @@ void ControlUnit::reset_internal_state() {
     sum_of_mu_cons_kWh        = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
+    sum_of_rem_pow_costs_EUR    = 0.0;
+    sum_of_saved_pow_costs_EUR  = 0.0;
+    sum_of_feedin_revenue_EUR   = 0.0;
+    sum_of_emissions_bgd_CO2eq  = 0.0;
+    sum_of_emissions_avoi_CO2eq = 0.0;
     if (has_sim_pv) {
         sim_comp_pv->resetInternalState();
     }
@@ -693,28 +701,39 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
         self_produced_load_kW = std::min(current_load_all_rSMs_kW + load_hp, load_pv-load_bs);
     }
 
-    double grid_feedin_kW = 0.0;
+    // Compute current energy flows out of the power flows
+    double grid_feedin_kWh = 0.0;
     if (current_load_vSM_kW < 0) {
-        grid_feedin_kW = -current_load_vSM_kW;
+        grid_feedin_kWh = -current_load_vSM_kW * Global::get_time_step_size_in_h();
     }
-    double grid_demand_kW = 0.0;
+    double grid_demand_kWh = 0.0;
     if (current_load_vSM_kW > 0) {
-        grid_demand_kW = current_load_vSM_kW;
+        grid_demand_kWh =  current_load_vSM_kW  * Global::get_time_step_size_in_h();
     }
-
-    //
+    double self_cons_kWh       = Global::get_time_step_size_in_h() * self_produced_load_kW;
     // add values to summation variables
     sum_of_consumption_kWh    += Global::get_time_step_size_in_h() * total_consumption;
-    sum_of_self_cons_kWh      += Global::get_time_step_size_in_h() * self_produced_load_kW;
+    sum_of_self_cons_kWh      += self_cons_kWh;
     if (current_load_all_rSMs_kW > 0)
         sum_of_mu_cons_kWh    += Global::get_time_step_size_in_h() * current_load_all_rSMs_kW;
-    sum_of_feed_into_grid_kWh += Global::get_time_step_size_in_h() * grid_feedin_kW;
-    sum_of_grid_demand_kWh    += Global::get_time_step_size_in_h() * grid_demand_kW;
-    /*if (create_history_output) {
-        history_self_prod_load_kW[ts - 1]     = ;
-        history_pv_generation_kW[ ts - 1]     = load_pv;
-        history_avg_consumption_load_kW[ts-1] = total_consumption;
-    }*/
+    sum_of_feed_into_grid_kWh += grid_feedin_kWh;
+    sum_of_grid_demand_kWh    += grid_demand_kWh;
+    // add values to summation variables where potentially the global time series have to be conducted
+    sum_of_feedin_revenue_EUR += grid_feedin_kWh * Global::get_feed_in_tariff();
+    if (global::eprices_local_ts != NULL) {
+        sum_of_rem_pow_costs_EUR    += grid_demand_kWh * global::eprices_local_ts[ts - 1];
+        sum_of_saved_pow_costs_EUR  += self_cons_kWh   * global::eprices_local_ts[ts - 1];
+    } else {
+        sum_of_rem_pow_costs_EUR    += grid_demand_kWh * Global::get_demand_tariff();
+        sum_of_saved_pow_costs_EUR  += self_cons_kWh   * Global::get_demand_tariff();
+    }
+    if (global::emission_ts != NULL) {
+        sum_of_emissions_bgd_CO2eq  += grid_demand_kWh * global::emission_ts[ts - 1];
+        sum_of_emissions_avoi_CO2eq += self_cons_kWh   * global::emission_ts[ts - 1];
+    } else {
+        sum_of_emissions_bgd_CO2eq  += grid_demand_kWh * Global::get_emissions_per_kWh();
+        sum_of_emissions_avoi_CO2eq += self_cons_kWh   * Global::get_emissions_per_kWh();
+    }
 
     //
     // output current status

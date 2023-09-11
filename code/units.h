@@ -181,9 +181,11 @@ class ControlUnit {
         double sum_of_mu_cons_kWh;        ///< The sum of energy consumed by measurement units from the beginning fo the simulation until the current step
         double sum_of_feed_into_grid_kWh; ///< The sum of energy in kWh, that is fed into the grid, starting from the beginning of the current simulation run
         double sum_of_grid_demand_kWh;    ///< The sum of energy in kWh, that is taken from the grid, starting from the beginning of the current simulation run
-        //float* history_self_prod_load_kW; ///< Array for later analysis, holding the historical values of the self-produced load, that is directly consumed
-        //float* history_pv_generation_kW; ///< Array for later analysis, holding the historical values of the PV-generation
-        //float* history_avg_consumption_load_kW; ///< Array for later analysis, holding the historical (average) consumption load for the corresponding time step
+        double sum_of_rem_pow_costs_EUR;  ///< The sum of the costs for the (remaining) demanded energy starting from the beginning of the current simulation run up to the current step
+        double sum_of_saved_pow_costs_EUR;///< The sum of saved power costs, i.e., the sum avoided grid demand starting from the beginning of the current simulation run up to the current step
+        double sum_of_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the current simulation run up to the current step
+        double sum_of_emissions_bgd_CO2eq;///< The sum of emissions in CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the current simulation run up to the current step
+        double sum_of_emissions_avoi_CO2eq;///< The sum of avoided emissions in CO2eq. because no grid demand was required starting from the beginning of the current simulation run up to the current step
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
