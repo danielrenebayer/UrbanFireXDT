@@ -189,6 +189,7 @@ class Global {
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
+        static double get_npv_factor_if_const()       { return npv_factor_if_const; } ///< Returns the factor for multiplication in the NPV formula for the discounted revenues if the cashflow is constant
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_hp_E_estimation_param_m()            { return hp_E_estimation_param_m; }
         static float get_hp_E_estimation_param_t()            { return hp_E_estimation_param_t; }
@@ -308,6 +309,7 @@ class Global {
         static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
         static float npv_discount_rate;    ///< Discount rate for the net present value computation
         static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
+        static double npv_factor_if_const; ///< The NPV constant multiplication factor - no setter available
         static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
         static float hp_E_estimation_param_m; ///< Parameter of linear regression (coefficient) for estimating heat pump electricity demand if no data is given
         static float hp_E_estimation_param_t; ///< Parameter of linear regression (intercept) for estimating heat pump electricity demand if no data is given

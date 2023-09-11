@@ -3,6 +3,7 @@
 using namespace global;
 
 
+#include <cmath>
 #include <ctime>
 #include <iostream>
 
@@ -134,6 +135,7 @@ float Global::inst_cost_PV_per_kWp  = 0.0;
 float Global::inst_cost_BS_per_kWh  = 0.0;
 float Global::npv_discount_rate     = 0.0;
 unsigned int Global::npv_time_horizon  = 0;
+double Global::npv_factor_if_const  = 0.0;
 float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::hp_E_estimation_param_m = 0.0;
 float Global::hp_E_estimation_param_t = 0.0;
@@ -722,6 +724,12 @@ void Global::set_npv_discount_rate(float value) {
         Global::npv_discount_rate = value;
         npv_discount_rate_set = true;
     }
+    // Compute npv_factor_if_const if all required values are defined
+    if (npv_time_horizon_set) {
+        npv_factor_if_const =
+          ( pow( (double) (1 + npv_discount_rate), (double) (npv_time_horizon)) - 1 ) /
+          ( pow( (double) (1 + npv_discount_rate), (double) (npv_time_horizon)) * (double) (npv_discount_rate) );
+    }
 }
 void Global::set_npv_time_horizon(unsigned int value) {
     if (is_locked && npv_time_horizon_set) {
@@ -729,6 +737,12 @@ void Global::set_npv_time_horizon(unsigned int value) {
     } else {
         Global::npv_time_horizon = value;
         npv_time_horizon_set = true;
+    }
+    // Compute npv_factor_if_const if all required values are defined
+    if (npv_discount_rate_set) {
+        npv_factor_if_const =
+          ( pow( (double) (1 + npv_discount_rate), (double) (npv_time_horizon)) - 1 ) /
+          ( pow( (double) (1 + npv_discount_rate), (double) (npv_time_horizon)) * (double) (npv_discount_rate) );
     }
 }
 void Global::set_inst_cost_PV_per_kWp(float value) {
