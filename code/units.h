@@ -184,8 +184,8 @@ class ControlUnit {
         double sum_of_rem_pow_costs_EUR;  ///< The sum of the costs for the (remaining) demanded energy starting from the beginning of the current simulation run up to the current step
         double sum_of_saved_pow_costs_EUR;///< The sum of saved power costs, i.e., the sum avoided grid demand starting from the beginning of the current simulation run up to the current step
         double sum_of_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the current simulation run up to the current step
-        double sum_of_emissions_bgd_CO2eq;///< The sum of emissions in CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the current simulation run up to the current step
-        double sum_of_emissions_avoi_CO2eq;///< The sum of avoided emissions in CO2eq. because no grid demand was required starting from the beginning of the current simulation run up to the current step
+        double sum_of_emissions_cbgd_kg_CO2eq;///< The sum of emissions in kg CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the current simulation run up to the current step
+        double sum_of_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the current simulation run up to the current step
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter

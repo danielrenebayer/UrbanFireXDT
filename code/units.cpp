@@ -124,7 +124,7 @@ bool ControlUnit::st__cu_list_init     = false;
 size_t ControlUnit::st__n_CUs             = 0;
 size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
-const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh]";
+const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq]";
 
 ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
@@ -186,11 +186,11 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     sum_of_mu_cons_kWh        = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
-    sum_of_rem_pow_costs_EUR    = 0.0;
-    sum_of_saved_pow_costs_EUR  = 0.0;
-    sum_of_feedin_revenue_EUR   = 0.0;
-    sum_of_emissions_bgd_CO2eq  = 0.0;
-    sum_of_emissions_avoi_CO2eq = 0.0;
+    sum_of_rem_pow_costs_EUR       = 0.0;
+    sum_of_saved_pow_costs_EUR     = 0.0;
+    sum_of_feedin_revenue_EUR      = 0.0;
+    sum_of_emissions_cbgd_kg_CO2eq = 0.0;
+    sum_of_emissions_avoi_kg_CO2eq = 0.0;
     /*
     if (Global::get_comp_eval_metrics()) {
         create_history_output = true;
@@ -446,7 +446,9 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(bat_n_ts_full) + ",";
         *retstr += to_string(bat_E_withdrawn) + ",";
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
-        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_demand_kWh() : 0.0);
+        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_demand_kWh() : 0.0) + ",";
+        *retstr += to_string(sum_of_emissions_cbgd_kg_CO2eq) + ",";
+        *retstr += to_string(sum_of_emissions_avoi_kg_CO2eq);
         return retstr;
 }
 
@@ -607,11 +609,11 @@ void ControlUnit::reset_internal_state() {
     sum_of_mu_cons_kWh        = 0.0;
     sum_of_feed_into_grid_kWh = 0.0;
     sum_of_grid_demand_kWh    = 0.0;
-    sum_of_rem_pow_costs_EUR    = 0.0;
-    sum_of_saved_pow_costs_EUR  = 0.0;
-    sum_of_feedin_revenue_EUR   = 0.0;
-    sum_of_emissions_bgd_CO2eq  = 0.0;
-    sum_of_emissions_avoi_CO2eq = 0.0;
+    sum_of_rem_pow_costs_EUR       = 0.0;
+    sum_of_saved_pow_costs_EUR     = 0.0;
+    sum_of_feedin_revenue_EUR      = 0.0;
+    sum_of_emissions_cbgd_kg_CO2eq = 0.0;
+    sum_of_emissions_avoi_kg_CO2eq = 0.0;
     if (has_sim_pv) {
         sim_comp_pv->resetInternalState();
     }
@@ -728,11 +730,11 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
         sum_of_saved_pow_costs_EUR  += self_cons_kWh   * Global::get_demand_tariff();
     }
     if (global::emission_ts != NULL) {
-        sum_of_emissions_bgd_CO2eq  += grid_demand_kWh * global::emission_ts[ts - 1];
-        sum_of_emissions_avoi_CO2eq += self_cons_kWh   * global::emission_ts[ts - 1];
+        sum_of_emissions_cbgd_kg_CO2eq += grid_demand_kWh * global::emission_ts[ts - 1] / 1000;
+        sum_of_emissions_avoi_kg_CO2eq += self_cons_kWh   * global::emission_ts[ts - 1] / 1000;
     } else {
-        sum_of_emissions_bgd_CO2eq  += grid_demand_kWh * Global::get_emissions_per_kWh();
-        sum_of_emissions_avoi_CO2eq += self_cons_kWh   * Global::get_emissions_per_kWh();
+        sum_of_emissions_cbgd_kg_CO2eq += grid_demand_kWh * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
+        sum_of_emissions_avoi_kg_CO2eq += self_cons_kWh   * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
     }
 
     //
