@@ -54,7 +54,7 @@ namespace global {
     inline std::map<unsigned long, std::vector<std::pair<float, std::string>>> roof_section_orientations; ///< Map storing a complet list of roof sections per location ID. Roof sections are tuples/pairs with the information (roof section area, roof section orientation)
     inline std::set<unsigned long> locations_with_geodata; ///< List / Set storing all locations for which geodata is available
     inline unsigned int current_repetition_counter = 0; ///< Repetition counter, if repetitions is set as a command line argument
-    inline const float* emission_ts      = NULL; ///< Reference to the emission time series for grid demanded energy (if present)
+    inline const float* emission_ts      = NULL; ///< Reference to the emission time series for grid demanded energy (if present) in g CO2eq per kWh
     inline const float* eprices_local_ts = NULL; ///< Reference to the time series of the energy prices (for residential customers) for grid demanded energy (if present)
     inline const float* eprices_spotm_ts = NULL; ///< Reference to the time series of the energy prices at the spot market (for non-residential customers, without vat or taxes) (if present)
 
@@ -184,7 +184,7 @@ class Global {
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
         static float get_demand_tariff()       { return demand_tariff; }
-        static float get_emissions_per_kWh()   { return emissions_per_kWh; } ///!< Returns the mean emissions in CO2eq for one kWh of grid demanded energy. If a time series is available, use the latter one!
+        static float get_emissions_g_CO2eq_per_kWh() { return emissions_per_kWh; } ///!< Returns the mean emissions in g CO2eq for one kWh of grid demanded energy. If a time series is available, use the latter one!
         static float get_inst_cost_PV_per_kWp(){ return inst_cost_PV_per_kWp; }
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
         static float get_npv_discount_rate()   { return npv_discount_rate; }
@@ -242,7 +242,7 @@ class Global {
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
         static void set_demand_tariff(float value);
-        static void set_emissions_per_kWh(float value);
+        static void set_emissions_g_CO2eq_per_kWh(float value);
         static void set_inst_cost_PV_per_kWp(float value);
         static void set_inst_cost_BS_per_kWh(float value);
         static void set_npv_discount_rate(float value);

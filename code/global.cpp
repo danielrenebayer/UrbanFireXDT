@@ -710,7 +710,7 @@ void Global::set_demand_tariff(float value) {
         demand_tariff_set = true;
     }
 }
-void Global::set_emissions_per_kWh(float value) {
+void Global::set_emissions_g_CO2eq_per_kWh(float value) {
     if (is_locked) {
         cerr << "Global variable emissions_per_kWh cannot be set at the moment!" << endl;
     } else {

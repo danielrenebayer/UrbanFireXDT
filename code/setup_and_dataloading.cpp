@@ -181,7 +181,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             }
             else if ( element_name.compare("emissions per kWh")                       == 0 )
             {
-                Global::set_emissions_per_kWh( scenario_dict.get_value<float>() );
+                Global::set_emissions_g_CO2eq_per_kWh( scenario_dict.get_value<float>() );
             }
             else if ( element_name.compare("net present value discount rate")         == 0 )
             {
@@ -1387,7 +1387,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_wind_kWp());
     PRINT_VAR(Global::get_feed_in_tariff());
     PRINT_VAR(Global::get_demand_tariff());
-    PRINT_VAR(Global::get_emissions_per_kWh());
+    PRINT_VAR(Global::get_emissions_g_CO2eq_per_kWh());
     PRINT_VAR(Global::get_inst_cost_PV_per_kWp());
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
     PRINT_VAR(Global::get_npv_discount_rate());
