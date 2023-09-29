@@ -97,12 +97,21 @@ namespace output {
     void outputMetrics(bool alt_fname = false, string * fname_postfix = NULL); ///< This function computed metrics for all control units after the simulation has been finished; if @param alt_fname is set to true, the output file will have the file name 'metrics-{fname_postfix}.csv' instead of 'metrics-per-cu.csv'
 
     /**
-     * Outputs every line that is collected in 'output_list' to 'metrics-per-cu.csv'.
+     * Outputs every line that is collected in 'output_list' to 'metrics-sac-planning-per-cu.csv'.
      * The output holds an additional last column about the added components for computing the metrics.
      * 
      * @param output_list: Reference to the list containing each line as string (lines must not end with a new line)
      */
-    void outputMetricsStrList(list<string*> &output_list);
+    void outputMetricsStrListSACPlanning(list<string*> &output_list);
+
+    /**
+     * Outputs every line that is collected in 'output_list' to 'weekly-metrics-per-cu.csv'.
+     * Attention: This methods deletes the output list!
+     * 
+     * @param output_list: Reference to the list containing each line as string (lines must not end with a new line)
+     * @param week_number: The week number of the output
+     */
+    void outputWeeklyMetricsStrList(list<string*> *output_list, unsigned long week_number);
 
 }
 

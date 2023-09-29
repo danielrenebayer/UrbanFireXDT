@@ -40,6 +40,9 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
     //time_t t_start = mktime(tm_start);
     //time_t t_end   = mktime(tm_end);
     struct tm* current_tm;
+    unsigned int last_step_weekday = 0; // required to identify new weeks
+    unsigned long week_number = 1;
+    //
     bool sim_started = false; // gets true, if simulation range (as given by tm_start) has been reached
     // main loop
     for (unsigned long ts = 1; ts <= n_tsteps; ts++) {
@@ -64,8 +67,41 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
             }
         }
         //
+        // day and time handling
+        unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday
+        unsigned int hourOfDay_r = (unsigned int) (current_tm->tm_hour);
+        // convert from rigth-alignment to left-alignment
+        unsigned int dayOfWeek_l = dayOfWeek_r;
+        unsigned int hourOfDay_l = hourOfDay_r - 1;
+        if (hourOfDay_r <= 0) {
+            hourOfDay_l = 23;
+            if (dayOfWeek_r >= 1)
+                dayOfWeek_l = dayOfWeek_r - 1;
+            else
+                dayOfWeek_l = 6;
+        }
+        // has a new week started?
+        if (last_step_weekday > dayOfWeek_l) {
+            last_step_weekday = dayOfWeek_l;
+            // only execute this during the main run (checked by subsection == NULL)
+            if (Global::get_compute_weekly_metrics() && subsection == NULL) {
+                std::list<std::string*> *output_list = new std::list<std::string*>();
+                // iterate over all control units, get the weekly metrics string (and reset weekly summation variables automatically)
+                ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+                const size_t nCUs = ControlUnit::GetNumberOfInstances();
+                for (size_t i = 0; i < nCUs; i++) {
+                    output_list->push_back(
+                        cuList[i]->get_metrics_string_weekly_wr(week_number)
+                    );
+                }
+                // output results
+                output::outputWeeklyMetricsStrList(output_list, week_number); // attention: this function deletes output_list
+            }
+            week_number++;
+        }
+        //
         // execute one step
-        if (!oneStep(ts, totalBatteryCapacity_kWh, output_prefix, subsection)) return false;
+        if (!oneStep(ts, dayOfWeek_l, hourOfDay_l, totalBatteryCapacity_kWh, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
@@ -80,7 +116,9 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
 
 }
 
-bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, const char* output_prefix /* = "" */, std::vector<ControlUnit*>* subsection /* = NULL */) {
+bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l,
+                        double totalBatteryCapacity_kWh, const char* output_prefix /* = "" */,
+                        std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -88,19 +126,6 @@ bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, cons
     //
 
     //int tsID = ts - 1;
-    struct tm* current_tm = global::time_localtime_str->at(ts-1);
-    unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday
-    unsigned int hourOfDay_r = (unsigned int) (current_tm->tm_hour);
-    // convert from rigth-alignment to left-alignment
-    unsigned int dayOfWeek_l = dayOfWeek_r;
-    unsigned int hourOfDay_l = hourOfDay_r - 1;
-    if (hourOfDay_r <= 0) {
-        hourOfDay_l = 23;
-        if (dayOfWeek_r >= 1)
-            dayOfWeek_l = dayOfWeek_r - 1;
-        else
-            dayOfWeek_l = 6;
-    }
 
     // TODO: parallelization of the unit calls
     // loop over all control units:

@@ -118,7 +118,8 @@ class ControlUnit {
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_SCR(); ///< Returns the SCR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
-        string* get_metrics_string(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
+        string* get_metrics_string_annual(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
+        string* get_metrics_string_weekly_wr(unsigned long week_number); // This function outputs the weekly metrics AND resets the internal weekly counters!
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
         // public members
         bool is_sim_expanded; ///< Puplicly accessible member, weather the control unit is expanded or not (required for SAC Planning). This flag has no internal effect inside the class.
@@ -176,6 +177,7 @@ class ControlUnit {
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
+        // summation variables from the beginning of the simulation run until the current time step
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_mu_cons_kWh;        ///< The sum of energy consumed by measurement units from the beginning fo the simulation until the current step
@@ -186,6 +188,17 @@ class ControlUnit {
         double sum_of_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the current simulation run up to the current step
         double sum_of_emissions_cbgd_kg_CO2eq;///< The sum of emissions in kg CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the current simulation run up to the current step
         double sum_of_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the current simulation run up to the current step
+        // summation variables from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_mu_cons_kWh;        ///< The sum of energy consumed by measurement units from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_feed_into_grid_kWh; ///< The sum of energy in kWh, that is fed into the grid, starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_grid_demand_kWh;    ///< The sum of energy in kWh, that is taken from the grid, starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_rem_pow_costs_EUR;  ///< The sum of the costs for the (remaining) demanded energy starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_saved_pow_costs_EUR;///< The sum of saved power costs, i.e., the sum avoided grid demand starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_emissions_cbgd_kg_CO2eq;///< The sum of emissions in kg CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the currently simulated week until the current time step
+        double sum_of_cweek_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the currently simulated week until the current time step
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
@@ -201,7 +214,8 @@ class ControlUnit {
         static ControlUnit** st__cu_list;
         //static std::map<unsigned long, ControlUnit*> location_to_cu_map;
     public:
-        static const std::string MetricsStringHeader; ///< The header for the output string produced by `ControlUnit::get_metrics_string()`
+        static const std::string MetricsStringHeaderAnnual; ///< The header for the output string produced by `ControlUnit::get_metrics_string_annual()`
+        static const std::string MetricsStringHeaderWeekly; ///< The header for the output string produced by `ControlUnit::get_metrics_string_weekly_wr()`
 };
 
 

@@ -450,7 +450,7 @@ bool add_expansion_to_units_orderd_by_metric(
                 double metric_result = (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::BestSSR) ? cu->get_SSR() : cu->get_NPV();
                 current_target_list->push_back(std::make_pair(metric_result, cu));
                 // add to complete metrics output
-                string * metrics_string = cu->get_metrics_string();
+                string * metrics_string = cu->get_metrics_string_annual();
                 metrics_string->append(",");
                 if (expPV) metrics_string->append("+PV");
                 if (expBS) metrics_string->append("+BS");
@@ -571,7 +571,7 @@ bool add_expansion_to_units_orderd_by_metric(
     }
     //
     // output metrics
-    output::outputMetricsStrList(output_str_collection);
+    output::outputMetricsStrListSACPlanning(output_str_collection);
     for (string* s : output_str_collection) delete s;
     // make nice output
     cout << "\r" << global::output_section_delimiter << std::endl;
@@ -721,7 +721,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
         }
         // 2.1.4) Output metric values
         for (ControlUnit* cu : *listOfCUs) {
-            string * metrics_string = cu->get_metrics_string();
+            string * metrics_string = cu->get_metrics_string_annual();
             metrics_string->append(",PV only");
             output_str_collection.push_back(metrics_string);
         }
@@ -753,7 +753,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
         }
         // 2.2.4) Output metric values
         for (ControlUnit* cu : *listOfCUs) {
-            string * metrics_string = cu->get_metrics_string();
+            string * metrics_string = cu->get_metrics_string_annual();
             metrics_string->append(",PV and BS");
             output_str_collection.push_back(metrics_string);
         }
@@ -900,7 +900,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
     }
     //
     // output metrics
-    output::outputMetricsStrList(output_str_collection);
+    output::outputMetricsStrListSACPlanning(output_str_collection);
     for (string* s : output_str_collection) delete s;
     // make nice output
     cout << "\r" << global::output_section_delimiter << std::endl;

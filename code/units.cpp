@@ -124,7 +124,8 @@ bool ControlUnit::st__cu_list_init     = false;
 size_t ControlUnit::st__n_CUs             = 0;
 size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
-const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
+const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 
 ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
@@ -191,6 +192,17 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     sum_of_feedin_revenue_EUR      = 0.0;
     sum_of_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_emissions_avoi_kg_CO2eq = 0.0;
+    // weekly counters
+    sum_of_cweek_consumption_kWh         = 0.0;
+    sum_of_cweek_self_cons_kWh           = 0.0;
+    sum_of_cweek_mu_cons_kWh             = 0.0;
+    sum_of_cweek_feed_into_grid_kWh      = 0.0;
+    sum_of_cweek_grid_demand_kWh         = 0.0;
+    sum_of_cweek_rem_pow_costs_EUR       = 0.0;
+    sum_of_cweek_saved_pow_costs_EUR     = 0.0;
+    sum_of_cweek_feedin_revenue_EUR      = 0.0;
+    sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
+    sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
     /*
     if (Global::get_comp_eval_metrics()) {
         create_history_output = true;
@@ -410,7 +422,7 @@ double ControlUnit::get_NPV() { // TODO update computation of NPV !!!
     return - investemnt_costs + total_savings;
 }
 
-string* ControlUnit::get_metrics_string() {
+string* ControlUnit::get_metrics_string_annual() {
         double SCR = get_SCR();
         double SSR = get_SSR();
         double NPV = get_NPV();
@@ -428,7 +440,7 @@ string* ControlUnit::get_metrics_string() {
             bat_n_ts_empyt = sim_comp_bs->get_n_ts_empty();
             bat_n_ts_full  = sim_comp_bs->get_n_ts_full();
         }
-        // See ControlUnit::MetricsStringHeader for the header definition
+        // See ControlUnit::MetricsStringHeaderAnnual for the header definition
         //
         string* retstr = new string;
         *retstr += to_string(unitID) + ",";
@@ -454,6 +466,69 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
         *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
         *retstr += to_string(get_sim_comp_cs_max_P_kW());
+        return retstr;
+}
+
+string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
+        double SCR_cweek = 0.0;
+        if (has_sim_pv && sim_comp_pv->get_cweek_generation_kWh() > 0) {
+            SCR_cweek = sum_of_cweek_self_cons_kWh / sim_comp_pv->get_cweek_generation_kWh();
+        }
+        double SSR_cweek = 0.0;
+        if (sum_of_cweek_consumption_kWh > 0) {
+            SSR_cweek = sum_of_cweek_self_cons_kWh / sum_of_cweek_consumption_kWh;
+        }
+        double sum_of_cweek_PV_generated_kWh = 0.0;
+        if (has_sim_pv) {
+            sum_of_cweek_PV_generated_kWh = sim_comp_pv->get_cweek_generation_kWh();
+            sim_comp_pv->resetWeeklyCounter();
+        }
+        double bat_EFC_cweek = 0.0;
+        double bat_E_cweek_withdrawn = 0.0;
+        if (has_sim_bs) {
+            bat_EFC_cweek = sim_comp_bs->get_cweek_EFC();
+            bat_E_cweek_withdrawn= sim_comp_bs->get_cweek_withdrawn_E_kWh();
+            sim_comp_bs->resetWeeklyCounter();
+        }
+        // See ControlUnit::MetricsStringHeader for the header definition
+        //
+        string* retstr = new string;
+        *retstr += to_string(unitID)      + ",";
+        *retstr += to_string(week_number) + ",";
+        *retstr += to_string(SCR_cweek)   + ",";
+        *retstr += to_string(SSR_cweek)   + ",";
+        *retstr += to_string(sum_of_cweek_consumption_kWh)   + ",";
+        *retstr += to_string(sum_of_cweek_mu_cons_kWh)       + ",";
+        *retstr += to_string(sum_of_cweek_self_cons_kWh)     + ",";
+        *retstr += to_string(sum_of_cweek_PV_generated_kWh)  + ",";
+        *retstr += to_string(sum_of_cweek_feed_into_grid_kWh)+ ",";
+        *retstr += to_string(sum_of_cweek_grid_demand_kWh)   + ",";
+        *retstr += to_string(bat_EFC_cweek)         + ",";
+        *retstr += to_string(bat_E_cweek_withdrawn) + ",";
+        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_cweek_demand_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_cweek_demand_kWh() : 0.0) + ",";
+        *retstr += to_string(sum_of_cweek_emissions_cbgd_kg_CO2eq) + ",";
+        *retstr += to_string(sum_of_cweek_emissions_avoi_kg_CO2eq) + ",";
+        *retstr += to_string(get_sim_comp_pv_kWp())   + ",";
+        *retstr += to_string(get_sim_comp_bs_P_kW())  + ",";
+        *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
+        *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
+        *retstr += to_string(get_sim_comp_cs_max_P_kW());
+        // reset weekly counters
+        sum_of_cweek_consumption_kWh         = 0.0;
+        sum_of_cweek_self_cons_kWh           = 0.0;
+        sum_of_cweek_mu_cons_kWh             = 0.0;
+        sum_of_cweek_feed_into_grid_kWh      = 0.0;
+        sum_of_cweek_grid_demand_kWh         = 0.0;
+        sum_of_cweek_rem_pow_costs_EUR       = 0.0;
+        sum_of_cweek_saved_pow_costs_EUR     = 0.0;
+        sum_of_cweek_feedin_revenue_EUR      = 0.0;
+        sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
+        sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
+        // reset HP and CS (PV and BS are resetted above)
+        if (has_sim_hp) sim_comp_hp->resetWeeklyCounter();
+        if (has_sim_cs) sim_comp_cs->resetWeeklyCounter();
+
         return retstr;
 }
 
@@ -619,6 +694,18 @@ void ControlUnit::reset_internal_state() {
     sum_of_feedin_revenue_EUR      = 0.0;
     sum_of_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_emissions_avoi_kg_CO2eq = 0.0;
+    //
+    sum_of_cweek_consumption_kWh         = 0.0;
+    sum_of_cweek_self_cons_kWh           = 0.0;
+    sum_of_cweek_mu_cons_kWh             = 0.0;
+    sum_of_cweek_feed_into_grid_kWh      = 0.0;
+    sum_of_cweek_grid_demand_kWh         = 0.0;
+    sum_of_cweek_rem_pow_costs_EUR       = 0.0;
+    sum_of_cweek_saved_pow_costs_EUR     = 0.0;
+    sum_of_cweek_feedin_revenue_EUR      = 0.0;
+    sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
+    sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
+    //
     if (has_sim_pv) {
         sim_comp_pv->resetInternalState();
     }
@@ -718,29 +805,51 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
         grid_demand_kWh =  current_load_vSM_kW  * Global::get_time_step_size_in_h();
     }
     double self_cons_kWh       = Global::get_time_step_size_in_h() * self_produced_load_kW;
+    double cons_kWh            = Global::get_time_step_size_in_h() * total_consumption;
     // add values to summation variables
-    sum_of_consumption_kWh    += Global::get_time_step_size_in_h() * total_consumption;
-    sum_of_self_cons_kWh      += self_cons_kWh;
-    if (current_load_all_rSMs_kW > 0)
-        sum_of_mu_cons_kWh    += Global::get_time_step_size_in_h() * current_load_all_rSMs_kW;
+    sum_of_consumption_kWh       += cons_kWh;
+    sum_of_cweek_consumption_kWh += cons_kWh;
+    sum_of_self_cons_kWh         += self_cons_kWh;
+    sum_of_cweek_self_cons_kWh   += self_cons_kWh;
+    if (current_load_all_rSMs_kW > 0) {
+        double mu_cons = Global::get_time_step_size_in_h() * current_load_all_rSMs_kW;
+        sum_of_mu_cons_kWh       += mu_cons;
+        sum_of_cweek_mu_cons_kWh += mu_cons;
+    }
     sum_of_feed_into_grid_kWh += grid_feedin_kWh;
     sum_of_grid_demand_kWh    += grid_demand_kWh;
+    sum_of_cweek_feed_into_grid_kWh += grid_feedin_kWh;
+    sum_of_cweek_grid_demand_kWh    += grid_demand_kWh;
     // add values to summation variables where potentially the global time series have to be conducted
-    sum_of_feedin_revenue_EUR += grid_feedin_kWh * Global::get_feed_in_tariff();
+    //  a) price computation
+    double p, p1, p2;
+    p = grid_feedin_kWh * Global::get_feed_in_tariff();
+    sum_of_feedin_revenue_EUR       += p;
+    sum_of_cweek_feedin_revenue_EUR += p;
     if (global::eprices_local_ts != NULL) {
-        sum_of_rem_pow_costs_EUR    += grid_demand_kWh * global::eprices_local_ts[ts - 1];
-        sum_of_saved_pow_costs_EUR  += self_cons_kWh   * global::eprices_local_ts[ts - 1];
+        p1 = grid_demand_kWh * global::eprices_local_ts[ts - 1];
+        p2 = self_cons_kWh   * global::eprices_local_ts[ts - 1];
     } else {
-        sum_of_rem_pow_costs_EUR    += grid_demand_kWh * Global::get_demand_tariff();
-        sum_of_saved_pow_costs_EUR  += self_cons_kWh   * Global::get_demand_tariff();
+        p1 = grid_demand_kWh * Global::get_demand_tariff();
+        p2 = self_cons_kWh   * Global::get_demand_tariff();
     }
+    sum_of_rem_pow_costs_EUR         += p1;
+    sum_of_saved_pow_costs_EUR       += p2;
+    sum_of_cweek_rem_pow_costs_EUR   += p1;
+    sum_of_cweek_saved_pow_costs_EUR += p2;
+    //  b) emission computations
+    double r1, r2;
     if (global::emission_ts != NULL) {
-        sum_of_emissions_cbgd_kg_CO2eq += grid_demand_kWh * global::emission_ts[ts - 1] / 1000;
-        sum_of_emissions_avoi_kg_CO2eq += self_cons_kWh   * global::emission_ts[ts - 1] / 1000;
+        r1 = grid_demand_kWh * global::emission_ts[ts - 1] / 1000;
+        r2 = self_cons_kWh   * global::emission_ts[ts - 1] / 1000;
     } else {
-        sum_of_emissions_cbgd_kg_CO2eq += grid_demand_kWh * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
-        sum_of_emissions_avoi_kg_CO2eq += self_cons_kWh   * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
+        r1 = grid_demand_kWh * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
+        r2 = self_cons_kWh   * Global::get_emissions_g_CO2eq_per_kWh() / 1000;
     }
+    sum_of_emissions_cbgd_kg_CO2eq       += r1;
+    sum_of_emissions_avoi_kg_CO2eq       += r2;
+    sum_of_cweek_emissions_cbgd_kg_CO2eq += r1;
+    sum_of_cweek_emissions_avoi_kg_CO2eq += r2;
 
     //
     // output current status

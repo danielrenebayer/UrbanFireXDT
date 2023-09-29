@@ -369,12 +369,12 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
             output_path /= "metrics-per-cu.csv";
         }
         ofstream ofs(output_path, std::ofstream::out);
-        ofs << ControlUnit::MetricsStringHeader <<"\n";
+        ofs << ControlUnit::MetricsStringHeaderAnnual <<"\n";
         //
         // loop over all CUs and get metrics output string
         ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
         for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
-            string* output_str = cuList[i]->get_metrics_string();
+            string* output_str = cuList[i]->get_metrics_string_annual();
             if (output_str != NULL)
                 ofs << *output_str;
             ofs << "\n";
@@ -386,12 +386,12 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
 }
 
 
-void output::outputMetricsStrList(list<string*> &output_list) {
+void output::outputMetricsStrListSACPlanning(list<string*> &output_list) {
     filesystem::path output_path;
     output_path  = *(global::current_global_output_dir);
     output_path /= "metrics-sac-planning-per-cu.csv";
     ofstream ofs(output_path, std::ofstream::out);
-    ofs << ControlUnit::MetricsStringHeader << ",Added components\n";
+    ofs << ControlUnit::MetricsStringHeaderAnnual << ",Added components\n";
     //
     // output all elements from the list
     for (string* s : output_list) {
@@ -399,6 +399,29 @@ void output::outputMetricsStrList(list<string*> &output_list) {
     }
     //
     ofs.close();
+}
+
+
+void output::outputWeeklyMetricsStrList(list<string*> *output_list, unsigned long week_number) {
+    filesystem::path output_path;
+    output_path  = *(global::current_global_output_dir);
+    output_path /= "weekly-metrics";
+    // create subfolder if it does not exist already
+    if (!filesystem::exists(output_path))
+        filesystem::create_directory(output_path);
+    output_path /= "week-" + std::to_string(week_number) + ".csv";
+    ofstream ofs(output_path, std::ofstream::out);
+    ofs << ControlUnit::MetricsStringHeaderWeekly << "\n";
+    //
+    // output all elements from the list
+    for (string* s : *output_list) {
+        ofs << *s << "\n";
+    }
+    //
+    ofs.close();
+    // delete the output list
+    for (string* s : *output_list) delete s;
+    delete output_list;
 }
 
 
