@@ -93,7 +93,8 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
      *
      */
     currentGeneration_kW = 0;
-    total_generation_kWh = 0.0;
+    generation_cumsum_total_kWh = 0.0;
+    generation_cumsum_cweek_kWh = 0.0;
 
   if (Global::get_exp_pv_static_profile_orientation() == "") {
     // Case 1: if no static profile is selected, use existing roof data
@@ -144,7 +145,8 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     }
 
     currentGeneration_kW = 0;
-    total_generation_kWh = 0.0;
+    generation_cumsum_total_kWh = 0.0;
+    generation_cumsum_cweek_kWh = 0.0;
     total_kWp = 0;
     // attach roof sections as defined in data
     // // float min_roof_area = min_kWp / kWp_per_m2;
@@ -221,11 +223,18 @@ void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     for (RoofSectionPV& section : roof_sections)
         currentGeneration_kW += section.get_currentFeedin_kW(ts);
     // compute total generation
-    total_generation_kWh += Global::get_time_step_size_in_h() * currentGeneration_kW;
+    double e = Global::get_time_step_size_in_h() * currentGeneration_kW;
+    generation_cumsum_total_kWh += e;
+    generation_cumsum_cweek_kWh += e;
+}
+
+void ComponentPV::resetWeeklyCounter() {
+    generation_cumsum_cweek_kWh = 0.0;
 }
 
 void ComponentPV::resetInternalState() {
-    total_generation_kWh = 0.0;
+    generation_cumsum_total_kWh = 0.0;
+    generation_cumsum_cweek_kWh = 0.0;
     currentGeneration_kW = 0.0;
 }
 
@@ -288,6 +297,7 @@ ComponentBS::ComponentBS(
     currentE_kWh      = 0;
     currentP_kW       = 0;
     charge_request_kW = 0;
+    cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty    = 0;
     n_ts_SOC_full     = 0;
@@ -351,6 +361,7 @@ void ComponentBS::calculateActions() {
         currentE_kWh = new_charge_kWh;
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
         total_E_withdrawn_kWh -= energy_taken_kWh;
+        cweek_E_withdrawn_kWh -= energy_taken_kWh;
     }
 
     // calculate new SOC value
@@ -363,12 +374,17 @@ void ComponentBS::calculateActions() {
         n_ts_SOC_full++;
 }
 
+void ComponentBS::resetWeeklyCounter() {
+    cweek_E_withdrawn_kWh = 0.0;
+}
+
 void ComponentBS::resetInternalState() {
     //
     // This method resets the internal SOC to the initial level
     //
     SOC = initial_SoC;
     currentE_kWh = maxE_kWh * initial_SoC;
+    cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty = 0;
     n_ts_SOC_full  = 0;
@@ -412,17 +428,25 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     // further initialization
     currentDemand_kW = 0;
     total_demand_kWh = 0.0;
+    cweek_demand_kWh = 0.0;
 }
 
 void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
     unsigned long tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
-    total_demand_kWh += currentDemand_kW * Global::get_time_step_size_in_h();
+    double e = currentDemand_kW * Global::get_time_step_size_in_h();
+    total_demand_kWh += e;
+    cweek_demand_kWh += e;
+}
+
+void ComponentHP::resetWeeklyCounter() {
+    cweek_demand_kWh = 0.0;
 }
 
 void ComponentHP::resetInternalState() {
     currentDemand_kW = 0.0;
     total_demand_kWh = 0.0;
+    cweek_demand_kWh = 0.0;
 }
 
 void ComponentHP::InitializeRandomGenerator() {
@@ -458,6 +482,7 @@ ComponentCS::ComponentCS() : max_charging_power(11) { // TODO: make max charging
     enabled = false;
     current_demand_kW = 0.0;
     total_demand_kWh  = 0.0;
+    cweek_demand_kWh  = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
 }
@@ -507,9 +532,14 @@ void ComponentCS::disable_station() {
     enabled = false;
 }
 
+void ComponentCS::resetWeeklyCounter() {
+    cweek_demand_kWh = 0.0;
+}
+
 void ComponentCS::resetInternalState() {
     current_demand_kW = 0.0;
     total_demand_kWh  = 0.0;
+    cweek_demand_kWh  = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
     charging_order_req.clear();
@@ -598,7 +628,9 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
             current_demand_kW  += ev->get_current_charging_power();
         }
         // compute current demand and cumulative sum
-        total_demand_kWh += current_demand_kW * Global::get_time_step_size_in_h();
+        double e = current_demand_kW * Global::get_time_step_size_in_h();
+        total_demand_kWh += e;
+        cweek_demand_kWh += e;
     } else if (requested_power_kW < 0) {
         // TODO bidirectional charging
     }
