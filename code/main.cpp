@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
 	// static attributes in the classes
 	//
     float expansion_matrix_rel_freq[16][16] = {0};
-    long  expansion_matrix_abs_freq[16][16] = {0};
+    unsigned long expansion_matrix_abs_freq[16][16] = {0};
 	Global::InitializeStaticVariables();
 
 	//

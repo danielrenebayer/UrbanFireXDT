@@ -254,7 +254,7 @@ bool expansion::verify_expansion_matrix(float expansion_matrix[16][16]) {
 
 
 bool add_expansion_to_units_random_or_data_order(
-    long  expansion_matrix_abs_freq[16][16],
+    unsigned long expansion_matrix_abs_freq[16][16],
     vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
 ) {
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
@@ -368,7 +368,7 @@ struct Combination {
  * @param cuRefLstVectBitOrder: List of all control units per expansion combination
  */
 bool add_expansion_to_units_orderd_by_metric(
-    long  expansion_matrix_abs_freq[16][16],
+    unsigned long expansion_matrix_abs_freq[16][16],
     vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
 ) {
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
@@ -582,7 +582,7 @@ bool add_expansion_to_units_orderd_by_metric(
     return true;
 }
 double add_expansion_to_units_orderd_by_metric_OLD(
-    long  expansion_matrix_abs_freq[16][16],
+    unsigned long expansion_matrix_abs_freq[16][16],
     vector<vector<ControlUnit*>>& cuRefLstVectBitOrder
 ) {
     // cummulative sum of added kWp of residential PV nominal power in (kWp)
@@ -911,7 +911,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
 
 void expansion::add_expansion_to_units(
     float expansion_matrix_rel_freq[16][16],
-    long  expansion_matrix_abs_freq[16][16]) {
+    unsigned long expansion_matrix_abs_freq[16][16]) {
     /*
      * This function adds the expansion given als relative counts in expansion_matrix_rel_freq
      * to the control units.
@@ -956,7 +956,7 @@ void expansion::add_expansion_to_units(
     //          are impossible, obviously)
     for (int i = 0; i < 16; i++) {
         for (int j = i+1; j < 16; j++) {
-            expansion_matrix_abs_freq[i][j] = (long) ( expansion_matrix_rel_freq[i][j] * (float) (currExpCountsMatIndexed[i]) );
+            expansion_matrix_abs_freq[i][j] = (unsigned long) ( expansion_matrix_rel_freq[i][j] * (float) (currExpCountsMatIndexed[i]) );
         }
     }
     // calculate diagonal values

@@ -19,7 +19,7 @@ namespace simulation {
     bool runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection = NULL, const char* output_prefix = "");
     bool oneStep(unsigned long ts, double totalBatteryCapacity_kWh, const char* output_prefix = "", std::vector<ControlUnit*>* subsection = NULL);
     bool runSimulationForAllVariations(int scenario_id);
-    bool runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], long expansion_matrix_abs_freq[16][16], int scenario_id); ///< Runs the complete simulation for all parameter variations and add sim. added components to the CUs
+    bool runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], int scenario_id); ///< Runs the complete simulation for all parameter variations and add sim. added components to the CUs
 
     /**
      * Run the complete simulation for a given scenario.
@@ -33,6 +33,6 @@ namespace simulation {
      * 
      * @return false, if an error occurs during simulation run or expansion planning, otherwise true
      */
-    bool runCompleteSimulation(float expansion_matrix_rel_freq[16][16], long expansion_matrix_abs_freq[16][16], int scenario_id);
+    bool runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], int scenario_id);
 
 }

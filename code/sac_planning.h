@@ -47,7 +47,7 @@ namespace expansion {
     bool load_expansion_matrix(float expansion_matrix[16][16]);
     bool verify_expansion_matrix(float expansion_matrix[16][16]);
     void add_expansion_to_units(float expansion_matrix_rel_freq[16][16],
-                                long  expansion_matrix_abs_freq[16][16]);
+                                unsigned long expansion_matrix_abs_freq[16][16]);
 }
 
 
