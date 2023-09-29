@@ -473,7 +473,7 @@ float ComponentCS::get_max_P_kW() const {
     return 0.0;
 }
 
-double ComponentCS::get_max_curr_charging_power_kW() const {
+float ComponentCS::get_max_curr_charging_power_kW() const {
     if (charging_power_required_kW + charging_power_possible_kW >= max_charging_power) {
         return max_charging_power;
     } else {
@@ -524,7 +524,7 @@ void ComponentCS::add_ev(unsigned long carID) {
     listOfEVs.push_back(new EVFSM(carID, this));
 }
 
-void ComponentCS::setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
+void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
     // 1. set new car states
     for (EVFSM* ev : listOfEVs) {
         ev->setCarStateForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
@@ -559,9 +559,9 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int
     }
 }
 
-void ComponentCS::set_charging_value(double requested_power_kW) {
+void ComponentCS::set_charging_value(float requested_power_kW) {
     current_demand_kW = 0.0;
-    double remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
+    float remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
     // check, if charging request is positive
     if (requested_power_kW > 0) {
         if (requested_power_kW < max_charging_power) {

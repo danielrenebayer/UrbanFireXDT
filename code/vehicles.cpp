@@ -50,7 +50,7 @@ EVFSM::~EVFSM() {
     list_of_all_tours.clear();
 }
 
-double EVFSM::get_current_charging_power() const {
+float EVFSM::get_current_charging_power() const {
     return battery->get_currentLoad_kW();
 }
 
@@ -113,7 +113,7 @@ void EVFSM::resetInternalState() {
     max_curr_available_p_kW   = 0.0;
 }
 
-void EVFSM::setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
+void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
     // if there is a currently active tour: check, if it reached home
     if (current_tour != NULL) {
         ts_since_departure += 1;
@@ -174,7 +174,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOf
     }
 }
 
-void EVFSM::set_current_charging_power(double power_kW) {
+void EVFSM::set_current_charging_power(float power_kW) {
     battery->set_chargeRequest(power_kW);
     battery->calculateActions();
 }

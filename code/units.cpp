@@ -631,7 +631,7 @@ void ControlUnit::reset_internal_state() {
     sim_comp_cs->resetInternalState();
 }
 
-bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hourOfDay_l) {
+bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
     //
     // This function computes the next value
     // for this complete control unit.
@@ -679,7 +679,7 @@ bool ControlUnit::compute_next_value(unsigned long ts, int dayOfWeek_l, int hour
     // 4. get the effect of the EV charging station
     if (sim_comp_cs->is_enabled()) {
         sim_comp_cs->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
-        double max_power = sim_comp_cs->get_max_curr_charging_power_kW();
+        float max_power = sim_comp_cs->get_max_curr_charging_power_kW();
         sim_comp_cs->set_charging_value(max_power);
         load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;

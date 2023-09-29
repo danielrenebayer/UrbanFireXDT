@@ -46,7 +46,7 @@ class BaseComponent {
 class BaseComponentSemiFlexible : public BaseComponent {
     public:
 		virtual ~BaseComponentSemiFlexible() {}
-        virtual double get_currentDemand_kW() const = 0;
+        virtual float get_currentDemand_kW() const = 0;
 };
 
 
@@ -143,7 +143,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         ComponentHP(float yearly_econs_kWh);
         // getter methods
         using BaseComponentSemiFlexible::get_currentDemand_kW;
-        double get_currentDemand_kW() const { return currentDemand_kW; }
+        float  get_currentDemand_kW() const { return currentDemand_kW; }
         double get_total_demand_kWh() const { return total_demand_kWh; }
         // update / action methods
         void calculateCurrentFeedin(unsigned long ts);
@@ -182,10 +182,10 @@ class ComponentCS : public BaseComponentSemiFlexible {
         bool is_enabled() const { return enabled; }
         float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW
         using BaseComponentSemiFlexible::get_currentDemand_kW;
-        double get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
+        float  get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_demand_kWh() const { return total_demand_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
-        double get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
+        float  get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
@@ -196,8 +196,8 @@ class ComponentCS : public BaseComponentSemiFlexible {
         void resetInternalState();
         void add_ev(unsigned long carID);
         // modifiers (in the course of simulation time)
-        void setCarStatesForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l);
-        void set_charging_value(double power_kW); ///< Sets the charging value in kW that should be charged into the connected EVs
+        void setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l);
+        void set_charging_value(float power_kW); ///< Sets the charging value in kW that should be charged into the connected EVs
     private:
         // constant members
         const float max_charging_power;
@@ -205,10 +205,10 @@ class ComponentCS : public BaseComponentSemiFlexible {
         bool enabled;
         std::vector<EVFSM*> listOfEVs;
         // variable members, variable during simulation run
-        double current_demand_kW;
+        float  current_demand_kW;
         double total_demand_kWh;
-        double charging_power_required_kW;
-        double charging_power_possible_kW;
+        float  charging_power_required_kW;
+        float  charging_power_possible_kW;
         std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
         std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
 };

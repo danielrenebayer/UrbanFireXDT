@@ -89,11 +89,11 @@ bool simulation::oneStep(unsigned long ts, double totalBatteryCapacity_kWh, cons
 
     //int tsID = ts - 1;
     struct tm* current_tm = global::time_localtime_str->at(ts-1);
-    int dayOfWeek_r = (current_tm->tm_wday + 6) % 7; // get day of week in the format 0->Monday, 6->Sunday
-    int hourOfDay_r =  current_tm->tm_hour;
+    unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday
+    unsigned int hourOfDay_r = (unsigned int) (current_tm->tm_hour);
     // convert from rigth-alignment to left-alignment
-    int dayOfWeek_l = dayOfWeek_r;
-    int hourOfDay_l = hourOfDay_r - 1;
+    unsigned int dayOfWeek_l = dayOfWeek_r;
+    unsigned int hourOfDay_l = hourOfDay_r - 1;
     if (hourOfDay_r <= 0) {
         hourOfDay_l = 23;
         if (dayOfWeek_r >= 1)

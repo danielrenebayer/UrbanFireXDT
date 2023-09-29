@@ -74,16 +74,16 @@ class EVFSM {
         // getters
         EVState get_current_state() const { return current_state; }
         EVStateIfConnAtHome get_current_state_icah() const { return current_state_icah; } ///< Returns the current state of the EV iff it is connected at home
-        double get_current_charging_power() const; ///< Gets the current charging power in kW; Only valid after calling `set_current_charging_power()`; This value can be smaller than the power set, as it could be that the battery cannot fulfil the request completly
+        float get_current_charging_power() const; ///< Gets the current charging power in kW; Only valid after calling `set_current_charging_power()`; This value can be smaller than the power set, as it could be that the battery cannot fulfil the request completly
         // TODO: Do we need both methods?
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil 
-        double get_max_curr_charging_power_kW() const { return max_curr_available_p_kW; } ///< Returns the maximal available charing power at the current time step.
+        float get_max_curr_charging_power_kW() const { return max_curr_available_p_kW; } ///< Returns the maximal available charing power at the current time step.
         // modifiers (on structural level of the simulation)
         void add_weekly_tour(unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double trip_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
         void resetInternalState(); ///< Resets the internal state
         // modifiers (in the course of simulation time)
-        void setCarStateForTimeStep(unsigned long ts, int dayOfWeek_l, int hourOfDay_l);
-        void set_current_charging_power(double power_kW); ///< Sets the current charging power in kW
+        void setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l);
+        void set_current_charging_power(float power_kW); ///< Sets the current charging power in kW
         // static methods
         static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double trip_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
         static void VaccuumStaticVariables();
@@ -106,7 +106,7 @@ class EVFSM {
         VehicleTour* next_tour;          ///< Reference to the next tour
         unsigned int ts_since_departure; ///< Number of time steps passed until the departure of the current tour (Only valid if a tour is ongoing)
         float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
-        double max_curr_available_p_kW;  ///< The currently maximal available charging power for this vehicle
+        float max_curr_available_p_kW;  ///< The currently maximal available charging power for this vehicle
         //
         // class members
         static std::map<unsigned long, EVFSM*> list_of_cars;
