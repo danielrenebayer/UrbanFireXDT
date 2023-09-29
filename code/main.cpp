@@ -54,7 +54,8 @@ int main(int argc, char* argv[]) {
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completly, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completly, 'on' substation output (default)")
-        ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used.");
+        ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used.")
+        ("weekly-metrics,w", bpopts::value<string>()->default_value("off"), "Controls the generation of the metrics computation on weekly level. Default is 'off'.");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
     bpopts::variables_map opts_vals;
@@ -136,6 +137,17 @@ int main(int argc, char* argv[]) {
         unsigned int seed = opts_vals["seed"].as<unsigned int>();
         Global::set_seed(seed);
         EVFSM::SetSeed(seed);
+    }
+    if (opts_vals.count("weekly-metrics") > 0) {
+        string wm_mode = opts_vals["weekly-metrics"].as<string>();
+        if (wm_mode == "off" || wm_mode == "no") {
+            Global::set_compute_weekly_metrics(false);
+        } else if (wm_mode == "on" || wm_mode == "yes") {
+            Global::set_compute_weekly_metrics(true);
+        } else {
+            cerr << "Error when parsing command line arguments: invalid option for --weekly-metrics / -w given!" << endl;
+            return 1;
+        }
     }
     /*
     if (opts_vals.count("metrics")) {

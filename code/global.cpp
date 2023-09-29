@@ -99,6 +99,7 @@ unsigned long Global::n_MUs       = 0;
 unsigned long Global::n_pv_ts     = 0;
 unsigned long Global::n_hp_ts     = 0;
 unsigned int  Global::seed        = 0;
+bool Global::compute_weekly_metrics = false;
 //bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
@@ -443,6 +444,13 @@ void Global::set_seed(unsigned int value) {
     } else {
         Global::seed = value;
         Global::seed_set = true;
+    }
+}
+void Global::set_compute_weekly_metrics(bool mode) {
+    if (is_locked) {
+        cerr << "Global variable compute_weekly_metrics is already initialized!" << endl;
+    } else {
+        Global::compute_weekly_metrics = mode;
     }
 }
 /*void Global::set_comp_eval_metrics(bool value) {
