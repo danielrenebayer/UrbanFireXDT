@@ -774,16 +774,22 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         return 1;
     }
 
-    if (stoul(argv[0]) != callcounter_timestepID) {
-        cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
+    try {
+        if (stoul(argv[0]) != callcounter_timestepID) {
+            cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
+            return 1;
+        }
+        if (stoul(argv[2]) != callcounter_timeseries) {
+            cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
+            return 1;
+        }
+        size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
+        ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the heat pump profiles.\n";
+        cerr << " - More details: At time step " << callcounter_timestepID << " for time series " << callcounter_timeseries << endl;
         return 1;
     }
-    if (stoul(argv[2]) != callcounter_timeseries) {
-        cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
-        return 1;
-    }
-    size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
-    ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
 
     if (callcounter_timestepID < Global::get_n_timesteps()) {
         callcounter_timestepID++;
