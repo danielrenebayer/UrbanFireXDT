@@ -124,7 +124,7 @@ bool ControlUnit::st__cu_list_init     = false;
 size_t ControlUnit::st__n_CUs             = 0;
 size_t ControlUnit::st__new_CU_position   = 0;
 ControlUnit** ControlUnit::st__cu_list = NULL;
-const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq]";
+const std::string ControlUnit::MetricsStringHeader = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 
 ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
     : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
@@ -448,7 +448,12 @@ string* ControlUnit::get_metrics_string() {
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
         *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_demand_kWh() : 0.0) + ",";
         *retstr += to_string(sum_of_emissions_cbgd_kg_CO2eq) + ",";
-        *retstr += to_string(sum_of_emissions_avoi_kg_CO2eq);
+        *retstr += to_string(sum_of_emissions_avoi_kg_CO2eq) + ",";
+        *retstr += to_string(get_sim_comp_pv_kWp()) + ",";
+        *retstr += to_string(get_sim_comp_bs_P_kW()) + ",";
+        *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
+        *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
+        *retstr += to_string(get_sim_comp_cs_max_P_kW());
         return retstr;
 }
 
