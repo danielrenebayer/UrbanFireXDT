@@ -82,7 +82,6 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
         }
         // has a new week started?
         if (last_step_weekday > dayOfWeek_l) {
-            last_step_weekday = dayOfWeek_l;
             // only execute this during the main run (checked by subsection == NULL)
             if (Global::get_compute_weekly_metrics() && subsection == NULL) {
                 std::list<std::string*> *output_list = new std::list<std::string*>();
@@ -99,6 +98,7 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
             }
             week_number++;
         }
+        last_step_weekday = dayOfWeek_l;
         //
         // execute one step
         if (!oneStep(ts, dayOfWeek_l, hourOfDay_l, totalBatteryCapacity_kWh, output_prefix, subsection)) return false;

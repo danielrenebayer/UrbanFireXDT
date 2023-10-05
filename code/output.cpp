@@ -404,7 +404,7 @@ void output::outputMetricsStrListSACPlanning(list<string*> &output_list) {
 
 void output::outputWeeklyMetricsStrList(list<string*> *output_list, unsigned long week_number) {
     filesystem::path output_path;
-    output_path  = *(global::current_global_output_dir);
+    output_path  = *(global::current_output_dir);
     output_path /= "weekly-metrics";
     // create subfolder if it does not exist already
     if (!filesystem::exists(output_path))
