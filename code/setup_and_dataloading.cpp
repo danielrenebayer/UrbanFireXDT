@@ -849,18 +849,26 @@ int load_data_from_central_database_callback_address_data_A(void* data, int argc
         return 1;
     }
     
-    size_t locationID = stoul(argv[0]);
-    float  annual_hp_e_demand = -1.0;
+    size_t locationID = 0;
+    float  annual_heat_demand_kWh = -1.0;
     float  volume = 0.0;
 
-    if (argv[2] != NULL) {
-        volume = stof(argv[2]);
-    }
-    if (argv[3] != NULL) {
-        annual_hp_e_demand = stof(argv[3]);
+    try {
+        locationID = stoul(argv[0]);
+
+        if (argv[2] != NULL) {
+            volume = stof(argv[2]);
+        }
+        if (argv[3] != NULL) {
+            annual_heat_demand_kWh = stof(argv[3]);
+        }
+    } catch (exception& e) {
+        cerr << "An error happened during the parsing of the heat demand abd building volume information.\n";
+        cerr << " - More details: " << e.what() << endl;
+        return 1;
     }
 
-    global::annual_heat_demand_kWh[ locationID ] = annual_hp_e_demand;
+    global::annual_heat_demand_kWh[ locationID ] = annual_heat_demand_kWh;
     global::building_volumes_m3[    locationID ] = volume;
     global::locations_with_geodata.insert( locationID );
 
