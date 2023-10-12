@@ -242,9 +242,21 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
                 string value = scenario_dict.get_value<string>();
                 Global::set_ev_data_path( &value );
             }
+            else if ( element_name.compare("use emission time series ia")             == 0 )
+            {
+                Global::set_use_emission_time_series_ia( scenario_dict.get_value<bool>() );
+            }
+            else if ( element_name.compare("use prices time series ia")               == 0 )
+            {
+                Global::set_use_prices_time_series_ia( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
-            else if ( element_name.compare("comment") == 0 )
+            else if ( element_name.starts_with("comment") == 0 )
+            {}
+            else if ( element_name.starts_with("__disabled ") == 0 )
+            {}
+            else if ( element_name.compare("inherits from") == 0 )
             {}
             else
             {
@@ -1229,7 +1241,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         bool table_exists = false;
         sql_query = "SELECT name FROM sqlite_master WHERE type='table' AND name='electricity_emissions';";
         sqlite3_exec(dbcon, sql_query.c_str(), sql_check_if_table_exists_callback, &table_exists, &sqlErrorMsgF);
-        if (table_exists) {
+        if (table_exists && Global::get_use_emission_time_series_ia()) {
             cout << "Loading time series on emission data as this table is present.\n";
             float* new_array = new float[Global::get_n_timesteps()];
             // initialize with 0 by default
@@ -1252,7 +1264,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         /*bool*/ table_exists = false;
         sql_query = "SELECT name FROM sqlite_master WHERE type='table' AND name='electricity_prices';";
         sqlite3_exec(dbcon, sql_query.c_str(), sql_check_if_table_exists_callback, &table_exists, &sqlErrorMsgF);
-        if (table_exists) {
+        if (table_exists && Global::get_use_prices_time_series_ia()) {
             cout << "Loading time series on electricity prices as this table is present.\n";
             float* new_arrayA = new float[Global::get_n_timesteps()];
             float* new_arrayB = new float[Global::get_n_timesteps()];
@@ -1415,6 +1427,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_n_pv_profiles());
     PRINT_VAR(Global::get_n_heatpump_profiles());
     PRINT_VAR(Global::get_ev_data_path());
+    PRINT_VAR(Global::get_use_emission_time_series_ia());
+    PRINT_VAR(Global::get_use_prices_time_series_ia());
     // Selection settings
     cout << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});

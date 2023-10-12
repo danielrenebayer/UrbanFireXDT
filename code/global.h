@@ -195,6 +195,8 @@ class Global {
         static float get_hp_E_estimation_param_m()            { return hp_E_estimation_param_m; }
         static float get_hp_E_estimation_param_t()            { return hp_E_estimation_param_t; }
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
+        static bool  get_use_emission_time_series_ia()        { return use_emission_time_series_ia; } ///< Return weather the emission time series (if it is available in the data) should be used or not
+        static bool  get_use_prices_time_series_ia()          { return use_prices_time_series_ia;   } ///< Return weather the electricity prices time series (if it is available in the data) should be used or not
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static const std::string& get_structure_database_name() { return system_db_name; }
@@ -253,6 +255,8 @@ class Global {
         static void set_hp_E_estimation_param_m(float value);
         static void set_hp_E_estimation_param_t(float value);
         static void set_ev_plugin_probability(float value);
+        static void set_use_emission_time_series_ia(bool use);
+        static void set_use_prices_time_series_ia(bool use);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
         static void set_structure_database_name(std::string* fname);
@@ -317,6 +321,8 @@ class Global {
         static float hp_E_estimation_param_m; ///< Parameter of linear regression (coefficient) for estimating heat pump electricity demand if no data is given
         static float hp_E_estimation_param_t; ///< Parameter of linear regression (intercept) for estimating heat pump electricity demand if no data is given
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
+        static bool  use_emission_time_series_ia; ///< Yes, if the emission time series (if it is available in the data) should be used or not
+        static bool  use_prices_time_series_ia;   ///< Yes, if the electricity prices time series (if it is available in the data) should be used or not
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static std::string system_db_name; ///< String holding the name of the database that contains the system structure

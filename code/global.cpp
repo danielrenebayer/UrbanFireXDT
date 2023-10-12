@@ -141,6 +141,8 @@ float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::hp_E_estimation_param_m = 0.0;
 float Global::hp_E_estimation_param_t = 0.0;
 float Global::ev_plugin_probability   = 0.25;
+bool  Global::use_emission_time_series_ia = true;
+bool  Global::use_prices_time_series_ia   = true;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -802,6 +804,20 @@ void Global::set_ev_plugin_probability(float value) {
             return;
         }
         Global::ev_plugin_probability = value;
+    }
+}
+void Global::set_use_emission_time_series_ia(bool use) {
+    if (is_locked) {
+        cerr << "Global variable use_emission_time_series_ia cannot be set!" << endl;
+    } else {
+        use_emission_time_series_ia = use;
+    }
+}
+void Global::set_use_prices_time_series_ia(bool use) {
+    if (is_locked) {
+        cerr << "Global variable use_emission_time_series_ia cannot be set!" << endl;
+    } else {
+        use_prices_time_series_ia = use;
     }
 }
 void Global::set_input_path(string* path) {
