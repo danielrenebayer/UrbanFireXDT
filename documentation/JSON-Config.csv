@@ -1,4 +1,5 @@
 Config Parameter Name,Type,Required,Default (if not set),Possible Values,Description,Can be used for parameter variations
+inherits from,integer,no,,,Define another scenario ID from which the current scenario should inherit the defined values,
 data input path,string,yes,,,Path (relative or absolute) to the input data,no
 data output path,string,yes,,,Path (relative or absolute) to the directory where the output should be saved,no
 database name,string,no,SystemStructure.db,,Name of the database that contains the system structure,no

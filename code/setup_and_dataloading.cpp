@@ -263,18 +263,58 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         //
         // search the correct scenario dictionary
         // and read all variables from there, overwrite defaults if it necessary
-        bool scenario_found = false;
-        for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
-            auto scenario_dict = scenario_dict_all.second;
-            // if we have found the correct entry ...
-            if (scenario_dict.get<int>("id") == scenario_id) {
-                // ... we read all variables
-                for (auto& s : scenario_dict) {
-                    string element_name = s.first;
-                    parse_element(element_name, s.second);
+        bool scenario_found = true;
+        // define lambda function for searching and parsing the scenario entries for the correct ID
+        auto find_sceario_id_and_parse = [&](int scenario_id_to_find) -> bool {
+            for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
+                auto scenario_dict = scenario_dict_all.second;
+                // if we have found the correct entry ...
+                if (scenario_dict.get<int>("id") == scenario_id_to_find) {
+                    // ... we read all variables
+                    for (auto& s : scenario_dict) {
+                        string element_name = s.first;
+                        parse_element(element_name, s.second);
+                    }
+                    //
+                    return true;
                 }
-                //
-                scenario_found = true;
+            }
+            return false;
+        };
+        list<int> scenarios_to_load;
+        scenarios_to_load.push_front(scenario_id);
+        // get all scenario IDs from which the selected one inherits
+        bool inheritance_ended = false;
+        int  current_search_scenario_id = scenario_id;
+        while (!inheritance_ended) {
+            for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
+                auto scenario_dict = scenario_dict_all.second;
+                // if we have found the correct entry ...
+                if (scenario_dict.get<int>("id") == current_search_scenario_id) {
+                    auto e = scenario_dict.get_optional<int>("inherits from");
+                    // check if there is a scenario from which we inherited
+                    if (e.is_initialized()) {
+                        int upper_scenario = e.get();
+                        if (find(scenarios_to_load.begin(), scenarios_to_load.end(), upper_scenario) != scenarios_to_load.end()) {
+                            cerr << "Error in config file: Ring closure in the inheritance for scenario ID " << upper_scenario << "!" << endl;
+                            return false;
+                        }
+                        cout << "Reading settings for inherited scenario with ID " << upper_scenario << endl;
+                        scenarios_to_load.push_front(upper_scenario);
+                        current_search_scenario_id = upper_scenario;
+                        inheritance_ended = false;
+                    } else {
+                        inheritance_ended = true;
+                    }
+                    break; // quit the inner loop
+                }
+            }
+        }
+        // load all required scenario definitions
+        for (int s : scenarios_to_load) {
+            if (! find_sceario_id_and_parse(s) ) {
+                cerr << "Scenario " << s << " was not found in the config file!" << endl;
+                scenario_found = false;
                 break;
             }
         }
