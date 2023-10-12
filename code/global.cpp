@@ -151,6 +151,8 @@ OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
+float Global::annual_heat_demand_limit_fsac  = -1;
+bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
 string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
@@ -892,6 +894,24 @@ void Global::set_battery_power_computation_mode(global::BatteryPowerComputationM
     } else {
         Global::bat_power_comp_mode = mode;
         Global::bat_power_comp_mode_init = true;
+    }
+}
+void Global::set_annual_heat_demand_limit_fsac(float value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        if (value < 1.0 && value != -1) {
+            cerr << "Global variable annual_heat_demand_limit_fsac cannot be set to value " << value << " (allowed range: -1 or [1,inf) )" << endl;
+            return;
+        }
+        Global::annual_heat_demand_limit_fsac = value;
+    }
+}
+void Global::set_select_buildings_wg_heatd_only(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::select_buildings_wg_heatd_only = value;
     }
 }
 void Global::set_create_substation_output(bool value) {

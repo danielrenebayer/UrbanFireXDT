@@ -205,6 +205,8 @@ class Global {
         static global::ExpansionProfileAllocationMode get_exp_profile_mode() { return exp_profile_mode; }
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
+        static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
+        static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
         static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
         static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
@@ -265,6 +267,8 @@ class Global {
         static void set_exp_profile_mode(global::ExpansionProfileAllocationMode mode);
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
+        static void set_annual_heat_demand_limit_fsac(float value);
+        static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
         static void set_exp_pv_static_profile_orientation(std::string* value);
         static void set_exp_pv_static_profile_idx(int value);
@@ -331,6 +335,8 @@ class Global {
         static global::ExpansionProfileAllocationMode exp_profile_mode; ///< Variable storing the selected mode for assigning profiles to PV sections or heat pumps
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
+        static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
+        static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
         static std::string exp_pv_static_profile_orientation; ///< fixed orientation for PV static selection mode (ignoring roof data)
         static int exp_pv_static_profile_idx;                 ///< fixed profile ID for PV static selection mode (-1 if not defined)

@@ -250,6 +250,14 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_use_prices_time_series_ia( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("select buildings with given heat demand only") == 0 )
+            {
+                Global::set_select_buildings_wg_heatd_only( scenario_dict.get_value<bool>() );
+            }
+            else if ( element_name.compare("annual heat demand limit for selection") == 0 )
+            {
+                Global::set_annual_heat_demand_limit_fsac( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment") == 0 )
@@ -1434,6 +1442,8 @@ void configld::output_variable_values() {
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
+    PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
+    PRINT_VAR(Global::get_select_buildings_wg_heatd_only());
     // Scenario settings
     cout << "  Scenario settings:\n";
     PRINT_VAR(Global::get_exp_pv_static_mode());
