@@ -102,6 +102,7 @@ class ControlUnit {
         bool has_bs_sim_added();
         bool is_expandable_with_pv_hp(); ///< Is a PV installation or a heat pump addable (yes, if geodata is available). This function uses caching.
         bool is_residential() { return residential; } ///< Is this unit a residential unit?
+        bool heat_demand_given_in_data(); ///< Returns true, if the heat demand for this location is given in the input data
         int  get_exp_combi_bit_repr();
         int  get_exp_combi_bit_repr_from_MUs();
         int  get_exp_combi_bit_repr_sim_added();

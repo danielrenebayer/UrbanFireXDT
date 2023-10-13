@@ -316,6 +316,10 @@ bool ControlUnit::is_expandable_with_pv_hp() {
     return is_expandable_with_pv_hp_cache;
 }
 
+bool ControlUnit::heat_demand_given_in_data() {
+    return global::annual_heat_demand_kWh[locationID] > 0;
+}
+
 int ControlUnit::get_exp_combi_bit_repr() {
     return get_exp_combi_bit_repr_from_MUs() | get_exp_combi_bit_repr_sim_added();
 }

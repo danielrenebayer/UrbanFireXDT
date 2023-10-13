@@ -318,10 +318,10 @@ bool add_expansion_to_units_random_or_data_order(
                     cout << "Max added battery storage capacity reached with " << cumsum_added_bs_kWh << " kWh" << endl;
                     break;
                 }
+                /*
                 // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
                 if (expHP) {
-                    while ((*iter)->get_annual_hp_el_cons() <= 0 || (*iter)->get_annual_hp_el_cons() > 20000) {
-                        // TODO: Make upper clip level configurable!
+                    while ((*iter)->get_annual_heat_demand_kWh() <= 0 || (*iter)->get_annual_heat_demand_kWh() > 40000) {
                         iter++;
                         if (iter == listOfCUs->end()) {
                             cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled (Pos. 2)." << endl;
@@ -329,6 +329,7 @@ bool add_expansion_to_units_random_or_data_order(
                         }
                     }
                 }
+                */
                 // 1. add components
                 if (expPV) (*iter)->add_exp_pv();
                 if (expBS) (*iter)->add_exp_bs();
@@ -934,6 +935,15 @@ void expansion::add_expansion_to_units(
         ControlUnit* current_unit = unit_list[i];
         // jump this unit, if it is not extensible (only if exp pv static mode is not available)
         if (!Global::get_exp_pv_static_mode() && !current_unit->is_expandable_with_pv_hp())
+            continue;
+        // exlude units with unknwon heat demand if requested
+        if (Global::get_annual_heat_demand_limit_fsac() >= 1.0 &&
+            current_unit->get_annual_heat_demand_kWh() > Global::get_annual_heat_demand_limit_fsac() ) {
+                continue;
+            }
+        //
+        // Only select units with known gas consumption
+        if (Global::get_select_buildings_wg_heatd_only() && !current_unit->heat_demand_given_in_data())
             continue;
         //
         int expCombi = current_unit->get_exp_combi_bit_repr();
