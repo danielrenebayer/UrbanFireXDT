@@ -307,6 +307,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         bool inheritance_ended = false;
         int  current_search_scenario_id = scenario_id;
         while (!inheritance_ended) {
+            inheritance_ended = true;
             for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
                 auto scenario_dict = scenario_dict_all.second;
                 // if we have found the correct entry ...
