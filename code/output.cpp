@@ -311,6 +311,8 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
+    ofs << "seed_set," << Global::is_seed_set() << "\n";
+    ofs << "seed," << Global::get_seed() << "\n";
     //
     ofs.close();
 }
