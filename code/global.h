@@ -210,6 +210,8 @@ class Global {
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
         static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
         static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
+        // special setter methods
+        static void increment_seed(); ///< Thus class method increments the current seed at anytime during the simulation, no lock is applied to this function.
         // setter methods
         static void set_n_timesteps(unsigned long n_timesteps);
         static void set_n_substations(unsigned long n_substations);

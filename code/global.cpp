@@ -394,6 +394,10 @@ void Global::UnlockAllVariables() {
     Global::is_locked = false;
 }
 
+void Global::increment_seed() {
+    seed += 1;
+}
+
 void Global::set_n_timesteps(unsigned long n_timesteps) {
     if (is_locked && n_timesteps_init) {
         cerr << "Global variable n_timesteps is already initialized!" << endl;

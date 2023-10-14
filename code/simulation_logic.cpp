@@ -374,6 +374,10 @@ bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], 
             // Remove all added components and reset all internal states
             ControlUnit::RemoveAllSimAddedComponents();
             ControlUnit::ResetAllInternalStates();
+            // increment seed, if a seed is set, otherwise we would get the same result in the next repetition and thus a repetition would be useless
+            if (Global::is_seed_set()) {
+                Global::increment_seed();
+            }
         }
         return true;
     } else {
