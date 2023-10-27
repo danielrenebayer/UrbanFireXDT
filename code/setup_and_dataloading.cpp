@@ -1454,6 +1454,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_pv_max_kWp_roof_sec());
     PRINT_VAR(Global::get_exp_pv_max_kWp_per_unit());
     PRINT_VAR(Global::get_exp_pv_max_kWp_total());
+    PRINT_VAR(Global::get_exp_pv_static_profile_orientation());
+    PRINT_VAR(Global::get_exp_pv_static_profile_idx());
     PRINT_VAR(Global::get_exp_bess_kW());
     PRINT_VAR(Global::get_exp_bess_kWh());
     PRINT_VAR(Global::get_exp_bess_E_P_ratio());
