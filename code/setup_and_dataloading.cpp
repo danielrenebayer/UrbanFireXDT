@@ -1375,10 +1375,10 @@ bool helper_read_ev_profile_data(const std::string& filepath) {
             unsigned short weekday       = scenario_dict_all.second.get_child("weekday").get_value<unsigned short>();
             unsigned int  hour_departure = scenario_dict_all.second.get_child("hour_departure").get_value<unsigned int>();
             unsigned int  duration_in_ts = scenario_dict_all.second.get_child("duration_in_ts").get_value<unsigned int>();
-            double        trip_length_km = scenario_dict_all.second.get_child("trip_length_km").get_value<double>();
+            double        tour_length_km = scenario_dict_all.second.get_child("tour_length_km").get_value<double>();
             short         with_work      = scenario_dict_all.second.get_child("with_work").get_value<short>();
             //
-            EVFSM::AddWeeklyTour(carID, weekday, hour_departure, duration_in_ts, trip_length_km, with_work > 0);
+            EVFSM::AddWeeklyTour(carID, weekday, hour_departure, duration_in_ts, tour_length_km, with_work > 0);
         }
     } catch (bpt::ptree_bad_path& j) {
         cerr << "Error when parsing EV-profiles json file: " << j.what() << endl;

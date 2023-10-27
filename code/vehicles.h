@@ -29,7 +29,7 @@ struct VehicleTour {
     unsigned short day_of_week;
     unsigned int departure_ts_of_day;
     unsigned int ts_duration;
-    double trip_length_km;
+    double tour_length_km;
     bool   with_work;
 };
 
@@ -79,13 +79,13 @@ class EVFSM {
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil 
         float get_max_curr_charging_power_kW() const { return max_curr_available_p_kW; } ///< Returns the maximal available charing power at the current time step.
         // modifiers (on structural level of the simulation)
-        void add_weekly_tour(unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double trip_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
+        void add_weekly_tour(unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
         void resetInternalState(); ///< Resets the internal state
         // modifiers (in the course of simulation time)
         void setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l);
         void set_current_charging_power(float power_kW); ///< Sets the current charging power in kW
         // static methods
-        static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double trip_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
+        static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
         static void VaccuumStaticVariables();
         static void SetSeed(unsigned int seed); ///< Sets the seed for the EVFSM-class random number generator
 

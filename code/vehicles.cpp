@@ -58,7 +58,7 @@ void EVFSM::add_weekly_tour(
     unsigned short weekday,
     unsigned int departure_ts_of_day,
     unsigned int ts_duration,
-    double trip_length_km,
+    double tour_length_km,
     bool with_work)
 {
     if (weekday > 6)
@@ -98,7 +98,7 @@ void EVFSM::add_weekly_tour(
         last_know_tour->next_tour_id = this_new_tour_id;
     }
     // append new tour
-    VehicleTour& new_tour = list_of_tours_pd[weekday]->emplace_back(0, weekday, departure_ts_of_day, ts_duration, trip_length_km, with_work);
+    VehicleTour& new_tour = list_of_tours_pd[weekday]->emplace_back(0, weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
     list_of_all_tours.push_back( &new_tour );
 }
 
@@ -144,7 +144,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
                 current_tour = &vt;
                 ts_since_departure = 0;
                 // compute (mean) energy demand per tour time step
-                energy_demand_per_tour_ts = (float) (vt.trip_length_km * econs_kWh_per_km) / (float) (vt.ts_duration);
+                energy_demand_per_tour_ts = (float) (vt.tour_length_km * econs_kWh_per_km) / (float) (vt.ts_duration);
                 next_tour = list_of_all_tours[vt.next_tour_id];
                 current_state = EVState::Driving;
                 break;
@@ -182,9 +182,9 @@ void EVFSM::set_current_charging_power(float power_kW) {
 void EVFSM::AddWeeklyTour(
     unsigned long carID,              unsigned short weekday,
     unsigned int departure_ts_of_day, unsigned int ts_duration,
-    double trip_length_km,            bool with_work)
+    double tour_length_km,            bool with_work)
 {
-    EVFSM::list_of_cars.at(carID)->add_weekly_tour(weekday, departure_ts_of_day, ts_duration, trip_length_km, with_work);
+    EVFSM::list_of_cars.at(carID)->add_weekly_tour(weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
 }
 
 void EVFSM::VaccuumStaticVariables() {
