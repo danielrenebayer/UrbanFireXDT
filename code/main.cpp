@@ -46,14 +46,14 @@ int main(int argc, char* argv[]) {
     bpopts::options_description opts_desc("Options");
     opts_desc.add_options()
         ("help,h",                            "Show help")
-        ("config",   bpopts::value<string>(), "Path to the json configuration file")
+        ("config",   bpopts::value<string>(), "Path to the JSON configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
         ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
-        ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation shoud be repeated - only usefull if random variables are used. Modifies the behaviour of the 'seed' option.")
+        ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation should be repeated - only useful if random variables are used. Modifies the behavior of the 'seed' option.")
       //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
-        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completly, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
-        ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completly, 'on' substation output (default)")
+        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
+        ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
         ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used. If the simulation is repeated more than once, the seed gets incremented by one per repetition.")
         ("weekly-metrics,w", bpopts::value<string>()->default_value("off"), "Controls the generation of the metrics computation on weekly level. Default is 'off'.");
     bpopts::positional_options_description opts_desc_pos;
