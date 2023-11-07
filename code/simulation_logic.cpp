@@ -332,7 +332,9 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
         output::outputCurrentParamVariCombi(cParamVals);
         output::outputCurrentCUSettings();
         //
-        // 2. Run the simulation
+        // 2.0 Reset internal states
+        ControlUnit::ResetAllInternalStates();
+        // 2.1 Run the simulation
         cout << "Main simulation run:\n";
         bool no_error = runSimulationForOneParamSetting();
         if (!no_error) return false;
