@@ -1,4 +1,6 @@
-# Output description
+% Output description
+
+# General description of the output files
 
 The simulation outputs multiple files, that are described below.
 Folders are marked in **bold**.
@@ -9,15 +11,102 @@ Folders are marked in **bold**.
 | `expansion-per-cu.csv`                              | List the expansion that happens per control unit   |
 |                                                     |                                                    |
 | **`no param vari`**                                 | Output directory if no param variation is selected |
-| &nbsp;&nbsp;\| `XXXX-substation-time-series.csv`    | Time series of the load, wind/o.s. PV feedin, etc. aggregated on substation level |
 | &nbsp;&nbsp;\| `metrics-per-cu.csv`                 | Computed metrics per control unit (like SSR, SCR, NPV, total grid demand, ...) including the concrete parameters for the simulated PV, battery and the charging station component |
+| &nbsp;&nbsp;\| `XXXX-substation-time-series.csv`    | Time series of the load, wind/o.s. PV feedin, etc. aggregated on substation level |
+| &nbsp;&nbsp;\| `substation-detailed-time-series.csv`| Time series of the additional details on substation level, like residential load (includes feed-in) and demand (only residential grid demand, no surplus feed-in accumulated) |
 | &nbsp;&nbsp;\| `parameter-settings.csv`             | Parameter settings for the concrete simulation run (very useful for parameter variations) |
 | &nbsp;&nbsp;\| `sim-added-roof-sections-per-cu.csv` | A list of all sim. added roof sections per control unit |
 | &nbsp;&nbsp;\| `substation-detailed-time-series.csv`| Addition information, aggregated on substation level, that is not contained in the first file |
 | &nbsp;&nbsp;\| `build_and_run_info.txt`             | Information on the simulation run and the used program  |
+| _optional output_:                                  | Output of all power flows inside the control units ...  |
+| _case single file_:                                 | _See command line parameter `--cu-output` for details_  |
+| &nbsp;&nbsp;\| `XXXX-CU-time-series.csv`            | ... in one file                                         |
+| _case seperated files_:                             |                                                         |
+| &nbsp;&nbsp;\| **`ts-per-cu`**                      |                                                         |
+| &nbsp;&nbsp;\|&nbsp;&nbsp;\| `YYYY-AllCUs-ts.csv`   | ... in one file per substation YYYY                     |
 |                                                     |                                                         |
 | **`param vari XXXX`**                               | Output directory if a parameter variation is selected   |
 | &nbsp;&nbsp;\| `build_and_run_info.txt`             | Information on the simulation run and the used program  |
 | &nbsp;&nbsp;\| **`variation index XXXX`**           | There is one subfolder for every variation combination, the concrete parameters can be found in `parameter-settings.csv` |
 | &nbsp;&nbsp;\|&nbsp;&nbsp;\| *rest of the content*  | see folder `no param vari` | |
 
+
+
+# Detailed description per file
+
+## metrics-per-cu.csv
+
+| Column name | Description |
+| ---         | ------      |
+| UnitID      | The control unit ID of the current record |
+| SCR         | The self-consumption rate over the complete simulated time span |
+| SSR         | The self-sufficiency rate over the complete simulated time span |
+| NPV         | The net-present value (including installation costs) over the complete simulated time span |
+| Sum of demand [kWh]              | The demand sum of electricity demand of the real smart meters and all simulated consumers (heat pump and charging station) in kWh |
+| Sum of MU demand [kWh]           | The demand sum of the measurement units, i.e., the real smart meters in kWh |
+| Sum of self-consumed e. [kWh]    | The sum of locally produced and self-consumed electricity in kWh |
+| Sum of PV-generated e. [kWh]     | The sum of locally produced PV energy in kWh |
+| Sum of grid feed-in [kWh]        | The sum of electricity that was fed into the grid in kWh |
+| Sum of grid demand [kWh]         | The sum of electricity that was demanded from the grid in kWh |
+| BS EFC                           | The battery equivalent full cycles (if not battery is simulated, this value defaults to 0.0) |
+| BS n_ts_empty                    | The number of time steps where the battery was empty (if not battery is simulated, this value defaults to 0.0) |
+| BS n_ts_full                     | The number of time steps where the battery was full (if not battery is simulated, this value defaults to 0.0) |
+| BS total E withdrawn [kWh]       | The sum of electricity that was withdrawn from the battery in kWh (if not battery is simulated, this value defaults to 0.0) - Attention: The battery might not be empty at the end of the simulation procedure |
+| Sum of HP demand [kWh]           | The sum of demanded electricity of the heat pump in kWh (if no heat pump is simulated, this value defaults to 0.0) |
+| Sum of CS demand [kWh]           | The sum of demanded electricity of the EV charging station in kWh (if no EV charging station is simulated, this value defaults to 0.0) |
+| Peak grid demand [kW]            | The peak grid demand in kW over the complete simulated time span |
+| Emissions cbgd [kg CO2eq]        | The CO2e emissions caused by grid demand including upstream emissions (but no installation emissions for PV panels, battery storage or heat pumps) |
+| Avoided emissions [kg CO2eq]     | The avioded CO2e emissions caused by local production (and possibly storing) of renewable energy |
+| Sim. PV max P [kWp]              | The installed power in kW (resp. kWp) of the simulated PV installation, or 0.0 if none is present |
+| Sim. BS P [kW]                   | The installed power in kW of the simulated battery storage system, or 0.0 if none is present |
+| Sim. BS E [kWh]                  | The installed capacity in kWh of the simulated battery storage system, or 0.0 if none is present |
+| n EVs                            | The number of EVs with their home at this given unit |
+| Sim. CS max P [kW]               | The installed power in kW of the simulated EV charging station, or 0.0 if none is present |
+
+
+## XXXX-substation-time-series.csv
+
+| Column name           | Description |
+| ---                   | ------      |
+| Timestep              | The time step ID of the current record |
+| _Per substation YYYY_ |             |
+| &nbsp;&nbsp; YYYY     | Active power in kW at substation YYYY |
+| open_space_pv_feedin  | Total feed-in of open-space PV installations in kW |
+| wind_feedin           | Total wind feed-in at grid level in kW |
+| OverallBatterySOC     | Mean SOC over all simulated battery storage systems on control unit level |
+| total_load            | Total active power in kW in the grid |
+
+
+## substation-detailed-time-series.csv
+
+The columns of this output follows the following nomenclature:
+
+- **load:** Sum of all current virtual smart meter measurements per time step 
+- **demand:** Sum of the positive current virtual smart meter measurements per time step
+
+| Column name             | Description |
+| ---                     | ------      |
+| Timestep                | The time step ID of the current record |
+| _Per substation YYYY_   |             |
+| &nbsp;&nbsp; YYYY_resident_load_kW   | Sum of residential load in kW of all residential buildings connected to substation YYYY |
+| &nbsp;&nbsp; YYYY_resident_demand_kW | Sum of residential demand in kW of all residential buildings connected to substation YYYY |
+| total_residential_load   | Total residential load in kW   |
+| total_residential_demand | Total residential demand in kW |
+
+
+## XXXX-CU-time-series.csv or YYYY-AllCUs-ts.csv
+
+| Column name           | Description |
+| ---                   | ------      |
+| Timestep              | The time step ID of the current record |
+| ControlUnitID         | The control unit ID of the current record |
+| Load_vSmartMeter_kW   | The power at the virtual smart meter in kW (positive values denote a demand, negative values denote a feed-in) |
+| Load_rSmartMeters_kW  | The power summed over all real smart meters in kW (positive values denote a demand, negative values denote a feed-in) |
+| Load_self_produced_kW | The self-produced power that is consumed in the current time step in kW at the given unit - Please note: If excess power was fed into the battery in the previous steps, this will only be taken into account at the moment of discharge |
+| PVFeedin_simulated_kW | The current PV production in kW (if present, else 0.0) |
+| BS_SOC                | The state of charge of the connected battery (if present, else 0.0) |
+| BS_load_kW            | The current power of the battery storage in kW (if present, else 0.0; positive values denote battery charging, negative values denote discharging) |
+| HP_load_kW            | The current power of the heat pump in kW (if present, else 0.0) |
+| CS_load_kW            | The current power of the EV charging station in kW (if present, else 0.0) |
+| CS_n_EVs_conn         | The number of home-parking vehicles that are currently connected to the charging station |
+| CS_n_EVs_not_conn     | The number of home-parking vehicles that are currently not connected to the charging station |
