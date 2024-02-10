@@ -289,6 +289,14 @@ bool ControlUnit::has_cs() {
 	return false;
 }
 
+bool ControlUnit::has_chp() {
+    for (MeasurementUnit* mu : *connected_units) {
+        if (mu->has_chp())
+            return true;
+    }
+    return false;
+}
+
 bool ControlUnit::has_bs_sim_added() {
 	return has_sim_bs;
 }
@@ -309,6 +317,10 @@ bool ControlUnit::is_expandable_with_pv_hp() {
             is_expandable_with_pv_hp_cache = false;
             cerr << "Warning: Roofdata is available for control unit with ID " << unitID << ", even though it is claimed that there is no geodata for it!" << endl;
         } else {
+            is_expandable_with_pv_hp_cache = false;
+        }
+        // if there is an chp, exclude this control unit from HP expansion
+        if (has_chp()) {
             is_expandable_with_pv_hp_cache = false;
         }
     }
