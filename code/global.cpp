@@ -120,6 +120,8 @@ float Global::exp_pv_max_kWp_total    =-1.0;
 float Global::exp_bess_kW           = 0.0;
 float Global::exp_bess_kWh          = 0.0;
 float Global::exp_bess_E_P_ratio    = 0.0;
+float Global::exp_bess_max_capacity =-1.0;
+float Global::exp_bess_sizingE_PV_ratio = 1.0;
 float Global::exp_bess_start_soc    = 0.0;
 float Global::exp_bess_effi_in      = 1.0;
 float Global::exp_bess_effi_out     = 1.0;
@@ -151,6 +153,7 @@ OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
+global::BatteryCapacityComputationMode Global::bat_capacity_comp_mode = global::BatteryCapacityComputationMode::Constant;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
@@ -616,6 +619,30 @@ void Global::set_exp_bess_E_P_ratio(float value) {
         Global::exp_bess_E_P_ratio_init = true;
     }
 }
+void Global::set_exp_bess_max_capacity(float value) {
+    if (is_locked) {
+        cerr << "Global variable exp_bess_max_capacity cannot be overwritten at the moment!" << endl;
+    } else {
+        if (value <= 0 && value != -1.0) { //-1.0 -> variable unset
+            cerr << "Global variable exp_bess_max_capacity cannot be set to value " << value << " (allowed range: ]0.0,inf[ )" << endl;
+            return;
+        } else {
+            Global::exp_bess_max_capacity = value;
+        }
+    }
+}
+void Global::set_exp_bess_sizingE_boPV(float value) {
+    if (is_locked && exp_bess_kWh_init) {
+        cerr << "Global variable exp_bess_sizingE_boPV is already initialized!" << endl;
+    } else {
+        if (value <= 0) {
+            cerr << "Global variable exp_bess_sizingE_boPV cannot be set to value " << value << " (allowed range: ]0.0,inf[ )" << endl;
+            return;
+        } else {
+            Global::exp_bess_sizingE_PV_ratio = value;
+        }
+    }
+}
 void Global::set_exp_bess_start_soc(float exp_bess_start_soc) {
     if (is_locked && exp_bess_start_soc_init) {
         cerr << "Global variable exp_bess_start_soc is already initialized!" << endl;
@@ -898,6 +925,13 @@ void Global::set_battery_power_computation_mode(global::BatteryPowerComputationM
     } else {
         Global::bat_power_comp_mode = mode;
         Global::bat_power_comp_mode_init = true;
+    }
+}
+void Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode mode) {
+    if (is_locked) {
+        cerr << "Battery capacity computation mode is already set!" << endl;
+    } else {
+        Global::bat_capacity_comp_mode = mode;
     }
 }
 void Global::set_annual_heat_demand_limit_fsac(float value) {

@@ -108,6 +108,28 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             {
                 Global::set_exp_bess_E_P_ratio( scenario_dict.get_value<float>() );
             }
+            else if (element_name.compare("expansion BS capacity computation mode")     == 0)
+            {
+                string selection = scenario_dict.get_value<string>();
+                if (selection == "const") {
+                    Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::Constant);
+                } else if (selection == "use PV power") {
+                    Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnNominalPVPower);
+                } else if (selection == "use mean annual consumption") {
+                    Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumption);
+                } else {
+                    cerr << "Parameter 'expansion BS capacity computation mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'expansion BS capacity computation mode' as defined in config-json is unknown.");
+                }
+            }
+            else if (element_name.compare("expansion BS max capacity") == 0)
+            {
+                Global::set_exp_bess_max_capacity( scenario_dict.get_value<float>() );
+            }
+            else if (element_name.compare("expansion BS capacity sizing factor for PV") == 0)
+            {
+                Global::set_exp_bess_sizingE_boPV( scenario_dict.get_value<float>() );
+            }
             else if (element_name.compare("expansion BS efficiency in")  == 0)
             {
                 Global::set_exp_bess_effi_in( scenario_dict.get_value<float>() );
@@ -1443,6 +1465,7 @@ void configld::output_variable_values() {
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
+    PRINT_ENUM_VAR(Global::get_battery_capacity_computation_mode(), [](auto var){switch(var){case global::BatteryCapacityComputationMode::Constant: return "Constant"; case global::BatteryCapacityComputationMode::BasedOnNominalPVPower: return "BasedOnNominalPVPower"; case global::BatteryCapacityComputationMode::BasedOnAnnualConsumption: return "BasedOnAnnualConsumption"; default: return "";}});
     PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
     PRINT_VAR(Global::get_select_buildings_wg_heatd_only());
     // Scenario settings
@@ -1459,6 +1482,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_bess_kW());
     PRINT_VAR(Global::get_exp_bess_kWh());
     PRINT_VAR(Global::get_exp_bess_E_P_ratio());
+    PRINT_VAR(Global::get_exp_bess_max_capacity());
+    PRINT_VAR(Global::get_exp_bess_sizingE_boPV());
     PRINT_VAR(Global::get_exp_bess_effi_in());
     PRINT_VAR(Global::get_exp_bess_effi_out());
     PRINT_VAR(Global::get_exp_bess_self_ds_ts());
