@@ -109,6 +109,7 @@ class ControlUnit {
         float get_current_load_vSMeter_kW() { return current_load_vSM_kW; }
         size_t get_n_MUs()     { return connected_units->size(); } // returns the number of MUs, that are connected to the given control unit
         size_t get_unitID()    { return unitID; } // returns the unit ID of this control unit
+        double get_mean_annual_MU_el_demand_kWh() const; ///< Returns the mean electricity demand in kWh of all connected MUs over all available years
         float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
@@ -261,6 +262,7 @@ class MeasurementUnit {
         inline unsigned long get_meUID() const;
         inline unsigned long get_locationID() const;
         // for simulation runs
+        double get_total_demand_kWh() const; ///< Returns the total demand of the measurement unit over the complete time span of data
         bool compute_next_value(unsigned long ts);
         float get_current_ts_rsm_value() { return current_load_rsm_kW; }
         //

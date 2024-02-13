@@ -365,6 +365,19 @@ int ControlUnit::get_exp_combi_bit_repr_sim_added() {
     return combination;
 }
 
+double ControlUnit::get_mean_annual_MU_el_demand_kWh() const {
+    double total_demand = 0.0;
+    for (MeasurementUnit* mu : *connected_units) {
+        if (mu->has_demand()) {
+            total_demand += mu->get_total_demand_kWh();
+        }
+    }
+    // compute the complete time span length of the input data (in hours)
+    double data_len_in_h = (double) (Global::get_n_timesteps()) * Global::get_time_step_size_in_h();
+    double data_len_in_years = data_len_in_h / ( 365 * 24 ); // TODO: Schaltjahre?
+    return total_demand / data_len_in_years;
+}
+
 float ControlUnit::get_sim_comp_pv_kWp() {
     if (has_sim_pv)
         return sim_comp_pv->get_kWp();
@@ -590,8 +603,31 @@ void ControlUnit::add_exp_bs() {
     if (has_bs())
         cerr << "Warning: Control unit with location id " << locationID << " already has a battery!" << endl;
     if (!has_sim_bs) {
+        // compute the battery capacity
+        float new_battery_capacity_kWh = 0.0;
+        if ( !has_sim_pv ||
+             Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Constant
+           )
+        {
+            // if there is no battery -> always use static values
+            new_battery_capacity_kWh = Global::get_exp_bess_kWh();
+        } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnNominalPVPower) {
+            float pv_kWp = sim_comp_pv->get_kWp();
+            new_battery_capacity_kWh = pv_kWp * Global::get_exp_bess_sizingE_boPV();
+        } else {
+            // round on two digits
+            new_battery_capacity_kWh = round( (float) (get_mean_annual_MU_el_demand_kWh() / 1000) * 100 ) / 100.0;
+            // TODO: get annual el. cons (incl. HP, if present) and size bess accordingly
+        }
+        // respect maximum addition
+        if (Global::get_exp_bess_max_capacity() > 0.0) {
+            if (Global::get_exp_bess_max_capacity() < new_battery_capacity_kWh) {
+                new_battery_capacity_kWh = Global::get_exp_bess_max_capacity();
+            }
+        }
+        // initialize the object
         has_sim_bs  = true;
-        sim_comp_bs = new ComponentBS(Global::get_exp_bess_kWh() /*maxE*/,
+        sim_comp_bs = new ComponentBS(new_battery_capacity_kWh /*maxE*/,
                                       Global::get_exp_bess_kW()  /*maxP*/,
                                       Global::get_exp_bess_E_P_ratio() /* E over P ratio */,
                                       Global::get_exp_bess_self_ds_ts() /* discharge rate per step */,
@@ -1184,6 +1220,14 @@ inline unsigned long MeasurementUnit::get_meUID() const{
 
 inline unsigned long MeasurementUnit::get_locationID() const {
     return locationID;
+}
+
+double MeasurementUnit::get_total_demand_kWh() const {
+    double cumsum = 0.0;
+    for (unsigned long ts = 1; ts <= Global::get_n_timesteps(); ts++) {
+        cumsum += data_value_demand[ts-1];
+    }
+    return cumsum;
 }
 
 bool MeasurementUnit::compute_next_value(unsigned long ts) {
