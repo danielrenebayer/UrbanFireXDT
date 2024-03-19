@@ -348,9 +348,6 @@ void Global::PrintUninitializedVariables() {
     if (!exp_pv_kWp_static_mode && !exp_pv_min_kWp_roof_sec_init) {
         cout << "Variable exp_pv_min_kWp_roof_sec not initialized." << endl;
     }
-    if (!exp_pv_kWp_static_mode && !exp_pv_max_kWp_per_sec_init) {
-        cout << "Variable exp_pv_max_kWp_per_sec not initialized." << endl;
-    }
     if (!feed_in_tariff_set) {
         cout << "Variable feed_in_tariff_set not initialized." << endl;
     }
