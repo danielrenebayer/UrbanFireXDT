@@ -212,7 +212,7 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
 
 }
 
-bool simulation::runSimulationForAllVariations(int scenario_id) {
+bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
     //
     // This function runs the simulation for all given parameter
     // variations. If no variation is selected, it executes the
@@ -348,7 +348,7 @@ bool simulation::runSimulationForAllVariations(int scenario_id) {
     return true;
 }
 
-bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], int scenario_id) {
+bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
     //
     // This function executes the expansion / adds sim. added components to selected CUs
     // and then calls runSimulationForAllVariations(int)
@@ -361,7 +361,7 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     return runSimulationForAllVariations(scenario_id);
 }
 
-bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], int scenario_id) {
+bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
     if (Global::get_repetitions_selected()) {
         // if repetition is selected, this function will handle it
         for (unsigned int cRep = 1; cRep <= Global::get_n_repetitions(); cRep++) {

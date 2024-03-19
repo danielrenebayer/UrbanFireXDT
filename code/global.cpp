@@ -108,7 +108,7 @@ uint Global::n_repetitions        = 0;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
-int Global::expansion_scenario_id = 0;
+unsigned long Global::expansion_scenario_id = 0;
 float Global::time_step_size_in_h   = 0.0;
 bool  Global::exp_pv_kWp_static_mode  = false;
 float Global::exp_pv_kWp_static       = 0.0;
@@ -528,7 +528,7 @@ void Global::set_tsteps_per_hour(int tsteps_per_hour) {
         #endif
     }
 }
-void Global::set_expansion_scenario_id(int expansion_scenario_id) {
+void Global::set_expansion_scenario_id(unsigned long expansion_scenario_id) {
     if (is_locked && expansion_scenario_id_init) {
         cerr << "Global variable expansion_scenario_id is already initialized!" << endl;
     } else {

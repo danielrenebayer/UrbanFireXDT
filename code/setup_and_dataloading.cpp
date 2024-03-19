@@ -36,7 +36,7 @@ bool helper_read_ev_profile_data(const std::string&);
 //
 // loads the global config file
 //
-bool configld::load_config_file(int scenario_id, string& filepath) {
+bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
     //
     // parse json
     bpt::ptree tree_root;
@@ -90,7 +90,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             }
             else if ( element_name.compare("expansion id")              == 0 )
             {
-                Global::set_expansion_scenario_id( scenario_dict.get_value<int>() );
+                Global::set_expansion_scenario_id( scenario_dict.get_value<unsigned long>() );
             }
             else if ( element_name.compare("expansion BS P in kW")      == 0 )
             {
@@ -307,11 +307,11 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
         // and read all variables from there, overwrite defaults if it necessary
         bool scenario_found = true;
         // define lambda function for searching and parsing the scenario entries for the correct ID
-        auto find_sceario_id_and_parse = [&](int scenario_id_to_find) -> bool {
+        auto find_sceario_id_and_parse = [&](unsigned long scenario_id_to_find) -> bool {
             for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
                 auto scenario_dict = scenario_dict_all.second;
                 // if we have found the correct entry ...
-                if (scenario_dict.get<int>("id") == scenario_id_to_find) {
+                if (scenario_dict.get<unsigned long>("id") == scenario_id_to_find) {
                     // ... we read all variables
                     for (auto& s : scenario_dict) {
                         string element_name = s.first;
@@ -323,17 +323,17 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             }
             return false;
         };
-        list<int> scenarios_to_load;
+        list<unsigned long> scenarios_to_load;
         scenarios_to_load.push_front(scenario_id);
         // get all scenario IDs from which the selected one inherits
         bool inheritance_ended = false;
-        int  current_search_scenario_id = scenario_id;
+        unsigned long current_search_scenario_id = scenario_id;
         while (!inheritance_ended) {
             inheritance_ended = true;
             for (auto& scenario_dict_all : tree_root.get_child("Scenarios")) {
                 auto scenario_dict = scenario_dict_all.second;
                 // if we have found the correct entry ...
-                if (scenario_dict.get<int>("id") == current_search_scenario_id) {
+                if (scenario_dict.get<unsigned long>("id") == current_search_scenario_id) {
                     auto e = scenario_dict.get_optional<int>("inherits from");
                     // check if there is a scenario from which we inherited
                     if (e.is_initialized()) {
@@ -354,7 +354,7 @@ bool configld::load_config_file(int scenario_id, string& filepath) {
             }
         }
         // load all required scenario definitions
-        for (int s : scenarios_to_load) {
+        for (unsigned long s : scenarios_to_load) {
             if (! find_sceario_id_and_parse(s) ) {
                 cerr << "Scenario " << s << " was not found in the config file!" << endl;
                 scenario_found = false;

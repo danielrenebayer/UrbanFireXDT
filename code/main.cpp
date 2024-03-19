@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 	//
 	// parsing command line arguments
 	//
-	int scenario_id;
+	unsigned long scenario_id;
     string config_filepath;
     //
     bpopts::options_description opts_desc("Options");
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
         ("help,h",                            "Show help")
         ("config",   bpopts::value<string>(), "Path to the JSON configuration file")
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
-        ("scenario", bpopts::value<int>(),    "ID of the scenario that should be used, regardless of parameter variation is selected or not")
+        ("scenario", bpopts::value<unsigned long>(),"ID of the scenario that should be used, regardless of parameter variation is selected or not")
         ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation should be repeated - only useful if random variables are used. Modifies the behavior of the 'seed' option.")
       //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
         Global::set_pvar_vals(false, 0);
     }
     if (opts_vals.count("scenario") > 0) {
-		scenario_id = opts_vals["scenario"].as<int>();
+		scenario_id = opts_vals["scenario"].as<unsigned long>();
     } else {
 		scenario_id = 1;
     }

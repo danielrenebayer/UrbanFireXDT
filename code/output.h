@@ -40,7 +40,7 @@ namespace output {
      * It must be callen before initializeDirectoriesPerPVar().
      * @param scenario_id The current scenario ID
      */
-    void initializeDirectoriesBase(int scenario_id);
+    void initializeDirectoriesBase(unsigned long scenario_id);
     /**
      * This function initializes the direcory (or directories)
      * for the current parameter variation (if selected).
@@ -54,14 +54,14 @@ namespace output {
      * This method initializes the substation output file.
      * @param scenario_id The current scenario ID
      */
-    void initializeSubstationOutput(int scenario_id);
+    void initializeSubstationOutput(unsigned long scenario_id);
     /**
      * This method initializes the individual output files for the control
      * units. Depending on the globally selected mode, one file per CU is
      * created or some CUs share one output file.
      * @param scenario_id The current scenario ID
      */
-    void initializeCUOutput(int scenario_id);
+    void initializeCUOutput(unsigned long scenario_id);
     /**
      * This function closes all outputs that are opend by initializeCUOutput() or initializeSubstationOutput().
      * It further informs all instances of the class ControlUnit that the output object is deleted.
@@ -145,7 +145,7 @@ class CUOutput {
  **/
 class CUOutputSingleFile : public CUOutput {
     public:
-        CUOutputSingleFile(int scenario_id);
+        CUOutputSingleFile(unsigned long scenario_id);
         ~CUOutputSingleFile();
         static const size_t bufferSize = 128*1024;
         //

@@ -174,7 +174,7 @@ class Global {
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
-        static int get_expansion_scenario_id() { return expansion_scenario_id;    }
+        static unsigned long get_expansion_scenario_id() { return expansion_scenario_id; }
         static float get_time_step_size_in_h() { return time_step_size_in_h; }
         static bool  get_exp_pv_static_mode()   { return exp_pv_kWp_static_mode; }
         static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
@@ -243,7 +243,7 @@ class Global {
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
-        static void set_expansion_scenario_id(int expansion_scenario_id);
+        static void set_expansion_scenario_id(unsigned long expansion_scenario_id);
         static void set_exp_pv_mode(bool mode);
         static void set_exp_pv_kWp_static(float value);
         static void set_exp_pv_kWp_per_m2(float value);
@@ -312,7 +312,7 @@ class Global {
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
-        static int expansion_scenario_id;  ///< ID of the expansion scenario
+        static unsigned long expansion_scenario_id;  ///< ID of the expansion scenario
         static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
         static bool  exp_pv_kWp_static_mode; ///< true, if static PV kWp calculation is selected, otherwise false
         static float exp_pv_kWp_static;    ///< kWp of in the simulation added PV installations, if all units should get the same kWp in the end

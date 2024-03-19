@@ -32,7 +32,7 @@ void create_dir_del_if_exists(filesystem::path dirpath) {
     filesystem::create_directory(dirpath);
 }
 
-void output::initializeDirectoriesBase(int scenario_id) {
+void output::initializeDirectoriesBase(unsigned long scenario_id) {
     //
     // create a subfolder for the current scenario, if it does not exist
     filesystem::path dirpath = Global::get_output_path();
@@ -129,7 +129,7 @@ void output::initializeDirectoriesPerPVar() {
     global::current_output_dir = new filesystem::path(param_vari_path);
 }
 
-void output::initializeSubstationOutput(int scenario_id) {
+void output::initializeSubstationOutput(unsigned long scenario_id) {
     // initial check: should a output be created?
     if (!Global::get_create_substation_output())
         return;
@@ -172,7 +172,7 @@ void output::initializeSubstationOutput(int scenario_id) {
     *(substation_output_details) << ",total_residential_load,total_residential_demand" << endl;
 }
 
-void output::initializeCUOutput(int scenario_id) {
+void output::initializeCUOutput(unsigned long scenario_id) {
     //
     // initializes the CU output, depending on the global setting
     if (Global::get_output_mode_per_cu() == global::OutputModePerCU::SingleFile) {
@@ -448,7 +448,7 @@ void CUOutput::close_buffer() {
         output_stream->close();
 }
 
-CUOutputSingleFile::CUOutputSingleFile(int scenario_id) {
+CUOutputSingleFile::CUOutputSingleFile(unsigned long scenario_id) {
     //
     // initialize the output file
     stringstream output_path_CUs;
