@@ -157,8 +157,7 @@ int main(int argc, char* argv[]) {
     }
     */
     // get time for time measurement
-    auto t1_A = std::chrono::steady_clock::now();
-    auto t1_B = std::chrono::system_clock::now();
+    auto t1 = std::chrono::system_clock::now();
     // set output flush interval
     global::n_ts_between_flushs = opts_vals["suof"].as<unsigned long>();
 
@@ -217,8 +216,7 @@ int main(int argc, char* argv[]) {
     configld::output_variable_values();
 
     // get time for time measurement
-    auto t2_A = std::chrono::steady_clock::now();
-    auto t2_B = std::chrono::system_clock::now();
+    auto t2 = std::chrono::system_clock::now();
 
     //
     // Plan and add which sim. added components should be added to which control units
@@ -232,8 +230,7 @@ int main(int argc, char* argv[]) {
     }
 
     // get time for time measurement
-    auto t3_A = std::chrono::steady_clock::now();
-    auto t3_B = std::chrono::system_clock::now();
+    auto t3 = std::chrono::system_clock::now();
 	
 	//
 	// clean up
@@ -247,18 +244,12 @@ int main(int argc, char* argv[]) {
 	global::vacuum();
 
     // get time for time measurement
-    auto t4_A = std::chrono::steady_clock::now();
-    auto t4_B = std::chrono::system_clock::now();
+    auto t4 = std::chrono::system_clock::now();
     cout << "Run-time information:\n";
-    cout << "  Setup and data loading: " << std::chrono::duration_cast<std::chrono::seconds>(t2_A-t1_A).count() << "s\n";
-    cout << "  Main run:               " << std::chrono::duration_cast<std::chrono::seconds>(t3_A-t2_A).count() << "s\n";
-    cout << "  Clean up:               " << std::chrono::duration_cast<std::chrono::seconds>(t4_A-t3_A).count() << "s\n";
-    cout << "  Complete run time:      " << std::chrono::duration_cast<std::chrono::seconds>(t4_A-t1_A).count() << "s\n";
-    cout << "Run-time information:\n";
-    cout << "  Setup and data loading: " << std::chrono::duration_cast<std::chrono::seconds>(t2_B-t1_B).count() << "s\n";
-    cout << "  Main run:               " << std::chrono::duration_cast<std::chrono::seconds>(t3_B-t2_B).count() << "s\n";
-    cout << "  Clean up:               " << std::chrono::duration_cast<std::chrono::seconds>(t4_B-t3_B).count() << "s\n";
-    cout << "  Complete run time:      " << std::chrono::duration_cast<std::chrono::seconds>(t4_B-t1_B).count() << "s" << std::endl;
+    cout << "  Setup and data loading: " << std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count() << "s\n";
+    cout << "  Main run:               " << std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count() << "s\n";
+    cout << "  Clean up:               " << std::chrono::duration_cast<std::chrono::seconds>(t4-t3).count() << "s\n";
+    cout << "  Complete run time:      " << std::chrono::duration_cast<std::chrono::seconds>(t4-t1).count() << "s" << std::endl;
 
 	return 0;
 }
