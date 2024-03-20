@@ -23,46 +23,39 @@ using namespace std;
 //          Substation           //
 // ----------------------------- //
 
-bool Substation::st__substation_list_init    = false;
-size_t Substation::st__n_substations            = 0;
-size_t Substation::st__new_substation_position  = 0;
-Substation** Substation::st__substation_list = NULL;
+size_t Substation::st__n_substations = 0;
+std::vector<Substation*> Substation::st__substation_list;
+std::map<unsigned long, unsigned long> Substation::public_to_internal_id;
 
-Substation::Substation(unsigned long id, string* name)
-	: id(id), name(name)
+bool Substation::InstantiateNewSubstation(unsigned long public_id, std::string* name) {
+    // check, if public_id is known
+    if (public_to_internal_id.contains(public_id))
+        return false;
+    // define new internal id
+    unsigned long new_internal_id = st__n_substations;
+    // increment the list
+    st__n_substations++;
+    // register public id
+    public_to_internal_id.insert(std::pair<unsigned long, unsigned long>(public_id, new_internal_id));
+    // create instance
+    Substation* new_obj = new Substation(new_internal_id, public_id, name);
+    // add to list of instances
+    st__substation_list.push_back(new_obj);
+    //
+    return true;
+}
+
+Substation::Substation(unsigned long internal_id, unsigned long public_id, std::string* name)
+	: internal_id(internal_id), public_id(public_id), name(name)
 {
 	/*
 	 * Constructor implementation of class Substation.
-	 *
-	 * It constructs a new instance and checks if id is the next id
 	 */
     // initialize instance variables
     connected_units = new list<ControlUnit*>();
     station_load    = 0.0;
     resident_load   = 0.0;
     resident_demand = 0.0;
-
-	//
-	// add to class variables
-	if (!st__substation_list_init) {
-		cerr << "Error: global list of substations has not been initialized" << endl;
-		throw runtime_error("Global list of substations has not been initialized!");
-		return;
-	}
-	// Attention: argument id starts with 1, not 0
-	if (id <= 0 || id > st__n_substations) {
-		cerr << "Error when creating a substation: id <= 0 or id > n_substations" << endl;
-		throw runtime_error("id <= 0 or id > n_substations");
-		return;
-	}
-	if (id - 1 != st__new_substation_position) {
-		cerr << "Error when creating a substation: id - 1 != st__new_substation_position" << endl;
-		cerr << "A reason might be, that Substation IDs are not ordered sequentially!" << endl;
-		throw runtime_error("Substation IDs are not ordered sequentially!");
-		return;
-	}
-	st__substation_list[st__new_substation_position] = this;
-	st__new_substation_position++;
 }
 
 Substation::~Substation() {
@@ -90,26 +83,25 @@ void Substation::calc_load() {
 }
 
 void Substation::InitializeStaticVariables(unsigned long n_substations) {
-	st__substation_list_init = true;
-	st__substation_list = new Substation*[n_substations];
-	st__n_substations   = n_substations;
+    st__substation_list.reserve(n_substations);
 }
 
 void Substation::VacuumInstancesAndStaticVariables() {
 	// delete all instances
-	for (unsigned long i = 0; i < st__new_substation_position; i++)
-		delete st__substation_list[i];
-	// delete static variables and arrays
-	delete[] st__substation_list;
-	st__substation_list = NULL;
-	st__substation_list_init = false;
+    for (size_t i = 0; i < st__n_substations; i++) {
+        delete st__substation_list[i];
+        st__substation_list[i] = NULL;
+    }
+	st__n_substations = 0;
 }
 
-inline Substation* Substation::GetInstance(unsigned long id) {
-	if (id > 0 && id <= st__n_substations)
-		return st__substation_list[id - 1];
-	else
+Substation* Substation::GetInstancePublicID(unsigned long public_id) {
+    try {
+        size_t internal_id = public_to_internal_id.at(public_id); // throws std::out_of_range if public_id is unknown
+		return st__substation_list[internal_id];
+    } catch (std::out_of_range const&) {
 		return NULL;
+    }
 }
 
 
@@ -120,15 +112,32 @@ inline Substation* Substation::GetInstance(unsigned long id) {
 //         ControlUnit           //
 // ----------------------------- //
 
-bool ControlUnit::st__cu_list_init     = false;
-size_t ControlUnit::st__n_CUs             = 0;
-size_t ControlUnit::st__new_CU_position   = 0;
-ControlUnit** ControlUnit::st__cu_list = NULL;
+size_t ControlUnit::st__n_CUs = 0;
+std::vector<ControlUnit*> ControlUnit::st__cu_list;
+std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
 const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 
-ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential)
-    : unitID(unitID), higher_level_subst(Substation::GetInstance(substation_id)), locationID(locationID), residential(residential)
+bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential) {
+    // check, if public_id is known
+    if (public_to_internal_id.contains(public_unitID))
+        return false;
+    // define new internal id
+    unsigned long new_internal_id = st__n_CUs;
+    // increment the list
+    st__n_CUs++;
+    // register public id
+    public_to_internal_id.insert(std::pair<unsigned long, unsigned long>(public_unitID, new_internal_id));
+    // create instance
+    ControlUnit* new_obj = new ControlUnit(new_internal_id, public_unitID, substation_id, locationID, residential);
+    // add to list of instances
+    st__cu_list.push_back(new_obj);
+    //
+    return true;
+}
+
+ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential)
+    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential)
 {
 	//
 	// initialize instance variables
@@ -145,29 +154,6 @@ ControlUnit::ControlUnit(unsigned long unitID, unsigned long substation_id, unsi
     output_obj      = NULL;
     is_expandable_with_pv_hp_cache          = false;
     is_expandable_with_pv_hp_cache_computed = false;
-
-	//
-	// add to class variables
-	if (!st__cu_list_init) {
-		cerr << "Error: Global list of control units has not been initialized" << endl;
-		throw runtime_error("Global list of control units has not been initialized!");
-		return;
-	}
-	// Attention: argument unitID starts with 1, not 0
-	if (unitID <= 0 || unitID > st__n_CUs) {
-		cerr << "Error when creating a control unit: UnitID <= 0 or UnitID > n_CUs" << endl;
-		throw runtime_error("UnitID <= 0 or UnitID > n_CUs");
-		return;
-	}
-	if (unitID - 1 != st__new_CU_position) {
-		cerr << "Error when creating a control unit: id - 1 != st__new_CU_position" << endl;
-		cerr << "A reason might be, that Control Unit IDs are not ordered sequentially!" << endl;
-		throw runtime_error("Control Unit IDs are not ordered sequentially!");
-		return;
-	}
-	st__cu_list[st__new_CU_position] = this;
-	st__new_CU_position++;
-    //location_to_cu_map.insert({locationID, this});
 
 	//
 	// add this control unit to the list of
@@ -941,33 +927,34 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
 }
 
 void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
-    st__cu_list_init = true;
-    st__cu_list = new ControlUnit*[n_CUs];
-    st__n_CUs   = n_CUs;
+    st__cu_list.reserve(n_CUs);
 }
 
 void ControlUnit::VacuumInstancesAndStaticVariables() {
     // delete all instances
-    for (unsigned long i = 0; i < st__new_CU_position; i++)
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
         delete st__cu_list[i];
-    // delete static variables and arrays
-    delete[] st__cu_list;
-    st__cu_list = NULL;
-    st__cu_list_init = false;
+        st__cu_list[i] = NULL;
+    }
+    st__n_CUs = 0;
 }
 
-ControlUnit* ControlUnit::GetInstance(unsigned long unitID) {
-    if (unitID > 0 && unitID <= st__n_CUs)
-        return st__cu_list[unitID - 1];
-    else
-        return NULL;
+ControlUnit* ControlUnit::GetInstancePublicID(unsigned long public_unitID) {
+    try {
+        size_t internal_id = public_to_internal_id.at(public_unitID); // throws std::out_of_range if public_id is unknown
+		return st__cu_list[internal_id];
+    } catch (std::out_of_range const&) {
+		return NULL;
+    }
 }
 
-ControlUnit* ControlUnit::GetInstanceWE(unsigned long unitID) {
-    if (unitID > 0 && unitID <= st__n_CUs)
-        return st__cu_list[unitID - 1];
-    else
-        throw runtime_error("ControlUnitID " + std::to_string(unitID) + " is out of range!");
+ControlUnit* ControlUnit::GetInstancePublicIDWE(unsigned long public_unitID) {
+    try {
+        size_t internal_id = public_to_internal_id.at(public_unitID); // throws std::out_of_range if public_id is unknown
+		return st__cu_list[internal_id];
+    } catch (std::out_of_range const&) {
+		throw runtime_error("ControlUnitID " + std::to_string(public_unitID) + " is out of range!");
+    }
 }
 
 //ControlUnit* ControlUnit::GetInstanceAtLocationID(unsigned long locationID) {
@@ -1046,17 +1033,39 @@ double ControlUnit::GetAllSimCompBatteriesCapacity_kWh() {
 //       MeasurementUnit         //
 // ----------------------------- //
 
-bool MeasurementUnit::st__mu_list_init   = false;
-size_t MeasurementUnit::st__n_MUs           = 0;
-size_t MeasurementUnit::st__new_MU_position = 0;
-MeasurementUnit** MeasurementUnit::st__mu_list = NULL;
+size_t MeasurementUnit::st__n_MUs = 0;
+std::vector<MeasurementUnit*> MeasurementUnit::st__mu_list;
+std::map<unsigned long, unsigned long> MeasurementUnit::public_to_internal_id;
 
-MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPointName, size_t locID,
+bool MeasurementUnit::InstantiateNewMeasurementUnit(size_t meUID, size_t public_unitID, std::string * meterPointName, size_t locID, 
+                bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
+                bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
+                bool has_chp)
+{
+    // check, if public_id is known
+    if (public_to_internal_id.contains(meUID))
+        return false;
+    // define new internal id
+    unsigned long new_internal_id = st__n_MUs;
+    // increment the list
+    st__n_MUs++;
+    // register public id
+    public_to_internal_id.insert(std::pair<unsigned long, unsigned long>(meUID, new_internal_id));
+    // create instance
+    MeasurementUnit* new_obj = new MeasurementUnit(new_internal_id, meUID, public_unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wind, has_evchst, has_chp);
+    // add to list of instances
+    st__mu_list.push_back(new_obj);
+    //
+    return true;
+}
+
+MeasurementUnit::MeasurementUnit(size_t internalID, size_t meUID, size_t public_unitID, string * meterPointName, size_t locID,
                                  bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                                  bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
                                  bool has_chp) :
+    internal_id(internalID),
     meUID(meUID),
-    higher_level_cu(ControlUnit::GetInstance(unitID)),
+    higher_level_cu(ControlUnit::GetInstancePublicID(public_unitID)),
     meterPointName(meterPointName), locationID(locID) {
     //
     // initialize instance variables
@@ -1078,27 +1087,10 @@ MeasurementUnit::MeasurementUnit(size_t meUID, size_t unitID, string * meterPoin
     //data_status_feedin=NULL;
     expansion_combination = expansion::genExpCombiAsBitRepr(has_pv_resid||has_pv_opens, has_bess, has_hp, has_evchst);
 
-    //
-    // add to class variables
-    if (!st__mu_list_init) {
-        cerr << "Error: global list of measurement units has not been initialized" << endl;
-        throw runtime_error("Global list of measurement units has not been initialized!");
-        return;
+    if (higher_level_cu == NULL) {
+        std::cerr << "Control unit with ID " << public_unitID << " not found! Cannot create measurement unit with meUID " << meUID << "." << std::endl;
+        throw runtime_error("ControlUnitID " + std::to_string(public_unitID) + " is out of range!"); 
     }
-    // Attention: argument meUID starts with 1, not 0
-    if (meUID <= 0 || meUID > st__n_MUs) {
-        cerr << "Error when creating a measurement unit: meUID <= 0 or meUID > n_MUs" << endl;
-        throw runtime_error("meUID <= 0 or meUID > n_MUs");
-        return;
-    }
-    if (meUID - 1 != st__new_MU_position) {
-        cerr << "Error when creating a measurement unit: meUID - 1 != st__new_MU_position" << endl;
-        cerr << "A reason might be, that Measurement Unit IDs are not ordered sequentially!" << endl;
-        throw runtime_error("Measurement Unit IDs are not ordered sequentially!");
-        return;
-    }
-    st__mu_list[st__new_MU_position] = this;
-    st__new_MU_position++;
 
     //
     // add this measurement unit to the list of
@@ -1210,18 +1202,6 @@ bool MeasurementUnit::load_data(const char * filepath) {
 
 }
 
-inline const std::string * MeasurementUnit::get_meterPointName() const {
-    return meterPointName;
-}
-
-inline unsigned long MeasurementUnit::get_meUID() const{
-    return meUID;
-}
-
-inline unsigned long MeasurementUnit::get_locationID() const {
-    return locationID;
-}
-
 double MeasurementUnit::get_total_demand_kWh() const {
     double cumsum = 0.0;
     for (unsigned long ts = 1; ts <= Global::get_n_timesteps(); ts++) {
@@ -1241,19 +1221,25 @@ bool MeasurementUnit::compute_next_value(unsigned long ts) {
 }
 
 void MeasurementUnit::InitializeStaticVariables(unsigned long n_MUs) {
-    st__mu_list_init = true;
-    st__mu_list = new MeasurementUnit*[n_MUs];
-    st__n_MUs   = n_MUs;
+    st__mu_list.reserve(n_MUs);
 }
 
 void MeasurementUnit::VacuumInstancesAndStaticVariables() {
     // delete all instances
-    for (size_t i = 0; i < st__new_MU_position; i++)
+    for (size_t i = 0; i < st__n_MUs; i++) {
         delete st__mu_list[i];
-    // delete static variables and arrays
-    delete[] st__mu_list;
-    st__mu_list = NULL;
-    st__mu_list_init = false;
+        st__mu_list[i] = NULL;
+    }
+    st__n_MUs = 0;
+}
+
+MeasurementUnit* MeasurementUnit::GetInstancePublicID(unsigned long meUID) {
+    try {
+        size_t internal_id = public_to_internal_id.at(meUID); // throws std::out_of_range if public_id is unknown
+		return st__mu_list[internal_id];
+    } catch (std::out_of_range const&) {
+		return NULL;
+    }
 }
 
 
