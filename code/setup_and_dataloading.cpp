@@ -524,32 +524,23 @@ int load_data_from_central_database_callbackA(void* data, int argc, char** argv,
      * This is the callback function for reading global attributes
      * (like timesteps and substations available in the data)
      * 
+     * The first parameter (data) is a reference to a function - see query_list
+     * 
      * Parameter information taken from documentation:
      *   argc: holds the number of results
      *   argv: holds each value in array
      *   colName: holds each column returned in array
      */
-    string comparisonStr1 = "n_timesteps";
-    string comparisonStr2 = "n_substations";
-    string comparisonStr3 = "n_control_units";
-    string comparisonStr4 = "n_measurement_units";
-    string comparisonStr5 = "n_profiles_hp";
-    if (argc != 2) {
-        cerr << "Number of arguments not equal to 2 for one row!" << endl;
+    if (argc != 1) {
+        cerr << "Number of arguments not equal to 1 for one row (in callback A)!" << endl;
         return 1;
     }
-    
-    if        (comparisonStr1.compare(argv[0]) == 0) {
-        Global::set_n_timesteps(   stoi(argv[1]) );
-    } else if (comparisonStr2.compare(argv[0]) == 0) {
-        Global::set_n_substations( stoi(argv[1]) );
-    } else if (comparisonStr3.compare(argv[0]) == 0) {
-        Global::set_n_CUs(          stoi(argv[1]) );
-    } else if (comparisonStr4.compare(argv[0]) == 0) {
-        Global::set_n_MUs(          stoi(argv[1]) );
-    } else if (comparisonStr5.compare(argv[0]) == 0) {
-        Global::set_n_heatpump_profiles( stoul(argv[1]) );
-    }
+
+    // convert the first argument to the correct type
+    void (*fp) (unsigned long) = (void (*)(unsigned long)) data;
+    unsigned long val = std::stoul( argv[0] );
+    // call the anonymous function / method
+    (*fp)(val);
 
     return 0;
 }
@@ -1097,13 +1088,39 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         // Load general data
         //
-        string sql_queryA = "SELECT key, value FROM general_data_information;";
-        char* sqlErrorMsgA;
-        int ret_valA = sqlite3_exec(dbcon, sql_queryA.c_str(), load_data_from_central_database_callbackA, NULL, &sqlErrorMsgA);
-        if (ret_valA != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgA << endl;
-            sqlite3_free(sqlErrorMsgA);
-            return false;
+        string sql_queryA;
+        char*  sqlErrorMsgA;
+        int    ret_valA;
+        // the tables to query and the functions of the calls where to store this information
+        // pair< pair< TABLE_NAME_TO_QUERY, TRUE_IF_ONLY_SELECT_COUNT >, ANONYMOUS_FUNCTION_NAME_TO_SAFE_THE_RESULT >
+        std::list<std::pair<std::pair<const char *, bool>, void (*)(unsigned long)>>
+        /*auto*/ query_list = {
+            std::make_pair(std::make_pair("time_indices", true), &Global::set_n_timesteps),
+            std::make_pair(std::make_pair("list_of_substations", true), &Global::set_n_substations),
+            std::make_pair(std::make_pair("list_of_control_units", true), &Global::set_n_CUs),
+            std::make_pair(std::make_pair("list_of_measurement_units", true), &Global::set_n_MUs),
+            std::make_pair(std::make_pair("global_profiles_heatpumps", false), &Global::set_n_heatpump_profiles)
+        };
+        //auto u = Global::set_n_timesteps;
+        // execute the query for every entry in the query_list
+        for (auto e : query_list) {
+            // check, which query should be executed
+            if (e.first.second) {
+                sql_queryA  = "SELECT count(*) FROM ";
+                sql_queryA += e.first.first;
+                sql_queryA += ";";
+            } else {
+                sql_queryA  = "SELECT count(*) FROM ( SELECT DISTINCT TimeSeriesIndex FROM ";
+                sql_queryA += e.first.first;
+                sql_queryA += " );";
+            }
+            // execute the query and call the function of the second argument of the pair to save the results
+            ret_valA   = sqlite3_exec(dbcon, sql_queryA.c_str(), load_data_from_central_database_callbackA, (void*) e.second, &sqlErrorMsgA);
+            if (ret_valA != 0) {
+                cerr << "Error when executing command '" << sql_queryA << "': " << sqlErrorMsgA << endl;
+                sqlite3_free(sqlErrorMsgA);
+                return false;
+            }
         }
 
         //
