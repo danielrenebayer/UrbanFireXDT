@@ -10,15 +10,15 @@ time_indices,local_time_zone,TEXT / VARCHAR(4),Time zone name of the local time 
 general_data_information,key,TEXT,"Name of the simulation attribute, see table overview for details on required keys"
 general_data_information,value,INTEGER,Value of the simulation attribute
 ,,,
-list_of_substations,substation_id,INTEGER,"ID of the substation, must start with 1 and must be numbered consecutively"
+list_of_substations,substation_id,INTEGER,"ID of the substation, may start with 1 and may be numbered consecutively (not mandatory anymore)"
 list_of_substations,substation_name,TEXT,Name of the substation
 ,,,
-list_of_control_units,UnitID,INTEGER,"ID of the control unit, must start with 1 and must be numbered consecutively"
+list_of_control_units,UnitID,INTEGER,"ID of the control unit, may start with 1 and may be numbered consecutively (not mandatory anymore)"
 list_of_control_units,substation_id,INTEGER,ID of the substation to which this control unit is connected to [Foreign key]
 list_of_control_units,LocID,INTEGER,ID of the location where the control unit is located at [Foreign key] 
 list_of_control_units,has_wbx,INTEGER,"Holds the value 1, iff there is a wallbox connected to this control unit"
 ,,,
-list_of_measurement_units,MeUID,INTEGER,"ID of the measurement unit, must start with 1 and must be numbered consecutively"
+list_of_measurement_units,MeUID,INTEGER,"ID of the measurement unit, may start with 1 and may be numbered consecutively (not mandatory anymore)"
 list_of_measurement_units,UnitID,INTEGER,ID of the control unit to which this measruement unit is assigned [Foreign key]
 list_of_measurement_units,MeterPointID,TEXT,"Name of the meter point, i.e. MPRN (Meter Point Reference Number in UK) or MELO (Meter Location Number in Germany)"
 list_of_measurement_units,has_demand,INTEGER,"Holds the value 1, iff this measurement unit shows a demand at least at one point in the simulation time"
