@@ -929,10 +929,8 @@ void expansion::add_expansion_to_units(
     //
     // 1. count current expansion status (as it is in the given data)
     //    and store the references to the CUs for a given current expansion in a list
-    ControlUnit *const * unit_list = ControlUnit::GetArrayOfInstances();
-    const size_t n_CUs = ControlUnit::GetNumberOfInstances();
-    for (size_t i = 0; i < n_CUs; i++) {
-        ControlUnit* current_unit = unit_list[i];
+    const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
+    for (ControlUnit* current_unit : units_list) {
         // jump this unit, if it is not extensible (only if exp pv static mode is not available)
         if (!Global::get_exp_pv_static_mode() && !current_unit->is_expandable_with_pv_hp())
             continue;
@@ -1066,9 +1064,8 @@ void expansion::add_expansion_to_units(
     info_path_B /= "expansion-per-cu.csv";
     ofstream output_per_cu(info_path_B, std::ofstream::out);
     output_per_cu << "UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,cs_orig,cs_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh,added_n_EVs" << endl;
-    // n_CUs and unit_list defined above, at 1.
-    for (unsigned long i = 0; i < n_CUs; i++) {
-        ControlUnit* current_unit = unit_list[i];
+    // units_list defined above, at 1.
+    for (ControlUnit* current_unit : units_list) {
         int expCombiAsInData    = current_unit->get_exp_combi_bit_repr_from_MUs();
         int expCombiAsSimulated = current_unit->get_exp_combi_bit_repr_sim_added();
         // output information

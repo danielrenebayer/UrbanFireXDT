@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <ranges>
 #include <sstream>
 #include <string>
 
@@ -146,10 +147,9 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     //
     // add header to output file
     *(substation_output) << "Timestep";
-    Substation*const* subList = Substation::GetArrayOfInstances();
-    const size_t nSubst = Substation::GetNumberOfInstances();
-    for (size_t i = 0; i < nSubst; i++) {
-        *(substation_output) << "," << subList[i]->get_name()->c_str();
+    const auto subList = Substation::GetArrayOfInstances();
+    for (Substation* s : subList) {
+        *(substation_output) << "," << s->get_name()->c_str();
     }
     *(substation_output) << ",open_space_pv_feedin,wind_feedin,OverallBatterySOC,total_load" << endl;
     //
@@ -165,9 +165,9 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     //
     // add header to output file
     *(substation_output_details) << "Timestep";
-    for (size_t i = 0; i < nSubst; i++) {
-        *(substation_output_details) << "," << subList[i]->get_name()->c_str() << "_resident_load_kW";
-        *(substation_output_details) << "," << subList[i]->get_name()->c_str() << "_resident_demand_kW";
+    for (Substation* s : subList) {
+        *(substation_output_details) << "," << s->get_name()->c_str() << "_resident_load_kW";
+        *(substation_output_details) << "," << s->get_name()->c_str() << "_resident_demand_kW";
     }
     *(substation_output_details) << ",total_residential_load,total_residential_demand" << endl;
 }
@@ -181,9 +181,9 @@ void output::initializeCUOutput(unsigned long scenario_id) {
         cu_single_output = new CUOutputSingleFile(scenario_id);
         //
         // add reference to all CUs
-        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
-            cuList[i]->set_output_object(cu_single_output);
+        const std::vector<ControlUnit*>& cuList = ControlUnit::GetArrayOfInstances();
+        for (ControlUnit* c : cuList) {
+            c->set_output_object(cu_single_output);
         }
     } else if (Global::get_output_mode_per_cu() == global::OutputModePerCU::IndividualFile) {
         // Case 2: One file for each substation
@@ -202,21 +202,15 @@ void output::initializeCUOutput(unsigned long scenario_id) {
         // and add reference to all connected CUs
         n_cu_multi_outputs = Global::get_n_substations();
         cu_multi_outputs = new CUOutputOneFilePerSubstation*[n_cu_multi_outputs];
-        Substation*const* substationList = Substation::GetArrayOfInstances();
-        for (size_t nSubst = 1; nSubst <= Global::get_n_substations(); nSubst++) {
-            Substation* currentS = substationList[nSubst-1];
-            cu_multi_outputs[nSubst-1] = new CUOutputOneFilePerSubstation(currentS->get_name(), dirpath);
+        const auto substationList = Substation::GetArrayOfInstances();
+        for (auto [subst_idx, currentS] : std::ranges::views::enumerate(substationList)) {
+            cu_multi_outputs[subst_idx] = new CUOutputOneFilePerSubstation(currentS->get_name(), dirpath);
             // add output file to all connected CUs
             const list<ControlUnit*>* conn_units = currentS->get_connected_units();
-            for (auto cu : *conn_units) {
-                cu->set_output_object(cu_multi_outputs[nSubst-1]);
+            for (ControlUnit* cu : *conn_units) {
+                cu->set_output_object(cu_multi_outputs[subst_idx]);
             }
         }
-        /*ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        for (int cuID = 1; cuID <= Global::get_n_CUs(); cuID++) {
-            cu_multi_outputs[cuID-1] = new CUOutputOneFilePerCU(cuID, dirpath);
-            cuList[cuID-1]->set_output_object(cu_multi_outputs[cuID-1]);
-        }*/
     } else {
         // Case 3: no output per CU selected
     }
@@ -251,9 +245,9 @@ void output::closeOutputs() {
     }
     //
     // remove references to output objects from all CUs
-    ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
-        cuList[i]->set_output_object(NULL);
+    const std::vector<ControlUnit*>& cuList = ControlUnit::GetArrayOfInstances();
+    for (ControlUnit* c : cuList) {
+        c->set_output_object(NULL);
     }
 }
 
@@ -321,7 +315,7 @@ void output::outputCurrentCUSettings() {
     // 1)
     // output information per control unit about sim. added kWp of PV, BS ...
     // not required anymore -> this information is contained in the metrics file now
-    ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+    const std::vector<ControlUnit*>& cuList = ControlUnit::GetArrayOfInstances();
     filesystem::path output_path {*(global::current_output_dir)};
     /*
     output_path /= "cu-parameters.csv";
@@ -345,8 +339,8 @@ void output::outputCurrentCUSettings() {
     output_path /= "sim-added-roof-sections-per-cu.csv";
     ofstream ofs2(output_path, std::ofstream::out);
     ofs2 << "UnitID,roof_section_number,section_kWp,orientation,profile_index\n";
-    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
-        string* cu_string = cuList[i]->get_pv_section_string();
+    for (ControlUnit* c : cuList) {
+        string* cu_string = c->get_pv_section_string();
         ofs2 << *cu_string;
         delete cu_string;
     }
@@ -374,9 +368,9 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
         ofs << ControlUnit::MetricsStringHeaderAnnual <<"\n";
         //
         // loop over all CUs and get metrics output string
-        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++) {
-            string* output_str = cuList[i]->get_metrics_string_annual();
+        const std::vector<ControlUnit*>& cuList = ControlUnit::GetArrayOfInstances();
+        for (ControlUnit* c : cuList) {
+            string* output_str = c->get_metrics_string_annual();
             if (output_str != NULL)
                 ofs << *output_str;
             ofs << "\n";

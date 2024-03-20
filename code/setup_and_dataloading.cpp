@@ -597,7 +597,11 @@ int load_data_from_central_database_callbackC(void* data, int argc, char** argv,
     size_t current_station_id = stoul(argv[0]);
     string* stationName = new string(argv[1]);
     try {
-        Substation::InstantiateNewSubstation(current_station_id, stationName);
+        if (!Substation::InstantiateNewSubstation(current_station_id, stationName)) {
+            cerr << "Error when creating substation with id " << current_station_id << endl;
+            cerr << "Is the ID of the substation unique?" << endl;
+            return 1;
+        }
     } catch (runtime_error& e) {
         cerr << "Error when creating a substation:" << endl;
         cerr << e.what() << endl;
@@ -625,7 +629,11 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
     unsigned long location_id      = stoul(argv[2]);
     bool residential = (location_id > 0) && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
     try {
-        ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential);
+        if (!ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential)) {
+            cerr << "Error when creating control unit with id " << current_cu_id << endl;
+            cerr << "Is the ID of the control unit unique?" << endl;
+            return 1;
+        }
     } catch (runtime_error& e) {
         cerr << "Error when creating control unit with id " << current_cu_id << endl;
         cerr << "Details:" << endl;
@@ -673,11 +681,17 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
     data_input_path << ".csv";
 
     try {
-        MeasurementUnit* newMU = MeasurementUnit::InstantiateNewMeasurementUnit(
+        bool res = MeasurementUnit::InstantiateNewMeasurementUnit(
                                 current_mu_id, conn_to_unitID, mPointIDStr, locID,
                                 has_demand, has_feedin, has_pv_resid, has_pv_opens,
                                 has_bess,   has_hp,     has_wind,     has_evchst,
                                 has_chp);
+        if (!res) {
+            cerr << "Error when creating measurement unit with id " << current_mu_id << endl;
+            cerr << "Is the ID of the control unit unique?" << endl;
+            return 1;
+        }
+        MeasurementUnit* newMU = MeasurementUnit::GetInstancePublicID(current_mu_id);
         if (! (newMU->load_data(data_input_path.str().c_str())) ) {
             cerr << "Error when loading data for measurement unit with id " << current_mu_id << endl;
             return 1;
@@ -1366,7 +1380,7 @@ bool helper_read_ev_info_json_data(const std::string& filepath) {
             }
             unsigned long carID = scenario_dict_all.second.get_child("carID").get_value<unsigned long>();
             unsigned long cuID  = scenario_dict_all.second.get_child("ControlUnitID").get_value<unsigned long>();
-            ControlUnit::GetInstanceWE(cuID)->add_ev(carID);
+            ControlUnit::GetInstancePublicIDWE(cuID)->add_ev(carID);
         }
     } catch (bpt::ptree_bad_path& j) {
         cerr << "Error when parsing EV json file: " << j.what() << endl;

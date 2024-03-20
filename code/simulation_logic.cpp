@@ -86,11 +86,10 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
             if (Global::get_compute_weekly_metrics() && subsection == NULL) {
                 std::list<std::string*> *output_list = new std::list<std::string*>();
                 // iterate over all control units, get the weekly metrics string (and reset weekly summation variables automatically)
-                ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-                const size_t nCUs = ControlUnit::GetNumberOfInstances();
-                for (size_t i = 0; i < nCUs; i++) {
+                const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
+                for (ControlUnit* current_unit : units_list) {
                     output_list->push_back(
-                        cuList[i]->get_metrics_string_weekly_wr(week_number)
+                        current_unit->get_metrics_string_weekly_wr(week_number)
                     );
                 }
                 // output results
@@ -131,10 +130,9 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
     // loop over all control units:
     //    set new values and execute next actions
     if (subsection == NULL) {
-        ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
-        const size_t nCUs = ControlUnit::GetNumberOfInstances();
-        for (size_t i = 0; i < nCUs; i++) {
-            if (!cuList[i]->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+        const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
+        for (ControlUnit* current_unit : units_list) {
+            if (!current_unit->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
                 return false;
         }
     } else {
@@ -157,8 +155,7 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
     //
     // loop over all substations: compute new load values
     // and calculate total grid load
-    Substation*const* subList = Substation::GetArrayOfInstances();
-    const size_t nSubst = Substation::GetNumberOfInstances();
+    const std::vector<Substation*>& substations_list = Substation::GetArrayOfInstances();
 
     if (output::substation_output != NULL && output::substation_output_details != NULL) {
         //
@@ -172,11 +169,11 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
         // generate output
         *(output::substation_output) << ts << ","; // add timestep to output
         *(output::substation_output_details) << ts << ",";
-        for (size_t i = 0; i < nSubst; i++) {
-            subList[i]->calc_load(); // TODO: This could be moved outside the test, if substation output exist -> Propably we need information on grid load later
-            float current_station_load = subList[i]->get_station_load();
-            float current_station_resident_load   = subList[i]->get_residential_load();
-            float current_station_resident_demand = subList[i]->get_residential_demand();
+        for (Substation* s : substations_list) {
+            s->calc_load(); // TODO: This could be moved outside the test, if substation output exist -> Propably we need information on grid load later
+            float current_station_load = s->get_station_load();
+            float current_station_resident_load   = s->get_residential_load();
+            float current_station_resident_demand = s->get_residential_demand();
             total_load += current_station_load;
             total_residential_load   += current_station_resident_load;
             total_residential_demand += current_station_resident_demand;
@@ -238,12 +235,12 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
             // 1. set current variable values
             //    i.e. iterate over all variable-name / value combinations and
             //    set values accordingly
-            ControlUnit*const* cuList = ControlUnit::GetArrayOfInstances();
+            const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
             for (auto& var_name_and_val : list_of_variables) {
 
                 if        (var_name_and_val.first.compare("expansion PV kWp static") == 0) {
-                    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                        cuList[i]->set_exp_pv_params_A(var_name_and_val.second);
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_pv_params_A(var_name_and_val.second);
                     cParamVals.exp_pv_kWp_static     = var_name_and_val.second;
                     cParamVals.exp_pv_kWp_static_set = true;
 
@@ -260,20 +257,20 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
                     cParamVals.exp_pv_kWp_per_m2_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS P in kW")  == 0) {
-                    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                        cuList[i]->set_exp_bs_maxP_kW(var_name_and_val.second);
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_maxP_kW(var_name_and_val.second);
                     cParamVals.exp_bs_maxP_kW = var_name_and_val.second;
                     cParamVals.exp_bs_maxP_kW_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS E in kWh") == 0) {
-                    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                        cuList[i]->set_exp_bs_maxE_kWh(var_name_and_val.second);
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_maxE_kWh(var_name_and_val.second);
                     cParamVals.exp_bs_maxE_kWh = var_name_and_val.second;
                     cParamVals.exp_bs_maxE_kWh_set = true;
 
                 } else if (var_name_and_val.first.compare("expansion BS E:P ratio") == 0) {
-                    for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                        cuList[i]->set_exp_bs_E_P_ratio(var_name_and_val.second);
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_E_P_ratio(var_name_and_val.second);
                     cParamVals.exp_bs_EP_ratio = var_name_and_val.second;
                     cParamVals.exp_bs_EP_ratio_set = true;
 
@@ -295,8 +292,8 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
                 if (cParamVals.exp_pv_kWp_per_m2_set)       kWp_per_m2 = cParamVals.exp_pv_kWp_per_m2;
                 if (cParamVals.exp_pv_min_kWp_roof_sec_set) min_kWp    = cParamVals.exp_pv_min_kWp_roof_sec;
                 if (cParamVals.exp_pv_max_kWp_roof_sec_set) max_kWp    = cParamVals.exp_pv_max_kWp_roof_sec;
-                for (size_t i = 0; i < ControlUnit::GetNumberOfInstances(); i++)
-                    cuList[i]->set_exp_pv_params_B(kWp_per_m2, min_kWp, max_kWp);
+                for (ControlUnit* current_unit : units_list)
+                    current_unit->set_exp_pv_params_B(kWp_per_m2, min_kWp, max_kWp);
             }
 
             //
