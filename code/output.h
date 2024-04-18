@@ -113,6 +113,15 @@ namespace output {
      */
     void outputWeeklyMetricsStrList(list<string*> *output_list, unsigned long week_number);
 
+    /**
+     * Output information on the run time to a file.
+     * Thus function must not be callen before initializeDirectoriesBase().
+     * 
+     * @param seconds_setup: The duration of the setup and data loading in seconds
+     * @param seconds_main_run: The duration of the main run in seconds
+     */
+    void outputRuntimeInformation(long seconds_setup, long seconds_main_run);
+
 }
 
 /**

@@ -57,7 +57,7 @@ echo -e "------------------------------\n"
 output_error=0
 for di in $dirs_to_compare; do
     #
-    diff -rq --exclude=build_and_run_info.txt test-output/$di test-output-verified/$di
+    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv test-output/$di test-output-verified/$di
     #
     # check if dirs are the same, if yes, return value is 0
     if (( $? != 0 )); then

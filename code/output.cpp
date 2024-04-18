@@ -420,6 +420,14 @@ void output::outputWeeklyMetricsStrList(list<string*> *output_list, unsigned lon
     delete output_list;
 }
 
+void output::outputRuntimeInformation(long seconds_setup, long seconds_main_run) {
+    ofstream time_output( *global::current_output_dir_prefix /= "runtime-information.csv", std::ofstream::out );
+    time_output << "key,value\n";
+    time_output << "Setup time in s," << seconds_setup << "\n";
+    time_output << "Main run time in s," << seconds_main_run << "\n";
+    time_output.close();
+}
+
 
 /////////////////////////////////
 //    Implementation of all    //

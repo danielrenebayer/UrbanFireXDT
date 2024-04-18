@@ -229,8 +229,11 @@ int main(int argc, char* argv[]) {
         return 3;
     }
 
-    // get time for time measurement
+    // get time for time measurement and send first values to the file
     auto t3 = std::chrono::system_clock::now();
+    long s_setup = std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count();
+    long s_main  = std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count();
+    output::outputRuntimeInformation(s_setup, s_main);
 	
 	//
 	// clean up
@@ -246,8 +249,8 @@ int main(int argc, char* argv[]) {
     // get time for time measurement
     auto t4 = std::chrono::system_clock::now();
     cout << "Run-time information:\n";
-    cout << "  Setup and data loading: " << std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count() << "s\n";
-    cout << "  Main run:               " << std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count() << "s\n";
+    cout << "  Setup and data loading: " << s_setup << "s\n";
+    cout << "  Main run:               " << s_main  << "s\n";
     cout << "  Clean up:               " << std::chrono::duration_cast<std::chrono::seconds>(t4-t3).count() << "s\n";
     cout << "  Complete run time:      " << std::chrono::duration_cast<std::chrono::seconds>(t4-t1).count() << "s" << std::endl;
 
