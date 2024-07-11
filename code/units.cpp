@@ -824,7 +824,9 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
         sim_comp_cs->set_charging_value(max_power);
         load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;
-        total_consumption += load_cs;
+        if (load_cs > 0)
+            total_consumption += load_cs;
+        // TODO in bidirectional charging case: If load_cs < 0 (ie the battery is discharged), we need to account that as well!
         // information for output
         n_cars_pc  = sim_comp_cs->get_n_EVs_pc();
         n_cars_pnc = sim_comp_cs->get_n_EVs_pnc();
@@ -843,10 +845,11 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
 
     //
     // compute self-produced load, that is directly consumed
-    if (current_load_all_rSMs_kW < 0) {
+    if (current_load_all_rSMs_kW < 0) { // MIND: sum of real smart meters, not the power reading of the virtual smart meter!
         self_produced_load_kW = std::min(load_hp, load_pv-load_bs);
+        // ignore feed-back from the existing systems in this situation
     } else {
-        self_produced_load_kW = std::min(current_load_all_rSMs_kW + load_hp, load_pv-load_bs);
+        self_produced_load_kW = std::min(current_load_all_rSMs_kW + load_hp + load_cs, load_pv - load_bs);
     }
 
     // Compute current energy flows out of the power flows
