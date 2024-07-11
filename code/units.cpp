@@ -115,7 +115,7 @@ Substation* Substation::GetInstancePublicID(unsigned long public_id) {
 size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
-const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
 
 bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential) {
@@ -466,6 +466,21 @@ string* ControlUnit::get_metrics_string_annual() {
             bat_n_ts_empyt = sim_comp_bs->get_n_ts_empty();
             bat_n_ts_full  = sim_comp_bs->get_n_ts_full();
         }
+        // computation of the array to load ratio (see Nyholm et al. 2016 in Applied Energy, https://doi.org/10.1016/j.apenergy.2016.08.172)
+        double ALR = 0.0;
+        if (has_sim_pv) {
+            ALR = sim_comp_pv->get_kWp() / ( sum_of_consumption_kWh / Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
+        }
+        // compuation of the Battery-to-Demand ratio
+        // and the Relative Battery Capacity (RBC)
+        double BDR = 0.0;
+        double RBC = 0.0;
+        if (has_sim_bs) {
+            BDR = sim_comp_bs->get_maxE_kWh() / ( sum_of_consumption_kWh / Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
+            if (has_sim_pv) {
+                RBC = 1000.0 * sim_comp_bs->get_maxE_kWh() / sim_comp_pv->get_total_generation_kWh();
+            }
+        }
         // See ControlUnit::MetricsStringHeaderAnnual for the header definition
         //
         string* retstr = new string;
@@ -473,6 +488,9 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(SCR) + ",";
         *retstr += to_string(SSR) + ",";
         *retstr += to_string(NPV) + ",";
+        *retstr += to_string(ALR) + ",";
+        *retstr += to_string(BDR) + ",";
+        *retstr += to_string(RBC) + ",";
         *retstr += to_string(sum_of_consumption_kWh) + ",";
         *retstr += to_string(sum_of_mu_cons_kWh)     + ",";
         *retstr += to_string(sum_of_self_cons_kWh)   + ",";

@@ -41,7 +41,10 @@ Folders are marked in **bold**.
 | UnitID      | The control unit ID of the current record |
 | SCR         | The self-consumption rate over the complete simulated time span |
 | SSR         | The self-sufficiency rate over the complete simulated time span |
-| NPV         | The net-present value (including installation costs) over the complete simulated time span |
+| NPV         | The net-present value (including installation costs) over the complete simulated time span [not in weekly output] |
+| ALR         | Array-to-load ratio (see Nyholm et al., 2016 in Applied Energy, https://doi.org/10.1016/j.apenergy.2016.08.172) [not in weekly output] |
+| BDR         | Battery-to-Demand ratio (see Nyholm et al., 2016) [not in weekly output]  |
+| RBC         | Relative battery capacity (see Nyholm et al., 2016) [not in weekly output] |
 | Sum of demand [kWh]              | The demand sum of electricity demand of the real smart meters and all simulated consumers (heat pump and charging station) in kWh |
 | Sum of MU demand [kWh]           | The demand sum of the measurement units, i.e., the real smart meters in kWh |
 | Sum of self-consumed e. [kWh]    | The sum of locally produced and self-consumed electricity in kWh |
