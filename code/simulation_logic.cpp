@@ -312,6 +312,7 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
             //
             // 4a. output metrics (if selected)
             output::outputMetrics();
+            output::outputEVMetrics();
             // 4b. close output files
             output::closeOutputs();
             //
@@ -338,6 +339,7 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
         //
         // 3a. output metrics (if selected)
         output::outputMetrics();
+        output::outputEVMetrics();
         // 3b. close output files
         output::closeOutputs();
     }

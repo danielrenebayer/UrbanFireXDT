@@ -420,6 +420,42 @@ void output::outputWeeklyMetricsStrList(list<string*> *output_list, unsigned lon
     delete output_list;
 }
 
+//
+// This function outputs the computed metrics for all EVs
+// after the simulation has been finished.
+// If no EV has be simulated, the function does nothing
+//
+void output::outputEVMetrics(bool alt_fname /* = false */, string * fname_postfix /* = NULL */) {
+    // return immediatley if there are not EVs
+    if (EVFSM::GetNumberOfEVs() == 0)
+        return;
+    //
+    filesystem::path output_path;
+    if (alt_fname) {
+        if (fname_postfix == NULL)
+            throw logic_error("Parameter fname_postfix of function output::outputEVMetrics() is NULL!");
+        output_path  = *(global::current_global_output_dir);
+        output_path /= "metrics-per-ev-" + *fname_postfix + ".csv";
+    } else {
+        output_path  = *(global::current_output_dir);
+        output_path /= "metrics-per-ev.csv";
+    }
+    ofstream ofs(output_path, std::ofstream::out);
+    ofs << EVFSM::MetricsStringHeaderAnnual <<"\n";
+    //
+    // loop over all CUs and get metrics output string
+    const std::map<unsigned long, EVFSM*>& evList = EVFSM::GetArrayOfInstances();
+    for (auto const& [key, ev_ref] : evList) {
+        string* output_str = ev_ref->get_metrics_string_annual();
+        if (output_str != NULL)
+            ofs << *output_str;
+        ofs << "\n";
+        delete output_str;
+    }
+    //
+    ofs.close();
+}
+
 void output::outputRuntimeInformation(long seconds_setup, long seconds_main_run) {
     ofstream time_output( *global::current_output_dir_prefix /= "runtime-information.csv", std::ofstream::out );
     time_output << "key,value\n";

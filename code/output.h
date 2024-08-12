@@ -114,6 +114,17 @@ namespace output {
     void outputWeeklyMetricsStrList(list<string*> *output_list, unsigned long week_number);
 
     /**
+     * Outputs the computed metrics for all simulated EVs after the simulation has been finished,
+     * similar to output::outputMetrics().
+     * Creates an output file only, if there is at least one EV.
+     * 
+     * @param alt_fname if true, the output file will have the file name 'metrics-per-ev-{fname_postfix}.csv'
+     * instead of 'metrics-per-ev.csv'.
+     * @param fname_postfix: Alternative ending of the file name if required.
+     */
+    void outputEVMetrics(bool alt_fname = false, string * fname_postfix = NULL);
+
+    /**
      * Output information on the run time to a file.
      * Thus function must not be callen before initializeDirectoriesBase().
      * 
