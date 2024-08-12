@@ -16,6 +16,7 @@
 std::map<unsigned long, EVFSM*> EVFSM::list_of_cars;
 std::default_random_engine*            EVFSM::random_generator = new std::default_random_engine();
 std::uniform_real_distribution<float>* EVFSM::distribution     = new std::uniform_real_distribution<float>(0, 1);
+const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
 
 EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) : carID(carID), econs_kWh_per_km(0.2f), homeStation(homeStation) {
     // Register this object in the global list of cars
@@ -34,6 +35,11 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) : carID(carID), econ
     ts_since_departure = 0;
     energy_demand_per_tour_ts = 0.0;
     max_curr_available_p_kW   = 0.0;
+    sum_of_driving_distance_km    = 0.0;
+    sum_of_E_used_for_driving_kWh = 0.0;
+    sum_of_E_charged_home_kWh     = 0.0;
+    sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_ts_EV_is_connected_kWh = 0;
     // Create the list of tours
     list_of_tours_pd.reserve(6);
     for (unsigned int day = 0; day < 7; day++) {
@@ -54,6 +60,17 @@ EVFSM::~EVFSM() {
 
 float EVFSM::get_current_charging_power() const {
     return battery->get_currentLoad_kW();
+}
+
+std::string* EVFSM::get_metrics_string_annual() {
+    std::string* retstr = new string;
+    *retstr += std::to_string(carID) + ",";
+    *retstr += std::to_string(sum_of_driving_distance_km)     + ",";
+    *retstr += std::to_string(sum_of_E_used_for_driving_kWh)  + ",";
+    *retstr += std::to_string(sum_of_E_charged_home_kWh)      + ",";
+    *retstr += std::to_string(sum_of_E_discharged_home_kWh)   + ",";
+    *retstr += std::to_string(sum_of_ts_EV_is_connected_kWh);
+    return retstr;
 }
 
 void EVFSM::add_weekly_tour(
@@ -113,6 +130,11 @@ void EVFSM::resetInternalState() {
     ts_since_departure = 0;
     energy_demand_per_tour_ts = 0.0;
     max_curr_available_p_kW   = 0.0;
+    sum_of_driving_distance_km    = 0.0;
+    sum_of_E_used_for_driving_kWh = 0.0;
+    sum_of_E_charged_home_kWh     = 0.0;
+    sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_ts_EV_is_connected_kWh = 0;
 }
 
 void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
@@ -124,6 +146,11 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
         battery->calculateActions();
         // check, if this tour is finished?
         if (ts_since_departure >= current_tour->ts_duration) {
+            // add tour length of the finished tour to the total driving distance
+            sum_of_driving_distance_km += current_tour->tour_length_km;
+            // add consumed electricty for driving
+            sum_of_E_used_for_driving_kWh += current_tour->tour_length_km * econs_kWh_per_km;
+            // remove current tour
             current_tour = NULL;
             // Calculate if car will be connected or not (depending on the current SOC and its connection probability)
             //   Always connect if SOC <= 0.35
@@ -156,6 +183,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
     //
     // if connected, determine the internal state
     if (current_state == EVState::ConnectedAtHome) {
+        sum_of_ts_EV_is_connected_kWh += 1;
         // the goal is: the car needs
         //   1) either at least 35 percent SOC when leaving,
         //   2) or at least as much energy in the battery required for the next trip + 20 percent points
@@ -179,6 +207,13 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
 void EVFSM::set_current_charging_power(float power_kW) {
     battery->set_chargeRequest(power_kW);
     battery->calculateActions();
+    // update the amount of charged / discharged electricity
+    float cload = battery->get_currentLoad_kW();
+    if ( cload > 0 ) {
+        sum_of_E_charged_home_kWh    += cload * Global::get_time_step_size_in_h();
+    } else if ( cload < 0 ) {
+        sum_of_E_discharged_home_kWh -= cload * Global::get_time_step_size_in_h();
+    }
 }
 
 void EVFSM::AddWeeklyTour(
