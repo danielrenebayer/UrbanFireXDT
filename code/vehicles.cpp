@@ -48,6 +48,8 @@ EVFSM::~EVFSM() {
     }
     list_of_tours_pd.clear();
     list_of_all_tours.clear();
+    // remove this car from the list_of_cars
+    EVFSM::list_of_cars.erase(this->carID);
 }
 
 float EVFSM::get_current_charging_power() const {
