@@ -57,7 +57,15 @@ echo -e "------------------------------\n"
 output_error=0
 for di in $dirs_to_compare; do
     #
-    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv test-output/$di test-output-verified/$di
+    # Sort the file ST1-AllCUs-ts.csv, as the output can be mixed up due to parallelization
+    find test-output/$di -name ST1-AllCUs-ts.csv -type f -exec sh -c '
+for file; do
+    sort "$file" > "${file}-sorted"
+    done
+' sh {} +
+    #
+    # Do the main diff task (but ignore ST1-AllCUs-ts.csv)
+    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv --exclude=ST1-AllCUs-ts.csv test-output/$di test-output-verified/$di
     #
     # check if dirs are the same, if yes, return value is 0
     if (( $? != 0 )); then
