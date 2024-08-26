@@ -13,6 +13,7 @@ using namespace simulation;
 #include "output.h"
 #include "sac_planning.h"
 #include "units.h"
+#include "worker_threads.hpp"
 
 //
 // Internal variables required for output control
@@ -126,22 +127,45 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
 
     //int tsID = ts - 1;
 
-    // TODO: parallelization of the unit calls
     // loop over all control units:
     //    set new values and execute next actions
-    if (subsection == NULL) {
-        const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
-        for (ControlUnit* current_unit : units_list) {
-            if (!current_unit->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
-                return false;
-        }
-    } else {
-        // execute simulation only for selected units
-        for (ControlUnit* cu : *subsection) {
-            if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
-                return false;
+    if (Global::get_n_threads() == 0)
+    {
+        // Case 1: No parallelization
+        if (subsection == NULL) {
+            // Case 1a: Execute simulation for all substations
+            const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
+            for (ControlUnit* current_unit : units_list) {
+                if (!current_unit->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+                    return false;
+            }
+        } else {
+            // Case 1b: Execute simulation only for selected units
+            for (ControlUnit* cu : *subsection) {
+                if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+                    return false;
+            }
         }
     }
+    else
+    {
+        // Case 2: Parallelization
+        if (subsection == NULL) {
+            // Case 2a: Execute simulation for all substations
+            CUControllerThreadGroupManager::ExecuteOneStep(ts, dayOfWeek_l, hourOfDay_l);
+            CUControllerThreadGroupManager::WaitForWorkersToFinish();
+        } else {
+            // Case 2b: Execute simulation only for a subset of all units
+            // TODO: Not parallelized at the moment !
+            //
+            // TODO: Replace this code!
+            for (ControlUnit* cu : *subsection) {
+                if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+                    return false;
+            }
+        }
+    }
+
     //
     // set new global radiation values for PV and wind speed
     float total_load = 0.0;
@@ -361,6 +385,13 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
 }
 
 bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
+    // Initialize and start the CUControllerThreadGroup
+    if (Global::get_n_threads() >= 1) {
+        CUControllerThreadGroupManager::InitializeThreadGroupManager();
+        CUControllerThreadGroupManager::StartAllWorkerThreads();
+    }
+    //
+    bool return_value = true;
     if (Global::get_repetitions_selected()) {
         // if repetition is selected, this function will handle it
         for (unsigned int cRep = 1; cRep <= Global::get_n_repetitions(); cRep++) {
@@ -370,7 +401,8 @@ bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], 
             output::initializeDirectoriesBase(scenario_id);
             // run the main part
             if (!simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
-                return false;
+                return_value = false;
+                break;
             }
             // Remove all added components and reset all internal states
             ControlUnit::RemoveAllSimAddedComponents();
@@ -380,11 +412,16 @@ bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], 
                 Global::increment_seed();
             }
         }
-        return true;
     } else {
         // Initialize global output directories
         output::initializeDirectoriesBase(scenario_id);
         // run the main part
-        return simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
+        return_value = simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
     }
+    // Stop all worker threads if sill running
+    if (Global::get_n_threads() >= 1) {
+        CUControllerThreadGroupManager::StopAllWorkerThreads();
+    }
+
+    return return_value;
 }

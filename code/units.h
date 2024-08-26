@@ -24,6 +24,7 @@ class OpenSpacePVOrWind;
 #include "global.h"
 #include "components.h"
 #include "output.h"
+#include "worker_threads.hpp"
 
 
 /*!
@@ -224,6 +225,12 @@ class ControlUnit {
         //
         bool is_expandable_with_pv_hp_cache; ///< Cached value saying is this unit expandable with a (roof-top) PV installation or a heat pump (it requires geo data for this!)
         bool is_expandable_with_pv_hp_cache_computed; ///< Boolean variable if cache has been computed
+        //
+        // Variables required for multi-threading
+        // CUControllerWorkerThread is getting full access to the member variables of this class
+        // Required only for the member variable worker_thread
+        friend class CUControllerWorkerThread;
+        CUControllerWorkerThread* worker_thread; ///< The working thead to which this substation is attached. The reference is NULL if unattached or no multithreading is used.
         //
         // static list of CUs
         static unsigned long st__n_CUs;

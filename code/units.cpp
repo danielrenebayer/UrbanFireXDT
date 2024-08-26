@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <list>
+#include <vector>
 
 #include <cmath> /* using: pow() */
 
@@ -207,6 +208,8 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
     sim_comp_cs = new ComponentCS();
+
+    worker_thread = NULL;
 }
 
 ControlUnit::~ControlUnit() {

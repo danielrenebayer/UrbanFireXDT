@@ -18,6 +18,7 @@
 #include "setup_and_dataloading.h"
 #include "simulation_logic.h"
 #include "vehicles.h"
+#include "worker_threads.hpp"
 
 
 using namespace std;
@@ -246,6 +247,7 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
+    CUControllerThreadGroupManager::Vacuum();
     EVFSM::VaccuumStaticVariables();
     ComponentHP::VacuumStaticVariables();
 	MeasurementUnit::VacuumInstancesAndStaticVariables();
