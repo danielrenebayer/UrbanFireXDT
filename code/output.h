@@ -162,6 +162,8 @@ class CUOutput {
  * This class represents the output for the
  * control units, that is directed into one
  * output file.
+ * 
+ * This class is thread-safe.
  **/
 class CUOutputSingleFile : public CUOutput {
     public:
@@ -206,6 +208,8 @@ class CUOutputOneFilePerCU : public CUOutput {
  * This class represents the output for all
  * control units, that are connected to one
  * substation.
+ * 
+ * This class is thread-safe.
  **/
 class CUOutputOneFilePerSubstation : public CUOutput {
     public:
@@ -220,6 +224,8 @@ class CUOutputOneFilePerSubstation : public CUOutput {
                 float load_hp,       float load_cs,
                 size_t n_cars_pc,    size_t n_cars_pnc);
         void flush_buffer();
+    private:
+        std::mutex single_file_mutex; ///< If a single file is selected as CU output, this variable holds the mutex to ensure correct concurrency behavior
 };
 
 #endif
