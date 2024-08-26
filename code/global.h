@@ -171,6 +171,7 @@ class Global {
         static int  get_parameter_varID()      { return pvar_id;        }
         static bool get_repetitions_selected() { return repetitions_selected; }
         static uint get_n_repetitions()        { return n_repetitions;  }
+        static uint get_n_threads()            { return n_threads;      }
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
         static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
@@ -240,6 +241,7 @@ class Global {
         static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_repetitions_selected(bool value);
         static void set_n_repetitions(unsigned int value);
+        static void set_n_threads(unsigned int value);
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
         static void set_tsteps_per_hour(int tsteps_per_hour);
@@ -309,6 +311,7 @@ class Global {
         static int  pvar_id;               ///< ID of the parameter variation
         static bool repetitions_selected;  ///< True, if complete twin (sac planning + param. vari. + simulation) should run more than once
         static unsigned int n_repetitions; ///< Number of repetitions if repetitions_selected == True
+        static unsigned int n_threads;     ///< Number of parallel threads
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
         static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
@@ -376,6 +379,7 @@ class Global {
         static bool pvar_set;
         static bool repetitions_selected_set;
         static bool n_repetitions_set;
+        static bool n_threads_set;
         static bool ts_start_str_init;
         static bool ts_end_str_init;
         static bool tsteps_per_hour_init;

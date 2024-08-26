@@ -105,6 +105,7 @@ bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
 bool Global::repetitions_selected = false;
 uint Global::n_repetitions        = 0;
+uint Global::n_threads            = 3;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
@@ -171,6 +172,7 @@ bool Global::seed_set              = false;
 bool Global::pvar_set              = false;
 bool Global::repetitions_selected_set     = false;
 bool Global::n_repetitions_set     = false;
+bool Global::n_threads_set         = false;
 bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
 bool Global::tsteps_per_hour_init  = false;
@@ -223,6 +225,7 @@ bool Global::AllVariablesInitialized() {
       //comp_eval_metrics_init &&
         pvar_set &&
         repetitions_selected_set &&
+        n_threads_set &&
         ts_start_str_init &&
         ts_end_str_init &&
         tsteps_per_hour_init &&
@@ -302,6 +305,9 @@ void Global::PrintUninitializedVariables() {
     }
     if (repetitions_selected && !n_repetitions_set) {
         cout << "Variable n_repetitions_set not initialized." << endl;
+    }
+    if (!n_threads_set) {
+        cout << "Variable n_threads not initialized." << endl;
     }
     if (!ts_start_str_init) {
         cout << "Variable ts_start_str not initialized." << endl;
@@ -492,6 +498,14 @@ void Global::set_n_repetitions(unsigned int value) {
     } else {
         Global::n_repetitions = value;
         Global::n_repetitions_set = true;
+    }
+}
+void Global::set_n_threads(unsigned int value) {
+    if (is_locked || n_threads_set){
+        cerr << "Global variable n_threads is already initialized!" << endl;
+    } else {
+        Global::n_threads = value;
+        Global::n_threads_set = true;
     }
 }
 void Global::set_ts_start_tm(struct tm* ts_start_tm) {

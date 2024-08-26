@@ -1466,7 +1466,7 @@ void configld::output_variable_values() {
     cout << "    C++ standard = " << __cplusplus << "\n\n";
     cout << "List of parameter settings:\n";
     // Scenario selection
-    cout << "  Scenario selection:\n";
+    cout << "  Scenario selection and simulation flow control:\n";
     PRINT_VAR(Global::get_expansion_scenario_id());
     PRINT_VAR(Global::is_parameter_variation());
     PRINT_VAR(Global::get_parameter_varID());
@@ -1474,6 +1474,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::is_seed_set());
     if (Global::is_seed_set()) { PRINT_VAR(Global::get_seed()); }
     PRINT_VAR(Global::get_n_repetitions());
+    PRINT_VAR(Global::get_n_threads());
     PRINT_TM_VAR(Global::get_ts_start_tm());
     PRINT_TM_VAR(Global::get_ts_end_tm());
     // Data
