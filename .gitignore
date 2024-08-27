@@ -1,7 +1,5 @@
+bin/
 config/
-code/main
-code/main-dbg
-code/main-opti
 cpp-test/
 test/test-output/S*
 .vscode/
