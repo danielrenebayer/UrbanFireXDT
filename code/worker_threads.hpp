@@ -27,36 +27,38 @@ class CUControllerWorkerThread;
 /*!
  * This class represents one group of threads of the class CUControllerWorkerThread.
  * It provides functionality for creating and managing all existing thread instances.
- * This class is a singleton. This means that there can only be one thread group manager
- * for the complete program.
  * 
  * This class is not thread-safe.
  */
 class CUControllerThreadGroupManager {
     private:
-        CUControllerThreadGroupManager();
         friend class CUControllerWorkerThread;
 
     public:
         /*!
-         * This function initializes the static class.
-         * If called multiple times, it does not do anything.
+         * This function initializes the a new instance of the thread group manager.
+         * It initializes the threads internally.
+         * 
+         * @param subsection: If the thread group should only be started for a subset of the available control units, the list of control units must be passed by this argument. Defaults to NULL, meaning that the group manager should handle all control units.
          */
-        static void InitializeThreadGroupManager();
+        CUControllerThreadGroupManager(const std::vector<ControlUnit*>* subsection = NULL);
+
+        ~CUControllerThreadGroupManager();
+        //static void InitializeThreadGroupManager();
         
         /*!
          * This function starts all worker threads.
          * This means that the threads are forked and start to idle and with for tasks.
          * If called multiple times, it does not do anything.
          */
-        static void StartAllWorkerThreads();
+        void startAllWorkerThreads();
 
         /*!
          * This function stops all worker threads.
          * It stops all threads and joins them again.
          * If called multiple times, it does not do anything.
          */
-        static void StopAllWorkerThreads();
+        void stopAllWorkerThreads();
 
         /*!
          * This method notifies the worker threads to start working.
@@ -66,24 +68,24 @@ class CUControllerThreadGroupManager {
          * @param dayOfWeek_l: The day of the week (left aligned) of the current time step (required for calling ControlUnit::compute_next_value())
          * @param hourOfDay_l: The hour of the day (left aligned) of the current time step (required for calling ControlUnit::compute_next_value())
          */
-        static void ExecuteOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l/*, const std::vector<ControlUnit*>* subsection = NULL*/);
+        void executeOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l/*, const std::vector<ControlUnit*>* subsection = NULL*/);
         
         /*!
          * This function waits until all workers are finished with executed their task,
          * that has been started with ExecuteOneStep().
          */
-        static void WaitForWorkersToFinish();
+        void waitForWorkersToFinish();
 
         /*!
          * This function deletes all created worker threads
          */
-        static void Vacuum();
+        // static void Vacuum();
 
     private:
-        static bool initialized; /* = false */ ///< True, if the manager is already initialized
-        static std::vector<CUControllerWorkerThread*> worker_threads; ///< Vector of worker threads
+        //bool initialized; /* = false */ ///< True, if the manager is already initialized
+        std::vector<CUControllerWorkerThread*> worker_threads; ///< Vector of worker threads
         //static std::barrier<>* all_workers_finished_barrier;
-        static std::latch* all_workers_finished_latch;
+        std::latch* all_workers_finished_latch;
         //static std::condition_variable cv_finished_signaling; ///< Internal conditional variable, required for notifying that a worker thread is finished
 };
 
@@ -101,8 +103,9 @@ class CUControllerWorkerThread {
          * is called more than once for the control units connected!
          * 
          * @param connected_units_: The list of control units that are connected to this working thread
+         * @param caller: The reference to the thread group manager object
          */
-        CUControllerWorkerThread(std::list<ControlUnit*>* connected_units_);
+        CUControllerWorkerThread(const std::list<ControlUnit*>* connected_units_, CUControllerThreadGroupManager& caller);
         ~CUControllerWorkerThread();
         void start(); ///< Starts this thread. This method has to be called before the call of executeOneStepForAllConnCUs().
         void stop(); ///< Stops this working thread.
@@ -125,6 +128,7 @@ class CUControllerWorkerThread {
         bool isIdling() const { return atomic_flag_idling; }
 
     private:
+        CUControllerThreadGroupManager& thread_group_manager; ///< Internal reference to the thread group manager
         std::vector<ControlUnit*> connected_units; ///< List of connected control units
         std::thread current_thread;
         std::mutex mtx; ///< The mutex object per instance

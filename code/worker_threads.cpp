@@ -16,55 +16,68 @@
 //         Implementation of           //
 //   CUControllerThreadGroupManager    //
 // ----------------------------------- //
-bool CUControllerThreadGroupManager::initialized = false;
-std::vector<CUControllerWorkerThread*> CUControllerThreadGroupManager::worker_threads;
-std::latch* CUControllerThreadGroupManager::all_workers_finished_latch = NULL;
+//bool CUControllerThreadGroupManager::initialized = false;
+//std::vector<CUControllerWorkerThread*> CUControllerThreadGroupManager::worker_threads;
+//std::latch* CUControllerThreadGroupManager::all_workers_finished_latch = NULL;
 
-void CUControllerThreadGroupManager::InitializeThreadGroupManager() {
-    if (!initialized) {
-        initialized = true;
+CUControllerThreadGroupManager::CUControllerThreadGroupManager(
+    const std::vector<ControlUnit*>* subsection /* = NULL */
+)
+{
+    if (Global::get_n_threads() < 1)
+        throw std::logic_error("Thread group manager cannot be started if the number of worker threads is set to 0.");
 
-        if (Global::get_n_threads() < 1)
-            return;
+    all_workers_finished_latch = NULL;
 
-        //all_workers_finished_barrier = new std::barrier<>(Global::get_n_threads() + 1); // +1 as the main thread calls arrive_and_wait(), too
+    // create as much lists as we have workers where we iteratively add one control unit
+    std::vector<std::list<ControlUnit*>> vlc;
+    for (unsigned int t = 0; t < Global::get_n_threads(); t++) {
+        vlc.emplace_back(); // create an empty list per worker
+    }
+    // add control units to the lists iteratively
+    unsigned int t = 0; // the current worker where the next control unti will be attached to
+    const std::vector<ControlUnit*>* list_of_units = &ControlUnit::GetArrayOfInstances();
+    if (subsection != NULL) {
+        list_of_units = subsection;
+    }
+    for (ControlUnit* cu : *list_of_units) {
+        vlc[t].push_back(cu);
+        // increment t
+        t++;
+        if ( t >= Global::get_n_threads() )
+            t = 0;
+    }
 
-        // create as much lists as we have workers where we iteratively add one control unit
-        std::vector<std::list<ControlUnit*>> vlc;
-        for (unsigned int t = 0; t < Global::get_n_threads(); t++) {
-            vlc.emplace_back(); // create an empty list per worker
-        }
-        // add control units to the lists iteratively
-        unsigned int t = 0; // the current worker where the next control unti will be attached to
-        for (ControlUnit* cu : ControlUnit::GetArrayOfInstances()) {
-            vlc[t].push_back(cu);
-            // increment t
-            t++;
-            if ( t >= Global::get_n_threads() )
-                t = 0;
-        }
-
-        worker_threads.reserve( Global::get_n_threads() );
-        for (unsigned int t = 0; t < Global::get_n_threads(); t++) {
-            CUControllerWorkerThread* new_thread = new CUControllerWorkerThread( &vlc[t] );
-            worker_threads.push_back(new_thread);
-        }
+    // Initialize the worker threads
+    worker_threads.reserve( Global::get_n_threads() );
+    for (unsigned int t = 0; t < Global::get_n_threads(); t++) {
+        CUControllerWorkerThread* new_thread = new CUControllerWorkerThread( &vlc[t], *this );
+        worker_threads.push_back(new_thread);
     }
 }
 
-void CUControllerThreadGroupManager::StartAllWorkerThreads() {
+CUControllerThreadGroupManager::~CUControllerThreadGroupManager() {
+    for (CUControllerWorkerThread* thread : worker_threads) {
+        thread->stop();
+        delete thread;
+    }
+    worker_threads.clear();
+    delete all_workers_finished_latch;
+}
+
+void CUControllerThreadGroupManager::startAllWorkerThreads() {
     for (CUControllerWorkerThread* wt : worker_threads) {
         wt->start();
     }
 }
 
-void CUControllerThreadGroupManager::StopAllWorkerThreads() {
+void CUControllerThreadGroupManager::stopAllWorkerThreads() {
     for (CUControllerWorkerThread* wt : worker_threads) {
         wt->stop();
     }
 }
 
-void CUControllerThreadGroupManager::ExecuteOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
+void CUControllerThreadGroupManager::executeOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
     // (Re-)Initialize the latch object
     if (all_workers_finished_latch != NULL)
         delete all_workers_finished_latch;
@@ -75,22 +88,10 @@ void CUControllerThreadGroupManager::ExecuteOneStep(unsigned long ts, unsigned i
     }
 }
 
-void CUControllerThreadGroupManager::WaitForWorkersToFinish() {
+void CUControllerThreadGroupManager::waitForWorkersToFinish() {
     // for (CUControllerWorkerThread* wt : worker_threads)
     //all_workers_finished_barrier->arrive_and_wait();
     all_workers_finished_latch->wait();
-}
-
-void CUControllerThreadGroupManager::Vacuum() {
-    if (initialized) {
-        for (CUControllerWorkerThread* thread : worker_threads) {
-            delete thread;
-        }
-        worker_threads.clear();
-        initialized = false;
-        //delete all_workers_finished_barrier;
-        delete all_workers_finished_latch;
-    }
 }
 
 
@@ -99,7 +100,11 @@ void CUControllerThreadGroupManager::Vacuum() {
 //      Implementation of        //
 //   CUControllerWorkerThread    //
 // ----------------------------- //
-CUControllerWorkerThread::CUControllerWorkerThread(std::list<ControlUnit*>* connected_units_) {
+CUControllerWorkerThread::CUControllerWorkerThread(
+    const std::list<ControlUnit*>* connected_units_,
+    CUControllerThreadGroupManager& caller
+) : thread_group_manager(caller)
+{
     // add the stations to connect to this thread to the internal vector storing all stations
     // check, if a station is not already connected to some other thread
     connected_units = std::vector<ControlUnit*>();
@@ -121,6 +126,11 @@ CUControllerWorkerThread::CUControllerWorkerThread(std::list<ControlUnit*>* conn
 CUControllerWorkerThread::~CUControllerWorkerThread() {
     // Stop the thread and clean up
     stop();
+    // Remove the reference to the working thread in the connected units
+    for (ControlUnit* cu : connected_units) {
+        cu->worker_thread = NULL;
+    }
+    // Join the threads and set the falgs to false
     if (current_thread.joinable()) {
         current_thread.join();
     }
@@ -226,6 +236,6 @@ void CUControllerWorkerThread::run() {
         //CUControllerThreadGroupManager::cv_finished_signaling.notify_all();
         // decrement the barrier
         //CUControllerThreadGroupManager::all_workers_finished_barrier->arrive();
-        CUControllerThreadGroupManager::all_workers_finished_latch->count_down();
+        thread_group_manager.all_workers_finished_latch->count_down();
     }
 }

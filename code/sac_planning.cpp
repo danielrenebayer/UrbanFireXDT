@@ -441,7 +441,16 @@ bool add_expansion_to_units_orderd_by_metric(
             }
             // run simulation for this combination
             cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: " << jStrO << "\n";
-            bool no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
+            CUControllerThreadGroupManager* tgm = NULL;
+            if (Global::get_n_threads() >= 1) {
+                tgm = new CUControllerThreadGroupManager(listOfCUs);
+                tgm->startAllWorkerThreads();
+            }
+            bool no_error = simulation::runSimulationForOneParamSetting(tgm, listOfCUs, "    ");
+            if (tgm != NULL) {
+                delete tgm;
+                tgm = NULL;
+            }
             if (!no_error) { 
                 cerr << "Error during selection of the CUs for adding simulated components." << endl;
                 return false;
@@ -708,7 +717,16 @@ double add_expansion_to_units_orderd_by_metric_OLD(
         }
         // 2.1.2) Execute the simulation once
         cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: +PV, no BS \n";
-        bool no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
+        CUControllerThreadGroupManager* tgm = NULL;
+        if (Global::get_n_threads() >= 1) {
+            tgm = new CUControllerThreadGroupManager(listOfCUs);
+            tgm->startAllWorkerThreads();
+        }
+        bool no_error = simulation::runSimulationForOneParamSetting(tgm, listOfCUs, "    ");
+        if (tgm != NULL) {
+            delete tgm;
+            tgm = NULL;
+        }
         if (!no_error) { 
             cerr << "Error during selection of the CUs for adding simulated components." << endl;
             return false;
@@ -740,7 +758,15 @@ double add_expansion_to_units_orderd_by_metric_OLD(
         }
         // 2.2.2) Execute the simulation once
         cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: +PV+BS \n";
-        /*bool*/ no_error = simulation::runSimulationForOneParamSetting(listOfCUs, "    ");
+        if (Global::get_n_threads() >= 1) {
+            tgm = new CUControllerThreadGroupManager(listOfCUs);
+            tgm->startAllWorkerThreads();
+        }
+        /*bool*/ no_error = simulation::runSimulationForOneParamSetting(tgm, listOfCUs, "    ");
+        if (tgm != NULL) {
+            delete tgm;
+            tgm = NULL;
+        }
         if (!no_error) { 
             cerr << "Error during selection of the CUs for adding simulated components." << endl;
             return false;

@@ -247,7 +247,6 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
-    CUControllerThreadGroupManager::Vacuum();
     EVFSM::VaccuumStaticVariables();
     ComponentHP::VacuumStaticVariables();
 	MeasurementUnit::VacuumInstancesAndStaticVariables();

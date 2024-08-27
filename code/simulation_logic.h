@@ -16,20 +16,28 @@
 
 namespace simulation {
 
-    bool runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection = NULL, const char* output_prefix = "");
-
     /**
      * Runs one step of the simulation.
      * Should only be called by simulation::runSimulationForOneParamSetting().
+     * 
+     * Attention: If a thread_manager is given, the subsection-argument is ignored!
+     * Thus, the thread manager must be initialized with the subsection!
      * 
      * @param ts current time step (starting from 1)
      * @param dayOfWeek_l The day of week of the current time step (left aligned)
      * @param hourOfWeek_l The hour of the day of the current time step (left aligned)
      * @param totalBatteryCapacity_kWh Total capacity over all batteries in kWh; required for computation of overall BS SOC
+     * @param thread_manager: If multi-threading is active, an existing thread manager can be passed.
      * @param output_prefix (optional, default "") A prefix that should be added to the output file names
      * @param subsection (optional, default NULL) Execut the simulation for the current step only for a given sub-set of all known control units
      */
-    bool oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l, double totalBatteryCapacity_kWh, const char* output_prefix = "", std::vector<ControlUnit*>* subsection = NULL);
+    bool oneStep(unsigned long ts,
+                 unsigned int dayOfWeek_l,
+                 unsigned int hourOfDay_l,
+                 double totalBatteryCapacity_kWh,
+                 CUControllerThreadGroupManager* thread_manager = NULL,
+                 const char* output_prefix = "",
+                 std::vector<ControlUnit*>* subsection = NULL);
 
     /**
      * Runs the simulation for the complete defined time span for one parameter
@@ -43,6 +51,7 @@ namespace simulation {
      * @param subsection: If not NULL, the simulation is only executed for the given control units
      * @param output_prefix: The prefix for stdout information. If not empty, if changes the writing to stdout. 
      */
+    bool runSimulationForOneParamSetting(CUControllerThreadGroupManager* thread_manager = NULL, std::vector<ControlUnit*>* subsection = NULL, const char* output_prefix = "");
 
     /**
      * Runs the simulation for all parameter variations.
@@ -51,6 +60,7 @@ namespace simulation {
      * This function also handels the correct initialization
      * of the output folders.
      */
+    bool runSimulationForAllVariations(unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager = NULL);
 
     /**
      * This function is called by simulation::runSimulationFAVsAndSAC().

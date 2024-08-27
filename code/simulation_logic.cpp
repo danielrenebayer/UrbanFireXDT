@@ -22,7 +22,7 @@ unsigned int output_counter = 0;
 #define OUTPUT_STATUS_OUTPUT_FREQ 24*24
 
 
-bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subsection /* = NULL */, const char* output_prefix /* = "" */) {
+bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager* thread_manager /* = NULL*/, std::vector<ControlUnit*>* subsection /* = NULL */, const char* output_prefix /* = "" */) {
     //
     // This function loops over all time steps as they are defined in the data.
     // If multiple settings (e.g. a parameter variation) should be applied,
@@ -101,7 +101,7 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
         last_step_weekday = dayOfWeek_l;
         //
         // execute one step
-        if (!oneStep(ts, dayOfWeek_l, hourOfDay_l, totalBatteryCapacity_kWh, output_prefix, subsection)) return false;
+        if (!oneStep(ts, dayOfWeek_l, hourOfDay_l, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
@@ -117,7 +117,9 @@ bool simulation::runSimulationForOneParamSetting(std::vector<ControlUnit*>* subs
 }
 
 bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l,
-                        double totalBatteryCapacity_kWh, const char* output_prefix /* = "" */,
+                        double totalBatteryCapacity_kWh,
+                        CUControllerThreadGroupManager* thread_manager /* = NULL */,
+                        const char* output_prefix /* = "" */,
                         std::vector<ControlUnit*>* subsection /* = NULL */) {
     //
     // Run one time step of the simulation
@@ -129,7 +131,7 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
 
     // loop over all control units:
     //    set new values and execute next actions
-    if (Global::get_n_threads() == 0)
+    if (thread_manager == NULL)
     {
         // Case 1: No parallelization
         if (subsection == NULL) {
@@ -149,21 +151,11 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
     }
     else
     {
-        // Case 2: Parallelization
-        if (subsection == NULL) {
-            // Case 2a: Execute simulation for all substations
-            CUControllerThreadGroupManager::ExecuteOneStep(ts, dayOfWeek_l, hourOfDay_l);
-            CUControllerThreadGroupManager::WaitForWorkersToFinish();
-        } else {
-            // Case 2b: Execute simulation only for a subset of all units
-            // TODO: Not parallelized at the moment !
-            //
-            // TODO: Replace this code!
-            for (ControlUnit* cu : *subsection) {
-                if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
-                    return false;
-            }
-        }
+        // Case 2: Parallelization - subsection is ignored!
+        // thread_manager MUST be initialized with subsection as argument!
+        thread_manager->executeOneStep(ts, dayOfWeek_l, hourOfDay_l);
+        thread_manager->waitForWorkersToFinish();
+        // TODO: If there occurs one false from cu->compute_next_values -> Break complete run![]
     }
 
     //
@@ -233,7 +225,7 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
 
 }
 
-bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
+bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager /*= NULL */) {
     //
     // This function runs the simulation for all given parameter
     // variations. If no variation is selected, it executes the
@@ -331,7 +323,7 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
             //
             // 3. run the simulation
             cout << "Simulation run for parameter variation " << std::to_string(param_vari_combi_ind+1) << " of " << std::to_string(n_param_vari_combis) << "\n";
-            bool no_error = runSimulationForOneParamSetting();
+            bool no_error = runSimulationForOneParamSetting(thread_manager);
             if (!no_error) return false;
             //
             // 4a. output metrics (if selected)
@@ -358,7 +350,7 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id) {
         ControlUnit::ResetAllInternalStates();
         // 2.1 Run the simulation
         cout << "Main simulation run:\n";
-        bool no_error = runSimulationForOneParamSetting();
+        bool no_error = runSimulationForOneParamSetting(thread_manager);
         if (!no_error) return false;
         //
         // 3a. output metrics (if selected)
@@ -380,16 +372,24 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     //
     expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
     //
-    // 2) run the simulation (for all parameter variations or a single run)
-    return runSimulationForAllVariations(scenario_id);
+    // 2a) Initialize and start the CUControllerThreadGroup if multi-threading is selected
+    CUControllerThreadGroupManager* tgm = NULL;
+    if (Global::get_n_threads() >= 1) {
+        tgm = new CUControllerThreadGroupManager();
+        tgm->startAllWorkerThreads();
+    }
+    // 2b) run the simulation (for all parameter variations or a single run)
+    bool return_value = runSimulationForAllVariations(scenario_id, tgm);
+    // 2c) delete the thread group manager
+    if (tgm != NULL) {
+        tgm->stopAllWorkerThreads();
+        delete tgm;
+    }
+    //
+    return return_value;
 }
 
 bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
-    // Initialize and start the CUControllerThreadGroup
-    if (Global::get_n_threads() >= 1) {
-        CUControllerThreadGroupManager::InitializeThreadGroupManager();
-        CUControllerThreadGroupManager::StartAllWorkerThreads();
-    }
     //
     bool return_value = true;
     if (Global::get_repetitions_selected()) {
@@ -417,10 +417,6 @@ bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], 
         output::initializeDirectoriesBase(scenario_id);
         // run the main part
         return_value = simulation::runSimulationFAVsAndSAC(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id);
-    }
-    // Stop all worker threads if sill running
-    if (Global::get_n_threads() >= 1) {
-        CUControllerThreadGroupManager::StopAllWorkerThreads();
     }
 
     return return_value;
