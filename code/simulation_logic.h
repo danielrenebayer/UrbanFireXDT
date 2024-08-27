@@ -31,7 +31,35 @@ namespace simulation {
      */
     bool oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l, double totalBatteryCapacity_kWh, const char* output_prefix = "", std::vector<ControlUnit*>* subsection = NULL);
 
-    bool runSimulationForAllVariations(unsigned long scenario_id);
+    /**
+     * Runs the simulation for the complete defined time span for one parameter
+     * setting and one repetition.
+     * It can be either called by simulation::runSimulationForAllVariations()
+     * or during the initialization phase for the SAC planning.
+     * This function creates a a thread manager object, if multi-threading is
+     * selected and no existing thread manager instance is passed.
+     * 
+     * @param thread_manager: If multi-threading is active, an existing thread manager can be passed.
+     * @param subsection: If not NULL, the simulation is only executed for the given control units
+     * @param output_prefix: The prefix for stdout information. If not empty, if changes the writing to stdout. 
+     */
+
+    /**
+     * Runs the simulation for all parameter variations.
+     * If no variations as selected, it will only call
+     * simulation::runSimulationForOneParamSetting() once.
+     * This function also handels the correct initialization
+     * of the output folders.
+     */
+
+    /**
+     * This function is called by simulation::runSimulationFAVsAndSAC().
+     * It starts the SAC (simulatively added components) planning and then 
+     * run the simulation for all parameter variations (FAVs).
+     * It also initializes the thread group manager for the main run of the
+     * simulation (i.e., NOT for the SAC planning, this is done by 
+     * the SAC planning function itselfe) if multi-processing is selected.
+     */
     bool runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id); ///< Runs the complete simulation for all parameter variations and add sim. added components to the CUs
 
     /**
