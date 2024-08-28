@@ -272,6 +272,26 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_use_prices_time_series_ia( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("controller mode")                         == 0 )
+            {
+                string selection = scenario_dict.get_value<string>();
+                if (selection == "rule-based") {
+                    Global::set_controller_mode( global::ControllerMode::RuleBased );
+                } else if (selection == "opti with perfect forecast") {
+                    Global::set_controller_mode( global::ControllerMode::OptimizedWithPerfectForecast );
+                } else {
+                    cerr << "Parameter 'controller mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'controller mode' as defined in config-json is unknown.");
+                }
+            }
+            else if ( element_name.compare("control horizon in ts")                  == 0 )
+            {
+                Global::set_control_horizon_in_ts( scenario_dict.get_value<unsigned int>() );
+            }
+            else if ( element_name.compare("control update freq in ts")               == 0 )
+            {
+                Global::set_control_update_freq_in_ts( scenario_dict.get_value<unsigned int>() );
+            }
             else if ( element_name.compare("select buildings with given heat demand only") == 0 )
             {
                 Global::set_select_buildings_wg_heatd_only( scenario_dict.get_value<bool>() );
@@ -1492,6 +1512,11 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_ev_data_path());
     PRINT_VAR(Global::get_use_emission_time_series_ia());
     PRINT_VAR(Global::get_use_prices_time_series_ia());
+    // Control strategy settings
+    cout << "  Control strategy settings:\n";
+    PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});
+    PRINT_VAR(Global::get_control_horizon_in_ts());
+    PRINT_VAR(Global::get_control_update_freq_in_ts());
     // Selection settings
     cout << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});

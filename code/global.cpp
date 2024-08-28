@@ -146,6 +146,8 @@ float Global::hp_E_estimation_param_t = 0.0;
 float Global::ev_plugin_probability   = 0.25;
 bool  Global::use_emission_time_series_ia = true;
 bool  Global::use_prices_time_series_ia   = true;
+uint  Global::control_horizon_in_ts       =   24;
+uint  Global::control_update_freq_in_ts   =    1;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -155,6 +157,7 @@ ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAlloca
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 global::BatteryCapacityComputationMode Global::bat_capacity_comp_mode = global::BatteryCapacityComputationMode::Constant;
+global::ControllerMode Global::controller_mode = global::ControllerMode::RuleBased;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
@@ -864,6 +867,28 @@ void Global::set_use_prices_time_series_ia(bool use) {
         use_prices_time_series_ia = use;
     }
 }
+void Global::set_control_horizon_in_ts(unsigned int value) {
+    if (is_locked) {
+        cerr << "Global variable control_horizon_in_ts cannot be set!" << endl;
+    } else {
+        if (value < 1) {
+            cerr << "Global variable control_horizon_in_ts cannot be set to value " << value << " (allowed range: [1,inf) )" << endl;
+            return;
+        }
+        control_horizon_in_ts = value;
+    }
+}
+void Global::set_control_update_freq_in_ts(unsigned int value) {
+    if (is_locked) {
+        cerr << "Global variable control_update_freq_in_ts cannot be set!" << endl;
+    } else {
+        if (value < 1) {
+            cerr << "Global variable control_update_freq_in_ts cannot be set to value " << value << " (allowed range: [1,inf) )" << endl;
+            return;
+        }
+        control_update_freq_in_ts = value;
+    }
+}
 void Global::set_input_path(string* path) {
     if (is_locked && input_path_init) {
         cerr << "Input path already set!" << endl;
@@ -943,6 +968,13 @@ void Global::set_battery_capacity_computation_mode(global::BatteryCapacityComput
         cerr << "Battery capacity computation mode is already set!" << endl;
     } else {
         Global::bat_capacity_comp_mode = mode;
+    }
+}
+void Global::set_controller_mode(global::ControllerMode mode) {
+    if (is_locked) {
+        cerr << "Controller mode cannot be set." << endl;
+    } else {
+        Global::controller_mode = mode;
     }
 }
 void Global::set_annual_heat_demand_limit_fsac(float value) {

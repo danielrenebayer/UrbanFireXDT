@@ -305,6 +305,12 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
+    ofs << "control horizont in ts,";
+    if (cParamVals.control_horizon_in_ts_set) ofs << cParamVals.control_horizon_in_ts; else ofs << Global::get_control_horizon_in_ts();
+    ofs << "\n";
+    ofs << "control update freq in ts,";
+    if (cParamVals.control_update_freq_in_ts_set) ofs << cParamVals.control_update_freq_in_ts; else ofs << Global::get_control_update_freq_in_ts();
+    ofs << "\n";
     ofs << "seed_set," << Global::is_seed_set() << "\n";
     ofs << "seed," << Global::get_seed() << "\n";
     //

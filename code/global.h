@@ -129,6 +129,15 @@ namespace global {
         BasedOnAnnualConsumption
     };
 
+    /**
+     * This enum defines the possible modes used inside the
+     * control units for making decissions.
+     */
+    enum struct ControllerMode {
+        RuleBased, ///< Rule-based control with the focus on maximizing PV self-consumption
+        OptimizedWithPerfectForecast, ///< Controller using a linear optimization (gurobi) with perfect forecast
+    };
+
     /*!
      * The string to delmitit output sections
      */
@@ -212,6 +221,8 @@ class Global {
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
         static bool  get_use_emission_time_series_ia()        { return use_emission_time_series_ia; } ///< Return weather the emission time series (if it is available in the data) should be used or not
         static bool  get_use_prices_time_series_ia()          { return use_prices_time_series_ia;   } ///< Return weather the electricity prices time series (if it is available in the data) should be used or not
+        static uint  get_control_horizon_in_ts()              { return control_horizon_in_ts;       } ///< The control horizon in time steps (only if controller_mode is set to a value including optimization)
+        static uint  get_control_update_freq_in_ts()          { return control_update_freq_in_ts;   } ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static const std::string& get_structure_database_name() { return system_db_name; }
@@ -221,6 +232,7 @@ class Global {
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         static global::BatteryCapacityComputationMode get_battery_capacity_computation_mode() { return bat_capacity_comp_mode; }
+        static global::ControllerMode get_controller_mode() { return controller_mode; }
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
@@ -280,6 +292,8 @@ class Global {
         static void set_ev_plugin_probability(float value);
         static void set_use_emission_time_series_ia(bool use);
         static void set_use_prices_time_series_ia(bool use);
+        static void set_control_horizon_in_ts(unsigned int value);
+        static void set_control_update_freq_in_ts(unsigned int value);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
         static void set_structure_database_name(std::string* fname);
@@ -289,6 +303,7 @@ class Global {
         static void set_cu_selection_mode_fca(global::CUSModeFCA mode);
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
         static void set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode mode);
+        static void set_controller_mode(global::ControllerMode mode);
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
@@ -352,6 +367,8 @@ class Global {
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
         static bool  use_emission_time_series_ia; ///< Yes, if the emission time series (if it is available in the data) should be used or not
         static bool  use_prices_time_series_ia;   ///< Yes, if the electricity prices time series (if it is available in the data) should be used or not
+        static uint  control_horizon_in_ts;      ///< The control horizont in time steps (only if controller_mode is set to a value including optimization)
+        static uint  control_update_freq_in_ts;   ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static std::string system_db_name; ///< String holding the name of the database that contains the system structure
@@ -361,6 +378,7 @@ class Global {
         static global::CUSModeFCA cu_selection_mode_fca; ///< The selected mode for selecting control units that get sim. added components
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
         static global::BatteryCapacityComputationMode bat_capacity_comp_mode; ///< The selected mode for computing the battery capacity
+        static global::ControllerMode controller_mode; ///< The mode how the control units make decisions
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
