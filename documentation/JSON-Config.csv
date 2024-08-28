@@ -53,7 +53,11 @@ installation cost BS per kWh ,float,yes,,,,no
 expansion profile selection ,string,yes,,as in data / random,Controls how the profiles (if there are more than one) should be assigned to a new created component,???
 CU selection mode for comp. add. ,string,yes,,as in data / random / best SSR / best NPV,"Controls how to select the control units for expansion, in case of best SSR and best NPV a simulation is executed first, where all SSR and NPV values for every control unit are computed, then they are sorted and finally this sorted list is taken",???
 select buildings with given heat demand only,bool,no,no,,"Select only buildings where the heat demand is given in the input database, table ‘heat_demand_per_location’",no
-annual heat demand limit for selection,float,no,-1,-1 (for no limit) or a value between 1 and inf.,Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen,no
+annual heat demand limit for selection,float,no,-1,-1 (for no limit) or a value between 1 and inf.,"Select only buildings where the heat demand is lower or equal than the given limit,  set to -1 (default) if no limit should be choosen",no
+,,,,,,
+controller mode,string,no,rule-based,"rule-based,opti with perfect forecast",Defines the control strategy used inside the control units: rule-based control to optimize (using a linear program) PV self-consumption or an optimization with a perfect forecast,no
+control horizont in ts ,unsigned int,no,24,1 to infinity,"If a optimization is used a control strategy, if defines the number of time steps that the optimization looks into the future (i.e., the horizon)",yes
+control update freq in ts ,unsigned int,no,1,1 to infinity,"If a optimization is used a control strategy, if defines after how many time steps the optimization is executed again inside the control units (the default value of 1 means, that the optimization is executed every time step)",yes
 ,,,,,,
 th. E to HP el. E conversion factor,float,yes,,,Factor for converting a thermal energy per building into a heat pump electricity consumption,no
 HP el. E estimation m,float,yes,,,Parameter for estimating the heat pump consumption if no data is given for a building in the data (param: coef. of the linear regression),no
