@@ -53,7 +53,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
 class RoofSectionPV {
     public:
         RoofSectionPV(float this_section_kWp, std::string& orientation);
-        float get_currentFeedin_kW(unsigned long ts);
+        float get_generation_at_ts_kW(unsigned long ts) const; ///< Returns the current feed in at a given time step. This method does not change the object. The validity of the arguments is NOT checked anymore!
         float get_section_kWp()    const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
         size_t get_profile_index() const { return profile_index;    }
@@ -151,8 +151,15 @@ class ComponentHP : public BaseComponentSemiFlexible {
         // getter methods
         using BaseComponentSemiFlexible::get_currentDemand_kW;
         float  get_currentDemand_kW() const { return currentDemand_kW; }
-        double get_total_demand_kWh() const { return total_demand_kWh; }
-        double get_cweek_demand_kWh() const { return cweek_demand_kWh; }
+        /**
+         * Returns the total consumption from the beginning of the simulation up to the latest executed step in kWh.
+         */
+        double get_total_consumption_kWh()   const { return total_consumption_kWh; }
+        /**
+         * Returns the total consumption from the beginning of the current week up to the latest executed step in kWh.
+         */
+        double get_cweek_consumption_kWh()   const { return cweek_consumption_kWh; }
+        float  get_demand_at_ts_kW(unsigned long ts) const; ///< Returns the demand of the heat pump at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
         // update / action methods
         void calculateCurrentFeedin(unsigned long ts);
         void resetWeeklyCounter();
@@ -168,8 +175,8 @@ class ComponentHP : public BaseComponentSemiFlexible {
         const float* profile_data; ///< Reference to the profile, should be one of global::hp_profiles
         // member variables that can change over time
         float currentDemand_kW;
-        double total_demand_kWh; ///< Total demand since the beginning of the simulation period
-        double cweek_demand_kWh; ///< Total demand since the beginning of the the currently simulated week
+        double total_consumption_kWh; ///< Total consumption since the beginning of the simulation period
+        double cweek_consumption_kWh; ///< Total consumption since the beginning of the the currently simulated week
         //
         // static data for selecting the next time series for expansion
         static size_t next_hp_idx;
@@ -193,8 +200,8 @@ class ComponentCS : public BaseComponentSemiFlexible {
         float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW
         using BaseComponentSemiFlexible::get_currentDemand_kW;
         float  get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
-        double get_total_demand_kWh() const { return total_demand_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
-        double get_cweek_demand_kWh() const { return cweek_demand_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
+        double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
+        double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
         float  get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
@@ -218,8 +225,8 @@ class ComponentCS : public BaseComponentSemiFlexible {
         std::vector<EVFSM*> listOfEVs;
         // variable members, variable during simulation run
         float  current_demand_kW;
-        double total_demand_kWh;
-        double cweek_demand_kWh; ///< Total demand since the beginning of the the currently simulated week
+        double total_consumption_kWh;
+        double cweek_consumption_kWh; ///< Total demand since the beginning of the the currently simulated week
         float  charging_power_required_kW;
         float  charging_power_possible_kW;
         std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging

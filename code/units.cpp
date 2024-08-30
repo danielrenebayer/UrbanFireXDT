@@ -430,7 +430,7 @@ double ControlUnit::get_SCR() {
     return SCR;
 }
 
-double ControlUnit::get_NPV() { // TODO update computation of NPV !!!
+double ControlUnit::get_NPV() { // TODO: In future, integration of heat pump an EV ?
     // 0. return 0 if no PV or battery is available
     if (!(has_sim_pv || has_sim_bs))
         return 0;
@@ -504,8 +504,8 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(bat_n_ts_empyt) + ",";
         *retstr += to_string(bat_n_ts_full) + ",";
         *retstr += to_string(bat_E_withdrawn) + ",";
-        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_demand_kWh() : 0.0) + ",";
-        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_demand_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_consumption_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_consumption_kWh() : 0.0) + ",";
         *retstr += to_string(peak_grid_demand_kW) + ",";
         *retstr += to_string(sum_of_emissions_cbgd_kg_CO2eq) + ",";
         *retstr += to_string(sum_of_emissions_avoi_kg_CO2eq) + ",";
@@ -553,8 +553,8 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         *retstr += to_string(sum_of_cweek_grid_demand_kWh)   + ",";
         *retstr += to_string(bat_EFC_cweek)         + ",";
         *retstr += to_string(bat_E_cweek_withdrawn) + ",";
-        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_cweek_demand_kWh() : 0.0) + ",";
-        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_cweek_demand_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_cweek_consumption_kWh() : 0.0) + ",";
+        *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_cweek_consumption_kWh() : 0.0) + ",";
         *retstr += to_string(cweek_peak_grid_demand_kW) + ",";
         *retstr += to_string(sum_of_cweek_emissions_cbgd_kg_CO2eq) + ",";
         *retstr += to_string(sum_of_cweek_emissions_avoi_kg_CO2eq) + ",";

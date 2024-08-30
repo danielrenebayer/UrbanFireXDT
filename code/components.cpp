@@ -69,7 +69,7 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
     profile_data = global::pv_profiles_per_ori.at(orientation)[profile_index];
 }
 
-float RoofSectionPV::get_currentFeedin_kW(unsigned long ts) {
+float RoofSectionPV::get_generation_at_ts_kW(unsigned long ts) const {
     unsigned long tsID = ts - 1;
     return this_section_kWp * profile_data[tsID];
 }
@@ -197,6 +197,16 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     }
 }
 
+float ComponentPV::get_generation_at_ts_kW(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps()) {
+        return 0.0;
+    }
+    float generation_kW = 0.0;
+    for (const RoofSectionPV& section : roof_sections)
+        generation_kW += section.get_generation_at_ts_kW(ts);
+    return generation_kW;
+}
+
 string* ComponentPV::get_section_string(const string& prefix_per_line) {
     string* return_str = new string();
     unsigned long counter = 1;
@@ -221,7 +231,7 @@ string* ComponentPV::get_section_string(const string& prefix_per_line) {
 void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     currentGeneration_kW = 0.0;
     for (RoofSectionPV& section : roof_sections)
-        currentGeneration_kW += section.get_currentFeedin_kW(ts);
+        currentGeneration_kW += section.get_generation_at_ts_kW(ts);
     // compute total generation
     double e = Global::get_time_step_size_in_h() * currentGeneration_kW;
     generation_cumsum_total_kWh += e;
@@ -427,26 +437,26 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     profile_data = global::hp_profiles[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
-    total_demand_kWh = 0.0;
-    cweek_demand_kWh = 0.0;
+    total_consumption_kWh = 0.0;
+    cweek_consumption_kWh = 0.0;
 }
 
 void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
     unsigned long tsID = ts - 1;
     currentDemand_kW = profile_data[tsID] * scaling_factor;
     double e = currentDemand_kW * Global::get_time_step_size_in_h();
-    total_demand_kWh += e;
-    cweek_demand_kWh += e;
+    total_consumption_kWh += e;
+    cweek_consumption_kWh += e;
 }
 
 void ComponentHP::resetWeeklyCounter() {
-    cweek_demand_kWh = 0.0;
+    cweek_consumption_kWh = 0.0;
 }
 
 void ComponentHP::resetInternalState() {
     currentDemand_kW = 0.0;
-    total_demand_kWh = 0.0;
-    cweek_demand_kWh = 0.0;
+    total_consumption_kWh = 0.0;
+    cweek_consumption_kWh = 0.0;
 }
 
 void ComponentHP::InitializeRandomGenerator() {
@@ -481,8 +491,8 @@ void ComponentHP::VacuumStaticVariables() {
 ComponentCS::ComponentCS() : max_charging_power(11) { // TODO: make max charging power configurable, or at least dependent of the number of flats in a building
     enabled = false;
     current_demand_kW = 0.0;
-    total_demand_kWh  = 0.0;
-    cweek_demand_kWh  = 0.0;
+    total_consumption_kWh  = 0.0;
+    cweek_consumption_kWh  = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
 }
@@ -533,13 +543,13 @@ void ComponentCS::disable_station() {
 }
 
 void ComponentCS::resetWeeklyCounter() {
-    cweek_demand_kWh = 0.0;
+    cweek_consumption_kWh = 0.0;
 }
 
 void ComponentCS::resetInternalState() {
     current_demand_kW = 0.0;
-    total_demand_kWh  = 0.0;
-    cweek_demand_kWh  = 0.0;
+    total_consumption_kWh      = 0.0;
+    cweek_consumption_kWh      = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
     charging_order_req.clear();
@@ -629,8 +639,8 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
         }
         // compute current demand and cumulative sum
         double e = current_demand_kW * Global::get_time_step_size_in_h();
-        total_demand_kWh += e;
-        cweek_demand_kWh += e;
+        total_consumption_kWh += e;
+        cweek_consumption_kWh += e;
     } else if (requested_power_kW < 0) {
         // TODO bidirectional charging
     }
