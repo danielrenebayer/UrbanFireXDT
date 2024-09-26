@@ -1152,7 +1152,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         // Load time indices
         //
-        string sql_queryB = "SELECT TimestepID, local_time, local_time_zone FROM time_indices ORDER BY TimestepID;";
+        string sql_queryB = "SELECT TimestepID, local_time_ra, local_time_zone FROM time_indices ORDER BY TimestepID;";
         char* sqlErrorMsgB;
         int ret_valB = sqlite3_exec(dbcon, sql_queryB.c_str(), load_data_from_central_database_callbackB, NULL, &sqlErrorMsgB);
         if (ret_valB != 0) {
