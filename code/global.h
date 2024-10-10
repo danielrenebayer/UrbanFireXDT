@@ -205,6 +205,10 @@ class Global {
         static float get_exp_bess_P_for_SOC_0(){ return exp_bess_P_for_SOC_0;}
         static float get_exp_bess_P_for_SOC_1(){ return exp_bess_P_for_SOC_1;}
         static float get_exp_bess_max_E_total(){ return exp_bess_max_E_total;}  //!< Returns the upper limit of (resid.) battery capacity for installation, or -1.0 if it is not set
+        static bool          is_exp_hp_max_n_addition_set() { return exp_hp_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added heat pumps is set. The concrete value would be given by Global::get_exp_hp_max_n_addition().
+        static unsigned long get_exp_hp_max_n_addition() { return exp_hp_max_n_addition; } //!< Upper limit for the number of added simulated heat pumps
+        static bool          is_exp_ev_max_n_addition_set() { return exp_ev_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added EVs is set. The concrete value would be given by Global::get_exp_ev_max_n_addition().
+        static unsigned long get_exp_ev_max_n_addition() { return exp_ev_max_n_addition; } //!< Upper limit for the number of added EVs
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
@@ -277,6 +281,8 @@ class Global {
         static void set_exp_bess_P_for_SOC_0(float value);
         static void set_exp_bess_P_for_SOC_1(float value);
         static void set_exp_bess_max_E_total(float value);
+        static void set_exp_hp_max_n_addition(unsigned long value);
+        static void set_exp_ev_max_n_addition(unsigned long value);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
@@ -351,6 +357,8 @@ class Global {
         static float exp_bess_P_for_SOC_0; ///< power consumption of battery if SOC is 0 in kW
         static float exp_bess_P_for_SOC_1; ///< power consumption of battery if SOC is 1 in kW
         static float exp_bess_max_E_total; ///< Upper limit of installed battery storage capacity (only residential)
+        static unsigned long exp_hp_max_n_addition;///< Upper limit for the number of added simulated heat pumps
+        static unsigned long exp_ev_max_n_addition;///< Upper limit for the number of added EVs
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid
@@ -413,6 +421,8 @@ class Global {
         static bool exp_bess_kWh_init;
         static bool exp_bess_E_P_ratio_init;
         static bool exp_bess_start_soc_init;
+        static bool exp_hp_max_n_addition_set;
+        static bool exp_ev_max_n_addition_set;
         static bool open_space_pv_kWp_init;
         static bool wind_kWp_init;
         static bool feed_in_tariff_set;

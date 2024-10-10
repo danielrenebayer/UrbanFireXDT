@@ -130,6 +130,8 @@ float Global::exp_bess_self_ds_ts   = 0.0;
 float Global::exp_bess_P_for_SOC_0  = 0.0;
 float Global::exp_bess_P_for_SOC_1  = 0.0;
 float Global::exp_bess_max_E_total  =-1.0;
+ulong Global::exp_hp_max_n_addition = 0;
+ulong Global::exp_ev_max_n_addition = 0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 float Global::feed_in_tariff        = 0.0;
@@ -191,6 +193,8 @@ bool Global::exp_bess_kW_init      = false;
 bool Global::exp_bess_kWh_init     = false;
 bool Global::exp_bess_E_P_ratio_init    = false;
 bool Global::exp_bess_start_soc_init    = false;
+bool Global::exp_hp_max_n_addition_set  = false;
+bool Global::exp_ev_max_n_addition_set  = false;
 bool Global::open_space_pv_kWp_init= false;
 bool Global::wind_kWp_init         = false;
 bool Global::feed_in_tariff_set    = false;
@@ -733,6 +737,22 @@ void Global::set_exp_bess_max_E_total(float value) {
             return;
         }
         Global::exp_bess_max_E_total = value;
+    }
+}
+void Global::set_exp_hp_max_n_addition(unsigned long value) {
+    if (is_locked) {
+        cerr << "Global variable exp_hp_max_n_addition cannot be overwritten at the moment!" << endl;
+    } else {
+        Global::exp_hp_max_n_addition = value;
+        Global::exp_hp_max_n_addition_set = true;
+    }
+}
+void Global::set_exp_ev_max_n_addition(unsigned long value) {
+    if (is_locked) {
+        cerr << "Global variable exp_ev_max_n_addition cannot be overwritten at the moment!" << endl;
+    } else {
+        Global::exp_ev_max_n_addition = value;
+        Global::exp_ev_max_n_addition_set = true;
     }
 }
 void Global::set_open_space_pv_kWp(float open_space_kWp) {

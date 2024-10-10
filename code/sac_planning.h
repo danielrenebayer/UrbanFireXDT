@@ -37,6 +37,9 @@ namespace expansion {
 
     inline double final_cumsum_of_added_pv_kWp; ///< The cummulative sum of added roof-top PV power in kWp after the SAC planning
     inline double final_cumsum_of_added_bs_kWh; ///< The cummulative sum of added battery capacity in kWh after the SAC planning
+    inline ulong final_count_of_added_hps;      ///< Total number of added HPs
+    inline ulong final_count_of_added_evchsts;  ///< Total number of added EV charging stations
+    inline ulong final_count_of_added_evs;      ///< Total number of added EVs
 
     int expCombiMatrixOrderToBitRepr(int indexMatO);
     int expCombiBitReprToMatrixOrder(int bitRepr);

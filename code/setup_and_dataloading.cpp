@@ -300,6 +300,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_annual_heat_demand_limit_fsac( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("expansion HP max total addition") == 0 )
+            {
+                Global::set_exp_hp_max_n_addition( scenario_dict.get_value<unsigned long>() );
+            }
+            else if ( element_name.compare("expansion EV max total addition") == 0 )
+            {
+                Global::set_exp_ev_max_n_addition( scenario_dict.get_value<unsigned long>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment") == 0 )
@@ -1546,6 +1554,10 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_bess_self_ds_ts());
     PRINT_VAR(Global::get_exp_bess_start_soc());
     PRINT_VAR(Global::get_exp_bess_max_E_total());
+    PRINT_VAR(Global::is_exp_hp_max_n_addition_set());
+    PRINT_VAR(Global::get_exp_hp_max_n_addition());
+    PRINT_VAR(Global::is_exp_ev_max_n_addition_set());
+    PRINT_VAR(Global::get_exp_ev_max_n_addition());
     PRINT_VAR(Global::get_open_space_pv_kWp());
     PRINT_VAR(Global::get_wind_kWp());
     PRINT_VAR(Global::get_feed_in_tariff());
