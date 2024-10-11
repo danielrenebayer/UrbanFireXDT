@@ -308,6 +308,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_exp_ev_max_n_addition( scenario_dict.get_value<unsigned long>() );
             }
+            else if ( element_name.compare("break SAC loop if limit reached") == 0 )
+            {
+                Global::set_break_sac_loop_if_limit_reached( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment") == 0 )
@@ -1533,6 +1537,7 @@ void configld::output_variable_values() {
     PRINT_ENUM_VAR(Global::get_battery_capacity_computation_mode(), [](auto var){switch(var){case global::BatteryCapacityComputationMode::Constant: return "Constant"; case global::BatteryCapacityComputationMode::BasedOnNominalPVPower: return "BasedOnNominalPVPower"; case global::BatteryCapacityComputationMode::BasedOnAnnualConsumption: return "BasedOnAnnualConsumption"; default: return "";}});
     PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
     PRINT_VAR(Global::get_select_buildings_wg_heatd_only());
+    PRINT_VAR(Global::get_break_sac_loop_if_limit_reached());
     // Scenario settings
     cout << "  Scenario settings:\n";
     PRINT_VAR(Global::get_exp_pv_static_mode());

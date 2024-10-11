@@ -263,6 +263,11 @@ bool add_expansion_to_units_random_or_data_order(
     unsigned long cumsum_n_added_hps     = 0;
     unsigned long cumsum_n_added_evchsts = 0;
     unsigned long cumsum_n_added_evs     = 0;
+    // are addition limits (if defined) reached?
+    bool pv_addition_limit     = false;
+    bool bs_addition_limit     = false;
+    bool hp_addition_limit     = false;
+    bool ev_addition_limit     = false;
     //
     // loop over all combinations (starting in the end to get rid of problems where PV limit is reached but other components should have to be added)
     for (long iMatOlong = 15; iMatOlong >= 0; iMatOlong--) {
@@ -310,30 +315,46 @@ bool add_expansion_to_units_random_or_data_order(
                 // 0. check, if max global kWp addition is reached
                 if (Global::get_exp_pv_max_kWp_total() >= 0.0 &&
                     expPV &&
-                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total()) {
-                    cout << "Maximum of added roof-top PV power reached with " << cumsum_added_pv_kWp << " kWp" << endl;
-                    break; // goto outer_loop_end;
+                    cumsum_added_pv_kWp >= Global::get_exp_pv_max_kWp_total())
+                {
+                    pv_addition_limit = true;
                 }
                 if (Global::get_exp_bess_max_E_total() >= 0.0 &&
                     expBS &&
                     cumsum_added_bs_kWh >= Global::get_exp_bess_max_E_total())
                 {
-                    cout << "Max added battery storage capacity reached with " << cumsum_added_bs_kWh << " kWh" << endl;
-                    break;
+                    bs_addition_limit = true;
                 }
                 if (Global::is_exp_hp_max_n_addition_set() &&
                     expHP &&
                     cumsum_n_added_hps >= Global::get_exp_hp_max_n_addition())
                 {
-                    cout << "Max number of added heat pumps reached with " << cumsum_n_added_hps << " heat pumps" << endl;
-                    break;
+                    hp_addition_limit = true;
                 }
                 if (Global::is_exp_ev_max_n_addition_set() &&
                     expEV &&
                     cumsum_n_added_evs >= Global::get_exp_ev_max_n_addition())
                 {
-                    cout << "Max number of added EVs reached with " << cumsum_n_added_evs << " EVs" << endl;
-                    break;
+                    ev_addition_limit = true;
+                }
+                // 0b. break inner loop if selected
+                if (Global::get_break_sac_loop_if_limit_reached()) {
+                    if (pv_addition_limit) {
+                        cout << "Maximum of added roof-top PV power reached with " << cumsum_added_pv_kWp << " kWp" << endl;
+                        break; // goto outer_loop_end;
+                    }
+                    if (bs_addition_limit) {
+                        cout << "Max added battery storage capacity reached with " << cumsum_added_bs_kWh << " kWh" << endl;
+                        break;
+                    }
+                    if (hp_addition_limit) {
+                        cout << "Max number of added heat pumps reached with " << cumsum_n_added_hps << " heat pumps" << endl;
+                        break;
+                    }
+                    if (ev_addition_limit) {
+                        cout << "Max number of added EVs reached with " << cumsum_n_added_evs << " EVs" << endl;
+                        break;
+                    }
                 }
                 /*
                 // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
@@ -348,13 +369,13 @@ bool add_expansion_to_units_random_or_data_order(
                 }
                 */
                 // 1. add components
-                if (expPV) (*iter)->add_exp_pv();
-                if (expBS) (*iter)->add_exp_bs();
-                if (expHP) {
+                if (expPV && !pv_addition_limit) (*iter)->add_exp_pv();
+                if (expBS && !bs_addition_limit) (*iter)->add_exp_bs();
+                if (expHP && !hp_addition_limit) {
                     (*iter)->add_exp_hp();
                     cumsum_n_added_hps += 1;
                 }
-                if (expEV) {
+                if (expEV && !ev_addition_limit) {
                     (*iter)->add_exp_cs();
                     cumsum_n_added_evchsts += 1;
                     cumsum_n_added_evs += (*iter)->get_sim_comp_cs_n_EVs();
@@ -567,32 +588,34 @@ bool add_expansion_to_units_orderd_by_metric(
                     continue;
                 }
                 // are global limits reached?
-                if (expPV && pv_addition_limit) {
-                    continue;
-                }
-                if (expBS && bs_addition_limit) {
-                    continue;
-                }
-                if (expHP && hp_addition_limit) {
-                    continue;
-                }
-                if (expCS && ev_addition_limit) {
-                    continue;
+                if (Global::get_break_sac_loop_if_limit_reached()) {
+                    if (expPV && pv_addition_limit) {
+                        continue;
+                    }
+                    if (expBS && bs_addition_limit) {
+                        continue;
+                    }
+                    if (expHP && hp_addition_limit) {
+                        continue;
+                    }
+                    if (expCS && ev_addition_limit) {
+                        continue;
+                    }
                 }
                 // add the missing elements
-                if (expPV) {
+                if (expPV && !pv_addition_limit) {
                     cu_for_addition->add_exp_pv();
                     cumsum_added_pv_kWp += cu_for_addition->get_sim_comp_pv_kWp(); // calculate new cumsum
                 }
-                if (expBS) {
+                if (expBS && !bs_addition_limit) {
                     cu_for_addition->add_exp_bs();
                     cumsum_added_bs_kWh += cu_for_addition->get_sim_comp_bs_E_kWh(); // calculate new cumsum
                 }
-                if (expHP) {
+                if (expHP && !hp_addition_limit) {
                     cu_for_addition->add_exp_hp();
                     cumsum_n_added_hps += 1;
                 }
-                if (expCS) {
+                if (expCS && !ev_addition_limit) {
                     cu_for_addition->add_exp_cs();
                     cumsum_n_added_evchsts += 1;
                     cumsum_n_added_evs += cu_for_addition->get_sim_comp_cs_n_EVs();

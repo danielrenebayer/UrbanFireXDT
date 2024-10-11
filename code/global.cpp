@@ -111,6 +111,7 @@ struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
 unsigned long Global::expansion_scenario_id = 0;
 float Global::time_step_size_in_h   = 0.0;
+bool  Global::break_sac_loop_if_limit_reached = true;
 bool  Global::exp_pv_kWp_static_mode  = false;
 float Global::exp_pv_kWp_static       = 0.0;
 float Global::exp_pv_kWp_per_m2       = 0.0;
@@ -555,6 +556,13 @@ void Global::set_expansion_scenario_id(unsigned long expansion_scenario_id) {
     } else {
         Global::expansion_scenario_id = expansion_scenario_id;
         Global::expansion_scenario_id_init = true;
+    }
+}
+void Global::set_break_sac_loop_if_limit_reached(bool value) {
+    if (is_locked) {
+        cerr << "Global variable break_sac_loop_if_limit_reached is already initialized!" << endl;
+    } else {
+        Global::break_sac_loop_if_limit_reached = value;
     }
 }
 void Global::set_exp_pv_mode(bool mode) {
