@@ -224,6 +224,8 @@ class Global {
         static float get_hp_E_estimation_param_m()            { return hp_E_estimation_param_m; }
         static float get_hp_E_estimation_param_t()            { return hp_E_estimation_param_t; }
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
+        static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
+        static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
         static bool  get_use_emission_time_series_ia()        { return use_emission_time_series_ia; } ///< Return weather the emission time series (if it is available in the data) should be used or not
         static bool  get_use_prices_time_series_ia()          { return use_prices_time_series_ia;   } ///< Return weather the electricity prices time series (if it is available in the data) should be used or not
         static uint  get_control_horizon_in_ts()              { return control_horizon_in_ts;       } ///< The control horizon in time steps (only if controller_mode is set to a value including optimization)
@@ -298,6 +300,8 @@ class Global {
         static void set_hp_E_estimation_param_m(float value);
         static void set_hp_E_estimation_param_t(float value);
         static void set_ev_plugin_probability(float value);
+        static void set_ev_battery_size_kWh(float value);
+        static void set_ev_consumption_kWh_km(float value);
         static void set_use_emission_time_series_ia(bool use);
         static void set_use_prices_time_series_ia(bool use);
         static void set_control_horizon_in_ts(unsigned int value);
@@ -376,6 +380,8 @@ class Global {
         static float hp_E_estimation_param_m; ///< Parameter of linear regression (coefficient) for estimating heat pump electricity demand if no data is given
         static float hp_E_estimation_param_t; ///< Parameter of linear regression (intercept) for estimating heat pump electricity demand if no data is given
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
+        static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
+        static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
         static bool  use_emission_time_series_ia; ///< Yes, if the emission time series (if it is available in the data) should be used or not
         static bool  use_prices_time_series_ia;   ///< Yes, if the electricity prices time series (if it is available in the data) should be used or not
         static uint  control_horizon_in_ts;      ///< The control horizont in time steps (only if controller_mode is set to a value including optimization)

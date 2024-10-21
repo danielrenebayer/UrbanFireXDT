@@ -259,6 +259,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("EV battery size kWh") == 0)
+            {
+                Global::set_ev_battery_size_kWh( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("EV consumption kWh per km") == 0)
+            {
+                Global::set_ev_consumption_kWh_km( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev data path")         == 0 )
             {
                 string value = scenario_dict.get_value<string>();
@@ -1575,6 +1583,9 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
     PRINT_VAR(Global::get_hp_E_estimation_param_m());
     PRINT_VAR(Global::get_hp_E_estimation_param_t());
+    PRINT_VAR(Global::get_ev_plugin_probability());
+    PRINT_VAR(Global::get_ev_battery_size_kWh());
+    PRINT_VAR(Global::get_ev_consumption_kWh_km());
     // Output settings
     cout << "  Output settings:\n";
     PRINT_VAR(Global::get_compute_weekly_metrics());

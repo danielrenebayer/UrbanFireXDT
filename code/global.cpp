@@ -147,6 +147,8 @@ float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::hp_E_estimation_param_m = 0.0;
 float Global::hp_E_estimation_param_t = 0.0;
 float Global::ev_plugin_probability   = 0.25;
+float Global::ev_battery_size_kWh    = 30.0;
+float Global::ev_consumption_kWh_km   = 0.2f;
 bool  Global::use_emission_time_series_ia = true;
 bool  Global::use_prices_time_series_ia   = true;
 uint  Global::control_horizon_in_ts       =   24;
@@ -879,6 +881,28 @@ void Global::set_ev_plugin_probability(float value) {
             return;
         }
         Global::ev_plugin_probability = value;
+    }
+}
+void Global::set_ev_battery_size_kWh(float value) {
+    if (is_locked) {
+        cerr << "Global variable ev_battery_size_kWh cannot be set!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable ev_battery_size_kWh cannot be set to value " << value << " ( allowed range: [0.0,inf[ )" << endl;
+            return;
+        }
+        Global::ev_battery_size_kWh = value;
+    }
+}
+void Global::set_ev_consumption_kWh_km(float value) {
+    if (is_locked) {
+        cerr << "Global variable ev_consumption_kWh_km cannot be set!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable ev_consumption_kWh_km cannot be set to value " << value << " ( allowed range: [0.0,inf[ )" << endl;
+            return;
+        }
+        Global::ev_consumption_kWh_km = value;
     }
 }
 void Global::set_use_emission_time_series_ia(bool use) {

@@ -18,7 +18,11 @@ std::default_random_engine*            EVFSM::random_generator = new std::defaul
 std::uniform_real_distribution<float>* EVFSM::distribution     = new std::uniform_real_distribution<float>(0, 1);
 const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
 
-EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) : carID(carID), econs_kWh_per_km(0.2f), homeStation(homeStation) {
+EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
+    carID(carID),
+    econs_kWh_per_km(Global::get_ev_consumption_kWh_km()),
+    homeStation(homeStation)
+{
     // Register this object in the global list of cars
     if (EVFSM::list_of_cars.contains(carID)) {
         throw runtime_error("Error: There is already an instance of class EVFSM with carID = " + std::to_string(carID));
@@ -26,7 +30,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) : carID(carID), econ
     EVFSM::list_of_cars.emplace(carID, this);
     //
     // Create battery (using the secondary constructor)
-    battery = new ComponentBS(30, 0.0, 1.0, 1.0);
+    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0, 1.0, 1.0);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
     current_state_icah = EVStateIfConnAtHome::ChargingPossible;
