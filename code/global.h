@@ -206,6 +206,7 @@ class Global {
         static float get_exp_bess_P_for_SOC_0(){ return exp_bess_P_for_SOC_0;}
         static float get_exp_bess_P_for_SOC_1(){ return exp_bess_P_for_SOC_1;}
         static float get_exp_bess_max_E_total(){ return exp_bess_max_E_total;}  //!< Returns the upper limit of (resid.) battery capacity for installation, or -1.0 if it is not set
+        static float get_exp_bess_max_P_total(){ return exp_bess_max_P_total;}  //!< Returns the upper limit of (resid.) battery power for installation, or -1.0 if it is not set
         static bool          is_exp_hp_max_n_addition_set() { return exp_hp_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added heat pumps is set. The concrete value would be given by Global::get_exp_hp_max_n_addition().
         static unsigned long get_exp_hp_max_n_addition() { return exp_hp_max_n_addition; } //!< Upper limit for the number of added simulated heat pumps
         static bool          is_exp_ev_max_n_addition_set() { return exp_ev_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added EVs is set. The concrete value would be given by Global::get_exp_ev_max_n_addition().
@@ -285,6 +286,7 @@ class Global {
         static void set_exp_bess_P_for_SOC_0(float value);
         static void set_exp_bess_P_for_SOC_1(float value);
         static void set_exp_bess_max_E_total(float value);
+        static void set_exp_bess_max_P_total(float value);
         static void set_exp_hp_max_n_addition(unsigned long value);
         static void set_exp_ev_max_n_addition(unsigned long value);
         static void set_open_space_pv_kWp(float open_space_kWp);
@@ -364,6 +366,7 @@ class Global {
         static float exp_bess_P_for_SOC_0; ///< power consumption of battery if SOC is 0 in kW
         static float exp_bess_P_for_SOC_1; ///< power consumption of battery if SOC is 1 in kW
         static float exp_bess_max_E_total; ///< Upper limit of installed battery storage capacity (only residential)
+        static float exp_bess_max_P_total; ///< Upper limit of installed battery storage power (only residential)
         static unsigned long exp_hp_max_n_addition;///< Upper limit for the number of added simulated heat pumps
         static unsigned long exp_ev_max_n_addition;///< Upper limit for the number of added EVs
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)

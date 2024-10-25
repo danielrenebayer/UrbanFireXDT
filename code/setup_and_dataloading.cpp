@@ -154,6 +154,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_exp_bess_max_E_total( scenario_dict.get_value<float>() );
             }
+            else if (element_name.compare("expansion BS max total P addition")        == 0)
+            {
+                Global::set_exp_bess_max_P_total( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("open space PV kWp")         == 0 )
             {
                 Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );
@@ -1567,6 +1571,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_bess_self_ds_ts());
     PRINT_VAR(Global::get_exp_bess_start_soc());
     PRINT_VAR(Global::get_exp_bess_max_E_total());
+    PRINT_VAR(Global::get_exp_bess_max_P_total());
     PRINT_VAR(Global::is_exp_hp_max_n_addition_set());
     PRINT_VAR(Global::get_exp_hp_max_n_addition());
     PRINT_VAR(Global::is_exp_ev_max_n_addition_set());
