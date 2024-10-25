@@ -119,6 +119,7 @@ class ControlUnit {
         size_t get_n_MUs()     { return connected_units->size(); } // returns the number of MUs, that are connected to the given control unit
         size_t get_internal_id() const { return internal_id; }   ///< Returns the (consecutive) internal ID of the control unit
         size_t get_unitID()      const { return unitID; }        ///< returns the unit ID of this control unit as given in the system structure database
+        size_t get_location_id() const { return locationID; }    ///< Returns the location ID of the control unit
         double get_mean_annual_MU_el_demand_kWh() const; ///< Returns the mean electricity demand in kWh of all connected MUs over all available years
         float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery

@@ -278,6 +278,18 @@ bool add_expansion_to_units_random_or_data_order(
         vector<ControlUnit*>* listOfCUs = &(cuRefLstVectBitOrder[ iBitO ]);
         if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection) {
             //
+            // sort the list once according to the location ID, if a seed has been set later
+            //     -> helpful, if a seed has been set so that the same control units are selected if 
+            //        the simulation is executed for different years where the UnitIDs might change, but the LocationID remains stable
+            if (Global::is_seed_set()) {
+                std::ranges::sort(
+                    *listOfCUs,
+                    [](ControlUnit* a, ControlUnit* b) {
+                        return a->get_location_id() <= b->get_location_id();
+                    }
+                );
+            }
+            //
             // shuffle list if CU selection mode for comp. add. tells so (or random anyway is selected)
             random_device rndDevice;
             mt19937 rndGen( rndDevice() );
