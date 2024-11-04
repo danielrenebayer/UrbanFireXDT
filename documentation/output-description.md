@@ -18,6 +18,7 @@ Folders are marked in **bold**.
 | &nbsp;&nbsp;\| `sim-added-roof-sections-per-cu.csv` | A list of all sim. added roof sections per control unit |
 | &nbsp;&nbsp;\| `substation-detailed-time-series.csv`| Addition information, aggregated on substation level, that is not contained in the first file |
 | &nbsp;&nbsp;\| `build_and_run_info.txt`             | Information on the simulation run and the used program  |
+| &nbsp;&nbsp;\| `metrics-per-ev.csv`                 | Computed metrics per EV                                 |
 | _optional output_:                                  | Output of all power flows inside the control units ...  |
 | _case single file_:                                 | _See command line parameter `--cu-output` for details_  |
 | &nbsp;&nbsp;\| `XXXX-CU-time-series.csv`            | ... in one file                                         |
@@ -113,3 +114,16 @@ The columns of this output follows the following nomenclature:
 | CS_load_kW            | The current power of the EV charging station in kW (if present, else 0.0) |
 | CS_n_EVs_conn         | The number of home-parking vehicles that are currently connected to the charging station |
 | CS_n_EVs_not_conn     | The number of home-parking vehicles that are currently not connected to the charging station |
+
+
+## metrics-per-ev.csv
+
+
+| Column name                | Description |
+| ---                        | ------      |
+| CarID                      | The ID of the car as defined in the input data |
+| Driving distance [km]      | The total distance the EV is driven in the simulation in km |
+| E used for driving [kWh]   | The sum of electric energy required by the car in the simulation in kWh |
+| Home-charged E [kWh]       | The sum of electric energy that has been charged at home in kWh. Can be higher than `E used for driving [kWh]`, especially in the case of bidirectional charging |
+| Home-discharged E [kWh]    | The sum of electric energy that has been discharged from the EV battery at home in kWh (only important for the case of bidirectional charging) |
+
