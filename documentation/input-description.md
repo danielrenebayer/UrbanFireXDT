@@ -129,10 +129,14 @@ Documentation of the configuration database in detail
 
 ## Table global_profiles_heatpumps
 
+This table holds the normalized demand values of every heat pump time series in kW.
+The normalization takes place on an annual level, so that every time series results in a annual demand sum of 1000 kWh / a.
+
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | The time step for which the dataset is valid [Foreign key] |
-| Value_Demand  | REAL      | The normalized demand value of the heat pump time series; normalization takes place on a yearly level to a demand sum of 1000 kWh / a |
+| ShiftableDemand_kW   | REAL | The normalized demand value of the heat pump demand at this time step that can be shifted in theory |
+| UnshiftableDemand_kW | REAL | The normalized demand value of the heat pump demand that cannot be shifted |
 | TimeSeriesIndex | INTEGER | The index of the heat pump time series (important, if there is more than one time series) |
 
 
