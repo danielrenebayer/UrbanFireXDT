@@ -553,7 +553,10 @@ void ComponentHP::VacuumStaticVariables() {
 //         ComponentCS           //
 // ----------------------------- //
 
-ComponentCS::ComponentCS() : max_charging_power(11) { // TODO: make max charging power configurable, or at least dependent of the number of flats in a building
+ComponentCS::ComponentCS(ControlUnit* calling_control_unit) :
+    max_charging_power(11),
+    installation_place(calling_control_unit)
+{ // TODO: make max charging power configurable, or at least dependent of the number of flats in a building
     enabled = false;
     current_demand_kW = 0.0;
     total_consumption_kWh  = 0.0;
@@ -598,6 +601,10 @@ unsigned long ComponentCS::get_n_EVs() const {
     if (enabled)
         return listOfEVs.size();
     return 0;
+}
+
+unsigned long ComponentCS::get_control_unit_id() const {
+    return installation_place->get_unitID();
 }
 
 const std::vector<std::pair<float,float>>* ComponentCS::get_future_min_max_consumption() const {

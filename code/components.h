@@ -260,7 +260,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
  */
 class ComponentCS : public BaseComponentSemiFlexible {
     public:
-        ComponentCS();
+        ComponentCS(ControlUnit* calling_control_unit);
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
@@ -275,6 +275,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
+        unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
         using BaseComponentSemiFlexible::get_future_min_max_consumption;
         const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const; ///< Calculates and returns the future min/max consumption per time step -> IMPORTANT: See notes in BaseComponentSemiFlexible::get_future_min_max_consumption
         using BaseComponentSemiFlexible::get_future_unshiftable_demand;
@@ -292,6 +293,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
     private:
         // constant members
         const float max_charging_power;
+        const ControlUnit* installation_place;
         // variable members, constant during one simulation run
         bool enabled;
         std::vector<EVFSM*> listOfEVs;

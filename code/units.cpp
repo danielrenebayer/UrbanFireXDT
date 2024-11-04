@@ -207,7 +207,7 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     is_sim_expanded = false;
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
-    sim_comp_cs = new ComponentCS();
+    sim_comp_cs = new ComponentCS(this);
 
     worker_thread = NULL;
 }

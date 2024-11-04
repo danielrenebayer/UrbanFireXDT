@@ -16,7 +16,7 @@
 std::map<unsigned long, EVFSM*> EVFSM::list_of_cars;
 std::default_random_engine*            EVFSM::random_generator = new std::default_random_engine();
 std::uniform_real_distribution<float>* EVFSM::distribution     = new std::uniform_real_distribution<float>(0, 1);
-const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
+const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,HomeControlUnitID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
 
 EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     carID(carID),
@@ -69,6 +69,7 @@ float EVFSM::get_current_charging_power() const {
 std::string* EVFSM::get_metrics_string_annual() {
     std::string* retstr = new string;
     *retstr += std::to_string(carID) + ",";
+    *retstr += std::to_string(homeStation->get_control_unit_id()) + ",";
     *retstr += std::to_string(sum_of_driving_distance_km)     + ",";
     *retstr += std::to_string(sum_of_E_used_for_driving_kWh)  + ",";
     *retstr += std::to_string(sum_of_E_charged_home_kWh)      + ",";
