@@ -29,7 +29,7 @@ class ComponentCS;
  */
 class BaseComponent {
     public:
-		virtual ~BaseComponent() {}
+        virtual ~BaseComponent() {}
         // modifieres (on structural level of the simulation)
         virtual void resetInternalState() = 0; ///< Resets the internal simulation state (like counters), but retains the structural state like attached sub-components
         // modifiers (in the course of simulation time)
@@ -45,8 +45,44 @@ class BaseComponent {
  */
 class BaseComponentSemiFlexible : public BaseComponent {
     public:
-		virtual ~BaseComponentSemiFlexible() {}
+        BaseComponentSemiFlexible();
+        ~BaseComponentSemiFlexible();
         virtual float get_currentDemand_kW() const = 0;
+
+        /**
+         * Computes and returns the minimum and maximum electricity consumption of a component for the next n time steps (given some flexibility).
+         * The length of the resulting vector is set using BaseComponentSemiFlexible::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
+         */
+        virtual const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const = 0;
+
+        /**
+         * Comutes and returns the future electricity demand that is not shiftable for a component.
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing the not shiftable demand per future time step - READ THE ATTENTION NOTICE
+         */
+        virtual const std::vector<float>* get_future_unshiftable_demand() const = 0;
+
+        /**
+         * Sets another horizon for the number of time steps returned by BaseComponentSemiFlexible::get_future_min_max_demand()
+         */
+        void set_horizon_in_ts(unsigned int new_horizon);
+
+    protected:
+        // cached member variables
+        /**
+         * Internal storage of an object that is outputted by BaseComponentSemiFlexible::get_future_min_max_demand(),
+         * only required that we do not need to reserve / allocate a new vector with every call of
+         * BaseComponentSemiFlexible::get_future_min_max_demand()
+         */
+        std::vector<std::pair<float,float>>* future_min_max_storage;
+        /**
+         * Internal storage of the object that is outputted by ComponentHP::get_future_unshiftable_demand(),
+         * only required that we do not need to reserve / allocate a new vector with every call
+         */
+        std::vector<float>* future_unshiftable_storage;
+        
 };
 
 
@@ -80,7 +116,9 @@ class ComponentPV : public BaseComponent {
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         double get_cweek_generation_kWh(){ return generation_cumsum_cweek_kWh; } ///< Returns the produced energy in kWh from the start of the current week until the current time step
         double get_total_generation_kWh(){ return generation_cumsum_total_kWh; } ///< Returns the total produced energy in kWh from the start of the simulation run until the current time step
+        float get_generation_at_ts_kW(unsigned long ts) const; ///< Returns the generation at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
         std::string* get_section_string(const std::string& prefix_per_line); ///< Returns a string listing information about all existing, simulated roof sections - one line per section
+        //
         // update / action methods during simulation run
         void  calculateCurrentFeedin(unsigned long ts);
         // methods for simulation reset
@@ -159,9 +197,37 @@ class ComponentHP : public BaseComponentSemiFlexible {
          * Returns the total consumption from the beginning of the current week up to the latest executed step in kWh.
          */
         double get_cweek_consumption_kWh()   const { return cweek_consumption_kWh; }
-        float  get_demand_at_ts_kW(unsigned long ts) const; ///< Returns the demand of the heat pump at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
+        //float  get_demand_at_ts_kW(unsigned long ts) const; ///< Returns the demand of the heat pump at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
+
+        using BaseComponentSemiFlexible::get_future_min_max_consumption;
+        /**
+         * Returns the minimum and maximum heat pump electr. consumption for the next n time steps (given some flexibility).
+         * The length of the resulting vector is set using ComponentHP::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
+         */
+        const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const;
+
+        using BaseComponentSemiFlexible::get_future_unshiftable_demand;
+        /**
+         * Returns the future electricity demand that is not shiftable for the heat pump.
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
+         */
+        const std::vector<float>* get_future_unshiftable_demand() const;
+        //
         // update / action methods
-        void calculateCurrentFeedin(unsigned long ts);
+        using BaseComponentSemiFlexible::set_horizon_in_ts;
+        /**
+         * Computes the demand of the heat pump for a given time step (ignoring shiftable demand)
+         */
+        void calculateCurrentDemand_noshift(unsigned long ts);
+        /**
+         * Computes the demand of the heat pump for a given time step and 
+         * sets the current shiftable demand for the heat pump (if there is shiftable demand)
+         * @param current_demand_kW: The consumption for the next time step.
+         */
+        void calculateCurrentDemand_shift(unsigned long ts, float current_shiftable_demand_kW);
         void resetWeeklyCounter();
         void resetInternalState();
         //
@@ -172,7 +238,8 @@ class ComponentHP : public BaseComponentSemiFlexible {
         // constant member variables
         const float yearly_electricity_consumption_kWh;
         const float scaling_factor; ///< Factor to scale the profile to fit the yearly_electricity_consumption_kWh
-        const float* profile_data; ///< Reference to the profile, should be one of global::hp_profiles
+        const float* profile_data_shiftable; ///< Reference to the profile for the     shiftable part of the demand, should be one of global::hp_profiles_shiftable
+        const float* profile_data_not_shift; ///< Reference to the profile for the not-shiftable part of the demand, should be one of global::hp_profiles_not_shift
         // member variables that can change over time
         float currentDemand_kW;
         double total_consumption_kWh; ///< Total consumption since the beginning of the simulation period
@@ -208,6 +275,10 @@ class ComponentCS : public BaseComponentSemiFlexible {
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
+        using BaseComponentSemiFlexible::get_future_min_max_consumption;
+        const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const; ///< Calculates and returns the future min/max consumption per time step -> IMPORTANT: See notes in BaseComponentSemiFlexible::get_future_min_max_consumption
+        using BaseComponentSemiFlexible::get_future_unshiftable_demand;
+        const std::vector<float>* get_future_unshiftable_demand() const; ///< Calculates and returns the future demand per time step in the horizon that is NOT shiftable. Currently always 0.
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();
@@ -217,6 +288,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
         // modifiers (in the course of simulation time)
         void setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l);
         void set_charging_value(float power_kW); ///< Sets the charging value in kW that should be charged into the connected EVs
+        using BaseComponentSemiFlexible::set_horizon_in_ts;
     private:
         // constant members
         const float max_charging_power;
@@ -231,6 +303,11 @@ class ComponentCS : public BaseComponentSemiFlexible {
         float  charging_power_possible_kW;
         std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
         std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+        // Variables for access protection of non-const methods during the simulation run
+        bool is_callable_setCarStatesForTimeStep;
+        bool is_callable_set_charging_value;
+#endif
 };
 
 #endif

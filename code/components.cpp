@@ -11,6 +11,48 @@
 
 #include "vehicles.h"
 
+
+// ----------------------------- //
+//      Implementation of        //
+//   BaseComponentSemiFlexible   //
+// ----------------------------- //
+
+BaseComponentSemiFlexible::BaseComponentSemiFlexible() {
+    // initialization of the cached vector
+    future_min_max_storage     = NULL;
+    future_unshiftable_storage = NULL;
+    set_horizon_in_ts( Global::get_control_horizon_in_ts() );
+}
+
+BaseComponentSemiFlexible::~BaseComponentSemiFlexible() {
+    if (future_min_max_storage != NULL)
+        delete future_min_max_storage;
+    future_min_max_storage = NULL;
+    if (future_unshiftable_storage != NULL)
+        delete future_unshiftable_storage;
+    future_unshiftable_storage = NULL;
+}
+
+void BaseComponentSemiFlexible::set_horizon_in_ts(unsigned int new_horizon) {
+    if (future_min_max_storage != NULL)
+        delete future_min_max_storage;
+    future_min_max_storage = new std::vector<std::pair<float,float>>;
+    future_min_max_storage->reserve( new_horizon );
+
+    if (future_unshiftable_storage != NULL)
+        delete future_unshiftable_storage;
+    future_unshiftable_storage = new std::vector<float>;
+    future_unshiftable_storage->reserve( new_horizon );
+
+    // Initialize the objects
+    for (unsigned int i = 0; i < new_horizon; i++)  {
+        future_min_max_storage->push_back(std::make_pair<float,float>(0,0));
+        future_unshiftable_storage->push_back(0.0);
+    }
+}
+
+
+
 // ----------------------------- //
 //      Implementation of        //
 //        RoofSectionPV          //
@@ -434,19 +476,42 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     }
     //
     // reference the profile
-    profile_data = global::hp_profiles[this_hp_profile_idx];
+    profile_data_shiftable = global::hp_profiles_shiftable[this_hp_profile_idx];
+    profile_data_not_shift = global::hp_profiles_not_shift[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
     total_consumption_kWh = 0.0;
     cweek_consumption_kWh = 0.0;
 }
 
-void ComponentHP::calculateCurrentFeedin(unsigned long ts) {
+/*float ComponentHP::get_demand_at_ts_kW(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps()) {
+        return 0.0;
+    }
+    return profile_data[ts - 1] * scaling_factor;
+}*/
+
+const std::vector<std::pair<float,float>>* ComponentHP::get_future_min_max_consumption() const {
+    for (unsigned int step = 0; step < future_min_max_storage->size(); step++) {
+        // TODO
+    }
+    return future_min_max_storage;
+}
+
+const std::vector<float>* ComponentHP::get_future_unshiftable_demand() const {
+    // TODO !!!
+}
+
+void ComponentHP::calculateCurrentDemand_noshift(unsigned long ts) {
     unsigned long tsID = ts - 1;
-    currentDemand_kW = profile_data[tsID] * scaling_factor;
+    currentDemand_kW = ( profile_data_shiftable[tsID] + profile_data_not_shift[tsID] ) * scaling_factor;
     double e = currentDemand_kW * Global::get_time_step_size_in_h();
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
+}
+
+void ComponentHP::calculateCurrentDemand_shift(unsigned long ts, float current_shiftable_demand_kW) {
+    // TODO !!!
 }
 
 void ComponentHP::resetWeeklyCounter() {
@@ -495,6 +560,11 @@ ComponentCS::ComponentCS() : max_charging_power(11) { // TODO: make max charging
     cweek_consumption_kWh  = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
+
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    is_callable_setCarStatesForTimeStep = true;
+    is_callable_set_charging_value      = false;
+#endif
 }
 
 ComponentCS::~ComponentCS() {
@@ -528,6 +598,18 @@ unsigned long ComponentCS::get_n_EVs() const {
     if (enabled)
         return listOfEVs.size();
     return 0;
+}
+
+const std::vector<std::pair<float,float>>* ComponentCS::get_future_min_max_consumption() const {
+    for (unsigned int step = 0; step < future_min_max_storage->size(); step++) {
+        // TODO
+    }
+    return future_min_max_storage;
+}
+
+const std::vector<float>* ComponentCS::get_future_unshiftable_demand() const {
+    // As there is currently no non-shiftable demand for this component, we always return the default, i.e. 0
+    return future_unshiftable_storage;
 }
 
 unsigned long ComponentCS::get_possible_n_EVs() const {
@@ -565,6 +647,16 @@ void ComponentCS::add_ev(unsigned long carID) {
 }
 
 void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
+
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (is_callable_setCarStatesForTimeStep) {
+        is_callable_setCarStatesForTimeStep = false;
+        is_callable_set_charging_value = true;
+    } else {
+        throw std::runtime_error("Method ComponentCS::setCarStatesForTimeStep() cannot be called at the moment!");
+    }
+#endif
+
     // 1. set new car states
     for (EVFSM* ev : listOfEVs) {
         ev->setCarStateForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
@@ -600,6 +692,16 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWe
 }
 
 void ComponentCS::set_charging_value(float requested_power_kW) {
+
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (is_callable_set_charging_value) {
+        is_callable_set_charging_value = false;
+        is_callable_setCarStatesForTimeStep = true;
+    } else {
+        throw std::runtime_error("Method ComponentCS::set_charging_value() cannot be called at the moment!");
+    }
+#endif
+
     current_demand_kW = 0.0;
     float remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
     // check, if charging request is positive
@@ -612,6 +714,7 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
                 break;
             }
             // max. 11 kW per car
+            // TODO make upper limit configurable !!!
             // Set charging request
             if (remaining_power_kW >= 11.0) {
                 ev->set_current_charging_power(11.0);
