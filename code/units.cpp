@@ -711,6 +711,13 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
         sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
+void ControlUnit::change_control_horizon_in_ts(unsigned int new_horizon) {
+    if (has_sim_hp)
+        sim_comp_hp->set_horizon_in_ts(new_horizon);
+    if (has_sim_cs)
+        sim_comp_cs->set_horizon_in_ts(new_horizon);
+}
+
 void ControlUnit::remove_sim_added_pv() {
     if (has_sim_pv) {
         has_sim_pv = false;
@@ -1242,6 +1249,12 @@ bool MeasurementUnit::compute_next_value(unsigned long ts) {
     unsigned long tsID = ts - 1;
     current_load_rsm_kW = data_value_demand[tsID] - data_value_feedin[tsID];
     return true;
+}
+
+float MeasurementUnit::get_rsm_value_at_ts(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    return data_value_demand[ts - 1] - data_value_feedin[ts - 1];
 }
 
 void MeasurementUnit::InitializeStaticVariables(unsigned long n_MUs) {

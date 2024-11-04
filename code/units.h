@@ -149,6 +149,7 @@ class ControlUnit {
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value
+        void change_control_horizon_in_ts(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts())
         void remove_sim_added_pv(); ///< Removes a simulatively added PV installation
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
@@ -285,7 +286,14 @@ class MeasurementUnit {
         // for simulation runs
         double get_total_demand_kWh() const; ///< Returns the total demand of the measurement unit over the complete time span of data
         bool compute_next_value(unsigned long ts);
-        float get_current_ts_rsm_value() { return current_load_rsm_kW; }
+        float get_current_ts_rsm_value() const { return current_load_rsm_kW; }
+        /**
+         * Returns the load at the smart meter at a given time step in kW.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @param ts: The time step for which the load should be computed
+         */
+        float get_rsm_value_at_ts(unsigned long ts) const;
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors

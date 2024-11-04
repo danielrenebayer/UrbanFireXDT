@@ -294,9 +294,8 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUCont
                     std::cerr << "This is not implemented!" << std::endl;
 
                 } else if (var_name_and_val.first.compare("control horizont in ts") == 0) {
-                    Global::UnlockAllVariables();
-                    Global::set_control_horizon_in_ts( (uint) (var_name_and_val.second) );
-                    Global::LockAllVariables();
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->change_control_horizon_in_ts( (uint) (var_name_and_val.second) );
                     cParamVals.control_horizon_in_ts     = (uint) (var_name_and_val.second);
                     cParamVals.control_horizon_in_ts_set = true;
 

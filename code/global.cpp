@@ -14,7 +14,8 @@ using namespace std;
 bool global::all_variables_initialized() {
     if (time_info_init &&
         pv_profiles_data != NULL &&
-        hp_profiles  != NULL &&
+        hp_profiles_shiftable != NULL &&
+        hp_profiles_not_shift != NULL &&
         wind_profile != NULL &&
         unit_open_space_pv   != NULL &&
         unit_open_space_wind != NULL &&
@@ -33,9 +34,12 @@ void global::vacuum() {
     }
 
     // delete heatpump profiles
-    for (size_t hpIdx = 0; hpIdx < Global::get_n_heatpump_profiles(); hpIdx++)
-        delete[] hp_profiles[hpIdx];
-    delete[] hp_profiles; hp_profiles = NULL;
+    for (size_t hpIdx = 0; hpIdx < Global::get_n_heatpump_profiles(); hpIdx++) {
+        delete[] hp_profiles_shiftable[hpIdx];
+        delete[] hp_profiles_not_shift[hpIdx];
+    }
+    delete[] hp_profiles_shiftable; hp_profiles_shiftable = NULL;
+    delete[] hp_profiles_not_shift; hp_profiles_not_shift = NULL;
     // delete pv profiles
     for (size_t pvIdx = 0; pvIdx < Global::get_n_pv_profiles(); pvIdx++)
         delete[] pv_profiles_data[pvIdx];
@@ -65,8 +69,11 @@ void global::print_uninitialized_variables() {
     if (pv_profiles_data == NULL) {
         cout << "PV profiles (variable pv_profiles_data) undefined." << endl;
     }
-    if (hp_profiles == NULL) {
-        cout << "HP profiles (variable hp_profiles) undefined." << endl;
+    if (hp_profiles_shiftable == NULL) {
+        cout << "HP profiles (variable hp_profiles_shiftable) undefined." << endl;
+    }
+    if (hp_profiles_not_shift == NULL) {
+        cout << "HP profiles (variable hp_profiles_not_shift) undefined." << endl;
     }
     if (wind_profile == NULL) {
         cout << "Wind profiles (variable wind_profile) undefined." << endl;

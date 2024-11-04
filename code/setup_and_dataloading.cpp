@@ -880,6 +880,7 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
     callcounter++;
     return 0;
 }
+unsigned long callcounter_callback_HP = 0;
 int load_data_from_central_database_callback_HP(void* data, int argc, char** argv, char** colName) {
     /*
      * This is the callback function for geeting the global heat pump profiles.
@@ -888,14 +889,17 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
      * data should be written into.
      *
      * Columns:
-     * 0           1             2
-     * TimestepID  Value_Demand  TimeSeriesIndex
+     *   0           1                     2
+     *   TimestepID  ShiftableDemand_kW    TimeSeriesIndex
+     * or
+     *               UnshiftableDemand_kW
      */
     static unsigned long callcounter_timestepID = 1; // internal counter for the timestep ID
-    static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
+    //static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries, both are used to identify missing values
+    // the latter callcounter is defined outside to make it resettable!
 
     // check callcounter
-    if (callcounter_timeseries >= Global::get_n_heatpump_profiles()) {
+    if (callcounter_callback_HP >= Global::get_n_heatpump_profiles()) {
         cerr << "Error in data for heat pumps.\n";
         cerr << "It is said that there are " << Global::get_n_heatpump_profiles() << " heat pump profiles, but therer are more available in the table." << endl;
         return 1;
@@ -911,15 +915,15 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
             cerr << "There is one row missing for at least one timestep in the list of heat pump profiles!" << endl;
             return 1;
         }
-        if (stoul(argv[2]) != callcounter_timeseries) {
+        if (stoul(argv[2]) != callcounter_callback_HP) {
             cerr << "There are missing values for at least one time series in the list of heat pump profiles!" << endl;
             return 1;
         }
         size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
-        ((float**) data)[callcounter_timeseries][pos] = stof(argv[1]);
+        ((float**) data)[callcounter_callback_HP][pos] = stof(argv[1]);
     } catch (exception& e) {
         cerr << "An error happened during the parsing of the heat pump profiles.\n";
-        cerr << " - More details: At time step " << callcounter_timestepID << " for time series " << callcounter_timeseries << endl;
+        cerr << " - More details: At time step " << callcounter_timestepID << " for time series " << callcounter_callback_HP << endl;
         return 1;
     }
 
@@ -927,7 +931,7 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
         callcounter_timestepID++;
     } else {
         callcounter_timestepID = 1;
-        callcounter_timeseries++;
+        callcounter_callback_HP++;
     }
     return 0;
 }
@@ -1288,21 +1292,35 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         // Load central heat pump profiles
         //
-        float** new_hp_profile_array = new float*[Global::get_n_heatpump_profiles()];
+        float** new_hp_profile_s_array   = new float*[Global::get_n_heatpump_profiles()];
+        float** new_hp_profile_nos_array = new float*[Global::get_n_heatpump_profiles()];
         for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
-            new_hp_profile_array[hp_idx] = new float[Global::get_n_timesteps()];
+            new_hp_profile_s_array[hp_idx] = new float[Global::get_n_timesteps()];
+            new_hp_profile_nos_array[hp_idx] = new float[Global::get_n_timesteps()];
             // initialize with 0 by default
-            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
-                new_hp_profile_array[hp_idx][l] = 0;
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
+                new_hp_profile_s_array[hp_idx][l]   = 0;
+                new_hp_profile_nos_array[hp_idx][l] = 0;
+            }
         }
-        sql_query = "SELECT TimestepID,Value_Demand,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
-        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_array/*Reference to the new array*/, &sqlErrorMsgF);
+        callcounter_callback_HP = 0;
+        sql_query = "SELECT TimestepID,ShiftableDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_s_array  /*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
-        global::hp_profiles = new_hp_profile_array;
+        callcounter_callback_HP = 0;
+        sql_query = "SELECT TimestepID,UnshiftableDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
+        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_nos_array/*Reference to the new array*/, &sqlErrorMsgF);
+        if (ret_valF != 0) {
+            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            sqlite3_free(sqlErrorMsgF);
+            return false;
+        }
+        global::hp_profiles_shiftable = new_hp_profile_s_array;
+        global::hp_profiles_not_shift = new_hp_profile_nos_array;
 
         //
         // Load residual netload
