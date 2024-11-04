@@ -7,5 +7,7 @@ expansion PV kWp static mode,0
 expansion BS E in kWh,1
 expansion BS E:P ratio,0
 expansion BS initial SOC,0
+control horizont in ts,24
+control update freq in ts,1
 seed_set,1
 seed,1234
