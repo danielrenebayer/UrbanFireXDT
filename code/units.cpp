@@ -391,7 +391,7 @@ float ControlUnit::get_annual_heat_demand_th_kWh() {
         float building_volume = global::building_volumes_m3[locationID];
         if (building_volume > 0.0) {
             // heat demand not given by gas or other data, so we need to approximate it based on a linear regression
-            return (Global::get_hp_E_estimation_param_m() * building_volume + Global::get_hp_E_estimation_param_t()) * Global::get_heat_demand_thermalE_to_hpE_conv_f();
+            return Global::get_heat_cons_bobv_slope() * building_volume + Global::get_heat_cons_bobv_intercept();
         } else {
             return 0.0;
         }

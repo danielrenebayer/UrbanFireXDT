@@ -251,13 +251,13 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_heat_demand_thermalE_to_hpE_conv_f( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("HP el. E estimation m") == 0 )
+            else if ( element_name.compare("Heat consumption apo building V: slope") == 0 )
             {
-                Global::set_hp_E_estimation_param_m( scenario_dict.get_value<float>() );
+                Global::set_heat_cons_bobv_slope( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("HP el. E estimation t") == 0 )
+            else if ( element_name.compare("Heat consumption apo building V: intercept") == 0 )
             {
-                Global::set_hp_E_estimation_param_t( scenario_dict.get_value<float>() );
+                Global::set_heat_cons_bobv_intercept( scenario_dict.get_value<float>() );
             }
             else if ( element_name.compare("EV plugin probability") == 0)
             {
@@ -1604,8 +1604,8 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
     PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
-    PRINT_VAR(Global::get_hp_E_estimation_param_m());
-    PRINT_VAR(Global::get_hp_E_estimation_param_t());
+    PRINT_VAR(Global::get_heat_cons_bobv_slope());
+    PRINT_VAR(Global::get_heat_cons_bobv_intercept());
     PRINT_VAR(Global::get_ev_plugin_probability());
     PRINT_VAR(Global::get_ev_battery_size_kWh());
     PRINT_VAR(Global::get_ev_consumption_kWh_km());

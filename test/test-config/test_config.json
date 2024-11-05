@@ -35,9 +35,9 @@
 
         "use BS for creating SSR list for SAC planning": false,
 
-        "th. E to HP el. E conversion factor":   2,
-        "HP el. E estimation m":   2,
-        "HP el. E estimation t": 200
+        "th. E to HP el. E conversion factor":          2.0,
+        "Heat consumption apo building V: slope":       4.0,
+        "Heat consumption apo building V: intercept": 400.0
     },
     "Scenarios": [
         {
