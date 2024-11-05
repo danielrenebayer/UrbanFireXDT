@@ -763,8 +763,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
                 }
                 // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
                 if (expHP) {
-                    while ((*iter)->get_annual_hp_el_cons() <= 0 || (*iter)->get_annual_hp_el_cons() > 20000) {
-                        // TODO: Make upper clip level configurable!
+                    while ((*iter)->get_annual_hp_el_cons_kWh() <= 0) {
                         iter++;
                         if (iter == listOfCUs->end()) {
                             cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled (Pos. 2)." << endl;
@@ -1072,7 +1071,7 @@ void expansion::add_expansion_to_units(
             continue;
         // exlude units with unknwon heat demand if requested
         if (Global::get_annual_heat_demand_limit_fsac() >= 1.0 &&
-            current_unit->get_annual_heat_demand_kWh() > Global::get_annual_heat_demand_limit_fsac() ) {
+            current_unit->get_annual_heat_demand_th_kWh() > Global::get_annual_heat_demand_limit_fsac() ) {
                 continue;
             }
         //
@@ -1224,7 +1223,7 @@ void expansion::add_expansion_to_units(
         output_per_cu << "," << current_unit->get_sim_comp_pv_kWp();
         output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
         output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW();
-        output_per_cu << "," << ((0 < (expansion::MaskHP & expCombiAsSimulated)) ? current_unit->get_annual_hp_el_cons() : 0.0);
+        output_per_cu << "," << ((0 < (expansion::MaskHP & expCombiAsSimulated)) ? current_unit->get_annual_hp_el_cons_kWh() : 0.0);
         output_per_cu << "," << current_unit->get_sim_comp_cs_n_EVs();
         output_per_cu << "\n";
     }

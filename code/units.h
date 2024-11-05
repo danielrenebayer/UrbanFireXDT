@@ -124,8 +124,8 @@ class ControlUnit {
         float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         float get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
-        float get_annual_heat_demand_kWh(); ///< Returns the annual heat demand in (thermal) kWh of all attachted buildings
-        float get_annual_hp_el_cons(); ///< Returns the annual HP electricity consumption of a heat pump, if it would be added simulatively (regardless whether it is added or not)
+        float get_annual_heat_demand_th_kWh();  ///< Returns the annual heat demand in (thermal) kWh of all attachted buildings
+        float get_annual_hp_el_cons_kWh();      ///< Returns the annual HP electricity consumption of a heat pump in kWh, if it would be added simulatively (regardless whether it is added or not)
         float get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)
         size_t get_sim_comp_cs_n_EVs() const;   ///< Returns the number of connected EVs if the charging station component is enabled, otherwise 0 is returned.
         size_t get_sim_comp_cs_possible_n_EVs() const; ///< Returns the number of EVs that would be connected to the charging station component, if it would be enablede

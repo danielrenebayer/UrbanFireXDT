@@ -385,23 +385,22 @@ float ControlUnit::get_sim_comp_bs_E_kWh() {
     return 0;
 }
 
-float ControlUnit::get_annual_heat_demand_kWh() {
+float ControlUnit::get_annual_heat_demand_th_kWh() {
     float heat_demand = global::annual_heat_demand_kWh[locationID];
     if (heat_demand <= 0) {
-        // heat demand not given by gas or other data, so we need to approximate it based on a linear regression
-        return (Global::get_hp_E_estimation_param_m() * global::building_volumes_m3[locationID] + Global::get_hp_E_estimation_param_t()) * Global::get_heat_demand_thermalE_to_hpE_conv_f();
+        float building_volume = global::building_volumes_m3[locationID];
+        if (building_volume > 0.0) {
+            // heat demand not given by gas or other data, so we need to approximate it based on a linear regression
+            return (Global::get_hp_E_estimation_param_m() * building_volume + Global::get_hp_E_estimation_param_t()) * Global::get_heat_demand_thermalE_to_hpE_conv_f();
+        } else {
+            return 0.0;
+        }
     }
     return heat_demand;
 }
 
-float ControlUnit::get_annual_hp_el_cons() {
-    float heat_demand = global::annual_heat_demand_kWh[locationID];
-    if (heat_demand <= 0) {
-        // heat demand not given by gas or other data, so we need to approximate it based on a linear regression
-        return Global::get_hp_E_estimation_param_m() * global::building_volumes_m3[locationID] + Global::get_hp_E_estimation_param_t();
-    } else {
-        return heat_demand / Global::get_heat_demand_thermalE_to_hpE_conv_f();
-    }
+float ControlUnit::get_annual_hp_el_cons_kWh() {
+    return get_annual_heat_demand_th_kWh() / Global::get_heat_demand_thermalE_to_hpE_conv_f();
 }
 
 float ControlUnit::get_sim_comp_cs_max_P_kW() const {
@@ -651,7 +650,7 @@ void ControlUnit::add_exp_hp() {
         //
         // create and link component
         has_sim_hp  = true;
-        sim_comp_hp = new ComponentHP(this->get_annual_hp_el_cons());
+        sim_comp_hp = new ComponentHP(this->get_annual_hp_el_cons_kWh());
     }
 }
 
