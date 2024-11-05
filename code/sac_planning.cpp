@@ -9,8 +9,10 @@ using namespace expansion;
 #include <iostream>
 #include <limits>
 #include <list>
+#include <queue>
 #include <ranges>
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -297,8 +299,9 @@ bool add_expansion_to_units_random_or_data_order(
                 rndGen.seed(Global::get_seed());
             shuffle(listOfCUs->begin(), listOfCUs->end(), rndGen);
         }
-        // get the iterator
-        vector<ControlUnit*>::iterator iter = listOfCUs->begin();
+        //
+        // convert the vector containint all list of CUs with the current expansion status to a set to be able to remove elements quickly later
+        std::set<ControlUnit*> setOfCUs (listOfCUs->begin(), listOfCUs->end());
         // loop over all **target** expansion states
         // start at iMatO + 1, as all combinations bevore are impossible / or do not need any expansion
         // If one loops over them as well, the order of the ordered_list (in case it is set) would be useless!
@@ -319,9 +322,26 @@ bool add_expansion_to_units_random_or_data_order(
             if (ijXOR & MaskBS) expBS = true;
             if (ijXOR & MaskHP) expHP = true;
             if (ijXOR & MaskWB) expEV = true;
+            // filter all elements from the list of control units with the current combination
+            // that can be expanded to the current selected target combination
+            std::queue<ControlUnit*> currExpandableSetOfCUs;
+            for (ControlUnit* cu : setOfCUs) {
+                bool include_this_unit = true;
+                if (expPV && !cu->is_expandable_with_pv())
+                    include_this_unit = false;
+                if (expHP && !cu->is_expandable_with_hp())
+                    include_this_unit = false;
+                if (expBS && !cu->is_expandable_with_pv() && !cu->has_pv()) // if we add a BS, the building MUST contain a PV already or be able to add a PV
+                    include_this_unit = false;
+                if (expEV &&  cu->get_sim_comp_cs_possible_n_EVs() == 0)
+                    include_this_unit = false;
+                //
+                if (include_this_unit)
+                    currExpandableSetOfCUs.push( cu );
+            }
             // loop over this number
             for (long n = 0; n < numThisCombi_i_j; n++) {
-                if (iter == listOfCUs->end()) {
+                if (currExpandableSetOfCUs.size() <= 0) {
                     cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
                     goto outer_loop_end;
                 }
@@ -375,37 +395,30 @@ bool add_expansion_to_units_random_or_data_order(
                         break;
                     }
                 }
-                /*
-                // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
-                if (expHP) {
-                    while ((*iter)->get_annual_heat_demand_kWh() <= 0 || (*iter)->get_annual_heat_demand_kWh() > 40000) {
-                        iter++;
-                        if (iter == listOfCUs->end()) {
-                            cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled (Pos. 2)." << endl;
-                            goto outer_loop_end;
-                        }
-                    }
-                }
-                */
+                // 0c. get the current unit
+                ControlUnit* cu = currExpandableSetOfCUs.front();
                 // 1. add components
-                if (expPV && !pv_addition_limit) (*iter)->add_exp_pv();
-                if (expBS && !bs_addition_limit) (*iter)->add_exp_bs();
+                if (expPV && !pv_addition_limit) cu->add_exp_pv();
+                if (expBS) { // BS -> Do not install BS if BS addition limit is reached OR if PV addition is reached and this CU has no existing PV
+                    if (!bs_addition_limit && (!pv_addition_limit || cu->has_pv()))
+                        cu->add_exp_bs();
+                }
                 if (expHP && !hp_addition_limit) {
-                    (*iter)->add_exp_hp();
+                    cu->add_exp_hp();
                     cumsum_n_added_hps += 1;
                 }
                 if (expEV && !ev_addition_limit) {
-                    (*iter)->add_exp_cs();
+                    cu->add_exp_cs();
                     cumsum_n_added_evchsts += 1;
-                    cumsum_n_added_evs += (*iter)->get_sim_comp_cs_n_EVs();
+                    cumsum_n_added_evs += cu->get_sim_comp_cs_n_EVs();
                 }
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
-                cumsum_added_pv_kWp += (*iter)->get_sim_comp_pv_kWp();
-                cumsum_added_bs_kWh += (*iter)->get_sim_comp_bs_E_kWh();
-                cumsum_added_bs_kW  += (*iter)->get_sim_comp_bs_P_kW();
-                // 3. remove from list (would be good, but not required - right now it does not happen)
-                //    only the iterator is incremented
-                iter++;
+                cumsum_added_pv_kWp += cu->get_sim_comp_pv_kWp();
+                cumsum_added_bs_kWh += cu->get_sim_comp_bs_E_kWh();
+                cumsum_added_bs_kW  += cu->get_sim_comp_bs_P_kW();
+                // 3. remove element from both, the set and the list
+                currExpandableSetOfCUs.pop();
+                setOfCUs.erase( cu );
             }
         }
         outer_loop_end:;
@@ -501,10 +514,12 @@ bool add_expansion_to_units_orderd_by_metric(
             if (ijXOR & MaskWB) expCS = true;
             string jStrO = expansion::expCombiMatrixOrderToString(jExpTargetMatO);
             // filter listOfCUs -> Only select those units where an addition of the selected components is possible
-            auto filterLambda = [expPV,expHP,expCS](ControlUnit* cu){ 
+            auto filterLambda = [expPV,expBS,expHP,expCS](ControlUnit* cu){ 
                 return 
-                    ( (expPV || expHP) ? cu->is_expandable_with_pv_hp() > 0 : true ) &&
-                    ( (expCS)          ? cu->get_sim_comp_cs_possible_n_EVs() > 0 : true );
+                    ( (expPV) ? cu->is_expandable_with_pv() : true ) &&
+                    ( (expBS) ? cu->is_expandable_with_pv() || cu->has_pv() : true ) &&
+                    ( (expHP) ? cu->is_expandable_with_hp() : true ) &&
+                    ( (expCS) ? cu->get_sim_comp_cs_possible_n_EVs() > 0 : true );
             };
             auto filteredListOfCUs = *listOfCUs | std::views::filter(filterLambda);
             // add the missing elements
@@ -1066,6 +1081,7 @@ void expansion::add_expansion_to_units(
     //    and store the references to the CUs for a given current expansion in a list
     const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
     for (ControlUnit* current_unit : units_list) {
+        /*
         // jump this unit, if it is not extensible (only if exp pv static mode is not available)
         if (!Global::get_exp_pv_static_mode() && !current_unit->is_expandable_with_pv_hp())
             continue;
@@ -1078,6 +1094,7 @@ void expansion::add_expansion_to_units(
         // Only select units with known gas consumption
         if (Global::get_select_buildings_wg_heatd_only() && !current_unit->heat_demand_given_in_data())
             continue;
+        */
         //
         int expCombi = current_unit->get_exp_combi_bit_repr();
         currExpCountsBitIndexed[ expCombi ]++;
@@ -1203,7 +1220,7 @@ void expansion::add_expansion_to_units(
     filesystem::path info_path_B (*(global::current_global_output_dir)); // same argument as 21 lines above
     info_path_B /= "expansion-per-cu.csv";
     ofstream output_per_cu(info_path_B, std::ofstream::out);
-    output_per_cu << "UnitID,n_MUs,is_exp_with_pv_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,cs_orig,cs_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh,added_n_EVs" << endl;
+    output_per_cu << "UnitID,n_MUs,is_exp_with_pv,is_exp_with_hp,pv_orig,pv_added,bs_orig,bs_added,hp_orig,hp_added,cs_orig,cs_added,added_pv_kWp,added_bess_E_kWh,added_bess_P_kW,added_hp_AnnECons_kWh,added_n_EVs" << endl;
     // units_list defined above, at 1.
     for (ControlUnit* current_unit : units_list) {
         int expCombiAsInData    = current_unit->get_exp_combi_bit_repr_from_MUs();
@@ -1211,7 +1228,8 @@ void expansion::add_expansion_to_units(
         // output information
         output_per_cu <<        current_unit->get_unitID();
         output_per_cu << "," << current_unit->get_n_MUs();
-        output_per_cu << "," << current_unit->is_expandable_with_pv_hp();
+        output_per_cu << "," << current_unit->is_expandable_with_pv();
+        output_per_cu << "," << current_unit->is_expandable_with_hp();
         output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsInData));
         output_per_cu << "," << (0 < (expansion::MaskPV & expCombiAsSimulated));
         output_per_cu << "," << (0 < (expansion::MaskBS & expCombiAsInData));

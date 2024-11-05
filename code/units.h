@@ -109,7 +109,8 @@ class ControlUnit {
         bool has_cs(); ///< Checks, if the unit has an EV charging station connected (in data or simulated)
         bool has_chp();
         bool has_bs_sim_added();
-        bool is_expandable_with_pv_hp(); ///< Is a PV installation or a heat pump addable (yes, if geodata is available). This function uses caching.
+        bool is_expandable_with_pv(); ///< Is a simulated PV installation addable (yes, if geodata is available). This function uses caching.
+        bool is_expandable_with_hp(); ///< Is a simulated heat pump addable (yes, if geodata or gas consumption data is available). This function uses caching.
         bool is_residential() { return residential; } ///< Is this unit a residential unit?
         bool heat_demand_given_in_data(); ///< Returns true, if the heat demand for this location is given in the input data
         int  get_exp_combi_bit_repr();
@@ -225,8 +226,10 @@ class ControlUnit {
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
         float self_produced_load_kW; ///< Load [in kW] that is produced by the PV / taken from Battery / El. vehicle AND directly consumed by the measurement units
         //
-        bool is_expandable_with_pv_hp_cache; ///< Cached value saying is this unit expandable with a (roof-top) PV installation or a heat pump (it requires geo data for this!)
-        bool is_expandable_with_pv_hp_cache_computed; ///< Boolean variable if cache has been computed
+        bool is_expandable_with_pv_cache; ///< Cached value saying is this unit expandable with a (roof-top) PV installation or a heat pump (it requires geo data for this!)
+        bool is_expandable_with_pv_cache_computed; ///< Boolean variable if cache has been computed
+        bool is_expandable_with_hp_cache; ///< Cached value saying is this unit expandable with a (roof-top) PV installation or a heat pump (it requires geo data for this!)
+        bool is_expandable_with_hp_cache_computed; ///< Boolean variable if cache has been computed
         //
         // Variables required for multi-threading
         // CUControllerWorkerThread is getting full access to the member variables of this class

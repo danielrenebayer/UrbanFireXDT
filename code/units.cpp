@@ -153,8 +153,10 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
     output_obj      = NULL;
-    is_expandable_with_pv_hp_cache          = false;
-    is_expandable_with_pv_hp_cache_computed = false;
+    is_expandable_with_pv_cache          = false;
+    is_expandable_with_pv_cache_computed = false;
+    is_expandable_with_hp_cache          = false;
+    is_expandable_with_hp_cache_computed = false;
 
 	//
 	// add this control unit to the list of
@@ -290,31 +292,56 @@ bool ControlUnit::has_bs_sim_added() {
 	return has_sim_bs;
 }
 
-bool ControlUnit::is_expandable_with_pv_hp() {
-    if (!is_expandable_with_pv_hp_cache_computed) {
+bool ControlUnit::is_expandable_with_pv() {
+    if (!is_expandable_with_pv_cache_computed) {
         // compute value first, if it has not been computed
-        is_expandable_with_pv_hp_cache_computed = true;
+        is_expandable_with_pv_cache_computed = true;
         // computation itselfe
         bool geodata_flag_set  = global::locations_with_geodata.contains(locationID);
         bool roofdata_flag_set = global::roof_section_orientations.contains(locationID);
         if (geodata_flag_set && roofdata_flag_set) {
-            is_expandable_with_pv_hp_cache = true;
+            is_expandable_with_pv_cache = true;
         } else if (geodata_flag_set && !roofdata_flag_set) {
-            is_expandable_with_pv_hp_cache = false;
+            is_expandable_with_pv_cache = false;
             cerr << "Warning: Geodata is claimed to be available for control unit with ID " << unitID << ", but still no roof data has been found!" << endl;
         } else if (!geodata_flag_set && roofdata_flag_set) {
-            is_expandable_with_pv_hp_cache = false;
+            is_expandable_with_pv_cache = true;
             cerr << "Warning: Roofdata is available for control unit with ID " << unitID << ", even though it is claimed that there is no geodata for it!" << endl;
         } else {
-            is_expandable_with_pv_hp_cache = false;
-        }
-        // if there is an chp, exclude this control unit from HP expansion
-        if (has_chp()) {
-            is_expandable_with_pv_hp_cache = false;
+            is_expandable_with_pv_cache = false;
         }
     }
 
-    return is_expandable_with_pv_hp_cache;
+    return is_expandable_with_pv_cache;
+}
+
+bool ControlUnit::is_expandable_with_hp() {
+    if (!is_expandable_with_hp_cache_computed) {
+        // compute value first, if it has not been computed
+        is_expandable_with_hp_cache_computed = true;
+        // defaults to true
+        is_expandable_with_hp_cache = true;
+        // check, if annual heat consumption > 0, otherwise, no HP can be added!
+        // if heat consumption above the global limit for HP addition, also do not include this
+        if (
+            get_annual_heat_demand_th_kWh() <= 0.0 ||
+            (
+                Global::get_annual_heat_demand_limit_fsac() >= 1.0 &&
+                get_annual_heat_demand_th_kWh() > Global::get_annual_heat_demand_limit_fsac()
+            )
+        ) {
+            is_expandable_with_hp_cache = false;
+        }
+        // only select units with known heat consumption?
+        if (Global::get_select_buildings_wg_heatd_only() && !heat_demand_given_in_data())
+            is_expandable_with_hp_cache = false;
+        // if there is an chp, exclude this control unit from HP expansion
+        if (has_chp()) {
+            is_expandable_with_hp_cache = false;
+        }
+    }
+
+    return is_expandable_with_hp_cache;
 }
 
 bool ControlUnit::heat_demand_given_in_data() {
