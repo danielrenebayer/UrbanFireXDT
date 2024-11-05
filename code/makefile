@@ -4,13 +4,12 @@ LIBS  = -pthread -l sqlite3 -l boost_program_options
 FILES = main.cpp components.cpp units.cpp global.cpp sac_planning.cpp setup_and_dataloading.cpp simulation_logic.cpp output.cpp helper.cpp vehicles.cpp worker_threads.cpp
 OUTPUT_DIR = ../bin
 
+debug: directories
+	g++ $(FILES) -o $(OUTPUT_DIR)/simulation-dbg $(FLAGS) $(FLAGS_EXTRA) $(MACROS) -g -D DEBUG -D ADD_METHOD_ACCESS_PROTECTION_VARS $(LIBS)
 directories:
 	mkdir -p $(OUTPUT_DIR)
 
-default: directories
-	g++ $(FILES) -o $(OUTPUT_DIR)/simulation $(FLAGS) $(LIBS)
-
-all: debug default opti
+all: debug opti
 
 opti: directories
 	g++ $(FILES) -o $(OUTPUT_DIR)/simulation-opti $(FLAGS) -O3 $(LIBS)
@@ -22,5 +21,5 @@ verbose_debug: directories
 	g++ $(FILES) -o $(OUTPUT_DIR)/simulation-dbg $(FLAGS) -g -D DEBUG -D DEBUG_EXTRA_OUTPUT $(LIBS)
 
 clean:
-	rm -f $(OUTPUT_DIR)/simulation $(OUTPUT_DIR)/simulation-dbg $(OUTPUT_DIR)/simulation-opti
+	rm -f $(OUTPUT_DIR)/simulation-dbg $(OUTPUT_DIR)/simulation-opti
 
