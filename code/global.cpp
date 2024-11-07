@@ -159,6 +159,7 @@ float Global::ev_battery_size_kWh    = 30.0;
 float Global::ev_consumption_kWh_km   = 0.2f;
 bool  Global::use_emission_time_series_ia = true;
 bool  Global::use_prices_time_series_ia   = true;
+bool  Global::select_only_residential_buildings = false;
 uint  Global::control_horizon_in_ts       =   24;
 uint  Global::control_update_freq_in_ts   =    1;
 string Global::input_path         = "";
@@ -924,6 +925,13 @@ void Global::set_use_prices_time_series_ia(bool use) {
         cerr << "Global variable use_emission_time_series_ia cannot be set!" << endl;
     } else {
         use_prices_time_series_ia = use;
+    }
+}
+void Global::set_select_only_residential_buildings(bool value) {
+    if (is_locked) {
+        cerr << "Global variable select_only_residential_buildings cannot be set!" << endl;
+    } else {
+        select_only_residential_buildings = value;
     }
 }
 void Global::set_control_horizon_in_ts(unsigned int value) {

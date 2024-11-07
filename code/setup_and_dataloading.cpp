@@ -324,6 +324,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_break_sac_loop_if_limit_reached( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("select only residential buildings") == 0 )
+            {
+                Global::set_select_only_residential_buildings( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment") == 0 )
@@ -1568,6 +1572,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
     PRINT_VAR(Global::get_select_buildings_wg_heatd_only());
     PRINT_VAR(Global::get_break_sac_loop_if_limit_reached());
+    PRINT_VAR(Global::get_select_only_residential_buildings());
     // Scenario settings
     cout << "  Scenario settings:\n";
     PRINT_VAR(Global::get_exp_pv_static_mode());

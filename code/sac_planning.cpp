@@ -1095,6 +1095,11 @@ void expansion::add_expansion_to_units(
         if (Global::get_select_buildings_wg_heatd_only() && !current_unit->heat_demand_given_in_data())
             continue;
         */
+        // select only residential buildings if selected
+        if (Global::get_select_only_residential_buildings()) {
+            if (!current_unit->is_residential())
+                continue;
+        }
         //
         int expCombi = current_unit->get_exp_combi_bit_repr();
         currExpCountsBitIndexed[ expCombi ]++;

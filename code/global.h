@@ -230,6 +230,7 @@ class Global {
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
         static bool  get_use_emission_time_series_ia()        { return use_emission_time_series_ia; } ///< Return weather the emission time series (if it is available in the data) should be used or not
         static bool  get_use_prices_time_series_ia()          { return use_prices_time_series_ia;   } ///< Return weather the electricity prices time series (if it is available in the data) should be used or not
+        static bool  get_select_only_residential_buildings()  { return select_only_residential_buildings; } ///< Should only be residential buildings be considered for simulated component addition (SAC planning)?
         static uint  get_control_horizon_in_ts()              { return control_horizon_in_ts;       } ///< The control horizon in time steps (only if controller_mode is set to a value including optimization)
         static uint  get_control_update_freq_in_ts()          { return control_update_freq_in_ts;   } ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
         static const std::string& get_input_path()  { return input_path;  }
@@ -307,6 +308,7 @@ class Global {
         static void set_ev_consumption_kWh_km(float value);
         static void set_use_emission_time_series_ia(bool use);
         static void set_use_prices_time_series_ia(bool use);
+        static void set_select_only_residential_buildings(bool value);
         static void set_control_horizon_in_ts(unsigned int value);
         static void set_control_update_freq_in_ts(unsigned int value);
         static void set_input_path(std::string* path);
@@ -388,6 +390,7 @@ class Global {
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
         static bool  use_emission_time_series_ia; ///< Yes, if the emission time series (if it is available in the data) should be used or not
         static bool  use_prices_time_series_ia;   ///< Yes, if the electricity prices time series (if it is available in the data) should be used or not
+        static bool  select_only_residential_buildings;
         static uint  control_horizon_in_ts;      ///< The control horizont in time steps (only if controller_mode is set to a value including optimization)
         static uint  control_update_freq_in_ts;   ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
         static std::string input_path;     ///< reference to the string holding the input path of the data
