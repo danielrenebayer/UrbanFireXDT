@@ -127,7 +127,8 @@ namespace global {
     enum struct BatteryCapacityComputationMode {
         Constant,
         BasedOnNominalPVPower,
-        BasedOnAnnualConsumption
+        BasedOnAnnualConsumption,
+        BasedOnAnnualConsumptionWithHeatPump
     };
 
     /**

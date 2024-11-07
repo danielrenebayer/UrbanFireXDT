@@ -399,10 +399,6 @@ bool add_expansion_to_units_random_or_data_order(
                 ControlUnit* cu = currExpandableSetOfCUs.front();
                 // 1. add components
                 if (expPV && !pv_addition_limit) cu->add_exp_pv();
-                if (expBS) { // BS -> Do not install BS if BS addition limit is reached OR if PV addition is reached and this CU has no existing PV
-                    if (!bs_addition_limit && (!pv_addition_limit || cu->has_pv()))
-                        cu->add_exp_bs();
-                }
                 if (expHP && !hp_addition_limit) {
                     cu->add_exp_hp();
                     cumsum_n_added_hps += 1;
@@ -411,6 +407,11 @@ bool add_expansion_to_units_random_or_data_order(
                     cu->add_exp_cs();
                     cumsum_n_added_evchsts += 1;
                     cumsum_n_added_evs += cu->get_sim_comp_cs_n_EVs();
+                }
+                // bs is the last thing to add, as the sizing might depend (if config variable set) on the hp annual consumption size
+                if (expBS) { // BS -> Do not install BS if BS addition limit is reached OR if PV addition is reached and this CU has no existing PV
+                    if (!bs_addition_limit && (!pv_addition_limit || cu->has_pv()))
+                        cu->add_exp_bs();
                 }
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 cumsum_added_pv_kWp += cu->get_sim_comp_pv_kWp();
@@ -525,9 +526,9 @@ bool add_expansion_to_units_orderd_by_metric(
             // add the missing elements
             for (ControlUnit* cu : filteredListOfCUs) {
                 if (expPV) cu->add_exp_pv();
-                if (expBS) cu->add_exp_bs();
                 if (expHP) cu->add_exp_hp();
                 if (expCS) cu->add_exp_cs();
+                if (expBS) cu->add_exp_bs();
             }
             // run simulation for this combination
             cout << "\rSimulation pre-run for all CUs with current configuration " << iStrO << " -> target: " << jStrO << "\n";
@@ -644,11 +645,6 @@ bool add_expansion_to_units_orderd_by_metric(
                     cu_for_addition->add_exp_pv();
                     cumsum_added_pv_kWp += cu_for_addition->get_sim_comp_pv_kWp(); // calculate new cumsum
                 }
-                if (expBS && !bs_addition_limit) {
-                    cu_for_addition->add_exp_bs();
-                    cumsum_added_bs_kWh += cu_for_addition->get_sim_comp_bs_E_kWh(); // calculate new cumsum
-                    cumsum_added_bs_kW  += cu_for_addition->get_sim_comp_bs_P_kW();
-                }
                 if (expHP && !hp_addition_limit) {
                     cu_for_addition->add_exp_hp();
                     cumsum_n_added_hps += 1;
@@ -657,6 +653,11 @@ bool add_expansion_to_units_orderd_by_metric(
                     cu_for_addition->add_exp_cs();
                     cumsum_n_added_evchsts += 1;
                     cumsum_n_added_evs += cu_for_addition->get_sim_comp_cs_n_EVs();
+                }
+                if (expBS && !bs_addition_limit) {
+                    cu_for_addition->add_exp_bs();
+                    cumsum_added_bs_kWh += cu_for_addition->get_sim_comp_bs_E_kWh(); // calculate new cumsum
+                    cumsum_added_bs_kW  += cu_for_addition->get_sim_comp_bs_P_kW();
                 }
                 cu_for_addition->is_sim_expanded = true;
                 n_already_expanded_CUs[jExpTargetMatO]++;

@@ -643,14 +643,21 @@ void ControlUnit::add_exp_bs() {
            )
         {
             // if there is no battery -> always use static values
+            // TODO: is this an good idea? What about eixisting PV?
             new_battery_capacity_kWh = Global::get_exp_bess_kWh();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnNominalPVPower) {
             float pv_kWp = sim_comp_pv->get_kWp();
             new_battery_capacity_kWh = pv_kWp * Global::get_exp_bess_sizingE_boPV();
-        } else {
+        } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumption) {
             // round on two digits
             new_battery_capacity_kWh = round( (float) (get_mean_annual_MU_el_demand_kWh() / 1000) * 100 ) / 100.0;
-            // TODO: get annual el. cons (incl. HP, if present) and size bess accordingly
+        } else {
+            float ann_cons_kWh = get_mean_annual_MU_el_demand_kWh();
+            if (has_sim_hp) {
+                ann_cons_kWh += get_annual_hp_el_cons_kWh();
+            }
+            // round on two digits
+            new_battery_capacity_kWh = round( (float) (ann_cons_kWh / 1000) * 100 ) / 100.0;
         }
         // respect maximum addition
         if (Global::get_exp_bess_max_capacity() > 0.0) {

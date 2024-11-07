@@ -117,6 +117,8 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnNominalPVPower);
                 } else if (selection == "use mean annual consumption") {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumption);
+                } else if (selection == "use mean annual consumption with heat pump") {
+                    Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumptionWithHeatPump);
                 } else {
                     cerr << "Parameter 'expansion BS capacity computation mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
                     throw runtime_error("Parameter 'expansion BS capacity computation mode' as defined in config-json is unknown.");

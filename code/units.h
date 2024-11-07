@@ -140,7 +140,7 @@ class ControlUnit {
         bool is_sim_expanded; ///< Puplicly accessible member, weather the control unit is expanded or not (required for SAC Planning). This flag has no internal effect inside the class.
         // modifiers
         void add_exp_pv();
-        void add_exp_bs();
+        void add_exp_bs(); ///< Adds a simulated battery storage. Mind: MUST be called after ControlUnit::add_exp_hp() if it is called to ensure proper storage sizing for all configurations.
         void add_exp_hp();
         void add_exp_cs(); ///< Activates / enables the EV charging station at the control unit
         void add_ev(unsigned long carID); ///< Adds an EV to the charging station (regardless if the charging station is enabled or not)
