@@ -63,7 +63,11 @@ EVFSM::~EVFSM() {
 }
 
 float EVFSM::get_current_charging_power() const {
-    return battery->get_currentLoad_kW();
+    if (current_state == EVState::ConnectedAtHome) {
+        return battery->get_currentLoad_kW();
+    } else {
+        return 0.0;
+    }
 }
 
 std::string* EVFSM::get_metrics_string_annual() {
@@ -212,6 +216,10 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
 }
 
 void EVFSM::set_current_charging_power(float power_kW) {
+    if (current_state != EVState::ConnectedAtHome) {
+        std::cout << "Setting charging power while not charging !";
+        return;
+    }
     battery->set_chargeRequest(power_kW);
     battery->calculateActions();
     // update the amount of charged / discharged electricity
