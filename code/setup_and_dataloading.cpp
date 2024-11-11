@@ -726,17 +726,13 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
                                 current_mu_id, conn_to_unitID, mPointIDStr, locID,
                                 has_demand, has_feedin, has_pv_resid, has_pv_opens,
                                 has_bess,   has_hp,     has_wind,     has_evchst,
-                                has_chp);
+                                has_chp, data_input_path.str());
         if (!res) {
             cerr << "Error when creating measurement unit with id " << current_mu_id << endl;
             cerr << "Is the ID of the control unit unique?" << endl;
             return 1;
         }
-        MeasurementUnit* newMU = MeasurementUnit::GetInstancePublicID(current_mu_id);
-        if (! (newMU->load_data(data_input_path.str().c_str())) ) {
-            cerr << "Error when loading data for measurement unit with id " << current_mu_id << endl;
-            return 1;
-        }
+        /*MeasurementUnit* newMU = */ MeasurementUnit::GetInstancePublicID(current_mu_id);
     } catch (runtime_error& e) {
         cerr << "Error when creating measurement unit with id " << current_mu_id << endl;
         cerr << "Details:" << endl;
@@ -1234,6 +1230,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
         if (ret_valE != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE << endl;
             sqlite3_free(sqlErrorMsgE);
+            return false;
+        }
+        // 3b. Load MU data
+        if (!MeasurementUnit::LoadDataForAllInstances()) {
             return false;
         }
 

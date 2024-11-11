@@ -262,20 +262,20 @@ class MeasurementUnit {
         static bool InstantiateNewMeasurementUnit(size_t meUID, size_t public_unitID, std::string * meterPointName, size_t locID, 
                 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                 bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
-                bool has_chp);
+                bool has_chp, const std::string& data_source_path);
     private:
         // initialization and destruction
         MeasurementUnit(size_t internalID, size_t meUID, size_t public_unitID, std::string * meterPointName, size_t locID, 
                         bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                         bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
-                        bool has_chp);
+                        bool has_chp, const std::string& data_source_path);
     public:
         ~MeasurementUnit();
         const std::string * get_meterPointName() const { return meterPointName; } ///< Returns the name of the meter point
         unsigned long get_internal_id()          const { return internal_id; }    ///< Returns the (consecutive) internal ID of the measurement unit
         unsigned long get_meUID()                const { return meUID; }          ///< Returns the ID as given in the system structe database
         unsigned long get_locationID()           const { return locationID; }     ///< Returns the ID of the location
-        bool load_data(const char * filepath);
+        bool load_data(); ///< Load the data as given by the member variable data_source_path. Returns false if an error happend during file loading.
         bool has_demand() const { return rsm_has_demand; }
         bool has_feedin() const { return rsm_has_feedin; }
         bool has_pv()     const { return rsm_with_pv_residential || rsm_with_pv_open_space; }
@@ -303,6 +303,7 @@ class MeasurementUnit {
         static void InitializeStaticVariables(unsigned long n_MUs);
         static void VacuumInstancesAndStaticVariables();
         static size_t GetNumberOfInstances() {return st__n_MUs;}
+        static bool LoadDataForAllInstances(); ///< Loads the data for all created instances
         //
         // 2. Class getter methods
         static MeasurementUnit* GetInstancePublicID(unsigned long meUID); ///< Returns instance with public id meUID (or NULL, if the ID is not available)
@@ -313,6 +314,7 @@ class MeasurementUnit {
         ControlUnit *const higher_level_cu;
         const std::string *const meterPointName;
         const unsigned long locationID;
+        const std::string data_source_path;
         // member variables that can change over time
         float current_load_rsm_kW;
         bool rsm_has_demand; ///< RSM stands for Real Smart Meter

@@ -1104,7 +1104,7 @@ std::map<unsigned long, unsigned long> MeasurementUnit::public_to_internal_id;
 bool MeasurementUnit::InstantiateNewMeasurementUnit(size_t meUID, size_t public_unitID, std::string * meterPointName, size_t locID, 
                 bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                 bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
-                bool has_chp)
+                bool has_chp, const std::string& data_source_path)
 {
     // check, if public_id is known
     if (public_to_internal_id.contains(meUID))
@@ -1116,7 +1116,7 @@ bool MeasurementUnit::InstantiateNewMeasurementUnit(size_t meUID, size_t public_
     // register public id
     public_to_internal_id.insert(std::pair<unsigned long, unsigned long>(meUID, new_internal_id));
     // create instance
-    MeasurementUnit* new_obj = new MeasurementUnit(new_internal_id, meUID, public_unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wind, has_evchst, has_chp);
+    MeasurementUnit* new_obj = new MeasurementUnit(new_internal_id, meUID, public_unitID, meterPointName, locID, has_demand, has_feedin, has_pv_resid, has_pv_opens, has_bess, has_hp, has_wind, has_evchst, has_chp, data_source_path);
     // add to list of instances
     st__mu_list.push_back(new_obj);
     //
@@ -1126,11 +1126,13 @@ bool MeasurementUnit::InstantiateNewMeasurementUnit(size_t meUID, size_t public_
 MeasurementUnit::MeasurementUnit(size_t internalID, size_t meUID, size_t public_unitID, string * meterPointName, size_t locID,
                                  bool has_demand, bool has_feedin, bool has_pv_resid, bool has_pv_opens,
                                  bool has_bess,   bool has_hp,     bool has_wind,     bool has_evchst,
-                                 bool has_chp) :
+                                 bool has_chp, const std::string& data_source_path) :
     internal_id(internalID),
     meUID(meUID),
     higher_level_cu(ControlUnit::GetInstancePublicID(public_unitID)),
-    meterPointName(meterPointName), locationID(locID) {
+    meterPointName(meterPointName), locationID(locID),
+    data_source_path(data_source_path)
+{
     //
     // initialize instance variables
     current_load_rsm_kW = 0;
@@ -1178,7 +1180,7 @@ MeasurementUnit::~MeasurementUnit() {
     //data_status_feedin = NULL;
 }
 
-bool MeasurementUnit::load_data(const char * filepath) {
+bool MeasurementUnit::load_data() {
     //
     // initialize the arrays
     //
@@ -1192,9 +1194,9 @@ bool MeasurementUnit::load_data(const char * filepath) {
     // open and parse the csv file
     //
     ifstream smeter_input;
-    smeter_input.open(filepath);
+    smeter_input.open(data_source_path);
     if (!smeter_input.good()) {
-        cout << "Error when connecting to the smart meter file with path " << filepath << endl;
+        cout << "Error when connecting to the smart meter file with path " << data_source_path << endl;
         return false;
     } else {
         string currLineString;
@@ -1301,6 +1303,53 @@ void MeasurementUnit::VacuumInstancesAndStaticVariables() {
         st__mu_list[i] = NULL;
     }
     st__n_MUs = 0;
+}
+
+bool MeasurementUnit::LoadDataForAllInstances() {
+    if (Global::get_n_threads() >= 2) {
+        size_t n_threads = Global::get_n_threads();
+        // create a vector of lists where the objects are stored that should be handeled by one thread
+        std::vector<std::list<MeasurementUnit*>> object_allocation_list(n_threads);
+        size_t counter  = 0;
+        for (MeasurementUnit* mu : st__mu_list) {
+            object_allocation_list[counter % n_threads].push_back(mu);
+            counter += 1;
+        }
+        // create an atomic flag to indicate if an error has occured
+        std::atomic<bool> error_occured(false);
+        // start the threads
+        std::vector<std::thread> thread_list;
+        for (size_t thread_id = 0; thread_id < n_threads; thread_id++) {
+            thread_list.emplace_back(
+                [&, thread_id] {
+                    for (MeasurementUnit* mu : object_allocation_list[thread_id]) {
+                        if (! (mu->load_data()) ) {
+                            cerr << "Error when loading data for measurement unit with id " << mu->get_meUID() << endl;
+                            error_occured.store(true);
+                            return;
+                        }
+                    }
+                }
+            );
+        }
+        // wait until all threads are finished
+        for (std::thread& t : thread_list) {
+            if (t.joinable())
+                t.join();
+        }
+        // check for errors
+        if (error_occured.load()) {
+            return false;
+        }
+    } else {
+        for (MeasurementUnit* mu : st__mu_list) {
+            if (! (mu->load_data()) ) {
+                cerr << "Error when loading data for measurement unit with id " << mu->get_meUID() << endl;
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 MeasurementUnit* MeasurementUnit::GetInstancePublicID(unsigned long meUID) {
