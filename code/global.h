@@ -45,6 +45,7 @@ namespace global {
     inline const float* const* pv_profiles_data = NULL; ///< Reference to the list of global PV profiles (Two dimensional array with [n_pv_profiles, n_timesteps])
     inline const float* const* hp_profiles_shiftable = NULL; ///< Reference to the list of global heat pump profiles [shiftable part]     (Two dimensional array with [n_heatpump_profiles, n_timesteps])
     inline const float* const* hp_profiles_not_shift = NULL; ///< Reference to the list of global heat pump profiles [non-shiftable part] (Two dimensional array with [n_heatpump_profiles, n_timesteps])
+    inline const double* const* hp_profiles_s_cumsum  = NULL; ///< Reference to the list of cumulated global heat pump profiles [shiftable part] (Two dimensional array with [n_heatpump_profiles, n_timesteps])
     inline const float* residual_gridload_kW = NULL; ///< Residual netload, i.e. amount of load that has to be added to the final netload, this is a load that is not measured by smart meters occuring in this simulation
     inline const float* wind_profile = NULL; ///< Reference to the list of the global wind profile values
     inline OpenSpacePVOrWind* unit_open_space_pv   = NULL; ///< Reference to the global open space pv unit

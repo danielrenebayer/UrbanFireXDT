@@ -240,6 +240,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         const float scaling_factor; ///< Factor to scale the profile to fit the yearly_electricity_consumption_kWh
         const float* profile_data_shiftable; ///< Reference to the profile for the     shiftable part of the demand, should be one of global::hp_profiles_shiftable
         const float* profile_data_not_shift; ///< Reference to the profile for the not-shiftable part of the demand, should be one of global::hp_profiles_not_shift
+        const double* profile_shiftable_cumsum; ///< Reference to the cumsum of the profile_data_shiftable
         // member variables that can change over time
         float currentDemand_kW;
         double total_consumption_kWh; ///< Total consumption since the beginning of the simulation period

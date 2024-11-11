@@ -37,9 +37,11 @@ void global::vacuum() {
     for (size_t hpIdx = 0; hpIdx < Global::get_n_heatpump_profiles(); hpIdx++) {
         delete[] hp_profiles_shiftable[hpIdx];
         delete[] hp_profiles_not_shift[hpIdx];
+        delete[] hp_profiles_s_cumsum[hpIdx];
     }
     delete[] hp_profiles_shiftable; hp_profiles_shiftable = NULL;
     delete[] hp_profiles_not_shift; hp_profiles_not_shift = NULL;
+    delete[] hp_profiles_s_cumsum;  hp_profiles_s_cumsum  = NULL;
     // delete pv profiles
     for (size_t pvIdx = 0; pvIdx < Global::get_n_pv_profiles(); pvIdx++)
         delete[] pv_profiles_data[pvIdx];

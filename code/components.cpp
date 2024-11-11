@@ -478,6 +478,7 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     // reference the profile
     profile_data_shiftable = global::hp_profiles_shiftable[this_hp_profile_idx];
     profile_data_not_shift = global::hp_profiles_not_shift[this_hp_profile_idx];
+    profile_shiftable_cumsum = global::hp_profiles_s_cumsum[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
     total_consumption_kWh = 0.0;

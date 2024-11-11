@@ -1300,13 +1300,16 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         float** new_hp_profile_s_array   = new float*[Global::get_n_heatpump_profiles()];
         float** new_hp_profile_nos_array = new float*[Global::get_n_heatpump_profiles()];
+        double** new_hp_profile_s_cumsum  = new double*[Global::get_n_heatpump_profiles()];
         for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
             new_hp_profile_s_array[hp_idx] = new float[Global::get_n_timesteps()];
             new_hp_profile_nos_array[hp_idx] = new float[Global::get_n_timesteps()];
+            new_hp_profile_s_cumsum[hp_idx]  = new double[Global::get_n_timesteps()];
             // initialize with 0 by default
             for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
                 new_hp_profile_s_array[hp_idx][l]   = 0;
                 new_hp_profile_nos_array[hp_idx][l] = 0;
+                new_hp_profile_s_cumsum[hp_idx][l]  = 0;
             }
         }
         callcounter_callback_HP = 0;
@@ -1325,8 +1328,18 @@ bool configld::load_data_from_central_database(const char* filepath) {
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
+        // compute cumulative sum per profile
+        for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
+            double cumsum = 0.0;
+            for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
+                cumsum += new_hp_profile_s_array[hp_idx][l];
+                new_hp_profile_s_cumsum[hp_idx][l] = cumsum;
+            }
+        }
+        // allocate to globale variables
         global::hp_profiles_shiftable = new_hp_profile_s_array;
         global::hp_profiles_not_shift = new_hp_profile_nos_array;
+        global::hp_profiles_s_cumsum  = new_hp_profile_s_cumsum;
 
         //
         // Load residual netload
