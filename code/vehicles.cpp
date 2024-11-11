@@ -200,6 +200,8 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, u
             // Compute the maximal chargable power at the current time step
             float free_space_kWh = battery->get_maxE_kWh() - battery->get_currentCharge_kWh();
             max_curr_available_p_kW = free_space_kWh / Global::get_time_step_size_in_h();
+            if (max_curr_available_p_kW > Global::get_ev_max_charging_power_kW())
+                max_curr_available_p_kW = Global::get_ev_max_charging_power_kW();
         } else {
             current_state_icah = EVStateIfConnAtHome::DischargingPossible;
             max_curr_available_p_kW = 0.0;

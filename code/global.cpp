@@ -159,6 +159,7 @@ float Global::heat_cons_bobv_intercept = 0.0;
 float Global::ev_plugin_probability   = 0.25;
 float Global::ev_battery_size_kWh    = 30.0;
 float Global::ev_consumption_kWh_km   = 0.2f;
+float Global::ev_max_charging_power_kW=11.0f;
 bool  Global::use_emission_time_series_ia = true;
 bool  Global::use_prices_time_series_ia   = true;
 bool  Global::select_only_residential_buildings = false;
@@ -913,6 +914,17 @@ void Global::set_ev_consumption_kWh_km(float value) {
             return;
         }
         Global::ev_consumption_kWh_km = value;
+    }
+}
+void Global::set_ev_max_charging_power_kW(float value) {
+    if (is_locked) {
+        cerr << "Global variable ev_max_charging_power_kW cannot be set!" << endl;
+    } else {
+        if (value < 0.0) {
+            cerr << "Global variable ev_max_charging_power_kW cannot be set to value " << value << " ( allowed range: [0.0,inf[ )" << endl;
+            return;
+        }
+        Global::ev_max_charging_power_kW = value;
     }
 }
 void Global::set_use_emission_time_series_ia(bool use) {

@@ -688,11 +688,9 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
             if (remaining_power_kW <= 0.0) {
                 break;
             }
-            // max. 11 kW per car
-            // TODO make upper limit configurable !!!
             // Set charging request
-            if (remaining_power_kW >= 11.0) {
-                ev->set_current_charging_power(11.0);
+            if (remaining_power_kW >= Global::get_ev_max_charging_power_kW()) {
+                ev->set_current_charging_power(Global::get_ev_max_charging_power_kW());
             } else {
                 ev->set_current_charging_power(remaining_power_kW);
             }
@@ -704,10 +702,10 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
             if (remaining_power_kW <= 0.0) {
                 break;
             }
-            // max. 11 kW per car
+            // max. 11 kW per car or Global::get_ev_max_charging_power_kW()
             // Set charging request
-            if (remaining_power_kW >= 11.0) {
-                ev->set_current_charging_power(11.0);
+            if (remaining_power_kW >= Global::get_ev_max_charging_power_kW()) {
+                ev->set_current_charging_power(Global::get_ev_max_charging_power_kW());
             } else {
                 ev->set_current_charging_power(remaining_power_kW);
             }

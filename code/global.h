@@ -230,6 +230,7 @@ class Global {
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
         static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
+        static float get_ev_max_charging_power_kW()           { return ev_max_charging_power_kW;    } ///< The maximum charging power of a simulated EV
         static bool  get_use_emission_time_series_ia()        { return use_emission_time_series_ia; } ///< Return weather the emission time series (if it is available in the data) should be used or not
         static bool  get_use_prices_time_series_ia()          { return use_prices_time_series_ia;   } ///< Return weather the electricity prices time series (if it is available in the data) should be used or not
         static bool  get_select_only_residential_buildings()  { return select_only_residential_buildings; } ///< Should only be residential buildings be considered for simulated component addition (SAC planning)?
@@ -308,6 +309,7 @@ class Global {
         static void set_ev_plugin_probability(float value);
         static void set_ev_battery_size_kWh(float value);
         static void set_ev_consumption_kWh_km(float value);
+        static void set_ev_max_charging_power_kW(float value);
         static void set_use_emission_time_series_ia(bool use);
         static void set_use_prices_time_series_ia(bool use);
         static void set_select_only_residential_buildings(bool value);
@@ -390,6 +392,7 @@ class Global {
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
         static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
+        static float ev_max_charging_power_kW;
         static bool  use_emission_time_series_ia; ///< Yes, if the emission time series (if it is available in the data) should be used or not
         static bool  use_prices_time_series_ia;   ///< Yes, if the electricity prices time series (if it is available in the data) should be used or not
         static bool  select_only_residential_buildings;
