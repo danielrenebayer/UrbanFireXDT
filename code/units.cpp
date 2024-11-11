@@ -841,6 +841,43 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     // to calculate their actions for the next step.
     //
 
+    // Part A: Update all components and set their internal variables to the new time step
+    // Component PV
+    if (has_sim_pv) {
+        sim_comp_pv->calculateCurrentFeedin(ts);
+    }
+    // Component HP
+    if (has_sim_hp) {
+        sim_comp_hp->computeNextInternalState(ts);
+    }
+    // EV Charging station (propagates the new time step to the connected vehicles)
+    if (sim_comp_cs->is_enabled()) {
+        sim_comp_cs->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+    }
+
+
+    // Part B: Make decisions using an optimization if selected
+    if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast) {
+        //
+        // 3. Get the not-shiftable loads over the prediction horizon
+        // - measurement units
+        // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
+        // - heat pump -> not shiftable part
+        // - current battery SOC
+        //if (has_sim_hp)
+        //
+        // 4. Get the shiftable loads over the prediction horizon
+        // - heat pump
+        // - EV charging station
+        //
+        // 5. Run the optimization and get the results
+        //
+        // 6. Execute the optimization results (and get actual demand values per component -> this happens anyway below)
+        // TODO ! ! !
+    }
+
+    // Part C: Compute the load at the virtual smart meter
+
     float current_load_all_rSMs_kW = 0.0;
     float total_consumption = 0.0;
     float load_pv = 0.0;
@@ -865,14 +902,12 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     //
     // 2. get PV feedin
     if (has_sim_pv) {
-        sim_comp_pv->calculateCurrentFeedin(ts);
         load_pv = sim_comp_pv->get_currentGeneration_kW();
         current_load_vSM_kW -= load_pv;
     }
     //
     // 3. get the demand of the heat pump
     if (has_sim_hp) {
-        sim_comp_hp->calculateCurrentFeedin(ts);
         load_hp = sim_comp_hp->get_currentDemand_kW();
         current_load_vSM_kW += load_hp;
         total_consumption   += load_hp;
@@ -880,9 +915,13 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     //
     // 4. get the effect of the EV charging station
     if (sim_comp_cs->is_enabled()) {
-        sim_comp_cs->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
         float max_power = sim_comp_cs->get_max_curr_charging_power_kW();
-        sim_comp_cs->set_charging_value(max_power);
+        if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
+            sim_comp_cs->set_charging_value(max_power);
+        } else {
+            // TODO: Apply action given by the optimization
+            // TODO: So geht das nicht !!! Die obige Zeile ("get_max_curr_charging_power")
+        }
         load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;
         if (load_cs > 0)
@@ -896,7 +935,11 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     //
     // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
-        sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+        if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
+            sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+        } else {
+            // TODO set charge request according to the optimization result
+        }
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();
         current_load_vSM_kW += load_bs;

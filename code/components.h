@@ -55,14 +55,14 @@ class BaseComponentSemiFlexible : public BaseComponent {
          * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
          * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
          */
-        virtual const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const = 0;
+        const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const { return &future_min_max_storage; }
 
         /**
-         * Comutes and returns the future electricity demand that is not shiftable for a component.
-         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
-         * @return: Returns a pointer to a vector storing the not shiftable demand per future time step - READ THE ATTENTION NOTICE
+         * Returns the future electricity demand that is not shiftable for the heat pump.
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls! Do NOT delete the returned object.
+         * @return: Returns a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
          */
-        virtual const std::vector<float>* get_future_unshiftable_demand() const = 0;
+        const std::vector<float>* get_future_unshiftable_demand() const { return &future_unshiftable_storage; }
 
         /**
          * Sets another horizon for the number of time steps returned by BaseComponentSemiFlexible::get_future_min_max_demand()
@@ -76,12 +76,12 @@ class BaseComponentSemiFlexible : public BaseComponent {
          * only required that we do not need to reserve / allocate a new vector with every call of
          * BaseComponentSemiFlexible::get_future_min_max_demand()
          */
-        std::vector<std::pair<float,float>>* future_min_max_storage;
+        std::vector<std::pair<float,float>> future_min_max_storage;
         /**
          * Internal storage of the object that is outputted by ComponentHP::get_future_unshiftable_demand(),
          * only required that we do not need to reserve / allocate a new vector with every call
          */
-        std::vector<float>* future_unshiftable_storage;
+        std::vector<float> future_unshiftable_storage;
         
 };
 
@@ -198,30 +198,16 @@ class ComponentHP : public BaseComponentSemiFlexible {
          */
         double get_cweek_consumption_kWh()   const { return cweek_consumption_kWh; }
         //float  get_demand_at_ts_kW(unsigned long ts) const; ///< Returns the demand of the heat pump at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
-
         using BaseComponentSemiFlexible::get_future_min_max_consumption;
-        /**
-         * Returns the minimum and maximum heat pump electr. consumption for the next n time steps (given some flexibility).
-         * The length of the resulting vector is set using ComponentHP::set_horizon_in_ts().
-         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
-         * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
-         */
-        const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const;
-
         using BaseComponentSemiFlexible::get_future_unshiftable_demand;
-        /**
-         * Returns the future electricity demand that is not shiftable for the heat pump.
-         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
-         * @return: Returns a pointer to a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
-         */
-        const std::vector<float>* get_future_unshiftable_demand() const;
+\
         //
         // update / action methods
         using BaseComponentSemiFlexible::set_horizon_in_ts;
         /**
-         * Computes the demand of the heat pump for a given time step (ignoring shiftable demand)
+         * Computes the internal state for the first / next time step with a given timestep ID as parameter.
          */
-        void calculateCurrentDemand_noshift(unsigned long ts);
+        void computeNextInternalState(unsigned long ts);
         /**
          * Computes the demand of the heat pump for a given time step and 
          * sets the current shiftable demand for the heat pump (if there is shiftable demand)
@@ -278,9 +264,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
         using BaseComponentSemiFlexible::get_future_min_max_consumption;
-        const std::vector<std::pair<float,float>>* get_future_min_max_consumption() const; ///< Calculates and returns the future min/max consumption per time step -> IMPORTANT: See notes in BaseComponentSemiFlexible::get_future_min_max_consumption
         using BaseComponentSemiFlexible::get_future_unshiftable_demand;
-        const std::vector<float>* get_future_unshiftable_demand() const; ///< Calculates and returns the future demand per time step in the horizon that is NOT shiftable. Currently always 0.
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();

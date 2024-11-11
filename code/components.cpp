@@ -19,35 +19,22 @@
 
 BaseComponentSemiFlexible::BaseComponentSemiFlexible() {
     // initialization of the cached vector
-    future_min_max_storage     = NULL;
-    future_unshiftable_storage = NULL;
     set_horizon_in_ts( Global::get_control_horizon_in_ts() );
 }
 
 BaseComponentSemiFlexible::~BaseComponentSemiFlexible() {
-    if (future_min_max_storage != NULL)
-        delete future_min_max_storage;
-    future_min_max_storage = NULL;
-    if (future_unshiftable_storage != NULL)
-        delete future_unshiftable_storage;
-    future_unshiftable_storage = NULL;
 }
 
 void BaseComponentSemiFlexible::set_horizon_in_ts(unsigned int new_horizon) {
-    if (future_min_max_storage != NULL)
-        delete future_min_max_storage;
-    future_min_max_storage = new std::vector<std::pair<float,float>>;
-    future_min_max_storage->reserve( new_horizon );
+    future_unshiftable_storage.clear();
+    future_min_max_storage.clear();
 
-    if (future_unshiftable_storage != NULL)
-        delete future_unshiftable_storage;
-    future_unshiftable_storage = new std::vector<float>;
-    future_unshiftable_storage->reserve( new_horizon );
+    future_unshiftable_storage.reserve(new_horizon);
+    future_min_max_storage.reserve(    new_horizon);
 
-    // Initialize the objects
-    for (unsigned int i = 0; i < new_horizon; i++)  {
-        future_min_max_storage->push_back(std::make_pair<float,float>(0,0));
-        future_unshiftable_storage->push_back(0.0);
+    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
+        future_unshiftable_storage[tOffset] = 0.0;
+        future_min_max_storage.emplace_back(std::make_pair<double, double>(0.0, 0.0));
     }
 }
 
@@ -485,34 +472,24 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     cweek_consumption_kWh = 0.0;
 }
 
-/*float ComponentHP::get_demand_at_ts_kW(unsigned long ts) const {
-    if (ts <= 0 || ts > Global::get_n_timesteps()) {
-        return 0.0;
-    }
-    return profile_data[ts - 1] * scaling_factor;
-}*/
-
-const std::vector<std::pair<float,float>>* ComponentHP::get_future_min_max_consumption() const {
-    for (unsigned int step = 0; step < future_min_max_storage->size(); step++) {
-        // TODO
-    }
-    return future_min_max_storage;
-}
-
-const std::vector<float>* ComponentHP::get_future_unshiftable_demand() const {
-    // TODO !!!
-}
-
-void ComponentHP::calculateCurrentDemand_noshift(unsigned long ts) {
+void ComponentHP::computeNextInternalState(unsigned long ts) {
     unsigned long tsID = ts - 1;
+    // compute variables for future min/max consumption and information on not-shiftable consumption
+    double current_diff_kWh = 0.0;
+    for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
+        // not-shiftable part
+        future_unshiftable_storage[tOffset] = profile_data_not_shift[tsID + tOffset] ? tsID + tOffset < Global::get_n_timesteps() : 0.0;
+        // shiftable part
+        current_diff_kWh = profile_shiftable_cumsum[tsID] - total_consumption_kWh;
+        // TODO
+        //future_min_max_storage[tOffset].first = profile_data_not_shift[tsID + tOffset] ? tsID + tOffset < Global::get_n_timesteps() : 0.0;
+    }
+    //
+    // TODO
     currentDemand_kW = ( profile_data_shiftable[tsID] + profile_data_not_shift[tsID] ) * scaling_factor;
     double e = currentDemand_kW * Global::get_time_step_size_in_h();
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
-}
-
-void ComponentHP::calculateCurrentDemand_shift(unsigned long ts, float current_shiftable_demand_kW) {
-    // TODO !!!
 }
 
 void ComponentHP::resetWeeklyCounter() {
@@ -608,18 +585,6 @@ unsigned long ComponentCS::get_control_unit_id() const {
     return installation_place->get_unitID();
 }
 
-const std::vector<std::pair<float,float>>* ComponentCS::get_future_min_max_consumption() const {
-    for (unsigned int step = 0; step < future_min_max_storage->size(); step++) {
-        // TODO
-    }
-    return future_min_max_storage;
-}
-
-const std::vector<float>* ComponentCS::get_future_unshiftable_demand() const {
-    // As there is currently no non-shiftable demand for this component, we always return the default, i.e. 0
-    return future_unshiftable_storage;
-}
-
 unsigned long ComponentCS::get_possible_n_EVs() const {
     return listOfEVs.size();
 }
@@ -697,6 +662,8 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWe
         charging_power_possible_kW += ev->get_max_curr_charging_power_kW();
         charging_order_pos.push_back(ev);
     }
+
+    // TODO: Compute min and max charging demand
 }
 
 void ComponentCS::set_charging_value(float requested_power_kW) {
