@@ -287,7 +287,7 @@ bool add_expansion_to_units_random_or_data_order(
                 std::ranges::sort(
                     *listOfCUs,
                     [](ControlUnit* a, ControlUnit* b) {
-                        return a->get_location_id() <= b->get_location_id();
+                        return a->get_location_id() < b->get_location_id();
                     }
                 );
             }
