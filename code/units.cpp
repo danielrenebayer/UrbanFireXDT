@@ -116,8 +116,8 @@ Substation* Substation::GetInstancePublicID(unsigned long public_id) {
 size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
-const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
-const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW]";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
+const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 
 bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential) {
     // check, if public_id is known
@@ -539,7 +539,11 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(get_sim_comp_bs_P_kW()) + ",";
         *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
         *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
-        *retstr += to_string(get_sim_comp_cs_max_P_kW());
+        *retstr += to_string(get_sim_comp_cs_max_P_kW()) + ",";
+        *retstr += to_string(has_sim_pv) + ",";
+        *retstr += to_string(has_sim_bs) + ",";
+        *retstr += to_string(has_sim_hp) + ",";
+        *retstr += to_string(has_sim_cs);
         return retstr;
 }
 
@@ -588,7 +592,11 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         *retstr += to_string(get_sim_comp_bs_P_kW())  + ",";
         *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
         *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
-        *retstr += to_string(get_sim_comp_cs_max_P_kW());
+        *retstr += to_string(get_sim_comp_cs_max_P_kW()) + ",";
+        *retstr += to_string(has_sim_pv) + ",";
+        *retstr += to_string(has_sim_bs) + ",";
+        *retstr += to_string(has_sim_hp) + ",";
+        *retstr += to_string(has_sim_cs);
         // reset weekly counters
         sum_of_cweek_consumption_kWh         = 0.0;
         sum_of_cweek_self_cons_kWh           = 0.0;

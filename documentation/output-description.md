@@ -53,8 +53,8 @@ Folders are marked in **bold**.
 | Sum of grid feed-in [kWh]        | The sum of electricity that was fed into the grid in kWh |
 | Sum of grid demand [kWh]         | The sum of electricity that was demanded from the grid in kWh |
 | BS EFC                           | The battery equivalent full cycles (if not battery is simulated, this value defaults to 0.0) |
-| BS n_ts_empty                    | The number of time steps where the battery was empty (if not battery is simulated, this value defaults to 0.0) |
-| BS n_ts_full                     | The number of time steps where the battery was full (if not battery is simulated, this value defaults to 0.0) |
+| BS n\_ts\_empty                  | The number of time steps where the battery was empty (if not battery is simulated, this value defaults to 0.0) |
+| BS n\_ts\_full                   | The number of time steps where the battery was full (if not battery is simulated, this value defaults to 0.0) |
 | BS total E withdrawn [kWh]       | The sum of electricity that was withdrawn from the battery in kWh (if not battery is simulated, this value defaults to 0.0) - Attention: The battery might not be empty at the end of the simulation procedure |
 | Sum of HP demand [kWh]           | The sum of demanded electricity of the heat pump in kWh (if no heat pump is simulated, this value defaults to 0.0) |
 | Sum of CS demand [kWh]           | The sum of demanded electricity of the EV charging station in kWh (if no EV charging station is simulated, this value defaults to 0.0) |
@@ -66,6 +66,10 @@ Folders are marked in **bold**.
 | Sim. BS E [kWh]                  | The installed capacity in kWh of the simulated battery storage system, or 0.0 if none is present |
 | n EVs                            | The number of EVs with their home at this given unit |
 | Sim. CS max P [kW]               | The installed power in kW of the simulated EV charging station, or 0.0 if none is present |
+| Simulated PV                     | Indicates whether this control unit contains a simulated PV installation     |
+| Simulated BS                     | Indicates whether this control unit contains a simulated battery storage     |
+| Simulated HP                     | Indicates whether this control unit contains a simulated heat pump           |
+| Simulated CS                     | Indicates whether this control unit contains a simulated EV charging station |
 
 
 ## XXXX-substation-time-series.csv
