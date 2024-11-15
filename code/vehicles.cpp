@@ -30,7 +30,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     EVFSM::list_of_cars.emplace(carID, this);
     //
     // Create battery (using the secondary constructor)
-    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0, 1.0, 1.0);
+    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
     current_state_icah = EVStateIfConnAtHome::ChargingPossible;
@@ -92,6 +92,9 @@ void EVFSM::add_weekly_tour(
     if (weekday > 6)
         throw runtime_error("Error when adding a new vehicle tour: A weekday > 6 is not possible!");
     
+    if (ts_duration == 0)
+        ts_duration = 1;
+
     unsigned long this_new_tour_id = list_of_all_tours.size();
     if (list_of_all_tours.size() > 0) {
         VehicleTour* last_know_tour = list_of_all_tours.back();

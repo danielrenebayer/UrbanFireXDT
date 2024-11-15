@@ -110,6 +110,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | EV battery size kWh   | float   | no       | 30.0                 | 0.0 to inf      | The capacity of a simulated EV | no |
 | EV consumption kWh per km | float | no     |  0.2                 | 0.0 to inf      | The electricity consumption of an EV for driving 1 km | no |
 | EV max charging power | float   | no     |  11.0                  | 0.0 to inf      | The maximum charging power of a simulated EV | no |
+| EV charging efficiency | float  | no     |   1.0                  | 0.0 to 1.0      | The efficiency for charging the EV battery   | no |
 
 ### Group 3, Part D: Options applying to all components
 

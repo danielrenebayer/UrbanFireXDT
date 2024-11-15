@@ -277,6 +277,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_ev_max_charging_power_kW( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("EV charging efficiency") == 0)
+            {
+                Global::set_ev_charging_effi( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev data path")         == 0 )
             {
                 string value = scenario_dict.get_value<string>();
@@ -1634,6 +1638,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_ev_battery_size_kWh());
     PRINT_VAR(Global::get_ev_consumption_kWh_km());
     PRINT_VAR(Global::get_ev_max_charging_power_kW());
+    PRINT_VAR(Global::get_ev_charging_effi());
     // Output settings
     cout << "  Output settings:\n";
     PRINT_VAR(Global::get_compute_weekly_metrics());
