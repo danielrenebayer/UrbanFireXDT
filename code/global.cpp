@@ -166,6 +166,7 @@ bool  Global::use_prices_time_series_ia   = true;
 bool  Global::select_only_residential_buildings = false;
 uint  Global::control_horizon_in_ts       =   24;
 uint  Global::control_update_freq_in_ts   =    1;
+bool  Global::controller_allow_bs_grid_charging = false;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -1068,6 +1069,13 @@ void Global::set_controller_mode(global::ControllerMode mode) {
         cerr << "Controller mode cannot be set." << endl;
     } else {
         Global::controller_mode = mode;
+    }
+}
+void Global::set_controller_allow_bs_grid_charging(bool value) {
+    if (is_locked) {
+        cerr << "Variable controller_allow_bs_grid_charging cannot be set at the moment." << endl;
+    } else {
+        controller_allow_bs_grid_charging = value;
     }
 }
 void Global::set_annual_heat_demand_limit_fsac(float value) {

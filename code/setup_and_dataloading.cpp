@@ -314,6 +314,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_control_update_freq_in_ts( scenario_dict.get_value<unsigned int>() );
             }
+            else if ( element_name.compare("controller allow bs charging from grid")  == 0 )
+            {
+                Global::set_controller_allow_bs_grid_charging( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("select buildings with given heat demand only") == 0 )
             {
                 Global::set_select_buildings_wg_heatd_only( scenario_dict.get_value<bool>() );
@@ -1586,6 +1590,7 @@ void configld::output_variable_values() {
     PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});
     PRINT_VAR(Global::get_control_horizon_in_ts());
     PRINT_VAR(Global::get_control_update_freq_in_ts());
+    PRINT_VAR(Global::get_controller_allow_bs_grid_charging);
     // Selection settings
     cout << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});

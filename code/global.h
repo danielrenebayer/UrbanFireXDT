@@ -237,6 +237,7 @@ class Global {
         static bool  get_select_only_residential_buildings()  { return select_only_residential_buildings; } ///< Should only be residential buildings be considered for simulated component addition (SAC planning)?
         static uint  get_control_horizon_in_ts()              { return control_horizon_in_ts;       } ///< The control horizon in time steps (only if controller_mode is set to a value including optimization)
         static uint  get_control_update_freq_in_ts()          { return control_update_freq_in_ts;   } ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
+        static bool  get_controller_allow_bs_grid_charging()  { return controller_allow_bs_grid_charging; } ///< Is it possible to charge the battery from the grid?
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
         static const std::string& get_structure_database_name() { return system_db_name; }
@@ -317,6 +318,7 @@ class Global {
         static void set_select_only_residential_buildings(bool value);
         static void set_control_horizon_in_ts(unsigned int value);
         static void set_control_update_freq_in_ts(unsigned int value);
+        static void set_controller_allow_bs_grid_charging(bool value);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
         static void set_structure_database_name(std::string* fname);
@@ -401,6 +403,7 @@ class Global {
         static bool  select_only_residential_buildings;
         static uint  control_horizon_in_ts;      ///< The control horizont in time steps (only if controller_mode is set to a value including optimization)
         static uint  control_update_freq_in_ts;   ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
+        static bool  controller_allow_bs_grid_charging;
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
         static std::string system_db_name; ///< String holding the name of the database that contains the system structure
