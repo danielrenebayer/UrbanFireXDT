@@ -177,6 +177,7 @@ global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::Or
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 global::BatteryCapacityComputationMode Global::bat_capacity_comp_mode = global::BatteryCapacityComputationMode::Constant;
 global::ControllerMode Global::controller_mode = global::ControllerMode::RuleBased;
+global::ControllerOptimizationTarget Global::controller_optimization_target = global::ControllerOptimizationTarget::ElectricityCosts;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
@@ -1069,6 +1070,13 @@ void Global::set_controller_mode(global::ControllerMode mode) {
         cerr << "Controller mode cannot be set." << endl;
     } else {
         Global::controller_mode = mode;
+    }
+}
+void Global::set_controller_optimization_target(global::ControllerOptimizationTarget mode) {
+    if (is_locked) {
+        cerr << "Variable controller_optimization_target cannot be set at the moment." << endl;
+    } else {
+        controller_optimization_target = mode;
     }
 }
 void Global::set_controller_allow_bs_grid_charging(bool value) {

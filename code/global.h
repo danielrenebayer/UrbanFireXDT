@@ -141,6 +141,16 @@ namespace global {
         OptimizedWithPerfectForecast, ///< Controller using a linear optimization (gurobi) with perfect forecast
     };
 
+    /**
+     * This enum defines the possible optimization targets used inside the
+     * control units for making decissions if a optimized controller is used.
+     */
+    enum struct ControllerOptimizationTarget {
+        ElectricityCosts, ///< minimize the costs for electricity consumption (minus revenue for feedin) per control unit
+        PeakLoad,  ///< minimize the peak load per control unit
+        Emissions, ///< minimize the CO2 emissions caused by grid demand
+    };
+
     /*!
      * The string to delmitit output sections
      */
@@ -248,6 +258,7 @@ class Global {
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         static global::BatteryCapacityComputationMode get_battery_capacity_computation_mode() { return bat_capacity_comp_mode; }
         static global::ControllerMode get_controller_mode() { return controller_mode; }
+        static global::ControllerOptimizationTarget get_controller_optimization_target() { return controller_optimization_target; } ///< Returns the selected optimization target (only valid if a controller mode with optimization is selected)
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
@@ -329,6 +340,7 @@ class Global {
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
         static void set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode mode);
         static void set_controller_mode(global::ControllerMode mode);
+        static void set_controller_optimization_target(global::ControllerOptimizationTarget mode);
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
@@ -414,6 +426,7 @@ class Global {
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
         static global::BatteryCapacityComputationMode bat_capacity_comp_mode; ///< The selected mode for computing the battery capacity
         static global::ControllerMode controller_mode; ///< The mode how the control units make decisions
+        static global::ControllerOptimizationTarget controller_optimization_target;
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?

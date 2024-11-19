@@ -318,6 +318,20 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_controller_allow_bs_grid_charging( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("controller optimization target")          == 0 )
+            {
+                string selection = scenario_dict.get_value<string>();
+                if (selection == "electricity costs") {
+                    Global::set_controller_optimization_target( global::ControllerOptimizationTarget::ElectricityCosts );
+                } else if (selection == "peak load") {
+                    Global::set_controller_optimization_target( global::ControllerOptimizationTarget::PeakLoad );
+                } else if (selection == "emissions") {
+                    Global::set_controller_optimization_target( global::ControllerOptimizationTarget::Emissions );
+                } else {
+                    cerr << "Parameter 'controller optimization target' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'controller optimization target' as defined in config-json is unknown.");
+                }
+            }
             else if ( element_name.compare("select buildings with given heat demand only") == 0 )
             {
                 Global::set_select_buildings_wg_heatd_only( scenario_dict.get_value<bool>() );
@@ -1591,6 +1605,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_control_horizon_in_ts());
     PRINT_VAR(Global::get_control_update_freq_in_ts());
     PRINT_VAR(Global::get_controller_allow_bs_grid_charging);
+    PRINT_ENUM_VAR(Global::get_controller_optimization_target(), [](auto var){switch(var){case global::ControllerOptimizationTarget::ElectricityCosts: return "ElectricityCosts"; case global::ControllerOptimizationTarget::PeakLoad: return "PeakLoad"; case global::ControllerOptimizationTarget::Emissions: return "Emissions"; default: return "";}});
     // Selection settings
     cout << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
