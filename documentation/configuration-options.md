@@ -78,7 +78,6 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | expansion PV kWp static mode           | float | yes |         |  | If set to true, ignore all roof information and just add a static pv installation per roof | no |
 | expansion PV static mode profile orientation | string | no |   |  | Profile orientation if static mode is selected | no |
 | expansion PV static mode profile index | integer | no |        |  | Profile index if static mode is selected. Especially usefull if an fixed orientation is given | no |
-| expansion PV max total kWp addition    | float | no  | no max. set |  | Maximal size of all added PV installations over all control units | no |
 
 ### Group 3, Part B: Battery storage configuration
 
@@ -97,16 +96,12 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | expansion BS self-discharge per ts | float | no | 0 | 0.0 to 1.0 | Self-discharging rate in percent per time step | 
 | expansion BS power for SOC 0 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 0 in kW |  
 | expansion BS power for SOC 1 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 1 in kW | 
-| expansion BS max total E addition | float | no | no max. set |  | Upper limit for the accumulated capacity of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
-| expansion BS max total P addition | float | no | no max. set |  | Upper limit for the accumulated power of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
 
 ### Group 3, Part C: Heat pump and EV / EV charging station configuration
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
 | HP flexibility in ts  | unsigned int | no  | 1                    | 0 to inf        | The number of time steps an existing heat pump profile can be shifted (in both temporal directions) | no |
-| expansion HP max total addition | float | no |
-| expansion EV max total addition | float | no |
 | EV plugin probability | float   | no       | 0.25                 | 0.0 to 1.0      | The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded) | no |
 | EV battery size kWh   | float   | no       | 30.0                 | 0.0 to inf      | The capacity of a simulated EV | no |
 | EV consumption kWh per km | float | no     |  0.2                 | 0.0 to inf      | The electricity consumption of an EV for driving 1 km | no |
@@ -139,6 +134,11 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | select buildings with given heat demand only | bool | no | no |                 | Select only buildings where the heat consumption is given in the input database, table ‘heat\_demand\_per\_location’. If set to true, parameters `Heat consumption apo building V: slope` and `Heat consumption apo building V: intercept` will be ignored. | no |
 | annual heat demand limit for selection | float | no | -1   | -1 (for no limit) or a value between 1 and inf. | Select only buildings where the annual heat consumption is lower or equal than the given limit (in thermal kWh),  set to -1 (default) if no limit should be choosen | no |
 | select only residential buildings | bool | no | no                |                 | If set to yes, only control units representing residential properties will be selected for SAC addition | no |
+| expansion PV max total kWp addition    | float | no  | no max. set |  | Maximal size of all added PV installations over all control units | no |
+| expansion BS max total E addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the accumulated capacity of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
+| expansion BS max total P addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the accumulated power of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
+| expansion HP max total addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the total number of added heat pumps. See also `expansion PV max total kWp addition` | no |
+| expansion EV max total addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the total number of added EVs. See also `expansion PV max total kWp addition` | no |
 
 
 ## Group 4a: Selection / Deselection of the substations for addition
