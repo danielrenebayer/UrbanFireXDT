@@ -104,6 +104,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
+| HP flexibility in ts  | unsigned int | no  | 1                    | 0 to inf        | The number of time steps an existing heat pump profile can be shifted (in both temporal directions) | no |
 | expansion HP max total addition | float | no |
 | expansion EV max total addition | float | no |
 | EV plugin probability | float   | no       | 0.25                 | 0.0 to 1.0      | The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded) | no |

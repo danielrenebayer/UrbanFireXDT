@@ -249,6 +249,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_exp_pv_static_profile_idx( scenario_dict.get_value<int>() );
             }
+            else if ( element_name.compare("HP flexibility in ts") == 0 )
+            {
+                Global::set_hp_flexibility_in_ts( scenario_dict.get_value<unsigned int>() );
+            }
             else if ( element_name.compare("th. E to HP el. E conversion factor") == 0 )
             {
                 Global::set_heat_demand_thermalE_to_hpE_conv_f( scenario_dict.get_value<float>() );
@@ -1651,6 +1655,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
+    PRINT_VAR(Global::get_hp_flexibility_in_ts());
     PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
     PRINT_VAR(Global::get_heat_cons_bobv_slope());
     PRINT_VAR(Global::get_heat_cons_bobv_intercept());

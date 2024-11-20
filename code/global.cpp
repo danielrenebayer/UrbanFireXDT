@@ -153,6 +153,7 @@ float Global::inst_cost_BS_per_kWh  = 0.0;
 float Global::npv_discount_rate     = 0.0;
 unsigned int Global::npv_time_horizon  = 0;
 double Global::npv_factor_if_const  = 0.0;
+unsigned int Global::hp_flexibility_in_ts = 1;
 float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::heat_cons_bobv_slope     = 0.0;
 float Global::heat_cons_bobv_intercept = 0.0;
@@ -862,6 +863,13 @@ void Global::set_inst_cost_BS_per_kWh(float value) {
     } else {
         Global::inst_cost_BS_per_kWh = value;
         inst_cost_BS_per_kWh_set = true;
+    }
+}
+void Global::set_hp_flexibility_in_ts(unsigned int value) {
+    if (is_locked) {
+        cerr << "Global variable hp_flexibility_in_ts cannot be set at the moment!" << endl;
+    } else {
+        Global::hp_flexibility_in_ts = value;
     }
 }
 void Global::set_heat_demand_thermalE_to_hpE_conv_f(float value) {

@@ -234,6 +234,7 @@ class Global {
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
         static double get_npv_factor_if_const()       { return npv_factor_if_const; } ///< Returns the factor for multiplication in the NPV formula for the discounted revenues if the cashflow is constant
+        static unsigned int get_hp_flexibility_in_ts()        { return hp_flexibility_in_ts;       } ///< Returns the flexibility of the heat pump profiles in time steps
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_heat_cons_bobv_slope()               { return heat_cons_bobv_slope;        } ///< Parameter of linear regression (slope) for estimating annual heat consumption based on the building volume (bobv)
         static float get_heat_cons_bobv_intercept()           { return heat_cons_bobv_intercept;    } ///< Parameter of linear regression (intercept) for estimating annual heat consumption based on the building volume (bobv)
@@ -316,6 +317,7 @@ class Global {
         static void set_inst_cost_BS_per_kWh(float value);
         static void set_npv_discount_rate(float value);
         static void set_npv_time_horizon(unsigned int value);
+        static void set_hp_flexibility_in_ts(unsigned int value);
         static void set_heat_demand_thermalE_to_hpE_conv_f(float value);
         static void set_heat_cons_bobv_slope(float value);
         static void set_heat_cons_bobv_intercept(float value);
@@ -402,6 +404,7 @@ class Global {
         static float npv_discount_rate;    ///< Discount rate for the net present value computation
         static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
         static double npv_factor_if_const; ///< The NPV constant multiplication factor - no setter available
+        static unsigned int hp_flexibility_in_ts;
         static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
         static float heat_cons_bobv_slope;    ///< Parameter of linear regression (coefficient) for estimating annual heat consumption of a building based on its volume
         static float heat_cons_bobv_intercept;///< Parameter of linear regression (intercept) for estimating annual heat consumption of a building based on its volume
