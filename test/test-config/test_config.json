@@ -85,6 +85,14 @@
             "ev data path": "../test-data/ev-data/",
             "EV plugin probability": 1.0,
             "comment": "EV test; All households are equipped charging station"
+        },
+        {
+            "id": 9,
+            "expansion id": 4,
+            "controller mode": "opti with perfect forecast",
+            "control horizont in ts": 12,
+            "controller optimization target": "electricity costs",
+            "comment": "Based on ID 4 - with optimized control strategy. All households without anything equipped with a PV+BESS HP."
         }
     ],
     "Parameter Variation": [
