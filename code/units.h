@@ -23,6 +23,7 @@ class OpenSpacePVOrWind;
 
 #include "global.h"
 #include "components.h"
+#include "optimization_unit_general.hpp"
 #include "output.h"
 #include "worker_threads.hpp"
 
@@ -150,7 +151,6 @@ class ControlUnit {
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value
-        void change_control_horizon_in_ts(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts())
         void remove_sim_added_pv(); ///< Removes a simulatively added PV installation
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
@@ -177,6 +177,9 @@ class ControlUnit {
         // 3. modifiers for all created objects
         static void ResetAllInternalStates();
         static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units
+        static void ChangeControlHorizonInTS(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts()). See also `ControlUnit::change_control_horizon_in_ts()`.
+    protected:
+        void change_control_horizon_in_ts(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts()). This is protected, as the default vector used for the optimization-based control stretegies must be updated, too.
     private:
         // constant member variables (other languages might call this 'final')
         const unsigned long internal_id; ///< The internal ID of the control unit, must be sequentially
@@ -221,6 +224,8 @@ class ControlUnit {
         double sum_of_cweek_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the currently simulated week until the current time step
         // other variables that are valid from the beginning of the currently simulated week until the current time step
         float  cweek_peak_grid_demand_kW;       ///< The maximum of grid demand that occured during a time step in the current week
+        // caches for optimization
+        CUOptimization::OptimalControlCommandsOverHorizon optimization_result_cache; ///< The interal cache of the optimization result
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
@@ -241,6 +246,7 @@ class ControlUnit {
         static unsigned long st__n_CUs;
         static std::vector<ControlUnit*> st__cu_list;
         static std::map<unsigned long, unsigned long> public_to_internal_id;
+        static std::vector<double>* st__empty_vector_for_time_horizon; ///< An vector of 0.0 with the size of the current control horizon
         //static std::map<unsigned long, ControlUnit*> location_to_cu_map;
     public:
         static const std::string MetricsStringHeaderAnnual; ///< The header for the output string produced by `ControlUnit::get_metrics_string_annual()`

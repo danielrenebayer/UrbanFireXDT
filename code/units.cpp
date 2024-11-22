@@ -16,6 +16,15 @@
 #include "output.h"
 #include "sac_planning.h"
 
+#ifdef USE_GUROBI
+#include "optimization_unit_gurobi.hpp"
+auto runOptimizationForOneCU = CUOptimization::runOptimizationForOneCU_Gurobi;
+#endif
+#ifdef USE_COINOR
+#include "optimization_unit_coinor.hpp"
+auto runOptimizationForOneCU = CUOptimization::runOptimizationForOneCU_CLP;
+#endif
+
 using namespace std;
 
 
@@ -116,6 +125,7 @@ Substation* Substation::GetInstancePublicID(unsigned long public_id) {
 size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
+std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
 const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 
@@ -138,7 +148,8 @@ bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigne
 }
 
 ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential)
-    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential)
+    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential),
+      optimization_result_cache(Global::get_control_horizon_in_ts())
 {
 	//
 	// initialize instance variables
@@ -753,6 +764,7 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
 }
 
 void ControlUnit::change_control_horizon_in_ts(unsigned int new_horizon) {
+    optimization_result_cache.reset(new_horizon);
     if (has_sim_hp)
         sim_comp_hp->set_horizon_in_ts(new_horizon);
     if (has_sim_cs)
@@ -865,23 +877,83 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
 
 
     // Part B: Make decisions using an optimization if selected
-    if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast) {
+    if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast &&
+        ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
+       )
+    {
         //
-        // 3. Get the not-shiftable loads over the prediction horizon
+        // 3. Get the not-shiftable and shiftable loads over the prediction horizon
         // - measurement units
+        std::vector<float> future_resid_demand_kW(Global::get_control_horizon_in_ts());
+        for (size_t fts = 0; fts < Global::get_control_horizon_in_ts(); fts++) {
+            future_resid_demand_kW[fts] = 0.0;
+            for (MeasurementUnit* mu : *connected_units)
+                future_resid_demand_kW[fts] += mu->get_rsm_value_at_ts(ts + fts);
+        }
         // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
-        // - heat pump -> not shiftable part
-        // - current battery SOC
-        //if (has_sim_hp)
-        //
-        // 4. Get the shiftable loads over the prediction horizon
+        const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
+        if (has_sim_pv) {
+            future_pv_generation_kW = sim_comp_pv->get_future_generation_kW();
+        }
         // - heat pump
-        // - EV charging station
+        const std::vector<double>* future_hp_unshiftable_kW = st__empty_vector_for_time_horizon;
+        const std::vector<double>* future_hp_shiftable_maxE = st__empty_vector_for_time_horizon;
+        const std::vector<double>* future_hp_shiftable_minE = st__empty_vector_for_time_horizon;
+        float max_p_hp_kW = 0.0;
+        if (has_sim_hp) {
+            future_hp_unshiftable_kW = sim_comp_hp->get_future_unshiftable_demand_kW();
+            future_hp_shiftable_maxE = sim_comp_hp->get_future_max_consumption_kWh();
+            future_hp_shiftable_minE = sim_comp_hp->get_future_min_consumption_kWh();
+            max_p_hp_kW = 5.0; // TODO ! Set max hp power to the actual value !
+        }
+        // - charging station
+        float max_p_cs_kW = 0.0;
+        const std::vector<double>* future_cs_shiftable_maxE = st__empty_vector_for_time_horizon;
+        const std::vector<double>* future_cs_shiftable_minE = st__empty_vector_for_time_horizon;
+        if (has_sim_cs) {
+            future_cs_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
+            future_cs_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
+            max_p_cs_kW = 11.0; // TODO ! Set to actual max power of the heat pump !
+        }
+        // - current battery SOC
+        float current_bs_charge_kWh = 0.0;
+        float max_e_bs_kWh          = 0.0;
+        float max_p_bs_kW           = 0.0;
+        if (has_sim_bs) {
+            current_bs_charge_kWh = sim_comp_bs->get_currentCharge_kWh();
+            max_e_bs_kWh          = sim_comp_bs->get_maxE_kWh();
+            max_p_bs_kW           = sim_comp_bs->get_maxP_kW();
+        }
         //
-        // 5. Run the optimization and get the results
+        // 4. Run the optimization and get the results
+        bool opti_ret_val = runOptimizationForOneCU(
+            ts, optimization_result_cache, max_p_hp_kW, max_p_cs_kW, max_p_bs_kW, max_e_bs_kWh,
+             future_resid_demand_kW,   *future_pv_generation_kW,  *future_hp_unshiftable_kW,
+            *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
+            *future_cs_shiftable_maxE, *future_cs_shiftable_minE,
+            current_bs_charge_kWh);
+        if (!opti_ret_val) {
+            std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
+            return false;
+        }
         //
-        // 6. Execute the optimization results (and get actual demand values per component -> this happens anyway below)
-        // TODO ! ! !
+        // 5. Propagate the results to the components
+        if (has_sim_bs) {
+            sim_comp_bs->set_chargeRequest( optimization_result_cache.bs_power[0] );
+        }
+        if (has_sim_hp) {
+            sim_comp_hp->alterCurrentDemand( optimization_result_cache.hp_power[0] );
+        }
+        if (has_sim_cs) {
+            // optimization_result_cache.cs_power[0]
+            // TODO ! ! !
+        }
+    } else {
+        // If the rule-based strategy is selected, just use the current profile for the new demand
+        if (has_sim_hp)
+            sim_comp_hp->setDemandToProfileData(ts);
+        if (has_sim_cs)
+            sim_comp_cs->setDemandToProfileData(ts);
     }
 
     // Part C: Compute the load at the virtual smart meter
@@ -923,9 +995,9 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     //
     // 4. get the effect of the EV charging station
     if (sim_comp_cs->is_enabled()) {
-        float max_power = sim_comp_cs->get_max_curr_charging_power_kW();
+        float max_power = sim_comp_cs->get_max_curr_charging_power_kW(); // TODO: Why do we need this?
         if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
-            sim_comp_cs->set_charging_value(max_power);
+            sim_comp_cs->set_charging_value(max_power); // TODO: Remove this! There is already   sim_comp_cs->setDemandToProfileData(ts)   some lines above ... 
         } else {
             // TODO: Apply action given by the optimization
             // TODO: So geht das nicht !!! Die obige Zeile ("get_max_curr_charging_power")
@@ -1042,7 +1114,20 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
 }
 
 void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
+    // reserve enough space in vector of CUs
     st__cu_list.reserve(n_CUs);
+    // define static empty vector for the optimization
+    if (st__empty_vector_for_time_horizon == NULL) {
+        st__empty_vector_for_time_horizon = new std::vector<double>;
+        st__empty_vector_for_time_horizon->reserve( Global::get_control_horizon_in_ts() );
+        for (size_t fts = 0.0; fts < Global::get_control_horizon_in_ts(); fts++) {
+            (*st__empty_vector_for_time_horizon)[fts] = 0.0f;
+        }
+    }
+#ifdef USE_COINOR
+    // if CLP is used for optimization, prepare the optimization model
+    CUOptimization::prepareOrUpdateCLPModel();
+#endif
 }
 
 void ControlUnit::VacuumInstancesAndStaticVariables() {
@@ -1052,6 +1137,16 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         st__cu_list[i] = NULL;
     }
     st__n_CUs = 0;
+    // static variables
+    if (st__empty_vector_for_time_horizon != NULL) {
+        delete st__empty_vector_for_time_horizon;
+        st__empty_vector_for_time_horizon = NULL;
+    }
+/*
+#ifdef USE_COINOR
+    CUOptimization::vacuum();
+#endif
+*/
 }
 
 ControlUnit* ControlUnit::GetInstancePublicID(unsigned long public_unitID) {
@@ -1092,6 +1187,25 @@ void ControlUnit::RemoveAllSimAddedComponents() {
     for (unsigned long i = 0; i < st__n_CUs; i++) {
         st__cu_list[i]->remove_sim_added_components();
     }
+}
+
+void ControlUnit::ChangeControlHorizonInTS(unsigned int new_horizon) {
+    // Update global default variables
+    if (st__empty_vector_for_time_horizon != NULL)
+        delete st__empty_vector_for_time_horizon;
+    st__empty_vector_for_time_horizon = new std::vector<double>;
+    st__empty_vector_for_time_horizon->reserve( new_horizon );
+    for (size_t fts = 0.0; fts < new_horizon; fts++) {
+        (*st__empty_vector_for_time_horizon)[fts] = 0.0f;
+    }
+    // Call method for every register object
+    for (ControlUnit* cu : st__cu_list) {
+        cu->change_control_horizon_in_ts(new_horizon);
+    }
+#ifdef USE_COINOR
+    // if CLP is used for optimization, update the optimization model
+    CUOptimization::prepareOrUpdateCLPModel();
+#endif
 }
 
 size_t ControlUnit::GetNumberOfCUsWithSimCompPV() {

@@ -27,14 +27,17 @@ BaseComponentSemiFlexible::~BaseComponentSemiFlexible() {
 
 void BaseComponentSemiFlexible::set_horizon_in_ts(unsigned int new_horizon) {
     future_unshiftable_storage.clear();
-    future_min_max_storage.clear();
+    future_maxE_storage.clear();
+    future_minE_storage.clear();
 
     future_unshiftable_storage.reserve(new_horizon);
-    future_min_max_storage.reserve(    new_horizon);
+    future_maxE_storage.reserve(new_horizon);
+    future_minE_storage.reserve(new_horizon);
 
     for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
         future_unshiftable_storage[tOffset] = 0.0;
-        future_min_max_storage.emplace_back(std::make_pair<double, double>(0.0, 0.0));
+        future_maxE_storage[tOffset] = 0.0;
+        future_minE_storage[tOffset] = 0.0;
     }
 }
 
@@ -154,6 +157,9 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
     string ori = Global::get_exp_pv_static_profile_orientation();
     roof_sections.emplace_back(kWp, ori);
   }
+
+    // initialization of the cached vector
+    set_horizon_in_ts( Global::get_control_horizon_in_ts() );
 }
 
 ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID)
@@ -224,6 +230,9 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         std::string section_orientation = section_tuple.second;
         roof_sections.emplace_back(section_kWp, section_orientation);
     }
+
+    // initialization of the cached vector
+    set_horizon_in_ts( Global::get_control_horizon_in_ts() );
 }
 
 float ComponentPV::get_generation_at_ts_kW(unsigned long ts) const {
@@ -265,6 +274,10 @@ void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     double e = Global::get_time_step_size_in_h() * currentGeneration_kW;
     generation_cumsum_total_kWh += e;
     generation_cumsum_cweek_kWh += e;
+    // update future generation vector
+    for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
+        future_generation_kW[tOffset] = get_generation_at_ts_kW(ts + tOffset); // get_generation_at_ts_kW() returns 0.0 if outside data
+    }
 }
 
 void ComponentPV::resetWeeklyCounter() {
@@ -275,6 +288,14 @@ void ComponentPV::resetInternalState() {
     generation_cumsum_total_kWh = 0.0;
     generation_cumsum_cweek_kWh = 0.0;
     currentGeneration_kW = 0.0;
+}
+
+void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
+    future_generation_kW.clear();
+    future_generation_kW.reserve(new_horizon);
+    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
+        future_generation_kW[tOffset] = 0.0;
+    }
 }
 
 
@@ -470,24 +491,82 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     currentDemand_kW = 0;
     total_consumption_kWh = 0.0;
     cweek_consumption_kWh = 0.0;
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    state_s1 = false;
+#endif
 }
 
 void ComponentHP::computeNextInternalState(unsigned long ts) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s1) {
+        state_s1 = true;
+    } else {
+        throw std::runtime_error("Method ComponentHP::computeNextInternalState() cannot be called at the moment! Call ComponentHP::setDemandToProfileData() or ComponentHP::alterCurrentDemand() first.");
+    }
+#endif
+    //
     unsigned long tsID = ts - 1;
     // compute variables for future min/max consumption and information on not-shiftable consumption
-    double current_diff_kWh = 0.0;
+    double last_known_maxE_val = 0.0;
+    double last_known_minE_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
         // not-shiftable part
         future_unshiftable_storage[tOffset] = profile_data_not_shift[tsID + tOffset] ? tsID + tOffset < Global::get_n_timesteps() : 0.0;
         // shiftable part
-        current_diff_kWh = profile_shiftable_cumsum[tsID] - total_consumption_kWh;
-        // TODO
-        //future_min_max_storage[tOffset].first = profile_data_not_shift[tsID + tOffset] ? tsID + tOffset < Global::get_n_timesteps() : 0.0;
+        // for min profile -> left shift
+        size_t maxProfilePos = tsID + tOffset + Global::get_hp_flexibility_in_ts();
+        if (maxProfilePos < Global::get_n_timesteps()) {
+            double new_val = profile_shiftable_cumsum[maxProfilePos] - total_consumption_kWh;
+            if (new_val < 0)
+                new_val = 0.0;
+            future_maxE_storage[tOffset] = new_val;
+            last_known_maxE_val = new_val;
+        } else {
+            future_maxE_storage[tOffset] = last_known_maxE_val;
+        }
+        // for min profile -> right shift
+        if (tsID + tOffset < Global::get_hp_flexibility_in_ts()) {
+            future_minE_storage[tOffset] = 0.0;
+        } else {
+            size_t minProfilePos = tsID + tOffset - Global::get_hp_flexibility_in_ts();
+            if (minProfilePos < Global::get_n_timesteps()) {
+                double new_val = profile_shiftable_cumsum[minProfilePos] - total_consumption_kWh;
+                if (new_val < 0)
+                    new_val = 0.0;
+                future_minE_storage[tOffset] = new_val;
+                last_known_minE_val = new_val;
+            } else {
+                future_minE_storage[tOffset] = last_known_minE_val;
+            }
+        }
     }
-    //
-    // TODO
+}
+
+void ComponentHP::setDemandToProfileData(unsigned long ts) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (state_s1) {
+        state_s1 = false;
+    } else {
+        throw std::runtime_error("Method ComponentHP::setDemandToProfileData() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
+    }
+#endif
+    unsigned long tsID = ts - 1;
     currentDemand_kW = ( profile_data_shiftable[tsID] + profile_data_not_shift[tsID] ) * scaling_factor;
     double e = currentDemand_kW * Global::get_time_step_size_in_h();
+    total_consumption_kWh += e;
+    cweek_consumption_kWh += e;
+}
+
+void ComponentHP::alterCurrentDemand(float new_demand_kW) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (state_s1) {
+        state_s1 = false;
+    } else {
+        throw std::runtime_error("Method ComponentHP::alterCurrentDemand() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
+    }
+#endif
+    // TODO: Check, if new_demand_kW is above the actual upper limit or below lower limit of the heat pump ... but how?
+    double e = new_demand_kW * Global::get_time_step_size_in_h();
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
 }
@@ -664,6 +743,14 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWe
     }
 
     // TODO: Compute min and max charging demand
+}
+
+void ComponentCS::setDemandToProfileData(unsigned long ts) {
+    // TODO IMPLEMENT
+}
+
+void ComponentCS::alterCurrentDemand(float new_demand) {
+    // TODO IMPLEMENT
 }
 
 void ComponentCS::set_charging_value(float requested_power_kW) {
