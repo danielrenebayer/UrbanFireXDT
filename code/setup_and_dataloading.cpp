@@ -1124,7 +1124,13 @@ int load_data_from_central_database_callback_prices(void* data, int argc, char**
         if (argv[1] == NULL) {
             ((float*) (((float**)data)[0]) )[pos] = 0.0;
         } else {
-            ((float*) (((float**)data)[0]) )[pos] = stof(argv[1]);
+            float local_price = stof(argv[1]);
+            if (local_price < Global::get_feed_in_tariff()) {
+                cerr << "Warning: local energy price is lower than the feed-in tariff at time step " << callcounter << ".\n";
+                cerr << "Setting it to 1.05%% of the feed-in tariff." << endl;
+                local_price = Global::get_feed_in_tariff() * 1.05f;
+            }
+            ((float*) (((float**)data)[0]) )[pos] = local_price;
         }
         if (argv[2] == NULL) {
             ((float*) (((float**)data)[1]) )[pos] = 0.0;
