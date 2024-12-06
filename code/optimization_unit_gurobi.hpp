@@ -15,6 +15,10 @@
 
 namespace CUOptimization {
 
+    namespace {
+        inline GRBEnv* env; ///< The global gurobi environment
+    }
+
     /**
      * Initializes and executes the optimization for one control unit using gurobi optimizer (license required).
      *
@@ -53,10 +57,7 @@ namespace CUOptimization {
     )
     {
         try {
-            GRBEnv env = GRBEnv(true);
-            env.set(GRB_IntParam_OutputFlag, 0); // disable output
-            env.start();
-            GRBModel model = GRBModel(env);
+            GRBModel model = GRBModel(*env);
             // create the variables
             const unsigned int T  = Global::get_control_horizon_in_ts(); // number of time steps to consider
             const unsigned int Tp = T + 1; // required for the e_bs
@@ -226,6 +227,23 @@ namespace CUOptimization {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Initializes the global environment.
+     */
+    void initializeGurobiEnvironment() {
+        env = new GRBEnv(true);
+        env->set(GRB_IntParam_OutputFlag, 0); // disable output
+        env->start();
+    }
+
+    /**
+     * Deletes all global variables.
+     */
+    void vacuum() {
+        delete env;
+        env = NULL;
     }
 
 }

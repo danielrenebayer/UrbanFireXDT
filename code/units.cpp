@@ -1130,6 +1130,9 @@ void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
             (*st__empty_vector_for_time_horizon)[fts] = 0.0f;
         }
     }
+#ifdef USE_GUROBI
+    CUOptimization::initializeGurobiEnvironment();
+#endif
 #ifdef USE_COINOR
     // if CLP is used for optimization, prepare the optimization model
     CUOptimization::prepareOrUpdateCLPModel();
@@ -1148,6 +1151,9 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         delete st__empty_vector_for_time_horizon;
         st__empty_vector_for_time_horizon = NULL;
     }
+#ifdef USE_GUROBI
+    CUOptimization::vacuum();
+#endif
 /*
 #ifdef USE_COINOR
     CUOptimization::vacuum();
