@@ -565,8 +565,18 @@ void ComponentHP::alterCurrentDemand(float new_demand_kW) {
         throw std::runtime_error("Method ComponentHP::alterCurrentDemand() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
     }
 #endif
-    // TODO: Check, if new_demand_kW is above the actual upper limit or below lower limit of the heat pump ... but how?
     double e = new_demand_kW * Global::get_time_step_size_in_h();
+    double new_total_e = total_consumption_kWh + e;
+    // check, if the new demand is within the min/max bands
+    double unshiftable_e = future_unshiftable_storage[0] * Global::get_time_step_size_in_h();
+    if (new_total_e - unshiftable_e > future_maxE_storage[0] ||
+        new_total_e - unshiftable_e < future_minE_storage[0]
+    ) {
+        std::cerr << "Warning in Component HP: Heat consumption violating bounds!" << std::endl;
+    }
+    // update current demand
+    currentDemand_kW = new_demand_kW;
+    // update cumulative variables
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
 }
