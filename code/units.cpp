@@ -222,6 +222,8 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     // Generate new instance for the EV charging station (regardless if it is required or not)
     sim_comp_cs = new ComponentCS(this);
 
+    ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
+
     worker_thread = NULL;
 }
 
@@ -857,6 +859,8 @@ void ControlUnit::reset_internal_state() {
         sim_comp_hp->resetInternalState();
     }
     sim_comp_cs->resetInternalState();
+    //
+    ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
 }
 
 bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
@@ -887,6 +891,12 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
         ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
        )
     {
+        // Check number of time steps passed since last optimization run
+        ts_since_last_opti_run++;
+        if (ts_since_last_opti_run >= Global::get_control_update_freq_in_ts()) {
+            // run optimization in this case
+            // TODO: indention!
+
         //
         // 3. Get the not-shiftable and shiftable loads over the prediction horizon
         // - measurement units
@@ -942,6 +952,13 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
             std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
             return false;
         }
+
+        } else {
+            // else (i.e., no opti executed in this position):
+            // just move the cache by one
+            optimization_result_cache.shiftVectorsByOnePlace();
+        }
+
         //
         // 5. Propagate the results to the components
         if (has_sim_bs) {

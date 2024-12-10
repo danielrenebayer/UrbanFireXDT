@@ -226,6 +226,7 @@ class ControlUnit {
         float  cweek_peak_grid_demand_kW;       ///< The maximum of grid demand that occured during a time step in the current week
         // caches for optimization
         CUOptimization::OptimalControlCommandsOverHorizon optimization_result_cache; ///< The interal cache of the optimization result
+        unsigned long ts_since_last_opti_run; ///< Number of time steps since the last optimization run
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //
         float current_load_vSM_kW; ///< Current load at the virtual smart meter
