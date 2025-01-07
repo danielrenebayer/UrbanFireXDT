@@ -687,26 +687,35 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
      * This function also creates the control units.
      * 
      * Columns:
-     * 0       1              2      3
-     * UnitID  substation_id  LocID  has_residential_buildings
+     * 0       1              2      3                          4
+     * UnitID  substation_id  LocID  has_residential_buildings  n_flats
      * 
      */
-    if (argc != 4) {
-        cerr << "Number of arguments not equal to 4 for one row!" << endl;
+    if (argc != 5) {
+        cerr << "Number of arguments not equal to 5 for one row!" << endl;
         return 1;
     }
-    unsigned long current_cu_id    = stoul(argv[0]);
-    unsigned long conn_to_subst_id = stoul(argv[1]);
-    unsigned long location_id      = stoul(argv[2]);
-    bool residential = (location_id > 0) && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
+    static unsigned long last_valid_cu_id = 0;
     try {
-        if (!ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential)) {
+        unsigned long current_cu_id    = stoul(argv[0]);
+        unsigned long conn_to_subst_id = stoul(argv[1]);
+        unsigned long location_id      = stoul(argv[2]);
+        unsigned int  n_flats          =  stoi(argv[4]);
+        bool residential = (location_id > 0) && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
+        if (!ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential, n_flats)) {
             cerr << "Error when creating control unit with id " << current_cu_id << endl;
             cerr << "Is the ID of the control unit unique?" << endl;
             return 1;
         }
+        last_valid_cu_id = current_cu_id;
+    } catch (std::invalid_argument const& e) {
+        cerr << "Non-parsable integer or unsigned long detected in list_of_control_units. Last valid ID = " << last_valid_cu_id << std::endl;
+        return 1;
+    } catch (std::out_of_range const& e) {
+        cerr << "An integer is out of bounds in list_of_control_units. Last valid ID = " << last_valid_cu_id << std::endl;
+        return 1;
     } catch (runtime_error& e) {
-        cerr << "Error when creating control unit with id " << current_cu_id << endl;
+        cerr << "Error when creating control unit. Last valid ID = " << last_valid_cu_id << endl;
         cerr << "Details:" << endl;
         cerr << e.what() << endl;
         return 1;
@@ -1251,7 +1260,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 2. CUs
-        string sql_queryD = "SELECT A.UnitID, A.substation_id, A.LocID, B.has_residential_buildings FROM list_of_control_units AS A LEFT JOIN (SELECT LocID, has_residential_buildings FROM address_data) AS B ON A.LocID = B.LocID ORDER BY UnitID;";
+        string sql_queryD = "SELECT A.UnitID, A.substation_id, A.LocID, B.has_residential_buildings, A.n_flats FROM list_of_control_units AS A LEFT JOIN (SELECT LocID, has_residential_buildings FROM address_data) AS B ON A.LocID = B.LocID ORDER BY UnitID;";
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {

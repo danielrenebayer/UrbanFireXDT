@@ -97,9 +97,18 @@ class ControlUnit {
          * Instantiates a new control unit.
          * Returns false, if the unitID is already defined.
          */
-        static bool InstantiateNewControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential);
+        static bool InstantiateNewControlUnit(unsigned long unitID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats);
     private:
-        ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential);
+        /**
+         * Constructs a new control unit.
+         * @param internalID: The internal ID of the new unit. MUST be sequential and unique.
+         * @param publicID: The ID of the unit as given in the system structure database.
+         * @param substation_id: The ID of the substation as given in the system structure database.
+         * @param locationID: The ID of the location where the control unit will be.
+         * @param residential: True, if it is a representation of a residential building.
+         * @param n_flats: The number of (residential) flats / apartments inside the represented building.
+         */
+        ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats);
     public:
         ~ControlUnit();
         void add_unit(MeasurementUnit* unit);

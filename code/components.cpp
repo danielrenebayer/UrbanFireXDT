@@ -491,6 +491,14 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     currentDemand_kW = 0;
     total_consumption_kWh = 0.0;
     cweek_consumption_kWh = 0.0;
+    // computation of rated power (without AUX heating mode)
+    // = max of shiftable demand time series
+    rated_power_kW = 0.0;
+    for (unsigned long tsID = 0; tsID < Global::get_n_timesteps(); tsID++) {
+        float np = profile_data_shiftable[tsID] * scaling_factor;
+        if (np > rated_power_kW)
+            rated_power_kW = np;
+    }
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     state_s1 = false;
 #endif
@@ -620,16 +628,18 @@ void ComponentHP::VacuumStaticVariables() {
 //         ComponentCS           //
 // ----------------------------- //
 
-ComponentCS::ComponentCS(ControlUnit* calling_control_unit) :
-    max_charging_power(11),
+ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_of_flats) :
     installation_place(calling_control_unit)
-{ // TODO: make max charging power configurable, or at least dependent of the number of flats in a building
+{
     enabled = false;
     current_demand_kW = 0.0;
     total_consumption_kWh  = 0.0;
     cweek_consumption_kWh  = 0.0;
     charging_power_required_kW = 0.0;
     charging_power_possible_kW = 0.0;
+
+    // Computation of maximum charging power
+    max_charging_power = 11.0 * number_of_flats;
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     is_callable_setCarStatesForTimeStep = true;

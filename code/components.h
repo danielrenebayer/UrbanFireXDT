@@ -237,6 +237,10 @@ class ComponentHP : public BaseComponentSemiFlexible {
          * Returns the total consumption from the beginning of the current week up to the latest executed step in kWh.
          */
         double get_cweek_consumption_kWh()   const { return cweek_consumption_kWh; }
+        /**
+         * Returns the (simulated) rated power of the heat pump **without** the AUX heating.
+         */
+        float get_rated_power_without_AUX()  const { return rated_power_kW; }
         //float  get_demand_at_ts_kW(unsigned long ts) const; ///< Returns the demand of the heat pump at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
@@ -266,6 +270,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         const float* profile_data_shiftable; ///< Reference to the profile for the     shiftable part of the demand, should be one of global::hp_profiles_shiftable
         const float* profile_data_not_shift; ///< Reference to the profile for the not-shiftable part of the demand, should be one of global::hp_profiles_not_shift
         const double* profile_shiftable_cumsum; ///< Reference to the cumsum of the profile_data_shiftable
+        float rated_power_kW; ///< Rated power of the heat pump in kW
         // member variables that can change over time
         float currentDemand_kW;
         double total_consumption_kWh; ///< Total consumption since the beginning of the simulation period
@@ -290,7 +295,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
  */
 class ComponentCS : public BaseComponentSemiFlexible {
     public:
-        ComponentCS(ControlUnit* calling_control_unit);
+        ComponentCS(ControlUnit* calling_control_unit, unsigned int number_of_flats); ///< Constructs a new Charging Station component. There will be one charging point per flat. @param calling_control_unit: Reference to the calling unit, @param number_of_flats: The number of flats connected to the charging station
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
@@ -326,8 +331,8 @@ class ComponentCS : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::set_horizon_in_ts;
     private:
         // constant members
-        const float max_charging_power;
         const ControlUnit* installation_place;
+        float max_charging_power; // Not const, as the value might not be known on pre-initialization
         // variable members, constant during one simulation run
         bool enabled;
         std::vector<EVFSM*> listOfEVs;

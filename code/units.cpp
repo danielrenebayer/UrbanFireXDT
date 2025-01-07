@@ -129,7 +129,7 @@ std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
 const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 
-bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential) {
+bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats) {
     // check, if public_id is known
     if (public_to_internal_id.contains(public_unitID))
         return false;
@@ -140,14 +140,14 @@ bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigne
     // register public id
     public_to_internal_id.insert(std::pair<unsigned long, unsigned long>(public_unitID, new_internal_id));
     // create instance
-    ControlUnit* new_obj = new ControlUnit(new_internal_id, public_unitID, substation_id, locationID, residential);
+    ControlUnit* new_obj = new ControlUnit(new_internal_id, public_unitID, substation_id, locationID, residential, n_flats);
     // add to list of instances
     st__cu_list.push_back(new_obj);
     //
     return true;
 }
 
-ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential)
+ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats)
     : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential),
       optimization_result_cache(Global::get_control_horizon_in_ts())
 {
@@ -220,7 +220,7 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     is_sim_expanded = false;
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
-    sim_comp_cs = new ComponentCS(this);
+    sim_comp_cs = new ComponentCS(this, n_flats);
 
     ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
 
@@ -920,7 +920,7 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
             future_hp_unshiftable_kW = sim_comp_hp->get_future_unshiftable_demand_kW();
             future_hp_shiftable_maxE = sim_comp_hp->get_future_max_consumption_kWh();
             future_hp_shiftable_minE = sim_comp_hp->get_future_min_consumption_kWh();
-            max_p_hp_kW = 5.0; // TODO ! Set max hp power to the actual value !
+            max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
         }
         // - charging station
         float max_p_cs_kW = 0.0;
@@ -929,7 +929,7 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
         if (has_sim_cs) {
             future_cs_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
             future_cs_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
-            max_p_cs_kW = 11.0; // TODO ! Set to actual max power of the heat pump !
+            max_p_cs_kW = sim_comp_cs->get_max_P_kW();
         }
         // - current battery SOC
         float current_bs_charge_kWh = 0.0;
