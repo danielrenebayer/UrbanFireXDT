@@ -77,7 +77,8 @@ Documentation of the configuration database in detail
 | UnitID        | INTEGER  | ID of the control unit, may start with 1 and may be numbered consecutively (not mandatory anymore) |
 | substation_id | INTEGER  | ID of the substation to which this control unit is connected to [Foreign key] |
 | LocID         | INTEGER  | ID of the location where the control unit is located at [Foreign key]  |
-| has_wbx       | INTEGER  | Holds the value 1, iff there is a wallbox connected to this control unit |
+| has_cs        | INTEGER  | Holds the value 1, iff there is a charging station already connected to this control unit
+| n_flats       | INTEGER  | The number of flats in a building / for a location (estimation or real value) |
 
 
 ## Table list_of_measurement_units
