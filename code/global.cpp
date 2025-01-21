@@ -102,6 +102,8 @@ void global::print_uninitialized_variables() {
 
 bool Global::is_locked            = false;
 unsigned long Global::n_timesteps = 0;
+unsigned long Global::first_timestep= 0;
+unsigned long Global::last_timestep = 0;
 unsigned long Global::n_substations = 0;
 unsigned long Global::n_CUs       = 0;
 unsigned long Global::n_MUs       = 0;
@@ -186,6 +188,8 @@ string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
 //
 bool Global::n_timesteps_init      = false;
+bool Global::first_timestep_init   = false;
+bool Global::last_timestep_init    = false;
 bool Global::n_substations_init    = false;
 bool Global::n_CUs_init            = false;
 bool Global::n_MUs_init            = false;
@@ -408,6 +412,22 @@ void Global::PrintUninitializedVariables() {
     }
 }
 
+bool Global::CheckTimeRelatedVariablesInitState() {
+    if (!n_timesteps_init) {
+        cout << "Variable n_timesteps not initialized." << endl;
+        return false;
+    }
+    if (!ts_start_str_init) {
+        cout << "Variable ts_start_str not initialized." << endl;
+        return false;
+    }
+    if (!ts_end_str_init) {
+        cout << "Variable ts_end_str not initialized." << endl;
+        return false;
+    }
+    return true;
+}
+
 void Global::LockAllVariables() {
     Global::is_locked = true;
 }
@@ -426,6 +446,22 @@ void Global::set_n_timesteps(unsigned long n_timesteps) {
     } else {
         Global::n_timesteps = n_timesteps;
         Global::n_timesteps_init = true;
+    }
+}
+void Global::set_first_timestep(unsigned long ts) {
+    if (first_timestep_init) {
+        cerr << "Global variable first_timestep is already initialized! It can only be initialized once, regardless of the lock-state." << endl;
+    } else {
+        Global::first_timestep = ts;
+        Global::first_timestep_init = true;
+    }
+}
+void Global::set_last_timestep(unsigned long ts) {
+    if (last_timestep_init) {
+        cerr << "Global variable last_timestep is already initialized! It can only be initialized once, regardless of the lock-state." << endl;
+    } else {
+        Global::last_timestep = ts;
+        Global::last_timestep_init = true;
     }
 }
 void Global::set_n_substations(unsigned long n_substations) {

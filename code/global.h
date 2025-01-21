@@ -174,12 +174,15 @@ class Global {
         //
         static bool AllVariablesInitialized();
         static void PrintUninitializedVariables(); ///< Prints all variable names to stdout, that are not initialized
+        static bool CheckTimeRelatedVariablesInitState(); ///< Returns true if all time-related variables have been initialized. If not, it will return false and prints out all missing variables. It does not include Global::first_timestep and Global::last_timestep (as this checking function is considered to be executed before the calculation of both values).
         //
         static void LockAllVariables();   ///< No (set) variable can be overwritten after this call, unset variables can still be set / overwritten once
         static void UnlockAllVariables(); ///< All variables can now be overwritten
         //
         // getter methods
         static unsigned long get_n_timesteps()          { return n_timesteps; }
+        static unsigned long get_first_timestep()       { return first_timestep;} //!< Returns the first timestep (starting at 1) in the simulation range
+        static unsigned long get_last_timestep()        { return last_timestep; } //!< Returns the last (inclusive) timestep (starting at 1) in the simulation range
         static unsigned long get_n_substations()        { return n_substations; }
         static unsigned long get_n_CUs()                { return n_CUs; }
         static unsigned long get_n_MUs()                { return n_MUs; }
@@ -269,6 +272,8 @@ class Global {
         static void increment_seed(); ///< Thus class method increments the current seed at anytime during the simulation, no lock is applied to this function.
         // setter methods
         static void set_n_timesteps(unsigned long n_timesteps);
+        static void set_first_timestep(unsigned long ts);
+        static void set_last_timestep(unsigned long ts);
         static void set_n_substations(unsigned long n_substations);
         static void set_n_CUs(unsigned long n_CUs);
         static void set_n_MUs(unsigned long n_MUs);
@@ -353,6 +358,8 @@ class Global {
         static bool is_locked;             ///< if set to true, values cannot be changed anymore
         // variables
         static unsigned long n_timesteps;  ///< Total number of timesteps for which data is available
+        static unsigned long first_timestep;
+        static unsigned long last_timestep;
         static unsigned long n_substations;///< Total number of substations for which data is available
         static unsigned long n_CUs;        ///< Total number of control units for which data is available
         static unsigned long n_MUs;        ///< Total number of meausrement units for which data is available
@@ -438,6 +445,8 @@ class Global {
         // boolean values holding information if the correspoding 
         // variable has been set or not
         static bool n_timesteps_init;
+        static bool first_timestep_init;
+        static bool last_timestep_init;
         static bool n_substations_init;
         static bool n_CUs_init;
         static bool n_MUs_init;
