@@ -35,38 +35,16 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
 
     // get time data
-    unsigned long n_tsteps = Global::get_n_timesteps();
-    struct tm* tm_start = Global::get_ts_start_tm();
-    struct tm* tm_end   = Global::get_ts_end_tm();
-    //time_t t_start = mktime(tm_start);
-    //time_t t_end   = mktime(tm_end);
+    unsigned long ts_start = Global::get_first_timestep();
+    unsigned long ts_end   = Global::get_last_timestep();
     struct tm* current_tm;
     unsigned int last_step_weekday = 0; // required to identify new weeks
     unsigned long week_number = 1;
     //
-    bool sim_started = false; // gets true, if simulation range (as given by tm_start) has been reached
     // main loop
-    for (unsigned long ts = 1; ts <= n_tsteps; ts++) {
+    for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
         // get current time as struct tm
         current_tm = global::time_localtime_str->at(ts - 1);
-        // jump time steps if they are not inside the simulation range
-        if (sim_started) {
-            //if (difftime(t_end, mktime(current_tm)) <= 0) {
-            if (compare_struct_tm(current_tm, tm_end) >= 0) {
-                if (output_prefix[0] == '\0')
-                    std::cout << output_prefix << "\rEnd of the simulation range (as defined in the scenario) has been reached." << std::endl;
-                break;
-            }
-        } else {
-            //if (difftime(mktime(current_tm), t_start) >= 0) {
-            if (compare_struct_tm(current_tm, tm_start) >= 0) {
-                sim_started = true;
-                if (output_prefix[0] == '\0')
-                    std::cout << output_prefix << "Start of the simulation range (as defined in the scenario) is reached." << std::endl;
-            } else {
-                continue;
-            }
-        }
         //
         // day and time handling
         unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday

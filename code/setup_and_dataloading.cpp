@@ -1237,6 +1237,41 @@ bool configld::load_data_from_central_database(const char* filepath) {
         }
         //
         global::time_info_init = true;
+        //
+        // Process time-related data
+        // -- check if time-related variables have been initialized
+        if (!Global::CheckTimeRelatedVariablesInitState()) {
+            std::cerr << "A time-related variable has not been initialized! Stopping." << std::endl;
+            return false;
+        }
+        unsigned long n_tsteps = Global::get_n_timesteps();
+        struct tm* tm_start = Global::get_ts_start_tm();
+        struct tm* tm_end   = Global::get_ts_end_tm();
+        unsigned long first_sim_ts = 0;
+        unsigned long last_sim_ts = 0;
+        bool sim_started = false; // gets true, if simulation range (as given by tm_start) has been reached
+        for (unsigned long tsID = 0; tsID < n_tsteps; tsID++) {
+            // get current time as struct tm
+            struct tm* current_tm = global::time_localtime_str->at(tsID);
+            // jump time steps if they are not inside the simulation range
+            if (sim_started) {
+                if (compare_struct_tm(current_tm, tm_end) >= 0) {
+                    last_sim_ts = tsID + 1;
+                    std::cout << "Last step in simulation run(s) = " << last_sim_ts << "\n";
+                    break;
+                }
+            } else {
+                if (compare_struct_tm(current_tm, tm_start) >= 0) {
+                    sim_started = true;
+                    first_sim_ts = tsID + 1;
+                    std::cout << "First step in simulation run(s) = " << first_sim_ts << "\n";
+                } else {
+                    continue;
+                }
+            }
+        }
+        Global::set_first_timestep(first_sim_ts);
+        Global::set_last_timestep(last_sim_ts);
 
         //
         // Initialize global list of units (i.e. control unit, measurement unit and substation)
