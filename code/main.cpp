@@ -247,7 +247,7 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
-    EVFSM::VaccuumStaticVariables();
+    EVFSM::VacuumStaticVariables();
     ComponentHP::VacuumStaticVariables();
 	MeasurementUnit::VacuumInstancesAndStaticVariables();
 	ControlUnit::VacuumInstancesAndStaticVariables();

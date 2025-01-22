@@ -90,7 +90,7 @@ class EVFSM {
         static const std::map<unsigned long, EVFSM*>& GetArrayOfInstances() { return list_of_cars; } ///< Returns the map of all existing instances. The objects itself are mutable, but the map reference is const.
         static unsigned long GetNumberOfEVs() { return list_of_cars.size(); }
         static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
-        static void VaccuumStaticVariables();
+        static void VacuumStaticVariables();
         static void SetSeed(unsigned int seed); ///< Sets the seed for the EVFSM-class random number generator
 
     private:

@@ -242,7 +242,7 @@ void EVFSM::AddWeeklyTour(
     EVFSM::list_of_cars.at(carID)->add_weekly_tour(weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
 }
 
-void EVFSM::VaccuumStaticVariables() {
+void EVFSM::VacuumStaticVariables() {
     EVFSM::list_of_cars.clear();
 }
 
