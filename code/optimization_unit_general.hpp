@@ -33,6 +33,19 @@ namespace CUOptimization {
                 cs_power.assign(new_horizon, 0.0);
                 bs_power.assign(new_horizon, 0.0);
             }
+
+            /**
+             * Removes the first element, shifts the second one to the first place and so on and
+             * adds a 0.0 at the last place.
+             */
+            void shiftVectorsByOnePlace() {
+                std::move(hp_power.begin() + 1, hp_power.end(), hp_power.begin());
+                hp_power.back() = 0.0;
+                std::move(cs_power.begin() + 1, cs_power.end(), cs_power.begin());
+                cs_power.back() = 0.0;
+                std::move(bs_power.begin() + 1, bs_power.end(), bs_power.begin());
+                bs_power.back() = 0.0;
+            }
     };
 }
 
