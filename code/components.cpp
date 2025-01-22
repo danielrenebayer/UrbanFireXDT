@@ -26,16 +26,13 @@ BaseComponentSemiFlexible::~BaseComponentSemiFlexible() {
 }
 
 void BaseComponentSemiFlexible::set_horizon_in_ts(unsigned int new_horizon) {
-    future_unshiftable_storage.clear();
     future_maxE_storage.clear();
     future_minE_storage.clear();
 
-    future_unshiftable_storage.reserve(new_horizon);
     future_maxE_storage.reserve(new_horizon);
     future_minE_storage.reserve(new_horizon);
 
     for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
-        future_unshiftable_storage[tOffset] = 0.0;
         future_maxE_storage[tOffset] = 0.0;
         future_minE_storage[tOffset] = 0.0;
     }
@@ -468,6 +465,12 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     : yearly_electricity_consumption_kWh(yearly_econs_kWh),
       scaling_factor(yearly_econs_kWh/1000.0f)
 {
+    // initialize the unshiftable load storage
+    future_unshiftable_storage.reserve( Global::get_control_horizon_in_ts() );
+    for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
+        future_unshiftable_storage[tOffset] = 0.0;
+    }
+
     // select heat pump profile static or random
     size_t this_hp_profile_idx;
     if (Global::get_exp_profile_mode() == global::ExpansionProfileAllocationMode::AsInData) {
@@ -502,6 +505,15 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     state_s1 = false;
 #endif
+}
+
+void ComponentHP::set_horizon_in_ts(unsigned int new_horizon) {
+    BaseComponentSemiFlexible::set_horizon_in_ts(new_horizon);
+    future_unshiftable_storage.clear();
+    future_unshiftable_storage.reserve(new_horizon);
+    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
+        future_unshiftable_storage[tOffset] = 0.0;
+    }
 }
 
 void ComponentHP::computeNextInternalState(unsigned long ts) {
