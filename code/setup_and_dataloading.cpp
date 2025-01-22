@@ -1418,7 +1418,12 @@ bool configld::load_data_from_central_database(const char* filepath) {
         for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
             double cumsum = 0.0;
             for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
-                cumsum += new_hp_profile_s_array[hp_idx][l];
+                // If first simulation time step >= current time step l, set added value to 0
+                if (l < Global::get_first_timestep() - 1) { // l is the ID, not the timestep number (starting at 1)
+                    cumsum = 0.0;
+                } else {
+                    cumsum += new_hp_profile_s_array[hp_idx][l];
+                }
                 new_hp_profile_s_cumsum[hp_idx][l] = cumsum;
             }
         }
