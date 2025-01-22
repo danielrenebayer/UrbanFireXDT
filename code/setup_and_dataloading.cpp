@@ -1249,7 +1249,8 @@ bool configld::load_data_from_central_database(const char* filepath) {
         struct tm* tm_end   = Global::get_ts_end_tm();
         unsigned long first_sim_ts = 0;
         unsigned long last_sim_ts = 0;
-        bool sim_started = false; // gets true, if simulation range (as given by tm_start) has been reached
+        bool sim_started  = false; // gets true, if simulation range (as given by tm_start) has been reached
+        bool sim_finished = false; // gets true, if the enf of the simulation range (as given by tm_end) has been reached
         for (unsigned long tsID = 0; tsID < n_tsteps; tsID++) {
             // get current time as struct tm
             struct tm* current_tm = global::time_localtime_str->at(tsID);
@@ -1257,19 +1258,24 @@ bool configld::load_data_from_central_database(const char* filepath) {
             if (sim_started) {
                 if (compare_struct_tm(current_tm, tm_end) >= 0) {
                     last_sim_ts = tsID + 1;
-                    std::cout << "Last step in simulation run(s) = " << last_sim_ts << "\n";
+                    sim_finished = true;
                     break;
                 }
             } else {
                 if (compare_struct_tm(current_tm, tm_start) >= 0) {
                     sim_started = true;
                     first_sim_ts = tsID + 1;
-                    std::cout << "First step in simulation run(s) = " << first_sim_ts << "\n";
                 } else {
                     continue;
                 }
             }
         }
+        // set last time step to end of simulation if not reached previously
+        if (!sim_finished) {
+            last_sim_ts = n_tsteps;
+        }
+        std::cout << "Last step in simulation run(s)  = " << std::setw(6) << last_sim_ts << "\n";
+        std::cout << "First step in simulation run(s) = " << std::setw(6) << first_sim_ts << "\n";
         Global::set_first_timestep(first_sim_ts);
         Global::set_last_timestep(last_sim_ts);
 
