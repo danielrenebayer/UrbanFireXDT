@@ -77,14 +77,14 @@ void CUControllerThreadGroupManager::stopAllWorkerThreads() {
     }
 }
 
-void CUControllerThreadGroupManager::executeOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
+void CUControllerThreadGroupManager::executeOneStep(unsigned long ts) {
     // (Re-)Initialize the latch object
     if (all_workers_finished_latch != NULL)
         delete all_workers_finished_latch;
     all_workers_finished_latch = new std::latch(Global::get_n_threads());
     // Notify all threads to start working
     for (CUControllerWorkerThread* wt : worker_threads) {
-        wt->executeOneStepForAllConnCUs(ts, dayOfWeek_l, hourOfDay_l);
+        wt->executeOneStepForAllConnCUs(ts);
     }
 }
 
@@ -167,9 +167,7 @@ void CUControllerWorkerThread::stop() {
 }
 
 void CUControllerWorkerThread::executeOneStepForAllConnCUs(
-    unsigned long ts,
-    unsigned int dayOfWeek_l,
-    unsigned int hourOfDay_l /*,
+    unsigned long ts /*,
     const std::vector<ControlUnit*>* subsection *//* = NULL */)
 {
     {
@@ -180,8 +178,6 @@ void CUControllerWorkerThread::executeOneStepForAllConnCUs(
         atomic_flag_idling = false;
         // set the variables storing the parameters for calling ControlUnit::compute_next_value()
         atomic_param_ts          = ts;
-        atomic_param_dayOfWeek_l = dayOfWeek_l;
-        atomic_param_hourOfDay_l = hourOfDay_l;
     }
     cv.notify_all();
 }
@@ -190,8 +186,6 @@ void CUControllerWorkerThread::run() {
     bool exec_task = false; // thread-internal variable to store the value of atomic_flag_exec
     //
     unsigned long ts;          // local copies of the atomic variables required for passing them as an argument to ControlUnit::compute_next_value()
-    unsigned int  dayOfWeek_l;
-    unsigned int  hourOfDay_l;
     //
     while(true)
     {
@@ -207,8 +201,6 @@ void CUControllerWorkerThread::run() {
                 atomic_flag_exec = false;
                 // copy the atomic variables to local copies
                 ts          = atomic_param_ts;
-                dayOfWeek_l = atomic_param_dayOfWeek_l;
-                hourOfDay_l = atomic_param_hourOfDay_l;
             }
 
             // return if stop flag has been set
@@ -225,7 +217,7 @@ void CUControllerWorkerThread::run() {
             // iterate over all connected CUs
             // and execute the compute_next_value()-method
             for (ControlUnit* cu : connected_units) {
-                cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l);
+                cu->compute_next_value(ts);
             }
         }
         // set atomic flag for idling to true AFTER the task has been executed

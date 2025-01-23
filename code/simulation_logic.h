@@ -24,16 +24,12 @@ namespace simulation {
      * Thus, the thread manager must be initialized with the subsection!
      * 
      * @param ts current time step (starting from 1)
-     * @param dayOfWeek_l The day of week of the current time step (left aligned)
-     * @param hourOfWeek_l The hour of the day of the current time step (left aligned)
      * @param totalBatteryCapacity_kWh Total capacity over all batteries in kWh; required for computation of overall BS SOC
      * @param thread_manager: If multi-threading is active, an existing thread manager can be passed.
      * @param output_prefix (optional, default "") A prefix that should be added to the output file names
      * @param subsection (optional, default NULL) Execut the simulation for the current step only for a given sub-set of all known control units
      */
     bool oneStep(unsigned long ts,
-                 unsigned int dayOfWeek_l,
-                 unsigned int hourOfDay_l,
                  double totalBatteryCapacity_kWh,
                  CUControllerThreadGroupManager* thread_manager = NULL,
                  const char* output_prefix = "",

@@ -863,7 +863,7 @@ void ControlUnit::reset_internal_state() {
     ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
 }
 
-bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
+bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // This function computes the next value
     // for this complete control unit.
@@ -882,7 +882,7 @@ bool ControlUnit::compute_next_value(unsigned long ts, unsigned int dayOfWeek_l,
     }
     // EV Charging station (propagates the new time step to the connected vehicles)
     if (sim_comp_cs->is_enabled()) {
-        sim_comp_cs->setCarStatesForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+        sim_comp_cs->setCarStatesForTimeStep(ts);
     }
 
 

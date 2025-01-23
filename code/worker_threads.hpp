@@ -68,7 +68,7 @@ class CUControllerThreadGroupManager {
          * @param dayOfWeek_l: The day of the week (left aligned) of the current time step (required for calling ControlUnit::compute_next_value())
          * @param hourOfDay_l: The hour of the day (left aligned) of the current time step (required for calling ControlUnit::compute_next_value())
          */
-        void executeOneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l/*, const std::vector<ControlUnit*>* subsection = NULL*/);
+        void executeOneStep(unsigned long ts/*, const std::vector<ControlUnit*>* subsection = NULL*/);
         
         /*!
          * This function waits until all workers are finished with executed their task,
@@ -120,7 +120,7 @@ class CUControllerWorkerThread {
          * @param hourOfDay_l: The hour of the day (left aligned) of the current time step (required for calling ControlUnit::compute_next_value())
          * @param subsection:  If the simulation should only be executed for a subset of instances, it can be defined here
          */
-        void executeOneStepForAllConnCUs(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l/*, const std::vector<ControlUnit*>* subsection = NULL*/);
+        void executeOneStepForAllConnCUs(unsigned long ts/*, const std::vector<ControlUnit*>* subsection = NULL*/);
         
         /*!
          * This function returns true if the thread is idling, i.e., it is running, but not currently working and has also no planned work.
@@ -139,8 +139,6 @@ class CUControllerWorkerThread {
         std::atomic<bool> atomic_flag_idling;  ///< Set to true if the thread is idling (i.e., running but without work and without planned work)
         //
         std::atomic<unsigned long> atomic_param_ts; ///< Parameter required for calling ControlUnit::compute_next_value()
-        std::atomic<unsigned int>  atomic_param_dayOfWeek_l; ///< Parameter required for calling ControlUnit::compute_next_value()
-        std::atomic<unsigned int>  atomic_param_hourOfDay_l; ///< Parameter required for calling ControlUnit::compute_next_value()
         //
         void run(); ///< Main internal function for this thread. It is started and stopped with the start()- and stop()-method.
 };

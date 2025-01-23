@@ -37,28 +37,17 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     // get time data
     unsigned long ts_start = Global::get_first_timestep();
     unsigned long ts_end   = Global::get_last_timestep();
-    struct tm* current_tm;
+    struct tm* current_tm_l; // left-aligned time stamp as struct tm
     unsigned int last_step_weekday = 0; // required to identify new weeks
     unsigned long week_number = 1;
     //
     // main loop
     for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
         // get current time as struct tm
-        current_tm = global::time_localtime_r->at(ts - 1);
+        current_tm_l = global::time_localtime_l->at(ts - 1);
         //
         // day and time handling
-        unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday
-        unsigned int hourOfDay_r = (unsigned int) (current_tm->tm_hour);
-        // convert from rigth-alignment to left-alignment
-        unsigned int dayOfWeek_l = dayOfWeek_r;
-        unsigned int hourOfDay_l = hourOfDay_r - 1;
-        if (hourOfDay_r <= 0) {
-            hourOfDay_l = 23;
-            if (dayOfWeek_r >= 1)
-                dayOfWeek_l = dayOfWeek_r - 1;
-            else
-                dayOfWeek_l = 6;
-        }
+        unsigned int dayOfWeek_l = (unsigned int) (current_tm_l->tm_wday); // get day of week in the format 0->Monday, 6->Sunday
         // has a new week started?
         if (last_step_weekday > dayOfWeek_l) {
             // only execute this during the main run (checked by subsection == NULL)
@@ -79,7 +68,7 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
         last_step_weekday = dayOfWeek_l;
         //
         // execute one step
-        if (!oneStep(ts, dayOfWeek_l, hourOfDay_l, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
+        if (!oneStep(ts, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
         if ((ts % global::n_ts_between_flushs) == 0)
             output::flushBuffers();
@@ -94,7 +83,7 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
 
 }
 
-bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l,
+bool simulation::oneStep(unsigned long ts,
                         double totalBatteryCapacity_kWh,
                         CUControllerThreadGroupManager* thread_manager /* = NULL */,
                         const char* output_prefix /* = "" */,
@@ -116,13 +105,13 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
             // Case 1a: Execute simulation for all substations
             const std::vector<ControlUnit*>& units_list = ControlUnit::GetArrayOfInstances();
             for (ControlUnit* current_unit : units_list) {
-                if (!current_unit->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+                if (!current_unit->compute_next_value(ts))
                     return false;
             }
         } else {
             // Case 1b: Execute simulation only for selected units
             for (ControlUnit* cu : *subsection) {
-                if (!cu->compute_next_value(ts, dayOfWeek_l, hourOfDay_l))
+                if (!cu->compute_next_value(ts))
                     return false;
             }
         }
@@ -131,7 +120,7 @@ bool simulation::oneStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned in
     {
         // Case 2: Parallelization - subsection is ignored!
         // thread_manager MUST be initialized with subsection as argument!
-        thread_manager->executeOneStep(ts, dayOfWeek_l, hourOfDay_l);
+        thread_manager->executeOneStep(ts);
         thread_manager->waitForWorkersToFinish();
         // TODO: If there occurs one false from cu->compute_next_values -> Break complete run![]
     }

@@ -165,7 +165,7 @@ class ControlUnit {
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
         void reset_internal_state(); ///< Resets the internal state of the object, without removing added components
         // for simulation runs
-        bool compute_next_value(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l); ///< Computes the value for the (next) time step. The additional parameters dayOfWeek and hourOfDay are only required for passing them to the Charging Station. Mind: Both values are "left-aligned", i.e., they are the labels for the start of the current time step (in contrast to global::time_localtime_str)
+        bool compute_next_value(unsigned long ts); ///< Computes the value for the (next) time step. The parameter 'ts' defines the current time step (starting counting at 1). This method must be called with strictly consecutive values ​​of parameter 'ts'.
         //
         // static functions
         // 1. Initializers and destructors
