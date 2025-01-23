@@ -521,7 +521,7 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
     if (!state_s1) {
         state_s1 = true;
     } else {
-        throw std::runtime_error("Method ComponentHP::computeNextInternalState() cannot be called at the moment! Call ComponentHP::setDemandToProfileData() or ComponentHP::alterCurrentDemand() first.");
+        throw std::runtime_error("Method ComponentHP::computeNextInternalState() cannot be called at the moment! Call ComponentHP::setDemandToProfileData() or ComponentHP::setDemandToGivenValue() first.");
     }
 #endif
     //
@@ -577,7 +577,7 @@ void ComponentHP::setDemandToProfileData(unsigned long ts) {
     cweek_consumption_kWh += e;
 }
 
-void ComponentHP::alterCurrentDemand(float new_demand_kW) {
+void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (state_s1) {
         state_s1 = false;
@@ -778,24 +778,18 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWe
 }
 
 void ComponentCS::setDemandToProfileData(unsigned long ts) {
-    // TODO IMPLEMENT
-}
-
-void ComponentCS::alterCurrentDemand(float new_demand) {
-    // TODO IMPLEMENT
-}
-
-void ComponentCS::set_charging_value(float requested_power_kW) {
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (is_callable_set_charging_value) {
         is_callable_set_charging_value = false;
         is_callable_setCarStatesForTimeStep = true;
     } else {
-        throw std::runtime_error("Method ComponentCS::set_charging_value() cannot be called at the moment!");
+        throw std::runtime_error("Method ComponentCS::setDemandToProfileData() cannot be called at the moment!");
     }
 #endif
 
+/*
+TODO !!!
     current_demand_kW = 0.0;
     float remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
     // check, if charging request is positive
@@ -836,7 +830,23 @@ void ComponentCS::set_charging_value(float requested_power_kW) {
         double e = current_demand_kW * Global::get_time_step_size_in_h();
         total_consumption_kWh += e;
         cweek_consumption_kWh += e;
-    } else if (requested_power_kW < 0) {
-        // TODO bidirectional charging
     }
+
+*/
 }
+
+void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW) {
+
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (is_callable_set_charging_value) {
+        is_callable_set_charging_value = false;
+        is_callable_setCarStatesForTimeStep = true;
+    } else {
+        throw std::runtime_error("Method ComponentCS::setDemandToGivenValues() cannot be called at the moment!");
+    }
+#endif
+
+    // TODO IMPLEMENT
+}
+
+

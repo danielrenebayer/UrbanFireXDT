@@ -14,6 +14,8 @@
 #include <vector>
 
 // The following classes are defined in this header file:
+class BaseComponent;
+class BaseComponentSemiFlexible;
 class RoofSectionPV;
 class ComponentPV;
 class ComponentBS;
@@ -38,8 +40,8 @@ class BaseComponent {
 
 /*!
  * An abstract class acting as super-class for all components that can be controlled, but still have to fulfil a task.
- * An example would be a heat pump or a charging station. Both offer flexibility to some extend, but their main purpose
- * is to generate heat or charge a EV. Thus their control is semi-flexible, as the main purpose still has to be fulfilled.
+ * An example would be a heat pump or an individual EV. Both offer flexibility to some extend, but their main purpose
+ * is to generate heat or to drive. Thus their control is semi-flexible, as the main purpose still has to be fulfilled.
  * 
  * Instead, a battery storage is a fully-flexible controlable element, as it has no other task to fulfil.
  */
@@ -76,7 +78,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
 
         /**
          * Sets the demand value to the value as given in the data.
-         * If this function is called, BaseComponentSemiFlexible::alterCurrentDemand() must not be called anymore.
+         * If this function is called, BaseComponentSemiFlexible::setDemandToGivenValues() must not be called anymore.
          */
         virtual void setDemandToProfileData(unsigned long ts) = 0;
 
@@ -86,7 +88,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
          * If this function is called, BaseComponentSemiFlexible::setDemandToProfileData() must not be called anymore.
          * @param new_demand_kW: The new power for this time step in kW.
          */
-        virtual void alterCurrentDemand(float new_demand_kW) = 0;
+        virtual void setDemandToGivenValue(float new_demand_kW) = 0;
 
     protected:
         // cached member variables
@@ -249,8 +251,8 @@ class ComponentHP : public BaseComponentSemiFlexible {
         void computeNextInternalState(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
-        using BaseComponentSemiFlexible::alterCurrentDemand;
-        void alterCurrentDemand(float new_demand_kW);
+        using BaseComponentSemiFlexible::setDemandToGivenValue;
+        void setDemandToGivenValue(float new_demand_kW);
         void resetWeeklyCounter();
         void resetInternalState();
         //
@@ -298,8 +300,7 @@ class ComponentCS : public BaseComponentSemiFlexible {
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
-        float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW
-        using BaseComponentSemiFlexible::get_currentDemand_kW;
+        float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW (regardless if this is currently available, as some EVs might already be fully charged or not available)
         float  get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()

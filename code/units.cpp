@@ -965,7 +965,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             sim_comp_bs->set_chargeRequest( optimization_result_cache.bs_power[0] );
         }
         if (has_sim_hp) {
-            sim_comp_hp->alterCurrentDemand( optimization_result_cache.hp_power[0] );
+            sim_comp_hp->setDemandToGivenValue( optimization_result_cache.hp_power[0] );
         }
         if (has_sim_cs) {
             // optimization_result_cache.cs_power[0]
