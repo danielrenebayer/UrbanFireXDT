@@ -32,6 +32,9 @@ void global::vacuum() {
     for (struct tm* t : *time_localtime_r) {
         delete t;
     }
+    for (struct tm* t : *time_localtime_l) {
+        delete t;
+    }
 
     // delete heatpump profiles
     for (size_t hpIdx = 0; hpIdx < Global::get_n_heatpump_profiles(); hpIdx++) {
@@ -49,6 +52,7 @@ void global::vacuum() {
 
     delete[] time_timestep_id;       time_timestep_id       = NULL;
     delete   time_localtime_r;       time_localtime_r       = NULL;
+    delete   time_localtime_l;       time_localtime_l       = NULL;
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
     delete   unit_open_space_pv;     unit_open_space_pv   = NULL;
     delete   unit_open_space_wind;   unit_open_space_wind = NULL;

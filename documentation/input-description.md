@@ -57,8 +57,9 @@ Documentation of the configuration database in detail
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | ID of the timestep, must start with 1 and must be numbered consecutively |
-| UTC_time      | TIMESTAMP | UTC time stamp of the beginning of the time step in the format YYYY-MM-DD HH:MM:SS |
-| local_time    | TIMESTAMP | Local time stamp of the beginning of the time step in the format YYYY-MM-DD HH:MM:SS |
+| UTC_time      | TIMESTAMP | UTC time stamp of the end of the time step (right alignment) in the format YYYY-MM-DD HH:MM:SS |
+| local_time_la | TIMESTAMP | Local time stamp of the beginning of the time step (left alignment) in the format YYYY-MM-DD HH:MM:SS |
+| local_time_ra | TIMESTAMP | Local time stamp of the end of the time step (right alignment) in the format YYYY-MM-DD HH:MM:SS |
 | local_time_zone | TEXT/VARCHAR(4) | Time zone name of the local time as text (might change e.g. through daylight saving time) |
 
 

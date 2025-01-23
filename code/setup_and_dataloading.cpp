@@ -627,11 +627,16 @@ int load_data_from_central_database_callbackA(void* data, int argc, char** argv,
 int load_data_from_central_database_callbackB(void* data, int argc, char** argv, char** colName) {
     /* 
      * This is the callback function for loading the time indices
+     *
+     * Columns:
+     * 0           1              2              3
+     * TimestepID  local_time_ra  local_time_la  local_time_zone
+     * 
      */
     static size_t callcounter = 1;
     size_t pos = callcounter - 1; // current position in the array is one behind the count of calls
-    if (argc != 3) {
-        cerr << "Number of arguments not equal to 3 for one row!" << endl;
+    if (argc != 4) {
+        cerr << "Number of arguments not equal to 4 for one row!" << endl;
         return 1;
     }
     size_t current_time_index = stoul(argv[0]);
@@ -640,17 +645,24 @@ int load_data_from_central_database_callbackB(void* data, int argc, char** argv,
         return 1;
     }
     // convert time values
-    struct tm* time_value = new struct tm;
-    stringstream stream_time_value(argv[1]);
-    stream_time_value >> get_time(time_value, "%Y-%m-%d %H:%M:%S");
-    string timezone_str { argv[2] };
-    if (timezone_str == "CEST")
-        time_value->tm_isdst = 1;
-    else
-        time_value->tm_isdst = 0;
+    struct tm* time_value_ra = new struct tm;
+    struct tm* time_value_la = new struct tm;
+    stringstream stream_time_value_ra(argv[1]);
+    stringstream stream_time_value_la(argv[2]);
+    stream_time_value_ra >> get_time(time_value_ra, "%Y-%m-%d %H:%M:%S");
+    stream_time_value_la >> get_time(time_value_la, "%Y-%m-%d %H:%M:%S");
+    string timezone_str { argv[3] };
+    if (timezone_str == "CEST") {
+        time_value_ra->tm_isdst = 1;
+        time_value_la->tm_isdst = 1;
+    } else {
+        time_value_ra->tm_isdst = 0;
+        time_value_la->tm_isdst = 0;
+    }
     // add time values to global list
     global::time_timestep_id[pos] = current_time_index;
-    global::time_localtime_r->push_back(time_value);
+    global::time_localtime_r->push_back(time_value_ra);
+    global::time_localtime_l->push_back(time_value_la);
     global::time_localtimezone_str->push_back(timezone_str);
     callcounter++;
     return 0;
@@ -1223,11 +1235,12 @@ bool configld::load_data_from_central_database(const char* filepath) {
         //
         global::time_timestep_id = new unsigned long[Global::get_n_timesteps()];
         global::time_localtime_r = new vector<struct tm*>();
+        global::time_localtime_l = new vector<struct tm*>();
         global::time_localtimezone_str = new vector<string>();
         //
         // Load time indices
         //
-        string sql_queryB = "SELECT TimestepID, local_time_ra, local_time_zone FROM time_indices ORDER BY TimestepID;";
+        string sql_queryB = "SELECT TimestepID, local_time_ra, local_time_la, local_time_zone FROM time_indices ORDER BY TimestepID;";
         char* sqlErrorMsgB;
         int ret_valB = sqlite3_exec(dbcon, sql_queryB.c_str(), load_data_from_central_database_callbackB, NULL, &sqlErrorMsgB);
         if (ret_valB != 0) {
@@ -1244,6 +1257,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             std::cerr << "A time-related variable has not been initialized! Stopping." << std::endl;
             return false;
         }
+        // Calculation of fist and last time step as given in data
         unsigned long n_tsteps = Global::get_n_timesteps();
         struct tm* tm_start = Global::get_ts_start_tm();
         struct tm* tm_end   = Global::get_ts_end_tm();

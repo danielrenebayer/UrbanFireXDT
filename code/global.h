@@ -39,6 +39,7 @@ namespace global {
     // Time info (read from time_indices table in central values database)
     inline unsigned long* time_timestep_id = NULL; ///< Reference to the list of time steps
     inline std::vector<struct tm*>* time_localtime_r        = NULL; ///< Reference to the list of right-aligned time stamps as struct tm. Right-aligned means the time at time step ts denotes the time at the ending of the interval - alignment fits to time_timestep_id
+    inline std::vector<struct tm*>* time_localtime_l        = NULL; ///< Reference to the list of left-aligned time stamps as struct tm. Left-aligned means the time at time step ts denotes the time at the start of the interval - alignment fits to time_timestep_id
     inline std::vector<std::string>* time_localtimezone_str = NULL; ///< Reference to the list of the time zone as string - alignment fits to time_timestep_id
     inline std::map<std::string, size_t> pv_profiles_information; ///< Map (orientation, number of time series) where the number of pv-profiles per orientation are given
     inline std::map<std::string, std::vector<const float*>> pv_profiles_per_ori; ///< Map (orientation, vector of references to the time series) where the available time series per orientation are given - same ordering as in data
