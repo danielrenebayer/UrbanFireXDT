@@ -21,6 +21,7 @@ class ComponentPV;
 class ComponentBS;
 class ComponentHP;
 class ComponentCS;
+class EVFSM;
 
 #include "global.h"
 #include "vehicles.h"
@@ -294,7 +295,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
  * Enabling a station in the simulation represents to build such a station in
  * the reality.
  */
-class ComponentCS : public BaseComponentSemiFlexible {
+class ComponentCS : public BaseComponent {
     public:
         ComponentCS(ControlUnit* calling_control_unit, unsigned int number_of_flats); ///< Constructs a new Charging Station component. There will be one charging point per flat. @param calling_control_unit: Reference to the calling unit, @param number_of_flats: The number of flats connected to the charging station
         ~ComponentCS();
@@ -305,30 +306,41 @@ class ComponentCS : public BaseComponentSemiFlexible {
         double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
-        float  get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
+        //float  get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
-        using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
-        using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
-        using BaseComponentSemiFlexible::get_future_unshiftable_demand_kW;
+        /**
+         * Returns the maximum electricity consumption of this component for the next n time steps (given some flexibility).
+         * This means that the value at position 0 returns the maximum cummulated consumption AT THE END of the current time step.
+         * This method assumes to start in the current time step, i.e. the consumption up to the current time step is considered to be 0.
+         * The length of the resulting vector is set using ComponentCS::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per future time step (index 0) and per car (index 1) - READ THE ATTENTION NOTICE
+         */
+        const std::vector<std::vector<double>>* get_future_max_consumption_kWh() const { return &future_maxE_storage; }
+        /**
+         * Returns the minimum electricity consumption of a component for the next n time steps (given some flexibility).
+         * This means that the value at position 0 returns the minimum cummulated consumption AT THE END of the current time step.
+         * This method assumes to start in the current time step, i.e. the consumption up to the current time step is considered to be 0.
+         * The length of the resulting vector is set using ComponentCS::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per future time step (index 0) and per car (index 1) - READ THE ATTENTION NOTICE
+         */
+        const std::vector<std::vector<double>>* get_future_min_consumption_kWh() const { return &future_minE_storage; }
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();
         void resetWeeklyCounter();
         void resetInternalState();
         void add_ev(unsigned long carID);
+        void set_horizon_in_ts(unsigned int new_horizon); ///< Sets another horizon for the number of time steps returned by ComponentCS::get_future_min_consumption_kWh() and ComponentCS::get_future_max_consumption_kWh()
         // modifiers (in the course of simulation time)
-        void setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l);
-        using BaseComponentSemiFlexible::setDemandToProfileData;
-        void setDemandToProfileData(unsigned long ts);
-        using BaseComponentSemiFlexible::alterCurrentDemand;
-        void alterCurrentDemand(float new_demand_kW);
-        // TODO !!! Remove this and replace by the function / method above !
-        void set_charging_value(float power_kW); ///< Sets the charging value in kW that should be charged into the connected EVs
-        using BaseComponentSemiFlexible::set_horizon_in_ts;
+        void setCarStatesForTimeStep(unsigned long ts); ///< Sets the car states for all attached EVs for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
+        void setDemandToProfileData(unsigned long ts); ///< Sets the charging demand to the (immediate charging) profile value. If this method is called once during a simulation run, ComponentCS::setDemandToGivenValues() MUST NOT be called afterwards.
+        void setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW); ///< Sets the charging demand (in kW) per EV as given by any contoller. If this method is called once during a simulation run, ComponentCS::setDemandToProfileData() MUST NOT be called afterwards.
     private:
         // constant members
         const ControlUnit* installation_place;
@@ -344,11 +356,108 @@ class ComponentCS : public BaseComponentSemiFlexible {
         float  charging_power_possible_kW;
         std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
         std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
+        std::vector<std::vector<double>> future_maxE_storage;
+        std::vector<std::vector<double>> future_minE_storage;
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run
         bool is_callable_setCarStatesForTimeStep;
         bool is_callable_set_charging_value;
 #endif
+};
+
+
+/*!
+ * This class represents a EV (electric vehicle) modeled as a finite-state machine.
+ *
+ * It is a finite-state machine with the states:
+ *  - charging at home
+ *  - at home (bu not charging)
+ *  - driving (i.e., away from home)
+ *  - charging somewhere on the way
+ * 
+ * Moreover, it has a battery component (the same as it is used for simulating the residential batteries).
+ * 
+ * Finally, it holds an attached driving profile.
+ */
+class EVFSM : public BaseComponentSemiFlexible {
+
+    public:
+        EVFSM(unsigned long carID, ComponentCS* homeStation);
+        ~EVFSM();
+        // getters
+        EVState get_current_state() const { return current_state; }
+        EVStateIfConnAtHome get_current_state_icah() const { return current_state_icah; } ///< Returns the current state of the EV iff it is connected at home
+        using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
+        using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
+        using BaseComponentSemiFlexible::get_currentDemand_kW;
+        float get_currentDemand_kW() const; ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
+        // TODO: Do we need both methods?
+        //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil 
+        float get_max_curr_charging_power_kW() const { return max_curr_available_p_kW; } ///< Returns the maximal available charing power at the current time step.
+        // TODO get_min_SOC_per_time_step ...
+        std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
+        // modifiers (on structural level of the simulation)
+        using BaseComponentSemiFlexible::set_horizon_in_ts;
+        void add_weekly_tour(unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
+        void preprocessTourInformation(); ///< Transforms the list of weekly tours into a list of tours for the complete simulation time span and computes upper and lower cumlulative energy required (i.e., fill variables BaseComponentSemiFlexible::future_maxE_storage and BaseComponentSemiFlexible::future_minE_storage from upper class). THis method MUST be called before the main simulation run starts, but it MUST be called after EVFSM::add_weekly_tour() is called for the last time, i.e., all tours have been added.
+        void resetInternalState(); ///< Resets the internal state
+        // modifiers (in the course of simulation time)
+        void setCarStateForTimeStep(unsigned long ts); ///< Sets the car state for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
+        //void setInternalStateToSimRunStart(); ///< Sets the state of the EV to the beginning of a simulation run
+        //void set_current_charging_power(float power_kW); ///< Sets the current charging power in kW. If this method is called, EVFSM::setDemandToProfileData() cannot be called.
+        //void setDemandToProfileData(unsigned long ts); ///< Sets the energy consumption to the value for immediate charging. If this method is called, EVFSM::set_current_charging_power() cannot be called.
+        using BaseComponentSemiFlexible::setDemandToProfileData;
+        void setDemandToProfileData(unsigned long ts);
+        using BaseComponentSemiFlexible::setDemandToGivenValue;
+        void setDemandToGivenValue(float new_demand_kW);
+        using BaseComponentSemiFlexible::resetWeeklyCounter;
+        void resetWeeklyCounter() {} ///< TODO IMPLEMENT !
+        // static methods
+        static const std::map<unsigned long, EVFSM*>& GetArrayOfInstances() { return list_of_cars; } ///< Returns the map of all existing instances. The objects itself are mutable, but the map reference is const.
+        static unsigned long GetNumberOfEVs() { return list_of_cars.size(); }
+        static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
+        static void VacuumStaticVariables();
+        static void SetSeed(unsigned int seed); ///< Sets the seed for the EVFSM-class random number generator
+
+    private:
+        // constant members
+        const unsigned long carID;       ///< ID of the car. The ID does not necessarily be successive but it must be unique.
+        const float econs_kWh_per_km;    ///< Energy consumption of the current EV in kWh/km
+        ComponentCS const* homeStation;  ///< Reference to the home station of the EV
+        // variable members (constant during a simulation run)
+        std::vector<std::vector<VehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 6 -> friday)
+        std::vector<VehicleTour*> list_of_all_tours; ///< Vector of all tours. Is the same as `list_of_tours_pd` in a flattened order, i.e., witout day information.
+        std::vector<EVState> prec_vec_of_states; ///< precomputed list of states per time step
+        std::vector<double> prec_vec_of_minE; ///< Complete precomputed vector of minimum charged electricity up to the end of time step ts
+        std::vector<double> prec_vec_of_maxE; ///< Complete precomputed vector of maximum charged electricity up to the end of time step ts
+        // attached members
+        ComponentBS* battery;
+        // variable members, variable during a simulation run
+        EVState current_state;           ///< Internal current state of the EV
+        EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
+        VehicleTour* current_tour;       ///< Reference to the current tour
+        VehicleTour* next_tour;          ///< Reference to the next tour
+        unsigned int ts_since_departure; ///< Number of time steps passed until the departure of the current tour (Only valid if a tour is ongoing)
+        float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
+        float max_curr_available_p_kW;  ///< The currently maximal available charging power for this vehicle
+        // variables for the final metrics calculation
+        double sum_of_driving_distance_km;    ///< Sum of driven distance in km (only updated at the end of a tour, when the home place is reached again)
+        double sum_of_E_used_for_driving_kWh; ///< Sum of electricity consumed by the EV required for driving in kWh
+        double sum_of_E_charged_home_kWh;     ///< Sum of charged electricity in kWh
+        double sum_of_E_discharged_home_kWh;  ///< Sum of discharged electricity in kWh from the EV
+        ulong  sum_of_ts_EV_is_connected_kWh; ///< Number of time steps the EV is connected as at the home charging point
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+        // Variables for access protection of non-const methods during the simulation run
+        bool state_s1; // directly after initialization, tours can be added
+        bool state_s2; // tour information has been processed, no tours can be added anymore
+#endif
+        //
+        // class members
+        static std::map<unsigned long, EVFSM*> list_of_cars;
+        static std::default_random_engine*            random_generator; ///< Generator required for random sampling
+        static std::uniform_real_distribution<float>* distribution    ; ///< Required for random sampling
+    public:
+        static const std::string MetricsStringHeaderAnnual; ///< The header for the output string produced by `EVFSM::get_metrics_string_annual()`
 };
 
 #endif

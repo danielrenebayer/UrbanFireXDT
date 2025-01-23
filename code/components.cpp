@@ -2,6 +2,7 @@
 #include "components.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include "vehicles.h"
+#include "global.h"
 
 
 // ----------------------------- //
@@ -582,7 +584,7 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
     if (state_s1) {
         state_s1 = false;
     } else {
-        throw std::runtime_error("Method ComponentHP::alterCurrentDemand() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
+        throw std::runtime_error("Method ComponentHP::setDemandToGivenValue() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
     }
 #endif
     double e = new_demand_kW * Global::get_time_step_size_in_h();
@@ -670,14 +672,6 @@ float ComponentCS::get_max_P_kW() const {
     return 0.0;
 }
 
-float ComponentCS::get_max_curr_charging_power_kW() const {
-    if (charging_power_required_kW + charging_power_possible_kW >= max_charging_power) {
-        return max_charging_power;
-    } else {
-        return charging_power_required_kW + charging_power_possible_kW;
-    }
-}
-
 unsigned long ComponentCS::get_n_EVs_pc() const {
     return std::ranges::count_if(listOfEVs, [](EVFSM* ev){return ev->get_current_state() == EVState::ConnectedAtHome;});
 }
@@ -730,7 +724,13 @@ void ComponentCS::add_ev(unsigned long carID) {
     listOfEVs.push_back(new EVFSM(carID, this));
 }
 
-void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWeek_l, unsigned int hourOfDay_l) {
+void ComponentCS::set_horizon_in_ts(unsigned int new_horizon) {
+    for (EVFSM* ev : listOfEVs) {
+        ev->set_horizon_in_ts(new_horizon);
+    }
+}
+
+void ComponentCS::setCarStatesForTimeStep(unsigned long ts) {
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (is_callable_setCarStatesForTimeStep) {
@@ -743,7 +743,7 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts, unsigned int dayOfWe
 
     // 1. set new car states
     for (EVFSM* ev : listOfEVs) {
-        ev->setCarStateForTimeStep(ts, dayOfWeek_l, hourOfDay_l);
+        ev->setCarStateForTimeStep(ts);
     }
     // 2. iterate over all cars currently at home -> how much energy do they require to charge?
     charging_power_required_kW = 0.0;
@@ -849,4 +849,309 @@ void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_
     // TODO IMPLEMENT
 }
 
+
+
+
+// ----------------------------- //
+//      Implementation of        //
+//            EVFSM              //
+// ----------------------------- //
+
+std::map<unsigned long, EVFSM*> EVFSM::list_of_cars;
+std::default_random_engine*            EVFSM::random_generator = new std::default_random_engine();
+std::uniform_real_distribution<float>* EVFSM::distribution     = new std::uniform_real_distribution<float>(0, 1);
+const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,HomeControlUnitID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
+
+EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
+    carID(carID),
+    econs_kWh_per_km(Global::get_ev_consumption_kWh_km()),
+    homeStation(homeStation)
+{
+    // Register this object in the global list of cars
+    if (EVFSM::list_of_cars.contains(carID)) {
+        throw runtime_error("Error: There is already an instance of class EVFSM with carID = " + std::to_string(carID));
+    }
+    EVFSM::list_of_cars.emplace(carID, this);
+    //
+    // Create battery (using the secondary constructor)
+    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
+    // Initialize variables for the state
+    current_state      = EVState::ConnectedAtHome;
+    current_state_icah = EVStateIfConnAtHome::ChargingPossible;
+    current_tour       = NULL;
+    next_tour          = NULL;
+    ts_since_departure = 0;
+    energy_demand_per_tour_ts = 0.0;
+    max_curr_available_p_kW   = 0.0;
+    sum_of_driving_distance_km    = 0.0;
+    sum_of_E_used_for_driving_kWh = 0.0;
+    sum_of_E_charged_home_kWh     = 0.0;
+    sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_ts_EV_is_connected_kWh = 0;
+    // Create the list of tours
+    list_of_tours_pd.reserve(6);
+    for (unsigned int day = 0; day < 7; day++) {
+        list_of_tours_pd.push_back( new std::vector<VehicleTour> () );
+    }
+
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    state_s1 = true;
+    state_s2 = false;
+#endif
+}
+
+EVFSM::~EVFSM() {
+    delete battery;
+    for (auto day_tours : list_of_tours_pd) {
+        delete day_tours;
+    }
+    list_of_tours_pd.clear();
+    list_of_all_tours.clear();
+    // remove this car from the list_of_cars
+    EVFSM::list_of_cars.erase(this->carID);
+}
+
+float EVFSM::get_currentDemand_kW() const {
+    return 0.0; // TODO !!!
+}
+
+std::string* EVFSM::get_metrics_string_annual() {
+    std::string* retstr = new string;
+    *retstr += std::to_string(carID) + ",";
+    *retstr += std::to_string(homeStation->get_control_unit_id()) + ",";
+    *retstr += std::to_string(sum_of_driving_distance_km)     + ",";
+    *retstr += std::to_string(sum_of_E_used_for_driving_kWh)  + ",";
+    *retstr += std::to_string(sum_of_E_charged_home_kWh)      + ",";
+    *retstr += std::to_string(sum_of_E_discharged_home_kWh)   + ",";
+    *retstr += std::to_string(sum_of_ts_EV_is_connected_kWh);
+    return retstr;
+}
+
+void EVFSM::add_weekly_tour(
+    unsigned short weekday,
+    unsigned int departure_ts_of_day,
+    unsigned int ts_duration,
+    double tour_length_km,
+    bool with_work)
+{
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s1) {
+        throw std::runtime_error("Method EVFSM::add_weekly_tour() cannot be called after EVFSM::preprocessTourInformation() has been called.");
+    }
+#endif
+
+    if (weekday > 6)
+        throw runtime_error("Error when adding a new vehicle tour: A weekday > 6 is not possible!");
+    
+    if (ts_duration == 0)
+        ts_duration = 1;
+
+    unsigned long this_new_tour_id = list_of_all_tours.size();
+    if (list_of_all_tours.size() > 0) {
+        VehicleTour* last_know_tour = list_of_all_tours.back();
+        // Check, if tours are added in the wrong ordering
+        if (last_know_tour->day_of_week > weekday) {
+            throw runtime_error("Error when adding a new vehicle tour: Weekday of new tour is bevore the latest added tour!");
+        } else if (last_know_tour->day_of_week == weekday && last_know_tour->departure_ts_of_day > departure_ts_of_day) {
+            throw runtime_error("Error when adding a new vehicle tour: Time step of departure of new tour is bevore the latest added tour!");
+        }
+        // Check, if tours are overlapping
+        // A) For the previous tour
+        float atime_of_week_prev = 24 * Global::get_time_step_size_in_h() * last_know_tour->day_of_week + (float) (last_know_tour->departure_ts_of_day) + (float) (last_know_tour->ts_duration); // arrival time of week of the previous trip
+        float dtime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day); // departure time of week of the trip to add
+        if (atime_of_week_prev > dtime_of_week_new) {
+            std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with its previous tour (weekday=" << last_know_tour->day_of_week << ", dep. ts=" << last_know_tour->departure_ts_of_day << ", ts. dur=" << last_know_tour->ts_duration << "). ";
+            std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
+            return;
+        }
+        // B) For the first tour in the next week
+        VehicleTour* first_known_tour = list_of_all_tours.front();
+        unsigned long ts_of_a_week = (unsigned long) std::floor(((double) (7 * 24) / (double) Global::get_time_step_size_in_h()));
+        float atime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day) + (float) (ts_duration); // arrival time of week of the trip to add
+        if ((unsigned long) atime_of_week_new > ts_of_a_week) {
+            float atime_of_week_first = Global::get_time_step_size_in_h() * first_known_tour->day_of_week + (float) (first_known_tour->departure_ts_of_day);
+            if ((unsigned long) (atime_of_week_new) % ts_of_a_week > (unsigned long) atime_of_week_first) {
+                std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with the first known tour (weekday=" << first_known_tour->day_of_week << ", dep. ts=" << first_known_tour->departure_ts_of_day << "). ";
+                std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ", ts. dur=" << ts_duration << ").\n";
+                return;
+            }
+        }
+        // Set next tour ID for the last know tour
+        last_know_tour->next_tour_id = this_new_tour_id;
+    }
+    // append new tour
+    VehicleTour& new_tour = list_of_tours_pd[weekday]->emplace_back(0, weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
+    list_of_all_tours.push_back( &new_tour );
+}
+
+void EVFSM::preprocessTourInformation() {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s1) {
+        throw std::runtime_error("Method EVFSM::preprocessTourInformation() must be called once only after the last call of EVFSM::add_weekly_tour().");
+    }
+    state_s1 = false;
+    state_s2 = true;
+#endif
+    resetInternalState();
+    // empty precomputed vectors
+    prec_vec_of_states.clear();
+    prec_vec_of_minE.clear();
+    prec_vec_of_maxE.clear();
+    prec_vec_of_states.resize(Global::get_n_timesteps(), EVState::ConnectedAtHome);
+    prec_vec_of_minE.resize(Global::get_n_timesteps(), 0.0);
+    prec_vec_of_maxE.resize(Global::get_n_timesteps(), 0.0);
+    // loop over all simulation time steps
+    double last_minE_value = 0.0;
+    double last_maxE_value = 0.0;
+    for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
+        unsigned long tsID = ts - 1;
+        // Update the current car state
+        setCarStateForTimeStep(ts);
+        // Write current state to the pre-computed dict
+        prec_vec_of_states[tsID] = current_state;
+        // TODO: Compute lower and upper electricity consumption up to now
+        // TODO If car plugin probability < 1.0, it MUST always be fully charged (if possible)
+        if (current_state == EVState::ConnectedAtHome) {
+            // TODO
+        }
+    }
+    // Update prec_vec_of_minE / maxE until the end of 
+    for (unsigned long ts = Global::get_last_timestep() + 1; ts < Global::get_n_timesteps(); ts++) {
+        prec_vec_of_minE.at(ts-1) = last_minE_value;
+        prec_vec_of_maxE.at(ts-1) = last_maxE_value;
+    }
+    // reset internal state again for the main simulation run
+    resetInternalState();
+}
+
+void EVFSM::resetInternalState() {
+    battery->resetInternalState();
+    current_state      = EVState::ConnectedAtHome;
+    current_state_icah = EVStateIfConnAtHome::ChargingPossible;
+    current_tour       = NULL;
+    next_tour          = NULL;
+    ts_since_departure = 0;
+    energy_demand_per_tour_ts = 0.0;
+    max_curr_available_p_kW   = 0.0;
+    sum_of_driving_distance_km    = 0.0;
+    sum_of_E_used_for_driving_kWh = 0.0;
+    sum_of_E_charged_home_kWh     = 0.0;
+    sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_ts_EV_is_connected_kWh = 0;
+}
+
+void EVFSM::setCarStateForTimeStep(unsigned long ts) {
+    // get current time
+    struct tm* current_tm_l = global::time_localtime_l->at(ts - 1);
+    unsigned int dayOfWeek_l = (unsigned int) (current_tm_l->tm_wday); // get day of week in the format 0->Monday, 6->Sunday
+    unsigned int hourOfDay_l = (unsigned int) (current_tm_l->tm_hour);
+    // if there is a currently active tour: check, if it reached home
+    if (current_tour != NULL) {
+        ts_since_departure += 1;
+        // remove consumed energy per step from the battery
+        battery->set_chargeRequest(-energy_demand_per_tour_ts);
+        battery->calculateActions();
+        // check, if this tour is finished?
+        if (ts_since_departure >= current_tour->ts_duration) {
+            // add tour length of the finished tour to the total driving distance
+            sum_of_driving_distance_km += current_tour->tour_length_km;
+            // add consumed electricty for driving
+            sum_of_E_used_for_driving_kWh += current_tour->tour_length_km * econs_kWh_per_km;
+            // remove current tour
+            current_tour = NULL;
+            // Calculate if car will be connected or not (depending on the current SOC and its connection probability)
+            //   Always connect if SOC <= 0.35
+            if (battery->get_SOC() <= 0.35) {
+                current_state = EVState::ConnectedAtHome;
+            } else {
+                // sample randomly if car will be conntected or not
+                if (Global::get_ev_plugin_probability() >= 1.0 || (*distribution)(*random_generator) <= Global::get_ev_plugin_probability())
+                    current_state = EVState::ConnectedAtHome;
+                else
+                    current_state = EVState::DisconnectedAtHome;
+            }
+        }
+    }
+    // does a new tour start?
+    if (current_tour == NULL) {
+        // loop over all tours on this day, is there a tour starting right now?
+        for ( VehicleTour &vt : *(list_of_tours_pd)[dayOfWeek_l] ) {
+            if (vt.departure_ts_of_day == hourOfDay_l) { // mind the shift: Car tours are left-aligned, hours are right aligned
+                current_tour = &vt;
+                ts_since_departure = 0;
+                // compute (mean) energy demand per tour time step
+                energy_demand_per_tour_ts = (float) (vt.tour_length_km * econs_kWh_per_km) / (float) (vt.ts_duration);
+                next_tour = list_of_all_tours[vt.next_tour_id];
+                current_state = EVState::Driving;
+                break;
+            }
+        }
+    }
+    //
+    // if connected, determine the internal state
+    if (current_state == EVState::ConnectedAtHome) {
+        sum_of_ts_EV_is_connected_kWh += 1;
+        // the goal is: the car needs
+        //   1) either at least 35 percent SOC when leaving,
+        //   2) or at least as much energy in the battery required for the next trip + 20 percent points
+        if (battery->get_SOC() < 1.0) {
+            current_state_icah = EVStateIfConnAtHome::ChargingPossible;
+            // TODO: BothPossible could also be the case in this situation!
+            // look at next_tour for this information
+            //
+            // Compute the maximal chargable power at the current time step
+            float free_space_kWh = battery->get_maxE_kWh() - battery->get_currentCharge_kWh();
+            max_curr_available_p_kW = free_space_kWh / Global::get_time_step_size_in_h();
+            if (max_curr_available_p_kW > Global::get_ev_max_charging_power_kW())
+                max_curr_available_p_kW = Global::get_ev_max_charging_power_kW();
+        } else {
+            current_state_icah = EVStateIfConnAtHome::DischargingPossible;
+            max_curr_available_p_kW = 0.0;
+        }
+    } else {
+        max_curr_available_p_kW = 0.0;
+    }
+}
+
+void EVFSM::setDemandToProfileData(unsigned long ts) {
+    // TODO
+}
+
+void EVFSM::setDemandToGivenValue(float new_demand_kW) {
+    // TODO
+}
+
+/*
+void EVFSM::set_current_charging_power(float power_kW) {
+    if (current_state != EVState::ConnectedAtHome) {
+        std::cout << "Setting charging power while not charging !";
+        return;
+    }
+    battery->set_chargeRequest(power_kW);
+    battery->calculateActions();
+    // update the amount of charged / discharged electricity
+    float cload = battery->get_currentLoad_kW();
+    if ( cload > 0 ) {
+        sum_of_E_charged_home_kWh    += cload * Global::get_time_step_size_in_h();
+    } else if ( cload < 0 ) {
+        sum_of_E_discharged_home_kWh -= cload * Global::get_time_step_size_in_h();
+    }
+}
+*/
+
+void EVFSM::AddWeeklyTour(
+    unsigned long carID,              unsigned short weekday,
+    unsigned int departure_ts_of_day, unsigned int ts_duration,
+    double tour_length_km,            bool with_work)
+{
+    EVFSM::list_of_cars.at(carID)->add_weekly_tour(weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
+}
+
+void EVFSM::VacuumStaticVariables() {
+    EVFSM::list_of_cars.clear();
+}
+
+void EVFSM::SetSeed(unsigned int seed) {
+    random_generator->seed(seed);
+}
 
