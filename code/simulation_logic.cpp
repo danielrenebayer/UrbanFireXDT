@@ -44,7 +44,7 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     // main loop
     for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
         // get current time as struct tm
-        current_tm = global::time_localtime_str->at(ts - 1);
+        current_tm = global::time_localtime_r->at(ts - 1);
         //
         // day and time handling
         unsigned int dayOfWeek_r = (unsigned int) ((current_tm->tm_wday + 6) % 7); // get day of week in the format 0->Monday, 6->Sunday

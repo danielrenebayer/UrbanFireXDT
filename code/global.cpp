@@ -29,7 +29,7 @@ bool global::all_variables_initialized() {
 
 void global::vacuum() {
     // delete global arrays
-    for (struct tm* t : *time_localtime_str) {
+    for (struct tm* t : *time_localtime_r) {
         delete t;
     }
 
@@ -48,7 +48,7 @@ void global::vacuum() {
     delete[] pv_profiles_data; pv_profiles_data = NULL;
 
     delete[] time_timestep_id;       time_timestep_id       = NULL;
-    delete   time_localtime_str;     time_localtime_str     = NULL;
+    delete   time_localtime_r;       time_localtime_r       = NULL;
     delete   time_localtimezone_str; time_localtimezone_str = NULL;
     delete   unit_open_space_pv;     unit_open_space_pv   = NULL;
     delete   unit_open_space_wind;   unit_open_space_wind = NULL;

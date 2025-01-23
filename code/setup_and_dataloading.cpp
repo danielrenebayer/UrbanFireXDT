@@ -650,7 +650,7 @@ int load_data_from_central_database_callbackB(void* data, int argc, char** argv,
         time_value->tm_isdst = 0;
     // add time values to global list
     global::time_timestep_id[pos] = current_time_index;
-    global::time_localtime_str->push_back(time_value);
+    global::time_localtime_r->push_back(time_value);
     global::time_localtimezone_str->push_back(timezone_str);
     callcounter++;
     return 0;
@@ -1222,7 +1222,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Initialize global time list
         //
         global::time_timestep_id = new unsigned long[Global::get_n_timesteps()];
-        global::time_localtime_str = new vector<struct tm*>();
+        global::time_localtime_r = new vector<struct tm*>();
         global::time_localtimezone_str = new vector<string>();
         //
         // Load time indices
@@ -1253,7 +1253,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         bool sim_finished = false; // gets true, if the enf of the simulation range (as given by tm_end) has been reached
         for (unsigned long tsID = 0; tsID < n_tsteps; tsID++) {
             // get current time as struct tm
-            struct tm* current_tm = global::time_localtime_str->at(tsID);
+            struct tm* current_tm = global::time_localtime_r->at(tsID);
             // jump time steps if they are not inside the simulation range
             if (sim_started) {
                 if (compare_struct_tm(current_tm, tm_end) >= 0) {
