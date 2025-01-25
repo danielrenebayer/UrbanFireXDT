@@ -395,10 +395,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         using BaseComponentSemiFlexible::get_currentDemand_kW;
-        float get_currentDemand_kW() const; ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
-        // TODO: Do we need both methods?
-        //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil 
-        float get_max_curr_charging_power_kW() const { return max_curr_available_p_kW; } ///< Returns the maximal available charing power at the current time step.
+        float get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
         // TODO get_min_SOC_per_time_step ...
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
         // modifiers (on structural level of the simulation)
@@ -407,7 +404,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         void preprocessTourInformation(); ///< Transforms the list of weekly tours into a list of tours for the complete simulation time span and computes upper and lower cumlulative energy required (i.e., fill variables BaseComponentSemiFlexible::future_maxE_storage and BaseComponentSemiFlexible::future_minE_storage from upper class). THis method MUST be called before the main simulation run starts, but it MUST be called after EVFSM::add_weekly_tour() is called for the last time, i.e., all tours have been added.
         void resetInternalState(); ///< Resets the internal state
         // modifiers (in the course of simulation time)
-        void setCarStateForTimeStep(unsigned long ts); ///< Sets the car state for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
+        void setCarStateForTimeStep(unsigned long ts); ///< Sets the car state for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'. It uses the precomputed vectors for internal processing.
         //void setInternalStateToSimRunStart(); ///< Sets the state of the EV to the beginning of a simulation run
         //void set_current_charging_power(float power_kW); ///< Sets the current charging power in kW. If this method is called, EVFSM::setDemandToProfileData() cannot be called.
         //void setDemandToProfileData(unsigned long ts); ///< Sets the energy consumption to the value for immediate charging. If this method is called, EVFSM::set_current_charging_power() cannot be called.
@@ -430,27 +427,30 @@ class EVFSM : public BaseComponentSemiFlexible {
         const float econs_kWh_per_km;    ///< Energy consumption of the current EV in kWh/km
         ComponentCS const* homeStation;  ///< Reference to the home station of the EV
         // variable members (constant during a simulation run)
-        std::vector<std::vector<VehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 6 -> friday)
-        std::vector<VehicleTour*> list_of_all_tours; ///< Vector of all tours. Is the same as `list_of_tours_pd` in a flattened order, i.e., witout day information.
+        std::vector<std::vector<WeeklyVehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 6 -> friday)
+        std::vector<WeeklyVehicleTour*> list_of_all_tours; ///< Vector of all weekly tours. Is the same as `list_of_tours_pd` in a flattened order, i.e., witout day information.
         std::vector<EVState> prec_vec_of_states; ///< precomputed list of states per time step
         std::vector<double> prec_vec_of_minE; ///< Complete precomputed vector of minimum charged electricity up to the end of time step ts
         std::vector<double> prec_vec_of_maxE; ///< Complete precomputed vector of maximum charged electricity up to the end of time step ts
+        std::vector<double> prec_vec_of_driving_distance_km; ///< Complete precomputed vector of driven distance of the EV in km up to the end of time step ts
+        std::vector<float>  prec_vec_of_maxP_kW; ///< Complete precomputed vector of maximum charging power per time step ts
+        std::vector<float>  prec_vec_of_curr_BS_E_cons_kWh; ///< Complete precomputed vector of electricity taken from the battery for driving (at time step ts, or 0, if the car is parked at home in any state)
         // attached members
         ComponentBS* battery;
         // variable members, variable during a simulation run
         EVState current_state;           ///< Internal current state of the EV
         EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
-        VehicleTour* current_tour;       ///< Reference to the current tour
-        VehicleTour* next_tour;          ///< Reference to the next tour
+        WeeklyVehicleTour* current_wTour;       ///< Reference to the current weekly tour
+        WeeklyVehicleTour* next_wTour;          ///< Reference to the next weekly tour
         unsigned int ts_since_departure; ///< Number of time steps passed until the departure of the current tour (Only valid if a tour is ongoing)
         float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
-        float max_curr_available_p_kW;  ///< The currently maximal available charging power for this vehicle
+        float current_P_kW;  ///< The current charging power in kW
         // variables for the final metrics calculation
         double sum_of_driving_distance_km;    ///< Sum of driven distance in km (only updated at the end of a tour, when the home place is reached again)
         double sum_of_E_used_for_driving_kWh; ///< Sum of electricity consumed by the EV required for driving in kWh
         double sum_of_E_charged_home_kWh;     ///< Sum of charged electricity in kWh
         double sum_of_E_discharged_home_kWh;  ///< Sum of discharged electricity in kWh from the EV
-        ulong  sum_of_ts_EV_is_connected_kWh; ///< Number of time steps the EV is connected as at the home charging point
+        ulong  sum_of_ts_EV_is_connected;     ///< Number of time steps the EV is connected as at the home charging point
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run
         bool state_s1; // directly after initialization, tours can be added
