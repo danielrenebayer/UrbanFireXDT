@@ -169,11 +169,13 @@ class ComponentPV : public BaseComponent {
 };
 
 class ComponentBS : public BaseComponent {
+    friend class EVFSM;
     public:
         ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC); ///< Default constructor if the battery should represent a large-scale or household-style battery system
         ComponentBS(float maxE_kWh, float discharge_rate_per_step, float efficiency_in, float initial_SoC); ///< Constructor to use if it is the battery of an EV
         // getter methods
         float get_SOC() const               { return SOC; }          ///< Returns the current state of charge of the battery
+        float get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
         float get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
         float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
         float get_maxE_kWh()       const    { return maxE_kWh;     }
@@ -186,6 +188,9 @@ class ComponentBS : public BaseComponent {
         double get_total_withdrawn_E_kWh() const { return total_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the simulation run until now
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
+    protected:
+        void  set_SOE_without_computations(float new_SOE_kWh); ///< Changes the current SOE without updating other internal variables! Should only be used by class EVFSM for the pre-computation!
+    public:
         void  set_maxE_kWh(float value);
         void  set_maxP_kW (float value);
         void  set_maxP_by_EPRatio(float EP_ratio);

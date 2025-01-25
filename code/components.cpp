@@ -369,6 +369,10 @@ ComponentBS::ComponentBS(
     }
 }
 
+void ComponentBS::set_SOE_without_computations(float new_SOE_kWh) {
+    currentE_kWh = new_SOE_kWh;
+}
+
 void ComponentBS::set_maxE_kWh(float value) {
     maxE_kWh = value;
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio)
