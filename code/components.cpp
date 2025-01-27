@@ -653,8 +653,6 @@ ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_
     current_demand_kW = 0.0;
     total_consumption_kWh  = 0.0;
     cweek_consumption_kWh  = 0.0;
-    charging_power_required_kW = 0.0;
-    charging_power_possible_kW = 0.0;
 
     // Computation of maximum charging power
     max_charging_power = 11.0 * number_of_flats;
@@ -714,10 +712,8 @@ void ComponentCS::resetInternalState() {
     current_demand_kW = 0.0;
     total_consumption_kWh      = 0.0;
     cweek_consumption_kWh      = 0.0;
-    charging_power_required_kW = 0.0;
-    charging_power_possible_kW = 0.0;
-    charging_order_req.clear();
-    charging_order_pos.clear();
+    //charging_order_req.clear();
+    //charging_order_pos.clear();
     //
     for (EVFSM* ev : listOfEVs) {
         ev->resetInternalState();
@@ -755,36 +751,6 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts) {
     for (EVFSM* ev : listOfEVs) {
         ev->setCarStateForTimeStep(ts);
     }
-    // 2. iterate over all cars currently at home -> how much energy do they require to charge?
-    charging_power_required_kW = 0.0;
-    charging_power_possible_kW = 0.0;
-    charging_order_req.clear();
-    charging_order_pos.clear();
-    // 2a. The cars that require charging
-    for (EVFSM* ev : listOfEVs
-                   | std::views::filter(
-                        [](EVFSM* ev) {
-                            return ev->get_current_state() == EVState::ConnectedAtHome &&
-                                   ev->get_current_state_icah() == EVStateIfConnAtHome::ChargingRequired;
-                        }))
-    {
-        charging_power_required_kW += ev->get_max_curr_charging_power_kW();
-        charging_order_req.push_back(ev);
-    }
-    // 2b. The cars that can charge
-    for (EVFSM* ev : listOfEVs
-                   | std::views::filter(
-                        [](EVFSM* ev) {
-                            return ev->get_current_state() == EVState::ConnectedAtHome &&
-                                   ( ev->get_current_state_icah() == EVStateIfConnAtHome::ChargingPossible ||
-                                     ev->get_current_state_icah() == EVStateIfConnAtHome::BothPossible);
-                        }))
-    {
-        charging_power_possible_kW += ev->get_max_curr_charging_power_kW();
-        charging_order_pos.push_back(ev);
-    }
-
-    // TODO: Compute min and max charging demand
 }
 
 void ComponentCS::setDemandToProfileData(unsigned long ts) {
@@ -798,51 +764,16 @@ void ComponentCS::setDemandToProfileData(unsigned long ts) {
     }
 #endif
 
-/*
-TODO !!!
     current_demand_kW = 0.0;
-    float remaining_power_kW = max_charging_power; // - current_demand_kW; // The remaining power (current_demand_kW is always 0 at this point)
-    // check, if charging request is positive
-    if (requested_power_kW > 0) {
-        if (requested_power_kW < max_charging_power) {
-            remaining_power_kW = requested_power_kW;
-        }
-        for (EVFSM* ev : charging_order_req) {
-            if (remaining_power_kW <= 0.0) {
-                break;
-            }
-            // Set charging request
-            if (remaining_power_kW >= Global::get_ev_max_charging_power_kW()) {
-                ev->set_current_charging_power(Global::get_ev_max_charging_power_kW());
-            } else {
-                ev->set_current_charging_power(remaining_power_kW);
-            }
-            // get actual charging power
-            remaining_power_kW -= ev->get_current_charging_power();
-            current_demand_kW  += ev->get_current_charging_power();
-        }
-        for (EVFSM* ev : charging_order_pos) {
-            if (remaining_power_kW <= 0.0) {
-                break;
-            }
-            // max. 11 kW per car or Global::get_ev_max_charging_power_kW()
-            // Set charging request
-            if (remaining_power_kW >= Global::get_ev_max_charging_power_kW()) {
-                ev->set_current_charging_power(Global::get_ev_max_charging_power_kW());
-            } else {
-                ev->set_current_charging_power(remaining_power_kW);
-            }
-            // get actual charging power
-            remaining_power_kW -= ev->get_current_charging_power();
-            current_demand_kW  += ev->get_current_charging_power();
-        }
-        // compute current demand and cumulative sum
-        double e = current_demand_kW * Global::get_time_step_size_in_h();
-        total_consumption_kWh += e;
-        cweek_consumption_kWh += e;
+    for (EVFSM* ev : listOfEVs) {
+        ev->setDemandToProfileData(ts);
+        current_demand_kW += ev->get_currentDemand_kW();
     }
+    // compute current demand and cumulative sum
+    double e = current_demand_kW * Global::get_time_step_size_in_h();
+    total_consumption_kWh += e;
+    cweek_consumption_kWh += e;
 
-*/
 }
 
 void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW) {
@@ -887,10 +818,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
-    current_state_icah = EVStateIfConnAtHome::ChargingPossible;
-    current_wTour      = NULL;
-    next_wTour         = NULL;
-    ts_since_departure = 0;
+    //current_state_icah = EVStateIfConnAtHome::ChargingPossible;
     energy_demand_per_tour_ts = 0.0;
     current_P_kW              = 0.0;
     sum_of_driving_distance_km    = 0.0;
@@ -907,6 +835,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     state_s1 = true;
     state_s2 = false;
+    state_s3 = false;
 #endif
 }
 
@@ -1016,7 +945,9 @@ void EVFSM::preprocessTourInformation() {
     std::vector<struct SingleVehicleTour> complete_tour_plan;
     // loop over all simulation time steps twice
     // -- first, to generate the tour plan for the complete simulation time span
-    unsigned long current_tour_ts_start = 0;
+    unsigned long current_tour_ts_start =    0; // Time step of current tour start (only valid if a tour is ongoing)
+    unsigned long ts_since_departure    =    0; // Number of time steps passed until the departure of the current tour (only valid if a tour is ongoing)
+    WeeklyVehicleTour* current_wTour    = NULL; ///< Reference to the current weekly tour
     for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
         // get current time
         struct tm* current_tm_l = global::time_localtime_l->at(ts - 1);
@@ -1053,7 +984,7 @@ void EVFSM::preprocessTourInformation() {
         }
     }
     // -- second, to compute upper and lower cumluative charging electricity consumption
-    current_state == EVState::ConnectedAtHome; // the EV is at home (connected) at the beginning of the simulation run
+    current_state = EVState::ConnectedAtHome; // the EV is at home (connected) at the beginning of the simulation run
     double last_minE_value = 0.0;
     double last_maxE_value = 0.0; // = cumulative sum of electricity used for driving
     double cumsum_driving_distance_km = 0.0;
@@ -1108,7 +1039,7 @@ void EVFSM::preprocessTourInformation() {
             energy_demand_per_tour_ts = 0.0;
         }
         // is there still a next tour, and if yes, does this tour start?
-        if (next_sTour != complete_tour_plan.end() && next_sTour->ts_start >= ts) {
+        if (next_sTour != complete_tour_plan.end() && next_sTour->ts_start <= ts) {
             current_sTour = &(*next_sTour);
             current_state = EVState::Driving;
             // compute (mean) energy demand per tour time step
@@ -1128,7 +1059,7 @@ void EVFSM::preprocessTourInformation() {
                 min_req_SOE = current_sTour->energy_consumption_kWh;
             }
             if (min_req_SOE < battery->get_SOE()) {
-                last_minE_value += min_req_SOE - battery->get_SOE();
+                last_minE_value += battery->get_SOE() - min_req_SOE;
                 battery->set_SOE_without_computations(min_req_SOE);
             }
             // set next tour iterator to next tour and unset boolean variables
@@ -1166,10 +1097,7 @@ void EVFSM::preprocessTourInformation() {
 void EVFSM::resetInternalState() {
     battery->resetInternalState();
     current_state      = EVState::ConnectedAtHome;
-    current_state_icah = EVStateIfConnAtHome::ChargingPossible;
-    current_wTour      = NULL;
-    next_wTour         = NULL;
-    ts_since_departure = 0;
+    //current_state_icah = EVStateIfConnAtHome::ChargingPossible;
     energy_demand_per_tour_ts = 0.0;
     current_P_kW              = 0.0;
     sum_of_driving_distance_km    = 0.0;
@@ -1180,6 +1108,13 @@ void EVFSM::resetInternalState() {
 }
 
 void EVFSM::setCarStateForTimeStep(unsigned long ts) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s2) {
+        throw std::runtime_error("Method EVFSM::setCarStateForTimeStep() cannot be called at the moment!");
+    }
+    state_s2 = false;
+    state_s3 = true;
+#endif
     unsigned long tsID = ts - 1;
     // Read values from precomputed vectors
     current_state = prec_vec_of_states[tsID];
@@ -1195,10 +1130,20 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
     if (current_state == EVState::Driving) {
         battery->set_chargeRequest(-prec_vec_of_curr_BS_E_cons_kWh[tsID]);
         battery->calculateActions();
+    } else if (current_state == EVState::ConnectedAtHome) {
+        // Increment counters
+        sum_of_ts_EV_is_connected += 1;
     }
 }
 
 void EVFSM::setDemandToProfileData(unsigned long ts) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s3) {
+        throw std::runtime_error("Method EVFSM::setDemandToProfileData() cannot be called at the moment!");
+    }
+    state_s2 = true;
+    state_s3 = false;
+#endif
     // immediate charging
     if (current_state == EVState::ConnectedAtHome && battery->get_SOC() < 1.0) {
         battery->set_chargeRequest( Global::get_ev_max_charging_power_kW() );

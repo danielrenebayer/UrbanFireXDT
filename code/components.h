@@ -358,10 +358,8 @@ class ComponentCS : public BaseComponent {
         float  current_demand_kW;
         double total_consumption_kWh;
         double cweek_consumption_kWh; ///< Total demand since the beginning of the the currently simulated week
-        float  charging_power_required_kW;
-        float  charging_power_possible_kW;
-        std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
-        std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
+        //std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
+        //std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
         std::vector<std::vector<double>> future_maxE_storage;
         std::vector<std::vector<double>> future_minE_storage;
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
@@ -392,7 +390,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         ~EVFSM();
         // getters
         EVState get_current_state() const { return current_state; }
-        EVStateIfConnAtHome get_current_state_icah() const { return current_state_icah; } ///< Returns the current state of the EV iff it is connected at home
+        // EVStateIfConnAtHome get_current_state_icah() const { return current_state_icah; } ///< Returns the current state of the EV iff it is connected at home
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         using BaseComponentSemiFlexible::get_currentDemand_kW;
@@ -440,10 +438,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         ComponentBS* battery;
         // variable members, variable during a simulation run
         EVState current_state;           ///< Internal current state of the EV
-        EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
-        WeeklyVehicleTour* current_wTour;       ///< Reference to the current weekly tour
-        WeeklyVehicleTour* next_wTour;          ///< Reference to the next weekly tour
-        unsigned int ts_since_departure; ///< Number of time steps passed until the departure of the current tour (Only valid if a tour is ongoing)
+        //EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
         float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
         float current_P_kW;  ///< The current charging power in kW
         // variables for the final metrics calculation
@@ -455,7 +450,8 @@ class EVFSM : public BaseComponentSemiFlexible {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run
         bool state_s1; // directly after initialization, tours can be added
-        bool state_s2; // tour information has been processed, no tours can be added anymore
+        bool state_s2; // ready for new/first time step, i.e., all tour information has been processed, no tours can be added anymore
+        bool state_s3; // EV internal state set to new time step, current demand can be set
 #endif
         //
         // class members
