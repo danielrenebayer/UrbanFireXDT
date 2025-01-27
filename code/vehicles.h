@@ -15,11 +15,11 @@
  * All time related parameters have to be aligned with the time step size of the simulation.
  */
 struct WeeklyVehicleTour {
-    unsigned long next_tour_id;
-    unsigned short day_of_week;
-    unsigned int departure_ts_of_day;
-    unsigned int ts_duration;
-    double tour_length_km;
+    unsigned long next_tour_id; ///< 0, if there is no new tour
+    short day_of_week; ///< The day of the week a tour starts. Note: 0 is Monday (like in Python, not like tm_wday where 0 is a Sunday)
+    unsigned long departure_ts_of_day; ///< Number of time steps after midnight where the tour starts
+    unsigned long ts_duration; ///< Tour duration in time steps, arrival at the beginning of a new time step (i.e., ts_duration = 1 --> arrival after one time step)
+    double tour_length_km; ///< Total length of the tour in km
     bool   with_work;
 };
 

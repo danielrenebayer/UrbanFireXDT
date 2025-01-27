@@ -934,9 +934,9 @@ std::string* EVFSM::get_metrics_string_annual() {
 }
 
 void EVFSM::add_weekly_tour(
-    unsigned short weekday,
-    unsigned int departure_ts_of_day,
-    unsigned int ts_duration,
+    short weekday,
+    unsigned long departure_ts_of_day,
+    unsigned long ts_duration,
     double tour_length_km,
     bool with_work)
 {
@@ -1020,8 +1020,12 @@ void EVFSM::preprocessTourInformation() {
     for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
         // get current time
         struct tm* current_tm_l = global::time_localtime_l->at(ts - 1);
-        unsigned int dayOfWeek_l = (unsigned int) (current_tm_l->tm_wday); // get day of week in the format 0->Monday, 6->Sunday
-        unsigned int hourOfDay_l = (unsigned int) (current_tm_l->tm_hour);
+        int dayOfWeek_l = current_tm_l->tm_wday; // get day of week in the format 0->Sunday, 6->Saturday
+        int hourOfDay_l = current_tm_l->tm_hour;
+        // Convert format: 0->Monday, 6->Sunday
+        dayOfWeek_l = dayOfWeek_l - 1;
+        if (dayOfWeek_l < 0)
+            dayOfWeek_l += 7;
         // if there is a currently active tour: check, if it reached home
         if (current_wTour != NULL) {
             ts_since_departure += 1;
@@ -1037,7 +1041,8 @@ void EVFSM::preprocessTourInformation() {
         if (current_wTour == NULL) {
             // loop over all tours on this day, is there a tour starting right now?
             for ( WeeklyVehicleTour &vt : *(list_of_tours_pd)[dayOfWeek_l] ) {
-                if (vt.departure_ts_of_day == hourOfDay_l) { // mind the shift: Car tours are left-aligned, hours are right aligned
+                if (vt.departure_ts_of_day == (unsigned int) hourOfDay_l) { // mind the shift: Car tours are left-aligned, hours are right aligned
+                    // TODO: Handle other time resolution than an hourly resolution
                     current_wTour = &vt;
                     ts_since_departure = 0;
                     current_tour_ts_start = ts;
@@ -1211,12 +1216,19 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
 }
 
 void EVFSM::setDemandToGivenValue(float new_demand_kW) {
+#ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
+    if (!state_s3) {
+        throw std::runtime_error("Method EVFSM::setDemandToGivenValue() cannot be called at the moment!");
+    }
+    state_s2 = true;
+    state_s3 = false;
+#endif
     // TODO
 }
 
 void EVFSM::AddWeeklyTour(
-    unsigned long carID,              unsigned short weekday,
-    unsigned int departure_ts_of_day, unsigned int ts_duration,
+    unsigned long carID,              short weekday,
+    unsigned long departure_ts_of_day,unsigned long ts_duration,
     double tour_length_km,            bool with_work)
 {
     EVFSM::list_of_cars.at(carID)->add_weekly_tour(weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);

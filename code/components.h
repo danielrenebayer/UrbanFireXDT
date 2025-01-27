@@ -401,7 +401,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
         // modifiers (on structural level of the simulation)
         using BaseComponentSemiFlexible::set_horizon_in_ts;
-        void add_weekly_tour(unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
+        void add_weekly_tour(short weekday, unsigned long departure_ts_of_day, unsigned long ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
         void preprocessTourInformation(); ///< Transforms the list of weekly tours into a list of tours for the complete simulation time span and computes upper and lower cumlulative energy required (i.e., fill variables BaseComponentSemiFlexible::future_maxE_storage and BaseComponentSemiFlexible::future_minE_storage from upper class). THis method MUST be called before the main simulation run starts, but it MUST be called after EVFSM::add_weekly_tour() is called for the last time, i.e., all tours have been added.
         void resetInternalState(); ///< Resets the internal state
         // modifiers (in the course of simulation time)
@@ -418,7 +418,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         // static methods
         static const std::map<unsigned long, EVFSM*>& GetArrayOfInstances() { return list_of_cars; } ///< Returns the map of all existing instances. The objects itself are mutable, but the map reference is const.
         static unsigned long GetNumberOfEVs() { return list_of_cars.size(); }
-        static void AddWeeklyTour(unsigned long carID, unsigned short weekday, unsigned int departure_ts_of_day, unsigned int ts_duration, double tour_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
+        static void AddWeeklyTour(unsigned long carID, short weekday, unsigned long departure_ts_of_day, unsigned long ts_duration, double tour_length_km, bool with_work); ///< This class method adds a home-centered car tour to the car with ID carID. All parameters that represent a time must have the same alignment as the global time information.
         static void VacuumStaticVariables();
         static void SetSeed(unsigned int seed); ///< Sets the seed for the EVFSM-class random number generator
 
@@ -428,7 +428,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         const float econs_kWh_per_km;    ///< Energy consumption of the current EV in kWh/km
         ComponentCS const* homeStation;  ///< Reference to the home station of the EV
         // variable members (constant during a simulation run)
-        std::vector<std::vector<WeeklyVehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 6 -> friday)
+        std::vector<std::vector<WeeklyVehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 7 -> sunday)
         std::vector<WeeklyVehicleTour*> list_of_all_tours; ///< Vector of all weekly tours. Is the same as `list_of_tours_pd` in a flattened order, i.e., witout day information.
         std::vector<EVState> prec_vec_of_states; ///< precomputed list of states per time step
         std::vector<double> prec_vec_of_minE; ///< Complete precomputed vector of minimum charged electricity up to the end of time step ts

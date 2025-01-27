@@ -1611,9 +1611,9 @@ bool helper_read_ev_profile_data(const std::string& filepath) {
                 return false;
             }
             unsigned long carID          = scenario_dict_all.second.get_child("carID").get_value<unsigned long>();
-            unsigned short weekday       = scenario_dict_all.second.get_child("weekday").get_value<unsigned short>();
-            unsigned int  hour_departure = scenario_dict_all.second.get_child("hour_departure").get_value<unsigned int>();
-            unsigned int  duration_in_ts = scenario_dict_all.second.get_child("duration_in_ts").get_value<unsigned int>();
+                     short weekday       = scenario_dict_all.second.get_child("weekday").get_value<short>();
+            unsigned long hour_departure = scenario_dict_all.second.get_child("hour_departure").get_value<unsigned long>();
+            unsigned long duration_in_ts = scenario_dict_all.second.get_child("duration_in_ts").get_value<unsigned long>();
             double        tour_length_km = scenario_dict_all.second.get_child("tour_length_km").get_value<double>();
             short         with_work      = scenario_dict_all.second.get_child("with_work").get_value<short>();
             //
