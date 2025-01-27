@@ -734,6 +734,12 @@ void ComponentCS::set_horizon_in_ts(unsigned int new_horizon) {
     }
 }
 
+void ComponentCS::preprocess_ev_data() {
+    for (EVFSM* ev : listOfEVs) {
+        ev->preprocessTourInformation();
+    }
+}
+
 void ComponentCS::setCarStatesForTimeStep(unsigned long ts) {
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS

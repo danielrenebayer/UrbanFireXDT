@@ -724,6 +724,10 @@ void ControlUnit::add_exp_cs() {
     }
 }
 
+void ControlUnit::preprocess_ev_data() {
+    sim_comp_cs->preprocess_ev_data();
+}
+
 void ControlUnit::add_ev(unsigned long carID) {
     sim_comp_cs->add_ev(carID);
 }
@@ -1199,6 +1203,12 @@ ControlUnit* ControlUnit::GetInstancePublicIDWE(unsigned long public_unitID) {
 //ControlUnit* ControlUnit::GetInstanceAtLocationID(unsigned long locationID) {
 //    return location_to_cu_map[locationID];
 //}
+
+void ControlUnit::PreprocessEVData() {
+    for (ControlUnit* cu : st__cu_list) {
+        cu->preprocess_ev_data();
+    }
+}
 
 void ControlUnit::ResetAllInternalStates() {
     //

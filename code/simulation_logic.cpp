@@ -369,6 +369,8 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
 }
 
 bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
+    // Initialize and precompute EV states
+    ControlUnit::PreprocessEVData();
     //
     bool return_value = true;
     if (Global::get_repetitions_selected()) {

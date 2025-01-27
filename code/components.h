@@ -342,6 +342,7 @@ class ComponentCS : public BaseComponent {
         void resetInternalState();
         void add_ev(unsigned long carID);
         void set_horizon_in_ts(unsigned int new_horizon); ///< Sets another horizon for the number of time steps returned by ComponentCS::get_future_min_consumption_kWh() and ComponentCS::get_future_max_consumption_kWh()
+        void preprocess_ev_data(); ///< Preprocesses EV data, calls EVFSM::preprocessTourInformation() for all attached EVs. Call this method only once right before the first simulation run.
         // modifiers (in the course of simulation time)
         void setCarStatesForTimeStep(unsigned long ts); ///< Sets the car states for all attached EVs for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
         void setDemandToProfileData(unsigned long ts); ///< Sets the charging demand to the (immediate charging) profile value. If this method is called once during a simulation run, ComponentCS::setDemandToGivenValues() MUST NOT be called afterwards.

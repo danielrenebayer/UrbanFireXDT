@@ -154,6 +154,7 @@ class ControlUnit {
         void add_exp_hp();
         void add_exp_cs(); ///< Activates / enables the EV charging station at the control unit
         void add_ev(unsigned long carID); ///< Adds an EV to the charging station (regardless if the charging station is enabled or not)
+        void preprocess_ev_data(); ///< Preprocesses EV data, calls EVFSM::preprocessTourInformation() for all attached EVs. Call this method only once right before the first simulation run.
         void set_output_object(CUOutput* output_obj);
         void set_exp_pv_params_A(float kWp_static); ///< Set the kWp of expanded PV installations in the case of static kWp computation per section
         void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
@@ -184,6 +185,7 @@ class ControlUnit {
         static double GetAllSimCompBatteriesCharge_kWh();   ///< Returns the charge of all simulatively added battery storage systems at the current ts
         static double GetAllSimCompBatteriesCapacity_kWh(); ///< Returns the capacity of all simulatively added battery storage systems
         // 3. modifiers for all created objects
+        static void PreprocessEVData(); ///< Preprocesses EV data (min/max consumption until a given ts, states, ...) for all EVs
         static void ResetAllInternalStates();
         static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units
         static void ChangeControlHorizonInTS(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts()). See also `ControlUnit::change_control_horizon_in_ts()`.
