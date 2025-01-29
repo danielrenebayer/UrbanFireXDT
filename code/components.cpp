@@ -12,6 +12,7 @@
 
 #include "vehicles.h"
 #include "global.h"
+#include "output.h"
 
 
 // ----------------------------- //
@@ -1157,6 +1158,10 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
         }
     } else {
         current_P_kW = 0.0;
+    }
+
+    if (Global::get_create_ev_detailed_output()) {
+        output::outputEVStateDetails(ts, carID, current_state, current_P_kW, prec_vec_of_minE[ts-1], prec_vec_of_maxE[ts-1], battery->get_currentCharge_kWh());
     }
 }
 
