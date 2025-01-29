@@ -290,6 +290,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 string value = scenario_dict.get_value<string>();
                 Global::set_ev_data_path( &value );
             }
+            else if ( element_name.compare("CS max power kW")                         == 0 )
+            {
+                Global::set_cs_max_charging_power_kW( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("use emission time series ia")             == 0 )
             {
                 Global::set_use_emission_time_series_ia( scenario_dict.get_value<bool>() );
@@ -1739,6 +1743,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_ev_consumption_kWh_km());
     PRINT_VAR(Global::get_ev_max_charging_power_kW());
     PRINT_VAR(Global::get_ev_charging_effi());
+    PRINT_VAR(Global::get_cs_max_charging_power_kW());
     // Output settings
     cout << "  Output settings:\n";
     PRINT_VAR(Global::get_compute_weekly_metrics());
