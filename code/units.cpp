@@ -1146,10 +1146,8 @@ void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
     // define static empty vector for the optimization
     if (st__empty_vector_for_time_horizon == NULL) {
         st__empty_vector_for_time_horizon = new std::vector<double>;
-        st__empty_vector_for_time_horizon->reserve( Global::get_control_horizon_in_ts() );
-        for (size_t fts = 0.0; fts < Global::get_control_horizon_in_ts(); fts++) {
-            (*st__empty_vector_for_time_horizon)[fts] = 0.0f;
-        }
+        st__empty_vector_for_time_horizon->clear();
+        st__empty_vector_for_time_horizon->resize( Global::get_control_horizon_in_ts(), 0.0 );
     }
 #ifdef USE_GUROBI
     CUOptimization::initializeGurobiEnvironment();
@@ -1233,10 +1231,8 @@ void ControlUnit::ChangeControlHorizonInTS(unsigned int new_horizon) {
     if (st__empty_vector_for_time_horizon != NULL)
         delete st__empty_vector_for_time_horizon;
     st__empty_vector_for_time_horizon = new std::vector<double>;
-    st__empty_vector_for_time_horizon->reserve( new_horizon );
-    for (size_t fts = 0.0; fts < new_horizon; fts++) {
-        (*st__empty_vector_for_time_horizon)[fts] = 0.0f;
-    }
+    st__empty_vector_for_time_horizon->clear();
+    st__empty_vector_for_time_horizon->resize( new_horizon, 0.0 );
     // Call method for every register object
     for (ControlUnit* cu : st__cu_list) {
         cu->change_control_horizon_in_ts(new_horizon);

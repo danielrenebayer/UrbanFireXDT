@@ -287,10 +287,7 @@ void ComponentPV::resetInternalState() {
 
 void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
     future_generation_kW.clear();
-    future_generation_kW.reserve(new_horizon);
-    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
-        future_generation_kW[tOffset] = 0.0;
-    }
+    future_generation_kW.resize(new_horizon, 0.0);
 }
 
 
@@ -468,10 +465,8 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
       scaling_factor(yearly_econs_kWh/1000.0f)
 {
     // initialize the unshiftable load storage
-    future_unshiftable_storage.reserve( Global::get_control_horizon_in_ts() );
-    for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
-        future_unshiftable_storage[tOffset] = 0.0;
-    }
+    future_unshiftable_storage.clear();
+    future_unshiftable_storage.resize( Global::get_control_horizon_in_ts(), 0.0);
 
     // select heat pump profile static or random
     size_t this_hp_profile_idx;
@@ -512,10 +507,7 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
 void ComponentHP::set_horizon_in_ts(unsigned int new_horizon) {
     BaseComponentSemiFlexible::set_horizon_in_ts(new_horizon);
     future_unshiftable_storage.clear();
-    future_unshiftable_storage.reserve(new_horizon);
-    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
-        future_unshiftable_storage[tOffset] = 0.0;
-    }
+    future_unshiftable_storage.resize(new_horizon, 0.0);
 }
 
 void ComponentHP::computeNextInternalState(unsigned long ts) {
