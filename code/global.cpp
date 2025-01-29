@@ -188,6 +188,8 @@ global::ControllerOptimizationTarget Global::controller_optimization_target = gl
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
+bool Global::create_control_cmd_output       = false;
+bool Global::create_ev_detailed_output       = false;
 string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
 //
@@ -1157,6 +1159,20 @@ void Global::set_create_substation_output(bool value) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
         Global::create_substation_output = value;
+    }
+}
+void Global::set_create_control_cmd_output(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::create_control_cmd_output = value;
+    }
+}
+void Global::set_create_ev_detailed_output(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::create_ev_detailed_output = value;
     }
 }
 void Global::set_exp_pv_static_profile_orientation(std::string* value) {

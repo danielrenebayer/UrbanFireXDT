@@ -9,6 +9,7 @@
 #include <string>
 
 #include "global.h"
+#include "vehicles.h"
 
 using namespace std;
 using namespace output;
@@ -214,6 +215,28 @@ void output::initializeCUOutput(unsigned long scenario_id) {
     } else {
         // Case 3: no output per CU selected
     }
+    //
+    // initialize additional outputs with details about the control units (if selected)
+    if (Global::get_create_control_cmd_output()) {
+        filesystem::path output_path = *(global::current_output_dir);
+        output_path /= "CU-control-commands.csv";
+        cu_details_ccmd_output = new ofstream(output_path, std::ofstream::out);
+        // activate buffers for speedup
+        //buffer = new char[bufferSize];
+        //cu_details_ccmd_output->rdbuf()->pubsetbuf(buffer, bufferSize);
+        // add header to output file
+        *(cu_details_ccmd_output) << "HEADER" << endl;
+    }
+    if (Global::get_create_ev_detailed_output()) {
+        filesystem::path output_path = *(global::current_output_dir);
+        output_path /= "ev-details.csv";;
+        cu_details_ev_output = new ofstream(output_path, std::ofstream::out);
+        // activate buffers for speedup
+        //buffer = new char[bufferSize];
+        //cu_details_ev_output->rdbuf()->pubsetbuf(buffer, bufferSize);
+        // add header to output file
+        *(cu_details_ev_output) << "TimestepID,CarID,EVState,P_charging_kW,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh" << endl;
+    }
 }
 
 void output::closeOutputs() {
@@ -249,6 +272,17 @@ void output::closeOutputs() {
     for (ControlUnit* c : cuList) {
         c->set_output_object(NULL);
     }
+    //
+    if (cu_details_ccmd_output != NULL) {
+        cu_details_ccmd_output->close();
+        delete cu_details_ccmd_output;
+        cu_details_ccmd_output = NULL;
+    }
+    if (cu_details_ev_output != NULL) {
+        cu_details_ev_output->flush();
+        delete cu_details_ev_output;
+        cu_details_ev_output = NULL;
+    }
 }
 
 void output::flushBuffers() {
@@ -265,6 +299,11 @@ void output::flushBuffers() {
     if (cu_multi_outputs != NULL)
         for (size_t i = 0; i < n_cu_multi_outputs; i++)
             cu_multi_outputs[i]->flush_buffer();
+    //
+    if (cu_details_ccmd_output != NULL)
+        cu_details_ccmd_output->flush();
+    if (cu_details_ev_output != NULL)
+        cu_details_ev_output->flush();
 }
 
 //
@@ -468,6 +507,21 @@ void output::outputRuntimeInformation(long seconds_setup, long seconds_main_run)
     time_output << "Setup time in s," << seconds_setup << "\n";
     time_output << "Main run time in s," << seconds_main_run << "\n";
     time_output.close();
+}
+
+void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, double cumsum_E_min, double cumsum_E_max, double ev_bs_SOE_kWh) {
+    std::unique_lock lock(mtx_cu_details_ev); // secure access by using a mutex
+    std::string ev_state_str;
+    if (ev_state == EVState::ConnectedAtHome) {
+        ev_state_str = "ConnectedAtHome";
+    } else if (ev_state == EVState::DisconnectedAtHome) {
+        ev_state_str = "DisconnectedAtHome";
+    } else if (ev_state == EVState::Driving) {
+        ev_state_str = "Driving";
+    } else {
+        ev_state_str = "unknown";
+    }
+    *(cu_details_ev_output) << ts << "," << carID << "," << ev_state_str << "," << p_charging_kW << "," << cumsum_E_min << "," << cumsum_E_max << "," << ev_bs_SOE_kWh << "\n";
 }
 
 

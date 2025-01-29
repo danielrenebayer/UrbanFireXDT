@@ -22,15 +22,22 @@ class CUOutputSingleFile;
 class CUOutputOneFilePerCU;
 class CUOutputOneFilePerSubstation;
 
+#include "vehicles.h"
+
 using namespace std;
 
 namespace output {
 
     inline std::ofstream* substation_output         = NULL; ///< The main file for the substation load time series
     inline std::ofstream* substation_output_details = NULL; ///< The secondary file for additional information about the substations
+    inline std::ofstream* cu_details_ccmd_output    = NULL; ///< Output file for command details per time step and control unit (if selected by --ccmd-output option)
+    inline std::ofstream* cu_details_ev_output      = NULL; ///< Output file for ev      details per time step and control unit (if selected by --ev-output option)
     inline CUOutputSingleFile* cu_single_output = NULL; ///< Reference to the single_output object, if one output for all CUs is selected
     inline CUOutputOneFilePerSubstation** cu_multi_outputs = NULL; ///< Reference to the array of CU ouputs, if one output per CU is selected
     inline size_t n_cu_multi_outputs = 0; ///< Number of elements in cu_multi_ouputs
+
+    inline std::mutex mtx_cu_details_ccmd; ///< Mutex to ensure proper working in parallel processing for output::cu_details_ccmd_output
+    inline std::mutex mtx_cu_details_ev;   ///< Mutex to ensure proper working in parallel processing for output::cu_details_ev_output
 
     /**
      * This function initializes the base direcory (or directories) for the output,
@@ -59,6 +66,9 @@ namespace output {
      * This method initializes the individual output files for the control
      * units. Depending on the globally selected mode, one file per CU is
      * created or some CUs share one output file.
+     * Moreover, it initializes the output files for the inidivudal control
+     * commands and the EV states per time step if selected by the command
+     * line arguments --ccmd-output and --ev-output.
      * @param scenario_id The current scenario ID
      */
     void initializeCUOutput(unsigned long scenario_id);
@@ -134,6 +144,12 @@ namespace output {
      * @param seconds_main_run: The duration of the main run in seconds
      */
     void outputRuntimeInformation(long seconds_setup, long seconds_main_run);
+
+    /**
+     * Outputs information about one EV for a given time step.
+     * Thread safe.
+     */
+    void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, double cumsum_E_min, double cumsum_E_max, double ev_bs_SOE_kWh);
 
 }
 

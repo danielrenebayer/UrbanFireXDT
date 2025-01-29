@@ -56,6 +56,8 @@ int main(int argc, char* argv[]) {
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
+        ("ccmd-output", bpopts::value<string>(), "Modify output behavior for details of the Control Commands (inside each control unit): 'off' disables all output (default), 'all' outputs detailed information about the control commands for all control units for every time step.")
+        ("ev-output",   bpopts::value<string>(), "Modify output behavior for EVs: 'off' disables all output (default), 'all' outputs information for all EVs for every time step.")
         ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used. If the simulation is repeated more than once, the seed gets incremented by one per repetition.")
         ("weekly-metrics,w", bpopts::value<string>()->default_value("off"), "Controls the generation of the metrics computation on weekly level. Default is 'off'.");
     bpopts::positional_options_description opts_desc_pos;
@@ -130,6 +132,34 @@ int main(int argc, char* argv[]) {
         }
     } else {
         Global::set_create_substation_output(true);
+    }
+    if (opts_vals.count("ccmd-output") > 0) {
+        string st_output = opts_vals["ccmd-output"].as<string>();
+        if (st_output == "no" || st_output == "off") {
+            Global::set_create_control_cmd_output(false);
+        } else if (st_output == "all") {
+            Global::set_create_control_cmd_output(true);
+        } else {
+            // invalid argument
+            cerr << "Error when parsing command line arguments: invalid option for --ccmd-output given!" << endl;
+            return 1;
+        }
+    } else {
+        Global::set_create_control_cmd_output(false);
+    }
+    if (opts_vals.count("ev-output") > 0) {
+        string st_output = opts_vals["ev-output"].as<string>();
+        if (st_output == "no" || st_output == "off") {
+            Global::set_create_ev_detailed_output(false);
+        } else if (st_output == "all") {
+            Global::set_create_ev_detailed_output(true);
+        } else {
+            // invalid argument
+            cerr << "Error when parsing command line arguments: invalid option for --ev-output given!" << endl;
+            return 1;
+        }
+    } else {
+        Global::set_create_ev_detailed_output(false);
     }
     if (opts_vals.count("repetitions") > 0) {
         unsigned int n_repetitions = opts_vals["repetitions"].as<unsigned int>();
