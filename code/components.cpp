@@ -32,13 +32,8 @@ void BaseComponentSemiFlexible::set_horizon_in_ts(unsigned int new_horizon) {
     future_maxE_storage.clear();
     future_minE_storage.clear();
 
-    future_maxE_storage.reserve(new_horizon);
-    future_minE_storage.reserve(new_horizon);
-
-    for (size_t tOffset = 0; tOffset < new_horizon; tOffset++) {
-        future_maxE_storage[tOffset] = 0.0;
-        future_minE_storage[tOffset] = 0.0;
-    }
+    future_maxE_storage.resize(new_horizon, 0.0);
+    future_minE_storage.resize(new_horizon, 0.0);
 }
 
 
