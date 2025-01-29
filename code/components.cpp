@@ -766,9 +766,46 @@ void ComponentCS::setDemandToProfileData(unsigned long ts) {
 #endif
 
     current_demand_kW = 0.0;
-    for (EVFSM* ev : listOfEVs) {
-        ev->setDemandToProfileData(ts);
-        current_demand_kW += ev->get_currentDemand_kW();
+    // if no upper limit for charging power is set -> use EVFSM::setDemandToProfileData()
+    // else use EVFSM::setDemandToGivenValue()
+    if (Global::get_cs_max_charging_power_kW() <= 0.0) {
+        for (EVFSM* ev : listOfEVs) {
+            ev->setDemandToProfileData(ts);
+            current_demand_kW += ev->get_currentDemand_kW();
+        }
+    } else {
+        float remaining_power_kW = Global::get_cs_max_charging_power_kW();
+        std::vector<double> new_power_per_EV_kW(listOfEVs.size(), 0.0);
+        // Loop over all EVs and get min demand
+        for (size_t ev_idx = 0; ev_idx < listOfEVs.size(); ev_idx++) {
+            EVFSM* ev = listOfEVs[ev_idx];
+            float min_demand = ev->get_future_min_consumption_kWh()->at(0) / Global::get_time_step_size_in_h(); // value at ts 0 always exists, as Global::control_horizon_in_ts >= 1 always holds!
+            new_power_per_EV_kW[ev_idx] = min_demand;
+            remaining_power_kW -= min_demand;
+        }
+        // Loop over all EVs again and assign max demand, if remaining power > 0
+        for (size_t ev_idx = 0; ev_idx < listOfEVs.size(); ev_idx++) {
+            EVFSM* ev = listOfEVs[ev_idx];
+            float max_demand = ev->get_future_max_consumption_kWh()->at(0) / Global::get_time_step_size_in_h();
+            if (remaining_power_kW > 0.0) {
+                if (remaining_power_kW > max_demand) {
+                    new_power_per_EV_kW[ev_idx] = max_demand;
+                    remaining_power_kW -= max_demand;
+                } else {
+                    new_power_per_EV_kW[ev_idx] = remaining_power_kW;
+                    remaining_power_kW = 0.0;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        // Set actual power of all EVs
+        for (size_t ev_idx = 0; ev_idx < listOfEVs.size(); ev_idx++) {
+            EVFSM* ev = listOfEVs[ev_idx];
+            ev->setDemandToGivenValue(new_power_per_EV_kW[ev_idx]);
+            current_demand_kW += ev->get_currentDemand_kW();
+        }
     }
     // compute current demand and cumulative sum
     double e = current_demand_kW * Global::get_time_step_size_in_h();
