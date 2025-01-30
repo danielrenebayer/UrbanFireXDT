@@ -107,7 +107,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | EV consumption kWh per km | float | no     |  0.2                 | 0.0 to inf      | The electricity consumption of an EV for driving 1 km | no |
 | EV max charging power | float   | no     |  11.0                  | 0.0 to inf      | The maximum charging power of a simulated EV | no |
 | EV charging efficiency | float  | no     |   1.0                  | 0.0 to 1.0      | The efficiency for charging the EV battery   | no |
-| CS max power kW       | float   | no       | -1.0                 | 0.0 (ex) to inf | The maximum charging power per charging station component, i.e., per building (regardless of the number of connected EVs). Take care on multi-residential buildings. | no |
+| CS max power kW       | float   | no       | -1.0                 | 0.0 (ex) to inf | The maximum charging power per charging station component, i.e., per building (regardless of the number of connected EVs). Take care on multi-residential buildings as it holds for them as well. This value will be ignored if the `controller mode` is not set to the rule-based strategy. | no |
 
 ### Group 3, Part D: Options applying to all components
 

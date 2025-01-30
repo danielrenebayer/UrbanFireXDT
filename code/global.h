@@ -175,7 +175,7 @@ class Global {
         //
         static bool AllVariablesInitialized();
         static void PrintUninitializedVariables(); ///< Prints all variable names to stdout, that are not initialized
-        static bool CheckTimeRelatedVariablesInitState(); ///< Returns true if all time-related variables have been initialized. If not, it will return false and prints out all missing variables. It does not include Global::first_timestep and Global::last_timestep (as this checking function is considered to be executed before the calculation of both values).
+        static bool CheckTimeRelatedVariablesInitState(); ///< Returns true if all time-related variables have been initialized. If not, it will return false and prints out all missing variables. It does not include Global::first_timestep and Global::last_timestep (as this checking function is considered to be executed before the calculation of both values). Moreover, it will print out warnings for impossible combinations.
         //
         static void LockAllVariables();   ///< No (set) variable can be overwritten after this call, unset variables can still be set / overwritten once
         static void UnlockAllVariables(); ///< All variables can now be overwritten

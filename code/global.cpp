@@ -251,6 +251,11 @@ void Global::DeleteStaticVariables() {
 }
 
 bool Global::AllVariablesInitialized() {
+    // Check for impossible combinations
+    if (cs_max_charging_power_kW > 0.0 && controller_mode != ControllerMode::RuleBased ) {
+        std::cerr << "Warning: Setting a upper limit for max charging power per control unit will be ignored if controller mode is other than rule-based." << std::endl;
+    }
+    // Check for initialized variables
     if (n_timesteps_init && 
         n_substations_init &&
         n_CUs_init &&
