@@ -97,11 +97,21 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | expansion BS power for SOC 0 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 0 in kW |  
 | expansion BS power for SOC 1 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 1 in kW | 
 
-### Group 3, Part C: Heat pump and EV / EV charging station configuration
+### Group 3, Part C: Heat pump configuration
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
 | HP flexibility in ts  | unsigned int | no  | 1                    | 0 to inf        | The number of time steps an existing heat pump profile can be shifted (in both temporal directions) | no |
+| th. E to HP el. E conversion factor | float | yes  |              |                 | Factor for converting a thermal energy per building into a heat pump electricity consumption | no |
+| Heat consumption apo building V: slope     | float   | no | 0.0   | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: coef. of the linear regression) | no |
+| Heat consumption apo building V: intercept | float   | no | 0.0   | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: intercept of the linear regression) | no |
+
+### Group 3, Part D: Individual EV and EV charging station configuration
+
+Notice the difference between individual EVs and the EV charging station (CS): There is only one CS component per control unit, but one single CS can be the home for arbitrary EVs.
+
+| Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
+| ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
 | EV plugin probability | float   | no       | 0.25                 | 0.0 to 1.0      | The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded) | no |
 | EV battery size kWh   | float   | no       | 30.0                 | 0.0 to inf      | The capacity of a simulated EV | no |
 | EV consumption kWh per km | float | no     |  0.2                 | 0.0 to inf      | The electricity consumption of an EV for driving 1 km | no |
@@ -109,13 +119,13 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | EV charging efficiency | float  | no     |   1.0                  | 0.0 to 1.0      | The efficiency for charging the EV battery   | no |
 | CS max power kW       | float   | no       | -1.0                 | 0.0 (ex) to inf | The maximum charging power per charging station component, i.e., per building (regardless of the number of connected EVs). Take care on multi-residential buildings as it holds for them as well. This value will be ignored if the `controller mode` is not set to the rule-based strategy. | no |
 
-### Group 3, Part D: Options applying to all components
+### Group 3, Part E: Options applying to all components
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
 | expansion profile selection | string | yes |             |  as in data / random     | Controls how the profiles (if there are more than one) should be assigned to a new created component | no |
 
-### Group 3, Part E: Other component options
+### Group 3, Part F: Other component options
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
@@ -127,9 +137,6 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
-| th. E to HP el. E conversion factor | float | yes  |              |                 | Factor for converting a thermal energy per building into a heat pump electricity consumption | no |
-| Heat consumption apo building V: slope     | float   | no       | 0.0                  | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: coef. of the linear regression) | no |
-| Heat consumption apo building V: intercept | float   | no       | 0.0                  | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: intercept of the linear regression) | no |
 | break SAC loop if limit reached | bool | no | true                |                 | Should the SAC loop be stopped for an individual combination (like PV + HP) if one of the limits is reached (either PV or HP) (even though HP components should still be added)? | no |
 | CU selection mode for comp. add. | string | yes |   | - `as in data`<br>- `random`<br>- `best SSR`<br>- `best NPV` | Controls how to select the control units for expansion.<br>`Random`: Shuffle the list of units randomly<br>`As in data`: Use the same sorting present in data (i.e., sorted by unit IDs)<br>In case of `best SSR` and `best NPV` a simulation is executed first, where all SSR and NPV values for every control unit are computed, then they are sorted and finally this sorted list is taken | no |
 | select buildings with given heat demand only | bool | no | no |                 | Select only buildings where the heat consumption is given in the input database, table ‘heat\_demand\_per\_location’. If set to true, parameters `Heat consumption apo building V: slope` and `Heat consumption apo building V: intercept` will be ignored. | no |
