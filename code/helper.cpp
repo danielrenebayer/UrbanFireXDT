@@ -104,4 +104,13 @@ int compare_struct_tm(struct tm* a, struct tm* b) {
     return 0;
 }
 
+float round_float_n(float x, unsigned int decimal_places) {
+        float m = std::powf(10.0f, (float) decimal_places);
+        return std::round( x * m ) / m;
+}
+
+float round_float_5(float x) {
+        return std::round( x * 100000 ) / 100000;
+}
+
 

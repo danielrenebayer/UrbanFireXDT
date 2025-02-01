@@ -9,6 +9,7 @@
 #include <string>
 
 #include "global.h"
+#include "helper.h"
 #include "vehicles.h"
 
 using namespace std;
@@ -599,7 +600,7 @@ void CUOutputSingleFile::output_for_one_cu(
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
@@ -608,7 +609,7 @@ void CUOutputOneFilePerCU::output_for_one_cu(
         float bs_SOC,   float load_bs,       float load_hp,
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
@@ -618,7 +619,7 @@ void CUOutputOneFilePerSubstation::output_for_one_cu(
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << load_cs << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputSingleFile::flush_buffer() {

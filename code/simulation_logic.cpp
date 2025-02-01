@@ -161,16 +161,16 @@ bool simulation::oneStep(unsigned long ts,
             total_residential_load   += current_station_resident_load;
             total_residential_demand += current_station_resident_demand;
             // stuff for output
-            *(output::substation_output) << current_station_load << ",";
-            *(output::substation_output_details) << current_station_resident_load   << ",";
-            *(output::substation_output_details) << current_station_resident_demand << ",";
+            *(output::substation_output) << round_float_5( current_station_load ) << ",";
+            *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
+            *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
         }
-        *(output::substation_output) << global::unit_open_space_pv->get_current_feedin_kW()   << ",";
-        *(output::substation_output) << global::unit_open_space_wind->get_current_feedin_kW() << ",";
-        *(output::substation_output) << totalBatterySOC << ",";
-        *(output::substation_output) << total_load << "\n"; // add total load to output
-        *(output::substation_output_details) << total_residential_load << ",";
-        *(output::substation_output_details) << total_residential_demand << "\n";
+        *(output::substation_output) << round_float_5( global::unit_open_space_pv->get_current_feedin_kW() )   << ",";
+        *(output::substation_output) << round_float_5( global::unit_open_space_wind->get_current_feedin_kW() ) << ",";
+        *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
+        *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
+        *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
+        *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
     }
 
     // Output current time step

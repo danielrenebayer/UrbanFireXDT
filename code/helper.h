@@ -9,6 +9,7 @@
 #ifndef __HELPER_H_
 #define __HELPER_H_
 
+#include <cmath>
 #include <list>
 #include <memory>
 #include <string>
@@ -34,6 +35,16 @@ list<list<pair<string,float>>>* cartesian_product(
  * Returns +1, if tm1 >  tm2
  */
 int compare_struct_tm(struct tm* a, struct tm* b);
+
+/**
+ * Rounds a float on n decimal places
+ */
+float round_float_n(float x, unsigned int decimal_places);
+
+/**
+ * Rounds a float on 5 decimal places
+ */
+float round_float_5(float x);
 
 
 #endif
