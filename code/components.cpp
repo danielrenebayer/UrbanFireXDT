@@ -1185,7 +1185,7 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
     }
 
     if (Global::get_create_ev_detailed_output()) {
-        output::outputEVStateDetails(ts, carID, current_state, current_P_kW, prec_vec_of_minE[ts-1], prec_vec_of_maxE[ts-1], battery->get_currentCharge_kWh());
+        output::outputEVStateDetails(ts, carID, current_state, current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
 }
 

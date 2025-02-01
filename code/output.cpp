@@ -236,7 +236,7 @@ void output::initializeCUOutput(unsigned long scenario_id) {
         //buffer = new char[bufferSize];
         //cu_details_ev_output->rdbuf()->pubsetbuf(buffer, bufferSize);
         // add header to output file
-        *(cu_details_ev_output) << "TimestepID,CarID,EVState,P_charging_kW,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh" << endl;
+        *(cu_details_ev_output) << "TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh" << endl;
     }
 }
 
@@ -510,7 +510,7 @@ void output::outputRuntimeInformation(long seconds_setup, long seconds_main_run)
     time_output.close();
 }
 
-void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, double cumsum_E_min, double cumsum_E_max, double ev_bs_SOE_kWh) {
+void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh) {
     std::unique_lock lock(mtx_cu_details_ev); // secure access by using a mutex
     std::string ev_state_str;
     if (ev_state == EVState::ConnectedAtHome) {
@@ -522,7 +522,7 @@ void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState
     } else {
         ev_state_str = "unknown";
     }
-    *(cu_details_ev_output) << ts << "," << carID << "," << ev_state_str << "," << p_charging_kW << "," << cumsum_E_min << "," << cumsum_E_max << "," << ev_bs_SOE_kWh << "\n";
+    *(cu_details_ev_output) << ts << "," << carID << "," << ev_state_str << "," << p_charging_kW << "," << cumsum_E_ch_home << "," << cumsum_E_min << "," << cumsum_E_max << "," << ev_bs_SOE_kWh << "\n";
 }
 
 
@@ -600,7 +600,16 @@ void CUOutputSingleFile::output_for_one_cu(
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << ","
+         << round_float_5(load_vsm) << ","
+         << round_float_5(load_rsm) << ","
+         << round_float_5(load_selfprod) << ","
+         << round_float_5(load_pv) << ","
+         << round_float_5(bs_SOC) << ","
+         << round_float_5(load_bs) << ","
+         << round_float_5(load_hp) << ","
+         << round_float_5(load_cs) << ","
+         << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
@@ -609,7 +618,15 @@ void CUOutputOneFilePerCU::output_for_one_cu(
         float bs_SOC,   float load_bs,       float load_hp,
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << ","
+        << round_float_5(load_vsm) << ","
+        << round_float_5(load_rsm) << ","
+        << round_float_5(load_selfprod) << ","
+        << round_float_5(load_pv) << ","
+        << round_float_5(bs_SOC) << ","
+        << round_float_5(load_bs) << ","
+        << round_float_5(load_hp) << ","
+        << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
@@ -619,7 +636,15 @@ void CUOutputOneFilePerSubstation::output_for_one_cu(
         float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
-    *(output_stream) << ts << "," << cuID << "," << load_vsm << "," << load_rsm << "," << load_selfprod << "," << load_pv << "," << bs_SOC << "," << load_bs << "," << load_hp << "," << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
+    *(output_stream) << ts << "," << cuID << ","
+        << round_float_5(load_vsm) << ","
+        << round_float_5(load_rsm) << ","
+        << round_float_5(load_selfprod) << ","
+        << round_float_5(load_pv) << ","
+        << round_float_5(bs_SOC) << ","
+        << round_float_5(load_bs) << ","
+        << round_float_5(load_hp) << ","
+        << round_float_5(load_cs) << "," << n_cars_pc << "," << n_cars_pnc << "\n";
 }
 
 void CUOutputSingleFile::flush_buffer() {

@@ -149,7 +149,7 @@ namespace output {
      * Outputs information about one EV for a given time step.
      * Thread safe.
      */
-    void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, double cumsum_E_min, double cumsum_E_max, double ev_bs_SOE_kWh);
+    void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh);
 
 }
 
