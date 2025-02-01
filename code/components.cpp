@@ -812,7 +812,16 @@ void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_
     }
 #endif
 
-    // TODO IMPLEMENT
+    current_demand_kW = 0.0;
+    for (size_t ev_idx = 0; ev_idx < listOfEVs.size() && ev_idx < charging_power_per_EV_kW.size(); ev_idx++) {
+        listOfEVs[ev_idx]->setDemandToGivenValue( charging_power_per_EV_kW[ev_idx] );
+        current_demand_kW += listOfEVs[ev_idx]->get_currentDemand_kW();
+    }
+    // compute current demand and cumulative sum
+    double e = current_demand_kW * Global::get_time_step_size_in_h();
+    total_consumption_kWh += e;
+    cweek_consumption_kWh += e;
+
 }
 
 
@@ -843,6 +852,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
+    current_ts         = 0;
     //current_state_icah = EVStateIfConnAtHome::ChargingPossible;
     energy_demand_per_tour_ts = 0.0;
     current_P_kW              = 0.0;
@@ -1032,11 +1042,12 @@ void EVFSM::preprocessTourInformation() {
     // main loop for simulation time span
     bool ev_fully_charged_at_next_dep = false; // True, if the EV must be fully charged at the next departure (or at least charged in every time step)!
     unsigned long ts_since_last_connection = 0;
+    double current_min_cumsum_SOE_kWh = battery->get_maxE_kWh(); // Start with a full battery
     for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
         unsigned long tsID = ts - 1;
         ts_since_last_connection++;
         // is the currently active tour finished?
-        if (current_sTour != NULL && current_sTour->ts_arrival >= ts) {
+        if (current_sTour != NULL && current_sTour->ts_arrival <= ts) {
             // arrival of current tour
             last_maxE_value += current_sTour->energy_consumption_kWh;
             cumsum_driving_distance_km += current_sTour->weekly_tour->tour_length_km;
@@ -1063,29 +1074,31 @@ void EVFSM::preprocessTourInformation() {
             current_sTour = NULL;
             energy_demand_per_tour_ts = 0.0;
         }
-        // is there still a next tour, and if yes, does this tour start?
-        if (next_sTour != complete_tour_plan.end() && next_sTour->ts_start <= ts) {
+        // is there no current tour, and is there still a next tour, and if yes, does this tour start right now?
+        if (current_sTour == NULL && next_sTour != complete_tour_plan.end() && next_sTour->ts_start <= ts) {
             current_sTour = &(*next_sTour);
             current_state = EVState::Driving;
             // compute (mean) energy demand per tour time step
             energy_demand_per_tour_ts = (float) (current_sTour->weekly_tour->tour_length_km * econs_kWh_per_km) / (float) (current_sTour->weekly_tour->ts_duration);
-            // Compute new min SOE to fulfil this new tour
+            // Compute new min SOE to fulfil this new tour, i.e., max(0.35*BAT_CAPACITY, THIS_TOUR_CONSUMPTION)
             double min_req_SOE = 0.35 * battery->get_maxE_kWh();
-            if (ev_fully_charged_at_next_dep) {
-                double kWh_to_charge = battery->get_maxE_kWh() - battery->get_SOE();
-                // check, if there is enough time to charge this amount, otherwise reduce it!
-                double max_possible_kWh = ts_since_last_connection * Global::get_ev_max_charging_power_kW() * Global::get_time_step_size_in_h();
-                if (max_possible_kWh < kWh_to_charge) {
-                    kWh_to_charge = max_possible_kWh;
-                }
-                last_minE_value += kWh_to_charge;
-                battery->set_SOE_without_computations(battery->get_SOE() + kWh_to_charge);
-            } else if (min_req_SOE < current_sTour->energy_consumption_kWh) {
+            if (min_req_SOE < current_sTour->energy_consumption_kWh) {
                 min_req_SOE = current_sTour->energy_consumption_kWh;
             }
-            if (min_req_SOE < battery->get_SOE()) {
-                last_minE_value += battery->get_SOE() - min_req_SOE;
-                battery->set_SOE_without_computations(min_req_SOE);
+            if (ev_fully_charged_at_next_dep) {
+                min_req_SOE = battery->get_maxE_kWh();
+                // check, if there is enough time to charge this amount, otherwise reduce it!
+                double max_possible_kWh = ts_since_last_connection * Global::get_ev_max_charging_power_kW() * Global::get_time_step_size_in_h();
+                if (max_possible_kWh < min_req_SOE) {
+                    min_req_SOE = max_possible_kWh;
+                }
+            }
+            current_min_cumsum_SOE_kWh -= min_req_SOE;
+            // if min cumsum SOE would be smaller 0.0, we need to charge ...
+            if (current_min_cumsum_SOE_kWh < 0.0) {
+                battery->set_SOE_without_computations(-current_min_cumsum_SOE_kWh);
+                last_minE_value += -current_min_cumsum_SOE_kWh;
+                current_min_cumsum_SOE_kWh = 0.0;
             }
             // set next tour iterator to next tour and unset boolean variables
             next_sTour++;
@@ -1140,6 +1153,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
     state_s2 = false;
     state_s3 = true;
 #endif
+    current_ts = ts;
     unsigned long tsID = ts - 1;
     // Read values from precomputed vectors
     current_state = prec_vec_of_states[tsID];
@@ -1147,9 +1161,20 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
     sum_of_driving_distance_km = prec_vec_of_driving_distance_km[tsID];
     current_P_kW = 0.0;
     // set inherited variables for semi-flexible component
+    double last_known_maxE_val = 0.0;
+    double last_known_minE_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
-        future_maxE_storage[tOffset] = prec_vec_of_maxE[tsID + tOffset];
-        future_minE_storage[tOffset] = prec_vec_of_minE[tsID + tOffset];
+        size_t tsIDaOffset = tsID + tOffset;
+        if (tsIDaOffset < Global::get_n_timesteps()) {
+            last_known_maxE_val = prec_vec_of_maxE[tsIDaOffset] - sum_of_E_charged_home_kWh;
+            last_known_minE_val = prec_vec_of_minE[tsIDaOffset] - sum_of_E_charged_home_kWh;
+            if (last_known_maxE_val < 0) // TODO: How can this happen?
+                last_known_maxE_val = 0.0;
+            if (last_known_minE_val < 0)
+                last_known_minE_val = 0.0;
+        }
+        future_maxE_storage[tOffset] = last_known_maxE_val;
+        future_minE_storage[tOffset] = last_known_minE_val;
     }
     // Remove energy from the battery if car is driving
     if (current_state == EVState::Driving) {
@@ -1189,6 +1214,9 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
     }
 }
 
+// define a small value added to the min/max cumsum energy consumption to remove misplaced warnings due to rounding errors
+#define epsilon 0.001
+
 void EVFSM::setDemandToGivenValue(float new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (!state_s3) {
@@ -1197,7 +1225,28 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
     state_s2 = true;
     state_s3 = false;
 #endif
-    // TODO
+    if (new_demand_kW < 0) {
+        std::cerr << "Warning: Bidirection EV charging currently not supported for EVFSM::setDemandToGivenValue()." << std::endl;
+        return;
+    }
+    double e = new_demand_kW * Global::get_time_step_size_in_h();
+    double new_total_e = sum_of_E_charged_home_kWh + e;
+    // check, if the new demand is within the min/max bands
+    if (new_total_e > prec_vec_of_maxE[current_ts-1] + epsilon ||
+        new_total_e < prec_vec_of_minE[current_ts-1] - epsilon
+    ) {
+        std::cerr << "Warning in EVFSM: Required demand is violating bounds for carID " << carID << " at time step " << current_ts << "!" << std::endl;
+    }
+    // update current demand
+    battery->set_chargeRequest( new_demand_kW );
+    battery->calculateActions();
+    current_P_kW = new_demand_kW;
+    // update cumulative variables
+    sum_of_E_charged_home_kWh += e;
+
+    if (Global::get_create_ev_detailed_output()) {
+        output::outputEVStateDetails(current_ts, carID, current_state, current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
+    }
 }
 
 void EVFSM::AddWeeklyTour(

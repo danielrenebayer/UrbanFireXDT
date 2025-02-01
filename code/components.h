@@ -412,7 +412,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::setDemandToGivenValue;
         void setDemandToGivenValue(float new_demand_kW);
         using BaseComponentSemiFlexible::resetWeeklyCounter;
-        void resetWeeklyCounter() {} ///< TODO IMPLEMENT !
+        void resetWeeklyCounter() {} ///< Do nothing. The EV has no weekly metrics.
         // static methods
         static const std::map<unsigned long, EVFSM*>& GetArrayOfInstances() { return list_of_cars; } ///< Returns the map of all existing instances. The objects itself are mutable, but the map reference is const.
         static unsigned long GetNumberOfEVs() { return list_of_cars.size(); }
@@ -438,6 +438,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         ComponentBS* battery;
         // variable members, variable during a simulation run
         EVState current_state;           ///< Internal current state of the EV
+        unsigned long current_ts;        ///< Internal variable storing the current time step
         //EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
         float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
         float current_P_kW;  ///< The current charging power in kW
