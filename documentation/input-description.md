@@ -190,5 +190,5 @@ The normalization takes place on an annual level, so that every time series resu
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | ID of the timestep, must have the same alignment as time_indices.TimestepID |
-| local_price   | REAL      | The local (dynamic) price for residential households for a dynamic tariff in ct/kWh |
-| spotmarket_price | REAL   | The (dynamic) price at the spot market (without vat or taxes) in ct/kWh |
+| local_price   | REAL      | The local (dynamic) price for residential households for a dynamic tariff in Euro/kWh |
+| spotmarket_price | REAL   | The (dynamic) price at the spot market (without vat or taxes) in Euro/kWh |
