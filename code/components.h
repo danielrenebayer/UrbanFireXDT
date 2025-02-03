@@ -310,8 +310,6 @@ class ComponentCS : public BaseComponent {
         float  get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
-        //double get_min_curr_charging_power_kW() const; ///< Returns the minimal charging power at the current time step. The charging station requires at least this portion to fulfil all charging demands.
-        //float  get_max_curr_charging_power_kW() const; ///< The maximal charging power that could be charged into the currently parking cars at the station.
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
         unsigned long get_n_EVs_pnc() const; ///< Returns the number of EVs that are currently at home AND NOT connected with the station
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
@@ -358,8 +356,6 @@ class ComponentCS : public BaseComponent {
         float  current_demand_kW;
         double total_consumption_kWh;
         double cweek_consumption_kWh; ///< Total demand since the beginning of the the currently simulated week
-        //std::list<EVFSM*> charging_order_req; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that require charging
-        //std::list<EVFSM*> charging_order_pos; ///< List of cars sorted after their charging urgency for dispatching the charging process; This list contains all cars that can be charged
         std::vector<std::vector<double>> future_maxE_storage;
         std::vector<std::vector<double>> future_minE_storage;
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
@@ -395,7 +391,6 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         using BaseComponentSemiFlexible::get_currentDemand_kW;
         float get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
-        // TODO get_min_SOC_per_time_step ...
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
         // modifiers (on structural level of the simulation)
         using BaseComponentSemiFlexible::set_horizon_in_ts;
@@ -404,9 +399,6 @@ class EVFSM : public BaseComponentSemiFlexible {
         void resetInternalState(); ///< Resets the internal state
         // modifiers (in the course of simulation time)
         void setCarStateForTimeStep(unsigned long ts); ///< Sets the car state for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'. It uses the precomputed vectors for internal processing.
-        //void setInternalStateToSimRunStart(); ///< Sets the state of the EV to the beginning of a simulation run
-        //void set_current_charging_power(float power_kW); ///< Sets the current charging power in kW. If this method is called, EVFSM::setDemandToProfileData() cannot be called.
-        //void setDemandToProfileData(unsigned long ts); ///< Sets the energy consumption to the value for immediate charging. If this method is called, EVFSM::set_current_charging_power() cannot be called.
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToGivenValue;
