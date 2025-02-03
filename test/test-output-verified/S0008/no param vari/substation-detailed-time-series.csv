@@ -9,7 +9,7 @@ Timestep,ST1_resident_load_kW,ST1_resident_demand_kW,total_residential_load,tota
 8,4,4,4,4
 9,0,0,0,0
 10,5,6,5,6
-11,0.0999966,1.1,0.0999966,1.1
+11,0.1,1.1,0.1,1.1
 12,-1,0,-1,0
 13,11.1,11.1,11.1,11.1
 14,11,11,11,11

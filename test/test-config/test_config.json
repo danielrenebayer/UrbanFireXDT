@@ -84,6 +84,7 @@
             "expansion id": 8,
             "ev data path": "../test-data/ev-data/",
             "EV plugin probability": 1.0,
+            "CS max power kW": 11.0,
             "comment": "EV test; All households are equipped charging station"
         },
         {

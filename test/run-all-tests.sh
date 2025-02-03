@@ -38,7 +38,7 @@ echo -e "\n-- 6. Simulation run --"
 ../bin/simulation-opti --config ../test/test-config/test_config.json --pvar 1 7
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 7. Simulation run --"
-../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 8
+../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 --ev-output all 8
 if (( $? != 0 )); then program_error=1; fi
 
 
@@ -63,9 +63,15 @@ for file; do
     sort "$file" > "${file}-sorted"
     done
 ' sh {} +
+    # Sort ev-details.csv
+    find test-output/$di -name ev-details.csv -type f -exec sh -c '
+for file; do
+    sort "$file" > "${file}-sorted"
+    done
+' sh {} +
     #
     # Do the main diff task (but ignore ST1-AllCUs-ts.csv)
-    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv --exclude=ST1-AllCUs-ts.csv test-output/$di test-output-verified/$di
+    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv --exclude=ST1-AllCUs-ts.csv --exclude=ev-details.csv test-output/$di test-output-verified/$di
     #
     # check if dirs are the same, if yes, return value is 0
     if (( $? != 0 )); then
