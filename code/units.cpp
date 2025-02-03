@@ -16,13 +16,13 @@
 #include "output.h"
 #include "sac_planning.h"
 
-#ifdef USE_GUROBI
-#include "optimization_unit_gurobi.hpp"
-auto runOptimizationForOneCU = CUOptimization::runOptimizationForOneCU_Gurobi;
-#endif
-#ifdef USE_COINOR
-#include "optimization_unit_coinor.hpp"
-auto runOptimizationForOneCU = CUOptimization::runOptimizationForOneCU_CLP;
+#include "optimization_unit_general.hpp"
+#ifdef USE_GLPK
+    #include "optimization_unit_glpk.hpp"
+#elif USE_GUROBI
+    #include "optimization_unit_gurobi.hpp"
+#elif USE_COINOR
+    #include "optimization_unit_coinor.hpp"
 #endif
 
 using namespace std;
@@ -148,8 +148,7 @@ bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigne
 }
 
 ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats)
-    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential),
-      optimization_result_cache(Global::get_control_horizon_in_ts())
+    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential)
 {
 	//
 	// initialize instance variables
@@ -225,6 +224,9 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
 
     worker_thread = NULL;
+
+    // Initialize the controller to NULL by default
+    optimized_controller = NULL;
 }
 
 ControlUnit::~ControlUnit() {
@@ -233,6 +235,8 @@ ControlUnit::~ControlUnit() {
 	if (has_sim_bs) delete sim_comp_bs;
 	if (has_sim_hp) delete sim_comp_hp;
     delete sim_comp_cs;
+    if (optimized_controller != NULL)
+        delete optimized_controller;
     /*
     if (create_history_output) {
         delete[] history_self_prod_load_kW;
@@ -776,7 +780,8 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
 }
 
 void ControlUnit::change_control_horizon_in_ts(unsigned int new_horizon) {
-    optimization_result_cache.reset(new_horizon);
+    if (optimized_controller != NULL)
+        optimized_controller->reset(new_horizon);
     if (has_sim_hp)
         sim_comp_hp->set_horizon_in_ts(new_horizon);
     if (has_sim_cs)
@@ -889,7 +894,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         sim_comp_cs->setCarStatesForTimeStep(ts);
     }
 
-
+    unsigned int n_cars = 0;
+    if (has_sim_cs)
+        n_cars = sim_comp_cs->get_n_EVs();
     // Part B: Make decisions using an optimization if selected
     if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast &&
         ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
@@ -899,6 +906,16 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         ts_since_last_opti_run++;
         if (ts_since_last_opti_run >= Global::get_control_update_freq_in_ts()) {
             // run optimization in this case
+            if (optimized_controller == NULL) {
+#ifdef USE_GLPK
+                optimized_controller = new GLPKController(unitID, Global::get_control_horizon_in_ts(), n_cars);
+#elif USE_GUROBI
+                optimized_controller = new GurobiLPController(unitID, Global::get_control_horizon_in_ts(), n_cars);
+#elif USE_COINOR
+#else
+                throw std::runtime_error("No optimization backend selected during compile time!");
+#endif
+            }
             // TODO: indention!
 
         //
@@ -928,11 +945,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         }
         // - charging station
         float max_p_cs_kW = 0.0;
-        const std::vector<double>* future_cs_shiftable_maxE = st__empty_vector_for_time_horizon;
-        const std::vector<double>* future_cs_shiftable_minE = st__empty_vector_for_time_horizon;
+        const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE = NULL;
+        const std::vector<const std::vector<double>*>* future_ev_shiftable_minE = NULL;
+        const std::vector<const std::vector<double>*>* future_ev_maxP           = NULL;
         if (has_sim_cs) {
-            future_cs_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
-            future_cs_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
+            future_ev_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
+            future_ev_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
+            future_ev_maxP = sim_comp_cs->get_future_max_power_kW();
             max_p_cs_kW = sim_comp_cs->get_max_P_kW();
         }
         // - current battery SOC
@@ -944,36 +963,39 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             max_e_bs_kWh          = sim_comp_bs->get_maxE_kWh();
             max_p_bs_kW           = sim_comp_bs->get_maxP_kW();
         }
-        //
-        // 4. Run the optimization and get the results
-        bool opti_ret_val = runOptimizationForOneCU(
-            ts, optimization_result_cache, max_p_hp_kW, max_p_cs_kW, max_p_bs_kW, max_e_bs_kWh,
-             future_resid_demand_kW,   *future_pv_generation_kW,  *future_hp_unshiftable_kW,
-            *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
-            *future_cs_shiftable_maxE, *future_cs_shiftable_minE,
-            current_bs_charge_kWh);
-        if (!opti_ret_val) {
-            std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
-            return false;
-        }
+            //
+            // 4. Run the optimization and get the results
+            bool opti_ret_val = optimized_controller->updateController(
+                ts, max_p_bs_kW, max_e_bs_kWh, max_p_hp_kW, max_p_cs_kW, current_bs_charge_kWh,
+                future_resid_demand_kW,   *future_pv_generation_kW,  *future_hp_unshiftable_kW,
+                *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
+                future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP
+                );
+            if (!opti_ret_val) {
+                std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
+                return false;
+            }
 
         } else {
             // else (i.e., no opti executed in this position):
             // just move the cache by one
-            optimization_result_cache.shiftVectorsByOnePlace();
+            optimized_controller->shiftVectorsByOnePlace();
         }
 
         //
         // 5. Propagate the results to the components
         if (has_sim_bs) {
-            sim_comp_bs->set_chargeRequest( optimization_result_cache.bs_power[0] );
+            sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
         }
         if (has_sim_hp) {
-            sim_comp_hp->setDemandToGivenValue( optimization_result_cache.hp_power[0] );
+            sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
         }
         if (has_sim_cs) {
-            // optimization_result_cache.cs_power[0]
-            // TODO ! ! !
+            const std::vector<std::vector<double>>& ev_power_kW = optimized_controller->get_future_ev_power_kW();
+            std::vector<float> ev_power_kW_this_ts;
+            for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++)
+                ev_power_kW_this_ts.push_back( ev_power_kW[evIdx][0] );
+            sim_comp_cs->setDemandToGivenValues( ev_power_kW_this_ts );
         }
     } else {
         // If the rule-based strategy is selected, just use the current profile for the new demand
@@ -1022,13 +1044,6 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // 4. get the effect of the EV charging station
     if (sim_comp_cs->is_enabled()) {
-        float max_power = sim_comp_cs->get_max_curr_charging_power_kW(); // TODO: Why do we need this?
-        if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
-            sim_comp_cs->set_charging_value(max_power); // TODO: Remove this! There is already   sim_comp_cs->setDemandToProfileData(ts)   some lines above ... 
-        } else {
-            // TODO: Apply action given by the optimization
-            // TODO: So geht das nicht !!! Die obige Zeile ("get_max_curr_charging_power")
-        }
         load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;
         if (load_cs > 0)
@@ -1149,13 +1164,14 @@ void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
         st__empty_vector_for_time_horizon->clear();
         st__empty_vector_for_time_horizon->resize( Global::get_control_horizon_in_ts(), 0.0 );
     }
-#ifdef USE_GUROBI
-    CUOptimization::initializeGurobiEnvironment();
+    // Initialize static members
+    if (Global::get_controller_mode() != global::ControllerMode::RuleBased) {
+#ifdef USE_GLPK
+#elif USE_GUROBI
+        GurobiLPController::InitializeGurobiEnvironment();
+#elif USE_COINOR
 #endif
-#ifdef USE_COINOR
-    // if CLP is used for optimization, prepare the optimization model
-    CUOptimization::prepareOrUpdateCLPModel();
-#endif
+    }
 }
 
 void ControlUnit::VacuumInstancesAndStaticVariables() {
@@ -1170,14 +1186,14 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         delete st__empty_vector_for_time_horizon;
         st__empty_vector_for_time_horizon = NULL;
     }
-#ifdef USE_GUROBI
-    CUOptimization::vacuum();
+    if (Global::get_controller_mode() != global::ControllerMode::RuleBased) {
+#ifdef USE_GLPK
+        GLPKController::VaccumAllStaticVariables();
+#elif USE_GUROBI
+        GurobiLPController::VaccumAllStaticVariables();
+#elif USE_COINOR
 #endif
-/*
-#ifdef USE_COINOR
-    CUOptimization::vacuum();
-#endif
-*/
+    }
 }
 
 ControlUnit* ControlUnit::GetInstancePublicID(unsigned long public_unitID) {
@@ -1237,10 +1253,6 @@ void ControlUnit::ChangeControlHorizonInTS(unsigned int new_horizon) {
     for (ControlUnit* cu : st__cu_list) {
         cu->change_control_horizon_in_ts(new_horizon);
     }
-#ifdef USE_COINOR
-    // if CLP is used for optimization, update the optimization model
-    CUOptimization::prepareOrUpdateCLPModel();
-#endif
 }
 
 size_t ControlUnit::GetNumberOfCUsWithSimCompPV() {

@@ -209,6 +209,7 @@ class ControlUnit {
         ComponentHP* sim_comp_hp; ///< Reference to the simulated Heat Pump Component (if it exists)
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
+        BaseOptimizedController* optimized_controller; ///< Reference to the controller (except of rule-based control)
         // summation variables from the beginning of the simulation run until the current time step
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
@@ -236,7 +237,6 @@ class ControlUnit {
         // other variables that are valid from the beginning of the currently simulated week until the current time step
         float  cweek_peak_grid_demand_kW;       ///< The maximum of grid demand that occured during a time step in the current week
         // caches for optimization
-        CUOptimization::OptimalControlCommandsOverHorizon optimization_result_cache; ///< The interal cache of the optimization result
         unsigned long ts_since_last_opti_run; ///< Number of time steps since the last optimization run
         //bool   create_history_output; ///< True, if a history output should be created for this control unit.
         //

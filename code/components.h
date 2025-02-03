@@ -321,18 +321,24 @@ class ComponentCS : public BaseComponent {
          * This method assumes to start in the current time step, i.e. the consumption up to the current time step is considered to be 0.
          * The length of the resulting vector is set using ComponentCS::set_horizon_in_ts().
          * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
-         * @return: Returns a pointer to a vector storing min/max demand per future time step (index 0) and per car (index 1) - READ THE ATTENTION NOTICE
+         * @return: Returns a pointer to a vector storing min/max demand per car (index 0) and per future time step (index 0) - READ THE ATTENTION NOTICE
          */
-        const std::vector<std::vector<double>>* get_future_max_consumption_kWh() const { return &future_maxE_storage; }
+        const std::vector<const std::vector<double>*>* get_future_max_consumption_kWh() const { return &future_maxE_storage; }
         /**
          * Returns the minimum electricity consumption of a component for the next n time steps (given some flexibility).
          * This means that the value at position 0 returns the minimum cummulated consumption AT THE END of the current time step.
          * This method assumes to start in the current time step, i.e. the consumption up to the current time step is considered to be 0.
          * The length of the resulting vector is set using ComponentCS::set_horizon_in_ts().
          * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
-         * @return: Returns a pointer to a vector storing min/max demand per future time step (index 0) and per car (index 1) - READ THE ATTENTION NOTICE
+         * @return: Returns a pointer to a vector storing min/max demand per car (index 0) and per future time step (index 0) - READ THE ATTENTION NOTICE
          */
-        const std::vector<std::vector<double>>* get_future_min_consumption_kWh() const { return &future_minE_storage; }
+        const std::vector<const std::vector<double>*>* get_future_min_consumption_kWh() const { return &future_minE_storage; }
+        /**
+         * Returns the maximum power per time step and EV for the future horizon.
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max demand per car (index 0) and per future time step (index 0) - READ THE ATTENTION NOTICE
+         */
+        const std::vector<const std::vector<double>*>* get_future_max_power_kW() const { return &future_maxP_storage; }
         // modifieres (on structural level of the simulation)
         void enable_station();
         void disable_station();
@@ -356,8 +362,9 @@ class ComponentCS : public BaseComponent {
         float  current_demand_kW;
         double total_consumption_kWh;
         double cweek_consumption_kWh; ///< Total demand since the beginning of the the currently simulated week
-        std::vector<std::vector<double>> future_maxE_storage;
-        std::vector<std::vector<double>> future_minE_storage;
+        std::vector<const std::vector<double>*> future_maxE_storage; ///< Internal storage of future max energy consumption per EV and time step
+        std::vector<const std::vector<double>*> future_minE_storage;
+        std::vector<const std::vector<double>*> future_maxP_storage;
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run
         bool is_callable_setCarStatesForTimeStep;
@@ -390,10 +397,12 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         using BaseComponentSemiFlexible::get_currentDemand_kW;
+        const std::vector<double>* get_future_max_power_kW() const { return &future_maxP_storage; } ///< Returns the maximum power of this EV per time step in the controller horizon. Attention: Returned object will be overwritten after calling EVFSM::setCarStateForTimeStep().
         float get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
         // modifiers (on structural level of the simulation)
         using BaseComponentSemiFlexible::set_horizon_in_ts;
+        void set_horizon_in_ts(unsigned int new_horizon);
         void add_weekly_tour(short weekday, unsigned long departure_ts_of_day, unsigned long ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
         void preprocessTourInformation(); ///< Transforms the list of weekly tours into a list of tours for the complete simulation time span and computes upper and lower cumlulative energy required (i.e., fill variables BaseComponentSemiFlexible::future_maxE_storage and BaseComponentSemiFlexible::future_minE_storage from upper class). THis method MUST be called before the main simulation run starts, but it MUST be called after EVFSM::add_weekly_tour() is called for the last time, i.e., all tours have been added.
         void resetInternalState(); ///< Resets the internal state
@@ -426,6 +435,8 @@ class EVFSM : public BaseComponentSemiFlexible {
         std::vector<double> prec_vec_of_driving_distance_km; ///< Complete precomputed vector of driven distance of the EV in km up to the end of time step ts
         std::vector<float>  prec_vec_of_maxP_kW; ///< Complete precomputed vector of maximum charging power per time step ts
         std::vector<float>  prec_vec_of_curr_BS_E_cons_kWh; ///< Complete precomputed vector of electricity taken from the battery for driving (at time step ts, or 0, if the car is parked at home in any state)
+        // cached member variables
+        std::vector<double> future_maxP_storage;  ///< Internal storage of maximum charging power over the future time steps
         // attached members
         ComponentBS* battery;
         // variable members, variable during a simulation run

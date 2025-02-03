@@ -20,7 +20,7 @@ class BaseOptimizedController {
         unsigned long time_horizon;
         std::vector<double> bs_power; ///< The battery storage power for every time step in the time horizon
         std::vector<double> hp_power; ///< The heat pump power for every time step in the time horizon
-        std::vector<std::vector<double>> ev_power; ///< The charging power per EV for every time step in the time horizon
+        std::vector<std::vector<double>> ev_power; ///< The charging power per EV (index 0) for every time step (index 1) in the time horizon
 
     public:
         /**
@@ -30,7 +30,7 @@ class BaseOptimizedController {
             controlUnitID(cuID), n_cars(n_cars), bs_power(time_horizon, 0.0), hp_power(time_horizon, 0.0)
         {
             this->time_horizon = time_horizon;
-            ev_power.resize(time_horizon, std::vector<double>(n_cars, 0.0));
+            ev_power.assign(n_cars, std::vector<double>(time_horizon, 0.0));
         }
 
         ~BaseOptimizedController() {}
@@ -60,7 +60,7 @@ class BaseOptimizedController {
                 this->time_horizon = new_horizon;
                 bs_power.assign(new_horizon, 0.0);
                 hp_power.assign(new_horizon, 0.0);
-                ev_power.assign(new_horizon, std::vector<double>(this->n_cars, 0.0));
+                ev_power.assign(this->n_cars, std::vector<double>(new_horizon, 0.0));
             }
 
             /**
@@ -72,8 +72,10 @@ class BaseOptimizedController {
                 bs_power.back() = 0.0;
                 std::move(hp_power.begin() + 1, hp_power.end(), hp_power.begin());
                 hp_power.back() = 0.0;
-                std::move(ev_power.begin() + 1, ev_power.end(), ev_power.begin());
-                ev_power.back() = std::vector<double>(this->n_cars, 0.0);
+                for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++) {
+                    std::move(ev_power[evIdx].begin() + 1, ev_power[evIdx].end(), ev_power[evIdx].begin());
+                    ev_power[evIdx].back() = 0.0;
+                }
             }
 
         /**

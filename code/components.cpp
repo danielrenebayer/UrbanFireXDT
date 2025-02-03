@@ -644,6 +644,11 @@ ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_
 
     // Computation of maximum charging power
     max_charging_power = 11.0 * number_of_flats;
+    if (Global::get_cs_max_charging_power_kW() > 0.0 &&
+        Global::get_cs_max_charging_power_kW() < max_charging_power
+    ) {
+        max_charging_power = Global::get_cs_max_charging_power_kW();
+    }
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     is_callable_setCarStatesForTimeStep = true;
@@ -710,6 +715,11 @@ void ComponentCS::resetInternalState() {
 
 void ComponentCS::add_ev(unsigned long carID) {
     listOfEVs.push_back(new EVFSM(carID, this));
+    //
+    // Reinitialize the vectors for future min/max storage
+    future_minE_storage.assign(listOfEVs.size(), NULL);
+    future_maxE_storage.assign(listOfEVs.size(), NULL);
+    future_maxP_storage.assign(listOfEVs.size(), NULL);
 }
 
 void ComponentCS::set_horizon_in_ts(unsigned int new_horizon) {
@@ -738,6 +748,13 @@ void ComponentCS::setCarStatesForTimeStep(unsigned long ts) {
     // 1. set new car states
     for (EVFSM* ev : listOfEVs) {
         ev->setCarStateForTimeStep(ts);
+    }
+
+    // 2. compute new vectors storing future min/max values
+    for (unsigned long evIdx = 0; evIdx < listOfEVs.size(); evIdx++) {
+        future_minE_storage[evIdx] = listOfEVs[evIdx]->get_future_min_consumption_kWh();
+        future_maxE_storage[evIdx] = listOfEVs[evIdx]->get_future_max_consumption_kWh();
+        future_maxP_storage[evIdx] = listOfEVs[evIdx]->get_future_max_power_kW();
     }
 }
 
@@ -895,6 +912,12 @@ std::string* EVFSM::get_metrics_string_annual() {
     *retstr += std::to_string(sum_of_E_discharged_home_kWh)   + ",";
     *retstr += std::to_string(sum_of_ts_EV_is_connected);
     return retstr;
+}
+
+void EVFSM::set_horizon_in_ts(unsigned int new_horizon) {
+    BaseComponentSemiFlexible::set_horizon_in_ts(new_horizon);
+    future_maxP_storage.clear();
+    future_maxP_storage.resize(new_horizon, 0.0);
 }
 
 void EVFSM::add_weekly_tour(
@@ -1163,6 +1186,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
     // set inherited variables for semi-flexible component
     double last_known_maxE_val = 0.0;
     double last_known_minE_val = 0.0;
+    double last_known_maxP_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
         size_t tsIDaOffset = tsID + tOffset;
         if (tsIDaOffset < Global::get_n_timesteps()) {
@@ -1172,9 +1196,11 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
                 last_known_maxE_val = 0.0;
             if (last_known_minE_val < 0)
                 last_known_minE_val = 0.0;
+            last_known_maxP_val = prec_vec_of_maxP_kW[tsIDaOffset];
         }
         future_maxE_storage[tOffset] = last_known_maxE_val;
         future_minE_storage[tOffset] = last_known_minE_val;
+        future_maxP_storage[tOffset] = last_known_maxP_val;
     }
     // Remove energy from the battery if car is driving
     if (current_state == EVState::Driving) {
