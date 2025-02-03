@@ -19,17 +19,18 @@ Folders are marked in **bold**.
 | &nbsp;&nbsp;\| `substation-detailed-time-series.csv`| Addition information, aggregated on substation level, that is not contained in the first file |
 | &nbsp;&nbsp;\| `build_and_run_info.txt`             | Information on the simulation run and the used program  |
 | &nbsp;&nbsp;\| `metrics-per-ev.csv`                 | Computed metrics per EV                                 |
-| _optional output_:                                  | Output of all power flows inside the control units ...  |
-| _case single file_:                                 | _See command line parameter `--cu-output` for details_  |
-| &nbsp;&nbsp;\| `XXXX-CU-time-series.csv`            | ... in one file                                         |
-| _case seperated files_:                             |                                                         |
-| &nbsp;&nbsp;\| **`ts-per-cu`**                      |                                                         |
-| &nbsp;&nbsp;\|&nbsp;&nbsp;\| `YYYY-AllCUs-ts.csv`   | ... in one file per substation YYYY                     |
-|                                                     |                                                         |
 | **`param vari XXXX`**                               | Output directory if a parameter variation is selected   |
 | &nbsp;&nbsp;\| `build_and_run_info.txt`             | Information on the simulation run and the used program  |
 | &nbsp;&nbsp;\| **`variation index XXXX`**           | There is one subfolder for every variation combination, the concrete parameters can be found in `parameter-settings.csv` |
-| &nbsp;&nbsp;\|&nbsp;&nbsp;\| *rest of the content*  | see folder `no param vari` | |
+| &nbsp;&nbsp;\|&nbsp;&nbsp;\| *rest of the content*  | see folder `no param vari` |
+|                                                     |                            |
+| _Optional output per cu_:                           | _Files only generated if selected by specified command line arguments. See command line parameter `--cu-output` for details_ |
+| &nbsp;&nbsp;\| `XXXX-CU-time-series.csv`            | Output of all power flows inside the control units **in one file** |
+| &nbsp;&nbsp;\| **`ts-per-cu`**                      | Output of all power flows inside the control units **in separated files (grouped by substation)** |
+| &nbsp;&nbsp;\|&nbsp;&nbsp;\| `YYYY-AllCUs-ts.csv`   |                            |
+|                                                     |                            |
+| _Further optional output_:                          | _Files only generated if selected by specified command line arguments. See command line parameter `--cu-output` for details_ |
+| ev-details.csv                                      | Detailed time series for every simulated EV |
 
 
 
