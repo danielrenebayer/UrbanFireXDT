@@ -883,6 +883,8 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     for (unsigned int day = 0; day < 7; day++) {
         list_of_tours_pd.push_back( new std::vector<WeeklyVehicleTour> () );
     }
+    // Initialize empty vector for storing future max power
+    future_maxP_storage.assign(Global::get_control_horizon_in_ts(), 0.0);
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     state_s1 = true;
@@ -917,7 +919,7 @@ std::string* EVFSM::get_metrics_string_annual() {
 void EVFSM::set_horizon_in_ts(unsigned int new_horizon) {
     BaseComponentSemiFlexible::set_horizon_in_ts(new_horizon);
     future_maxP_storage.clear();
-    future_maxP_storage.resize(new_horizon, 0.0);
+    future_maxP_storage.assign(new_horizon, 0.0);
 }
 
 void EVFSM::add_weekly_tour(

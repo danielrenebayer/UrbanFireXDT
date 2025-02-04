@@ -33,7 +33,7 @@ class BaseOptimizedController {
             ev_power.assign(n_cars, std::vector<double>(time_horizon, 0.0));
         }
 
-        ~BaseOptimizedController() {}
+        virtual ~BaseOptimizedController() = default;
 
         /**
          * Returns the optimized control for the heat pump for the next time steps in the time_horizon
