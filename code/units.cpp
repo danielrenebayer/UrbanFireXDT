@@ -21,8 +21,6 @@
     #include "optimization_unit_glpk.hpp"
 #elif USE_GUROBI
     #include "optimization_unit_gurobi.hpp"
-#elif USE_COINOR
-    #include "optimization_unit_coinor.hpp"
 #endif
 
 using namespace std;
@@ -911,7 +909,6 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 optimized_controller = new GLPKController(unitID, Global::get_control_horizon_in_ts(), n_cars);
 #elif USE_GUROBI
                 optimized_controller = new GurobiLPController(unitID, Global::get_control_horizon_in_ts(), n_cars);
-#elif USE_COINOR
 #else
                 throw std::runtime_error("No optimization backend selected during compile time!");
 #endif
@@ -1169,7 +1166,6 @@ void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
 #ifdef USE_GLPK
 #elif USE_GUROBI
         GurobiLPController::InitializeGurobiEnvironment();
-#elif USE_COINOR
 #endif
     }
 }
@@ -1191,7 +1187,6 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         GLPKController::VaccumAllStaticVariables();
 #elif USE_GUROBI
         GurobiLPController::VaccumAllStaticVariables();
-#elif USE_COINOR
 #endif
     }
 }

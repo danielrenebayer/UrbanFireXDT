@@ -8,7 +8,6 @@ OUTPUT_DIR = ../bin
 MACROS = -D USE_GUROBI
 #MACROS = -D USE_OR_TOOLS
 #MACROS = -D USE_GLPK
-#MACROS = -D USE_COINOR
 # Gurobi settings
 ifeq ($(findstring USE_GUROBI,$(MACROS)),USE_GUROBI)
 	# Load additional file with paths
@@ -30,10 +29,6 @@ endif
 # GLPK settings
 ifeq ($(findstring USE_GLPK,$(MACROS)),USE_GLPK)
 	OPTIMIZATION_OPTIONS = -lglpk
-endif
-# COIN-OR settings
-ifeq ($(findstring USE_COINOR,$(MACROS)),USE_COINOR)
-	OPTIMIZATION_OPTIONS = -lClp -lCoinUtils -lOsiClp -lOsi
 endif
 # OR-Tools settings
 ifeq ($(findstring USE_OR_TOOLS,$(MACROS)),USE_OR_TOOLS)
