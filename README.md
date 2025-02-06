@@ -1,0 +1,64 @@
+# Simulation for a Digital Twin of a Local Energy System
+
+<!-- About the repository -->
+## About the repository
+
+This repository contains the code for the simulation developed in the DigiSWM research project.
+
+
+<!-- Structure of the repository -->
+## Structure of the repository
+
+- The directory `code` contains all C++ code
+- The directory `config-example` contains an example config file
+- The directory `data` in an dummy directory for storing input data and (if not changed in the config) output data
+- The directory `documentation` contains the complete input and output documentation as well as a documentation of all configuration variables
+- The directory `test` contains a small example serving as an exemplary setup and for testing the code
+
+
+<!-- Installation -->
+## Installation and Requirements
+
+This code is mainly written in C++ in standard C++23 and developed for a Debian or Ubuntu environment.
+For compilation of the code, **gcc in version 14 or above** is required.
+
+### Dependencies
+
+This project requires the following libraries to build and run:
+* **libsqlite3-dev:** For SQLite3 database interaction
+* **libboost-dev:** For parsing the JSON-based configuration file and the command line options
+* **libboost-program-options-dev:** Specifically for command-line option parsing
+
+These dependencies can be installed on Debian/Ubuntu with:
+```
+apt-get install libsqlite3-dev libboost-dev libboost-program-options-dev
+```
+
+### Requirements for optimization-based strategies
+
+If the program should include an optimization-based control strategy, an LP-solver must be installed on the host.
+The simulation currently supports two optimization backends:
+- Gurobi
+- Google OR-Tools (using the internal GLOP solver)
+
+### Installation of OR-Tools
+
+- Download Google OR-Tools from [https://developers.google.com/optimization/install/cpp/binary_linux](https://developers.google.com/optimization/install/cpp/binary_linux)
+- Unpack the OR-Tools and save the set global variable `OPTIMIZER_PATH`
+
+
+<!-- First steps -->
+## First steps
+
+1. Install all dependencies including at least one of the optimizers
+2. Modify `code/makefile` to set the correct optimizer and optimizer path
+3. Add optimizer path to `LD_LIBRARY_PATH` using `export LD_LIBRARY_PATH=$OPTIMIZER_PATH/lib:LD_LIBRARY_PATH` (assuming that `OPTIMIZER_PATH` is manually set correctly)
+4. Run `cd code; make all`
+5. Run all tests `cd test; ./run-all-tests.sh`
+
+
+<!-- LICENSE -->
+## License
+
+This code is distributed unter the MIT License. See `LICENSE` for more details.
+
