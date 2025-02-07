@@ -49,7 +49,7 @@ bool GurobiLPController::updateController(
         }
         // one additional time step of the battery storage
         for (unsigned int t = 0; t < Tp; t++) {
-            e_bs_kWh[t]     = model.addVar(0.0, max_e_bs_kWh, 0.0, GRB_CONTINUOUS, "e_bs_kWh"); // energy of the battery storage at the beginning of a time step
+            e_bs_kWh[t]     = model.addVar(0.0, max_e_bs_kWh, 0.0, GRB_CONTINUOUS, "e_bs_kWh_" + tstr); // energy of the battery storage at the beginning of a time step
         }
         // separate initialization for the EVs
         for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
@@ -214,6 +214,11 @@ bool GurobiLPController::updateController(
         if (model_status != GRB_OPTIMAL) {
             std::cerr << "Optimization not resulting in optimal value.\n";
             std::cerr << "Gurobi model status = " << model_status << std::endl;
+            string filepath = "/tmp/gurobi_model_infeasible_";
+            filepath += std::to_string(controlUnitID);
+            filepath += ".lp";
+            std::cerr << "Writing model to " << filepath << std::endl;
+            model.write(filepath);
             return false;
         }
         //
