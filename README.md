@@ -45,6 +45,10 @@ The simulation currently supports two optimization backends:
 
 - Download Google OR-Tools from [https://developers.google.com/optimization/install/cpp/binary_linux](https://developers.google.com/optimization/install/cpp/binary_linux)
 - Unpack the OR-Tools and save the set global variable `OPTIMIZER_PATH`
+- Install dependencies for the OR-Tools, i.e., `libprotobuf-dev`
+```
+apt-get install libprotobuf-dev
+```
 
 
 <!-- First steps -->
@@ -55,6 +59,24 @@ The simulation currently supports two optimization backends:
 3. Add optimizer path to `LD_LIBRARY_PATH` using `export LD_LIBRARY_PATH=$OPTIMIZER_PATH/lib:LD_LIBRARY_PATH` (assuming that `OPTIMIZER_PATH` is manually set correctly)
 4. Run `cd code; make all`
 5. Run all tests `cd test; ./run-all-tests.sh`
+
+
+<!-- Compilation options: Make targets -->
+## Compilation options: Make targets
+
+The makefile `code/makefile` contains different targets.
+
+| Target name | Description |
+| ---         | ---         |
+| `debug`     | Compiles the code with all debugging symbols (for `gdb`) and without any optimizaation. Additionally, the access protection variables will be included that ensure the correct chronological sequence of method calls for the individual components. |
+| `opti`      | Compiles the code for the final usage. Includes code optimization, and no access protection stuff. |
+| `all`       | `debug` and `opti` together |
+| `verbose_debug` | Like `debug`, with extra output |
+| `clean`     | Removes compiled files in the output directory |
+| `print-vars` | Prints out all finally (i.e., after reading both the makefile and the local makefile) effective configuration variables |
+
+**Please note that all variables inside `code/makefile` can be overwritten with an local makefile `code/makefile_local`, if present.**
+If using a local makefile, the local paths and settings will be ignored by git, as it is in the list of ignored files.
 
 
 <!-- LICENSE -->
