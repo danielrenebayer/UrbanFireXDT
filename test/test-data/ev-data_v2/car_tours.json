@@ -1,0 +1,14 @@
+[
+    { "carID": 1, "weekday": 2, "hour_departure":  2, "duration_in_ts":  3, "tour_length_km": 20.0, "with_work": 0 },
+    { "carID": 1, "weekday": 2, "hour_departure":  7, "duration_in_ts":  5, "tour_length_km": 25.0, "with_work": 0 },
+    { "carID": 1, "weekday": 2, "hour_departure": 15, "duration_in_ts":  4, "tour_length_km": 10.0, "with_work": 0 },
+    { "carID": 1, "weekday": 2, "hour_departure": 20, "duration_in_ts":  2, "tour_length_km": 30.0, "with_work": 0 },
+
+    { "carID": 2, "weekday": 2, "hour_departure":  1, "duration_in_ts":  3, "tour_length_km": 10.0, "with_work": 0 },
+    { "carID": 2, "weekday": 2, "hour_departure": 10, "duration_in_ts":  5, "tour_length_km": 40.0, "with_work": 0 },
+    { "carID": 2, "weekday": 2, "hour_departure": 20, "duration_in_ts":  2, "tour_length_km": 25.0, "with_work": 0 },
+
+    { "carID": 3, "weekday": 2, "hour_departure":  1, "duration_in_ts":  3, "tour_length_km": 10.0, "with_work": 0 },
+    { "carID": 3, "weekday": 2, "hour_departure": 10, "duration_in_ts":  5, "tour_length_km": 40.0, "with_work": 0 },
+    { "carID": 3, "weekday": 2, "hour_departure": 20, "duration_in_ts":  2, "tour_length_km": 25.0, "with_work": 0 }
+]
