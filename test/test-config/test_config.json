@@ -89,12 +89,37 @@
         },
         {
             "id": 9,
-            "expansion id": 4,
+            "expansion id": 18,
+            "ev data path": "../test-data/ev-data/",
             "controller mode": "opti with perfect forecast",
+            "EV plugin probability": 1.0,
             "control horizont in ts": 12,
             "controller optimization target": "electricity costs",
-            "comment": "Based on ID 4 - with optimized control strategy. All households without anything equipped with a PV+BESS HP."
+            "comment": "Based on ID 8 - with optimized control strategy."
+        },
+        {
+            "id": 10,
+            "expansion id": 18,
+            "ev data path": "../test-data/ev-data_v2/",
+            "controller mode": "opti with perfect forecast",
+            "EV plugin probability": 1.0,
+            "EV battery size kWh": 10.0,
+            "control horizont in ts": 12,
+            "controller optimization target": "electricity costs",
+            "comment": "Based on ID 9, but reduced number of cars - with optimized control strategy."
+        },
+	{
+            "id": 11,
+            "expansion id": 18,
+            "ev data path": "../test-data/ev-data_v2/",
+            "controller mode": "opti with perfect forecast",
+            "EV plugin probability": 0.8,
+            "EV battery size kWh": 10.0,
+            "control horizont in ts": 12,
+            "controller optimization target": "electricity costs",
+            "comment": "Based on ID 10, but reduced plug-in probability"
         }
+
     ],
     "Parameter Variation": [
         {
