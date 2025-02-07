@@ -36,7 +36,7 @@ endif
 	# Set variables
 	OR_TOOLS_INCLUDE_PATH = $(OR_TOOLS_PATH)/include
 	OR_TOOLS_LIB_PATH = $(OR_TOOLS_PATH)/lib
-	OR_TOOLS_LIBS = -lortools -labsl_base -labsl_raw_logging_internal -labsl_spinlock_wait
+	OR_TOOLS_LIBS = -lortools -labsl_base -labsl_raw_logging_internal -labsl_spinlock_wait -lprotobuf
 	OPTIMIZATION_OPTIONS = -I$(OR_TOOLS_INCLUDE_PATH) -L$(OR_TOOLS_LIB_PATH) $(OR_TOOLS_LIBS)
 endif
 
