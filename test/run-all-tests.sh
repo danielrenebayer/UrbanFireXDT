@@ -7,7 +7,7 @@
 # change to the directory where this script is located
 cd $(dirname $0)
 
-dirs_to_compare="S0001 S0002 S0003 S0004 S0005 S0006 S0007 S0008"
+dirs_to_compare="S0001 S0002 S0003 S0004 S0005 S0006 S0007 S0008 S0009 S0010 S0011"
 # 0. delete output dirs if they already exist (e.g. from previous test runs)
 for di in $dirs_to_compare; do
     rm -rf test-output/$di
@@ -39,6 +39,15 @@ echo -e "\n-- 6. Simulation run --"
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 7. Simulation run --"
 ../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 --ev-output all 8
+if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 8. Simulation run --"
+../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 --ev-output all 9
+if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 9. Simulation run --"
+../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 --ev-output all 10
+if (( $? != 0 )); then program_error=1; fi
+echo -e "\n-- 10. Simulation run --"
+../bin/simulation-opti --config ../test/test-config/test_config.json --seed 1234 --ev-output all 11
 if (( $? != 0 )); then program_error=1; fi
 
 
