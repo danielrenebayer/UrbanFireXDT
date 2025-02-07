@@ -22,6 +22,7 @@
         "expansion BS initial SOC":    0.0,
         "expansion BS power computation mode": "Power as given",
 
+        "use prices time series ia": false,
         "tariff feed-in per kWh": 0.10,
         "tariff demand per kWh":  0.30,
         "net present value discount rate": 0.05,
@@ -95,6 +96,7 @@
             "EV plugin probability": 1.0,
             "control horizont in ts": 12,
             "controller optimization target": "electricity costs",
+            "use prices time series ia": true,
             "comment": "Based on ID 8 - with optimized control strategy."
         },
         {
@@ -106,6 +108,7 @@
             "EV battery size kWh": 10.0,
             "control horizont in ts": 12,
             "controller optimization target": "electricity costs",
+            "use prices time series ia": true,
             "comment": "Based on ID 9, but reduced number of cars - with optimized control strategy."
         },
 	{
@@ -117,6 +120,7 @@
             "EV battery size kWh": 10.0,
             "control horizont in ts": 12,
             "controller optimization target": "electricity costs",
+            "use prices time series ia": true,
             "comment": "Based on ID 10, but reduced plug-in probability"
         }
 
