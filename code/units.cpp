@@ -17,8 +17,8 @@
 #include "sac_planning.h"
 
 #include "optimization_unit_general.hpp"
-#ifdef USE_GLPK
-    #include "optimization_unit_glpk.hpp"
+#ifdef USE_OR_TOOLS
+    #include "optimization_unit_or_tools.hpp"
 #elif USE_GUROBI
     #include "optimization_unit_gurobi.hpp"
 #endif
@@ -905,8 +905,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         if (ts_since_last_opti_run >= Global::get_control_update_freq_in_ts()) {
             // run optimization in this case
             if (optimized_controller == NULL) {
-#ifdef USE_GLPK
-                optimized_controller = new GLPKController(unitID, Global::get_control_horizon_in_ts(), n_cars);
+#ifdef USE_OR_TOOLS
+                optimized_controller = new ORToolsLPController(unitID, Global::get_control_horizon_in_ts(), n_cars);
 #elif USE_GUROBI
                 optimized_controller = new GurobiLPController(unitID, Global::get_control_horizon_in_ts(), n_cars);
 #else
@@ -1163,7 +1163,7 @@ void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
     }
     // Initialize static members
     if (Global::get_controller_mode() != global::ControllerMode::RuleBased) {
-#ifdef USE_GLPK
+#ifdef USE_OR_TOOLS
 #elif USE_GUROBI
         GurobiLPController::InitializeGurobiEnvironment();
 #endif
@@ -1183,8 +1183,7 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         st__empty_vector_for_time_horizon = NULL;
     }
     if (Global::get_controller_mode() != global::ControllerMode::RuleBased) {
-#ifdef USE_GLPK
-        GLPKController::VaccumAllStaticVariables();
+#ifdef USE_OR_TOOLS
 #elif USE_GUROBI
         GurobiLPController::VaccumAllStaticVariables();
 #endif
