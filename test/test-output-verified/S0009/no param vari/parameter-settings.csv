@@ -1,0 +1,13 @@
+Parameter Name,Value
+expansion PV min kWp for section usage,0.001
+expansion PV max inst kWp per section,100
+expansion PV kWp per roof area in m2,0.1
+expansion PV kWp static,0
+expansion PV kWp static mode,0
+expansion BS E in kWh,1
+expansion BS E:P ratio,0
+expansion BS initial SOC,0
+control horizont in ts,24
+control update freq in ts,1
+seed_set,1
+seed,1234
