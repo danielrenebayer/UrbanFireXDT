@@ -1,5 +1,5 @@
 bin/
-code/makefile_paths.sh
+code/makefile_local
 config/
 cpp-test/
 test/test-output/S*
