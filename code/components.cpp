@@ -936,7 +936,7 @@ void EVFSM::add_weekly_tour(
 #endif
 
     if (weekday > 6)
-        throw runtime_error("Error when adding a new vehicle tour: A weekday > 6 is not possible!");
+        throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": A weekday > 6 is not possible!");
     
     if (ts_duration == 0)
         ts_duration = 1;
@@ -946,9 +946,9 @@ void EVFSM::add_weekly_tour(
         WeeklyVehicleTour* last_know_tour = list_of_all_tours.back();
         // Check, if tours are added in the wrong ordering
         if (last_know_tour->day_of_week > weekday) {
-            throw runtime_error("Error when adding a new vehicle tour: Weekday of new tour is bevore the latest added tour!");
+            throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": Weekday of new tour is bevore the latest added tour!");
         } else if (last_know_tour->day_of_week == weekday && last_know_tour->departure_ts_of_day > departure_ts_of_day) {
-            throw runtime_error("Error when adding a new vehicle tour: Time step of departure of new tour is bevore the latest added tour!");
+            throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": Time step of departure of new tour is bevore the latest added tour!");
         }
         // Check, if tours are overlapping
         // A) For the previous tour
