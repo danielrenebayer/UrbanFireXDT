@@ -49,6 +49,7 @@ bool GurobiLPController::updateController(
         }
         // one additional time step of the battery storage
         for (unsigned int t = 0; t < Tp; t++) {
+            const std::string tstr = to_string(t);
             e_bs_kWh[t]     = model.addVar(0.0, max_e_bs_kWh, 0.0, GRB_CONTINUOUS, "e_bs_kWh_" + tstr); // energy of the battery storage at the beginning of a time step
         }
         // separate initialization for the EVs
