@@ -1403,30 +1403,19 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load central heat pump profiles
         //
         float** new_hp_profile_s_array   = new float*[Global::get_n_heatpump_profiles()];
-        float** new_hp_profile_nos_array = new float*[Global::get_n_heatpump_profiles()];
         double** new_hp_profile_s_cumsum  = new double*[Global::get_n_heatpump_profiles()];
         for (unsigned long hp_idx = 0; hp_idx < Global::get_n_heatpump_profiles(); hp_idx++) {
             new_hp_profile_s_array[hp_idx] = new float[Global::get_n_timesteps()];
-            new_hp_profile_nos_array[hp_idx] = new float[Global::get_n_timesteps()];
             new_hp_profile_s_cumsum[hp_idx]  = new double[Global::get_n_timesteps()];
             // initialize with 0 by default
             for (unsigned long l = 0; l < Global::get_n_timesteps(); l++) {
                 new_hp_profile_s_array[hp_idx][l]   = 0;
-                new_hp_profile_nos_array[hp_idx][l] = 0;
                 new_hp_profile_s_cumsum[hp_idx][l]  = 0;
             }
         }
         callcounter_callback_HP = 0;
         sql_query = "SELECT TimestepID,ShiftableDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_s_array  /*Reference to the new array*/, &sqlErrorMsgF);
-        if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
-            sqlite3_free(sqlErrorMsgF);
-            return false;
-        }
-        callcounter_callback_HP = 0;
-        sql_query = "SELECT TimestepID,UnshiftableDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
-        ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_nos_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
@@ -1446,9 +1435,8 @@ bool configld::load_data_from_central_database(const char* filepath) {
             }
         }
         // allocate to globale variables
-        global::hp_profiles_shiftable = new_hp_profile_s_array;
-        global::hp_profiles_not_shift = new_hp_profile_nos_array;
-        global::hp_profiles_s_cumsum  = new_hp_profile_s_cumsum;
+        global::hp_profiles = new_hp_profile_s_array;
+        global::hp_profiles_cumsum = new_hp_profile_s_cumsum;
 
         //
         // Load residual netload

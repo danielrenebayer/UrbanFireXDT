@@ -27,12 +27,12 @@ class ORToolsLPController : public BaseOptimizedController {
         unsigned long ts,
         float max_p_bs_kW,
         float max_e_bs_kWh,
-        float max_p_hp_kW,
         float max_p_cs_kW,
         float current_bs_charge_kWh,
         const std::vector<float>& future_resid_demand_kW,
         const std::vector<double>& future_pv_generation_kW,
-        const std::vector<double>& future_hp_unshiftable_kW,
+        const std::vector<double>& future_hp_shiftable_maxP,
+        const std::vector<double>& future_hp_shiftable_minP,
         const std::vector<double>& future_hp_shiftable_maxE,
         const std::vector<double>& future_hp_shiftable_minE,
         const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE,
@@ -44,6 +44,7 @@ class ORToolsLPController : public BaseOptimizedController {
         //MPSolver* model = MPSolver::CreateSolver("GLOP");
         if (!model) {
                 std::cout << "SCIP solver unavailable." << std::endl;
+                //std::cout << "GLOP solver unavailable." << std::endl;
                 return false;
         }
         const double infinity = model->infinity();
@@ -62,7 +63,7 @@ class ORToolsLPController : public BaseOptimizedController {
         std::vector<MPVariable*> x_feedin_kW(T); // power of grid feedin in kW
         for (unsigned int t = 0; t < T; t++) {
             const std::string tstr = to_string(t);
-            p_hp_kW[t]      = model->MakeNumVar(0.0, max_p_hp_kW,  "p_hp_kW_"     + tstr);
+            p_hp_kW[t]      = model->MakeNumVar(future_hp_shiftable_minP[t], future_hp_shiftable_maxP[t],  "p_hp_kW_"     + tstr);
             // NOTICE: The next line is the only difference to the gurobi implementation: Bounds for cumsum E are set here directly
             e_hp_cum_kWh[t] = model->MakeNumVar(future_hp_shiftable_minE[t], future_hp_shiftable_maxE[t], "e_hp_cum_kWh_"+ tstr);
             p_bs_in_kW[t]   = model->MakeNumVar(0.0, max_p_bs_kW,  "p_bs_in_kW_"  + tstr);
@@ -128,7 +129,7 @@ class ORToolsLPController : public BaseOptimizedController {
             // Case A: Battery charging from grid allowed
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                double resid_minus_pv_kW = future_resid_demand_kW[t] + future_hp_unshiftable_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
+                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
                 MPConstraint* const c = model->MakeRowConstraint(-resid_minus_pv_kW, -resid_minus_pv_kW, "CU Power Balance " + tstr);
                 c->SetCoefficient(p_bs_in_kW[t],  1.0);
                 c->SetCoefficient(p_bs_out_kW[t],-1.0);
@@ -148,14 +149,14 @@ class ORToolsLPController : public BaseOptimizedController {
             std::vector<MPVariable*> p_cs_kW_2(T);
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                p_hp_kW_1[t] = model->MakeNumVar(0.0, max_p_hp_kW, "p_hp_kW_BalEq1_" + tstr);
-                p_hp_kW_2[t] = model->MakeNumVar(0.0, max_p_hp_kW, "p_hp_kW_BalEq2_" + tstr);
+                p_hp_kW_1[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq1_" + tstr);
+                p_hp_kW_2[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq2_" + tstr);
                 p_cs_kW_1[t] = model->MakeNumVar(0.0, max_p_cs_kW, "p_cs_kW_BalEq1_" + tstr);
                 p_cs_kW_2[t] = model->MakeNumVar(0.0, max_p_cs_kW, "p_cs_kW_BalEq2_" + tstr);
             }
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                double resid_minus_pv_kW = future_resid_demand_kW[t] + future_hp_unshiftable_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
+                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
                 double local_plus = 0, local_minus = 0;
                 if (resid_minus_pv_kW > 0) {
                     local_plus  =  resid_minus_pv_kW;

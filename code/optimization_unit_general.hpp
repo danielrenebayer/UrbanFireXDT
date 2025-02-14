@@ -84,14 +84,14 @@ class BaseOptimizedController {
          * @param ts: The current time step ID
          * @param max_p_bs_kW: Maximum battery power in kW
          * @param max_e_bs_kWh: Battery capacity in kWh
-         * @param max_p_hp_kW: Maximum heat pump power in kW (only shiftable part!)
          * @param max_p_cs_kW: Maximum charging station power in kW
          * @param current_bs_charge_kWh: Current charge of the battery in kWh
          * @param future_resid_demand_kW: Vector with future residential energy demand in kW per time step in the horizon
          * @param future_pv_generation_kW: Vector with future PV generation power in kW per time step in the horizon
-         * @param future_hp_unshiftable_kW: Vector with future unshiftable heat pump demand in kW per time step in the horizon
-         * @param future_hp_shiftable_maxE: Vector with maximum accumulated energy consumption of the heat pump (without shiftable part) in kWh until the end of each time step in the horizon
-         * @param future_hp_shiftable_minE: Vector with minimum accumulated energy consumption of the heat pump (without shiftable part) in kWh until the end of each time step in the horizon
+         * @param future_hp_shiftable_maxP: Vector with maximum power of the heat pump per time step
+         * @param future_hp_shiftable_minP: Vector with minimum power of the heat pump per time step
+         * @param future_hp_shiftable_maxE: Vector with maximum accumulated energy consumption of the heat pump in kWh until the end of each time step in the horizon
+         * @param future_hp_shiftable_minE: Vector with minimum accumulated energy consumption of the heat pump in kWh until the end of each time step in the horizon
          * @param future_ev_shiftable_maxE: Vector with maximum accumulated energy consumption of the charging station in kWh for every step over the considered horizon (first index) and every EV (second index)
          * @param future_ev_shiftable_minE: Vector with minimum accumulated energy consumption of the charging station in kWh for every step over the considered horizon (first index) and every EV (second index)
          * @param future_ev_maxP: Vector with maximum charging power per EV in kW for every step over the considered horizon (first index) and every EV (second index)
@@ -102,12 +102,12 @@ class BaseOptimizedController {
             unsigned long ts,
             float max_p_bs_kW,
             float max_e_bs_kWh,
-            float max_p_hp_kW,
             float max_p_cs_kW,
             float current_bs_charge_kWh,
             const std::vector<float>& future_resid_demand_kW,
             const std::vector<double>& future_pv_generation_kW,
-            const std::vector<double>& future_hp_unshiftable_kW,
+            const std::vector<double>& future_hp_shiftable_maxP,
+            const std::vector<double>& future_hp_shiftable_minP,
             const std::vector<double>& future_hp_shiftable_maxE,
             const std::vector<double>& future_hp_shiftable_minE,
             const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE,

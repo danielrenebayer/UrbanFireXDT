@@ -241,11 +241,19 @@ class ComponentHP : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         /**
-         * Returns the future electricity demand per time step that is not shiftable for the heat pump.
-         * Attention: The object the returned pointer referes to is overwritten on subsequent calls! Do NOT delete the returned object.
-         * @return: Returns a vector storing min/max demand per future time step - READ THE ATTENTION NOTICE
+         * Returns the maximum power of this component for the next n time steps (given some flexibility).
+         * The length of the resulting vector is set using BaseComponentSemiFlexible::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max power per future time step - READ THE ATTENTION NOTICE
          */
-        const std::vector<double>* get_future_unshiftable_demand_kW() const { return &future_unshiftable_storage; }
+        const std::vector<double>* get_future_max_power_kW() const { return &future_maxP_storage; }
+        /**
+         * Returns the minimum power of this component for the next n time steps (given some flexibility).
+         * The length of the resulting vector is set using BaseComponentSemiFlexible::set_horizon_in_ts().
+         * Attention: The object the returned pointer referes to is overwritten on subsequent calls!
+         * @return: Returns a pointer to a vector storing min/max power per future time step - READ THE ATTENTION NOTICE
+         */
+        const std::vector<double>* get_future_min_power_kW() const { return &future_minP_storage; }
 
         //
         // update / action methods
@@ -269,9 +277,8 @@ class ComponentHP : public BaseComponentSemiFlexible {
         // constant member variables
         const float yearly_electricity_consumption_kWh;
         const float scaling_factor; ///< Factor to scale the profile to fit the yearly_electricity_consumption_kWh
-        const float* profile_data_shiftable; ///< Reference to the profile for the     shiftable part of the demand, should be one of global::hp_profiles_shiftable
-        const float* profile_data_not_shift; ///< Reference to the profile for the not-shiftable part of the demand, should be one of global::hp_profiles_not_shift
-        const double* profile_shiftable_cumsum; ///< Reference to the cumsum of the profile_data_shiftable
+        const float* profile_data; ///< Reference to the profile of the demand in kW per time step, should be one of global::hp_profiles
+        const double* profile_cumsum; ///< Reference to the cumsum of the profile_data
         float rated_power_kW; ///< Rated power of the heat pump in kW
         // member variables that can change over time
         float currentDemand_kW;
@@ -281,7 +288,8 @@ class ComponentHP : public BaseComponentSemiFlexible {
          * Internal storage of the object that is outputted by BaseComponentSemiFlexible::get_future_unshiftable_demand_kW(),
          * only required that we do not need to reserve / allocate a new vector with every call
          */
-        std::vector<double> future_unshiftable_storage;
+        std::vector<double> future_maxP_storage; ///< Storage of maximum power over the considered time horizon
+        std::vector<double> future_minP_storage; ///< Storage of minimum power over the considered time horizon
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run
         bool state_s1;

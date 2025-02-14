@@ -930,15 +930,17 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             future_pv_generation_kW = sim_comp_pv->get_future_generation_kW();
         }
         // - heat pump
-        const std::vector<double>* future_hp_unshiftable_kW = st__empty_vector_for_time_horizon;
+        const std::vector<double>* future_hp_shiftable_maxP = st__empty_vector_for_time_horizon;
+        const std::vector<double>* future_hp_shiftable_minP = st__empty_vector_for_time_horizon;
         const std::vector<double>* future_hp_shiftable_maxE = st__empty_vector_for_time_horizon;
         const std::vector<double>* future_hp_shiftable_minE = st__empty_vector_for_time_horizon;
-        float max_p_hp_kW = 0.0;
+        //float max_p_hp_kW = 0.0;
         if (has_sim_hp) {
-            future_hp_unshiftable_kW = sim_comp_hp->get_future_unshiftable_demand_kW();
+            future_hp_shiftable_maxP = sim_comp_hp->get_future_max_power_kW();
+            future_hp_shiftable_minP = sim_comp_hp->get_future_min_power_kW();
             future_hp_shiftable_maxE = sim_comp_hp->get_future_max_consumption_kWh();
             future_hp_shiftable_minE = sim_comp_hp->get_future_min_consumption_kWh();
-            max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
+            //max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
         }
         // - charging station
         float max_p_cs_kW = 0.0;
@@ -963,8 +965,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             //
             // 4. Run the optimization and get the results
             bool opti_ret_val = optimized_controller->updateController(
-                ts, max_p_bs_kW, max_e_bs_kWh, max_p_hp_kW, max_p_cs_kW, current_bs_charge_kWh,
-                future_resid_demand_kW,   *future_pv_generation_kW,  *future_hp_unshiftable_kW,
+                ts, max_p_bs_kW, max_e_bs_kWh, max_p_cs_kW, current_bs_charge_kWh,
+                future_resid_demand_kW,   *future_pv_generation_kW,
+                *future_hp_shiftable_maxP, *future_hp_shiftable_minP,
                 *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
                 future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP
                 );

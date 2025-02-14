@@ -11,12 +11,12 @@ bool GurobiLPController::updateController(
     unsigned long ts,
     float max_p_bs_kW,
     float max_e_bs_kWh,
-    float max_p_hp_kW,
     float max_p_cs_kW,
     float current_bs_charge_kWh,
     const std::vector<float>& future_resid_demand_kW,
     const std::vector<double>& future_pv_generation_kW,
-    const std::vector<double>& future_hp_unshiftable_kW,
+    const std::vector<double>& future_hp_shiftable_maxP,
+    const std::vector<double>& future_hp_shiftable_minP,
     const std::vector<double>& future_hp_shiftable_maxE,
     const std::vector<double>& future_hp_shiftable_minE,
     const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE,
@@ -40,7 +40,7 @@ bool GurobiLPController::updateController(
         std::vector<GRBVar> x_feedin_kW(T); // power of grid feedin in kW
         for (unsigned int t = 0; t < T; t++) {
             const std::string tstr = to_string(t);
-            p_hp_kW[t]      = model.addVar(0.0, max_p_hp_kW,  0.0, GRB_CONTINUOUS, "p_hp_kW" + tstr);
+            p_hp_kW[t]      = model.addVar(future_hp_shiftable_minP[t], future_hp_shiftable_maxP[t], 0.0, GRB_CONTINUOUS, "p_hp_kW" + tstr);
             e_hp_cum_kWh[t] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "e_hp_cum_kWh" + tstr);
             p_bs_in_kW[t]   = model.addVar(0.0, max_p_bs_kW,  0.0, GRB_CONTINUOUS, "p_bs_in_kW" + tstr);
             p_bs_out_kW[t]  = model.addVar(0.0, max_p_bs_kW,  0.0, GRB_CONTINUOUS, "p_bs_out_kW" + tstr);
@@ -98,7 +98,7 @@ bool GurobiLPController::updateController(
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                     expr_cs_p_at_t += p_ev_kW[evIdx][t];
                 }
-                double resid_minus_pv_kW = future_resid_demand_kW[t] + future_hp_unshiftable_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
+                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
                 model.addConstr(resid_minus_pv_kW
                                 + p_bs_in_kW[t]  - p_bs_out_kW[t]
                                 + p_hp_kW[t]     + expr_cs_p_at_t
@@ -132,8 +132,8 @@ bool GurobiLPController::updateController(
             std::vector<GRBVar> p_cs_kW_1(T);
             std::vector<GRBVar> p_cs_kW_2(T);
             for (unsigned int t = 0; t < T; t++) {
-                p_hp_kW_1[t] = model.addVar(0.0, max_p_hp_kW,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq1");
-                p_hp_kW_2[t] = model.addVar(0.0, max_p_hp_kW,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq2");
+                p_hp_kW_1[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq1");
+                p_hp_kW_2[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq2");
                 p_cs_kW_1[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq1");
                 p_cs_kW_2[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq2");
             }
@@ -142,7 +142,7 @@ bool GurobiLPController::updateController(
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                     expr_cs_p_at_t += p_ev_kW[evIdx][t];
                 }
-                double resid_minus_pv_kW = future_resid_demand_kW[t] + future_hp_unshiftable_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
+                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
                 double local_plus = 0, local_minus = 0;
                 if (resid_minus_pv_kW > 0) {
                     local_plus  =  resid_minus_pv_kW;

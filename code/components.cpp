@@ -465,8 +465,10 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
       scaling_factor(yearly_econs_kWh/1000.0f)
 {
     // initialize the unshiftable load storage
-    future_unshiftable_storage.clear();
-    future_unshiftable_storage.resize( Global::get_control_horizon_in_ts(), 0.0);
+    future_maxP_storage.clear();
+    future_minP_storage.clear();
+    future_maxP_storage.resize( Global::get_control_horizon_in_ts(), 0.0);
+    future_minP_storage.resize( Global::get_control_horizon_in_ts(), 0.0);
 
     // select heat pump profile static or random
     size_t this_hp_profile_idx;
@@ -484,18 +486,18 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
     }
     //
     // reference the profile
-    profile_data_shiftable = global::hp_profiles_shiftable[this_hp_profile_idx];
-    profile_data_not_shift = global::hp_profiles_not_shift[this_hp_profile_idx];
-    profile_shiftable_cumsum = global::hp_profiles_s_cumsum[this_hp_profile_idx];
+    profile_data = global::hp_profiles[this_hp_profile_idx];
+    profile_cumsum = global::hp_profiles_cumsum[this_hp_profile_idx];
     // further initialization
     currentDemand_kW = 0;
     total_consumption_kWh = 0.0;
     cweek_consumption_kWh = 0.0;
     // computation of rated power (without AUX heating mode)
     // = max of shiftable demand time series
+    // TODO: Update computation: Detect AUX heating mode
     rated_power_kW = 0.0;
     for (unsigned long tsID = 0; tsID < Global::get_n_timesteps(); tsID++) {
-        float np = profile_data_shiftable[tsID] * scaling_factor;
+        float np = profile_data[tsID] * scaling_factor;
         if (np > rated_power_kW)
             rated_power_kW = np;
     }
@@ -506,8 +508,10 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
 
 void ComponentHP::set_horizon_in_ts(unsigned int new_horizon) {
     BaseComponentSemiFlexible::set_horizon_in_ts(new_horizon);
-    future_unshiftable_storage.clear();
-    future_unshiftable_storage.resize(new_horizon, 0.0);
+    future_maxP_storage.clear();
+    future_minP_storage.clear();
+    future_maxP_storage.resize(new_horizon, 0.0);
+    future_minP_storage.resize(new_horizon, 0.0);
 }
 
 void ComponentHP::computeNextInternalState(unsigned long ts) {
@@ -524,13 +528,15 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
     double last_known_maxE_val = 0.0;
     double last_known_minE_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
-        // not-shiftable part
-        future_unshiftable_storage[tOffset] = profile_data_not_shift[tsID + tOffset] ? tsID + tOffset < Global::get_n_timesteps() : 0.0;
-        // shiftable part
+        // power
+        // TODO: detect AUX heating and increase hp min and max power in these steps
+        future_maxP_storage[tOffset] = rated_power_kW;
+        future_minP_storage[tOffset] = 0.0;
+        // energy
         // for min profile -> left shift
         size_t maxProfilePos = tsID + tOffset + Global::get_hp_flexibility_in_ts();
         if (maxProfilePos < Global::get_n_timesteps()) {
-            double new_val = profile_shiftable_cumsum[maxProfilePos] - total_consumption_kWh;
+            double new_val = profile_cumsum[maxProfilePos] - total_consumption_kWh;
             if (new_val < 0)
                 new_val = 0.0;
             future_maxE_storage[tOffset] = new_val;
@@ -544,7 +550,7 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
         } else {
             size_t minProfilePos = tsID + tOffset - Global::get_hp_flexibility_in_ts();
             if (minProfilePos < Global::get_n_timesteps()) {
-                double new_val = profile_shiftable_cumsum[minProfilePos] - total_consumption_kWh;
+                double new_val = profile_cumsum[minProfilePos] - total_consumption_kWh;
                 if (new_val < 0)
                     new_val = 0.0;
                 future_minE_storage[tOffset] = new_val;
@@ -565,7 +571,7 @@ void ComponentHP::setDemandToProfileData(unsigned long ts) {
     }
 #endif
     unsigned long tsID = ts - 1;
-    currentDemand_kW = ( profile_data_shiftable[tsID] + profile_data_not_shift[tsID] ) * scaling_factor;
+    currentDemand_kW = profile_data[tsID] * scaling_factor;
     double e = currentDemand_kW * Global::get_time_step_size_in_h();
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
@@ -581,18 +587,25 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
 #endif
     double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
     double new_total_e = total_consumption_kWh + e;
-    // check, if the new demand is within the min/max bands
-    double unshiftable_e = future_unshiftable_storage[0] * Global::get_time_step_size_in_h();
-    if (new_total_e - unshiftable_e > future_maxE_storage[0]) {
-        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper bound!" << std::endl;
+    // check, if power is within the min/max power bands
+    if (new_demand_kW > future_maxP_storage[0]) {
+        new_demand_kW = future_maxP_storage[0];
+        std::cerr << "Warning in Component HP: Set demand is violating the upper power bound!\n";
+    } else if (new_demand_kW < future_minP_storage[0]) {
+        new_demand_kW = future_minP_storage[0];
+        std::cerr << "Warning in Component HP: Set demand is violating the lower power bound!\n";
+    }
+    // check, if the new demand is within the min/max energy consumption bands
+    if (new_total_e > future_maxE_storage[0]) {
+        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper energy consumption bound!\n";
         // set new_total_e to the upper limit
-        e = future_maxE_storage[0] - total_consumption_kWh + unshiftable_e;
+        e = future_maxE_storage[0] - total_consumption_kWh;
         new_demand_kW = e / Global::get_time_step_size_in_h();
         std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
-    } else if (new_total_e - unshiftable_e < future_minE_storage[0]) {
-        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower bound!" << std::endl;
+    } else if (new_total_e < future_minE_storage[0]) {
+        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower energy consumption bound!\n";
         // set new_total_e to the lower limit
-        e = future_minE_storage[0] - total_consumption_kWh + unshiftable_e;
+        e = future_minE_storage[0] - total_consumption_kWh;
         new_demand_kW = e / Global::get_time_step_size_in_h();
         std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
     }
