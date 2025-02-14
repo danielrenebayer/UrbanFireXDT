@@ -579,14 +579,22 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
         throw std::runtime_error("Method ComponentHP::setDemandToGivenValue() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
     }
 #endif
-    double e = new_demand_kW * Global::get_time_step_size_in_h();
+    double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
     double new_total_e = total_consumption_kWh + e;
     // check, if the new demand is within the min/max bands
     double unshiftable_e = future_unshiftable_storage[0] * Global::get_time_step_size_in_h();
-    if (new_total_e - unshiftable_e > future_maxE_storage[0] ||
-        new_total_e - unshiftable_e < future_minE_storage[0]
-    ) {
-        std::cerr << "Warning in Component HP: Heat consumption violating bounds!" << std::endl;
+    if (new_total_e - unshiftable_e > future_maxE_storage[0]) {
+        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper bound!" << std::endl;
+        // set new_total_e to the upper limit
+        e = future_maxE_storage[0] - total_consumption_kWh + unshiftable_e;
+        new_demand_kW = e / Global::get_time_step_size_in_h();
+        std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
+    } else if (new_total_e - unshiftable_e < future_minE_storage[0]) {
+        std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower bound!" << std::endl;
+        // set new_total_e to the lower limit
+        e = future_minE_storage[0] - total_consumption_kWh + unshiftable_e;
+        new_demand_kW = e / Global::get_time_step_size_in_h();
+        std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
     }
     // update current demand
     currentDemand_kW = new_demand_kW;
@@ -1263,10 +1271,16 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
     double e = new_demand_kW * Global::get_time_step_size_in_h();
     double new_total_e = sum_of_E_charged_home_kWh + e;
     // check, if the new demand is within the min/max bands
-    if (new_total_e > prec_vec_of_maxE[current_ts-1] + epsilon ||
-        new_total_e < prec_vec_of_minE[current_ts-1] - epsilon
-    ) {
-        std::cerr << "Warning in EVFSM: Required demand is violating bounds for carID " << carID << " at time step " << current_ts << "!" << std::endl;
+    if (new_total_e > prec_vec_of_maxE[current_ts-1] + epsilon) {
+        std::cerr << "Warning in EVFSM: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper bound for carID " << carID << " at time step " << current_ts << "!";
+        e = prec_vec_of_maxE[current_ts-1] - sum_of_E_charged_home_kWh;
+        new_demand_kW = e / Global::get_time_step_size_in_h();
+        std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
+    } else if (new_total_e < prec_vec_of_minE[current_ts-1] - epsilon) {
+        std::cerr << "Warning in EVFSM: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower bound for carID " << carID << " at time step " << current_ts << "!";
+        e = prec_vec_of_minE[current_ts-1] - sum_of_E_charged_home_kWh;
+        new_demand_kW = e / Global::get_time_step_size_in_h();
+        std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
     }
     // update current demand
     battery->set_chargeRequest( new_demand_kW );
