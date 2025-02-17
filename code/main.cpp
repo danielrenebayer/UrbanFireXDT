@@ -56,10 +56,11 @@ int main(int argc, char* argv[]) {
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
-        ("ccmd-output", bpopts::value<string>(), "Modify output behavior for details of the Control Commands (inside each control unit): 'off' disables all output (default), 'all' outputs detailed information about the control commands for all control units for every time step.")
+        ("ccmd-output", bpopts::value<string>(), "Modify output behavior for details of the Control Commands (inside each control unit): 'off' disables all output (default), 'on' or 'all' outputs detailed information about the control commands for all control units for every time step (that have an optimized controller).")
         ("ev-output",   bpopts::value<string>(), "Modify output behavior for EVs: 'off' disables all output (default), 'all' outputs information for all EVs for every time step.")
         ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used. If the simulation is repeated more than once, the seed gets incremented by one per repetition.")
-        ("weekly-metrics,w", bpopts::value<string>()->default_value("off"), "Controls the generation of the metrics computation on weekly level. Default is 'off'.");
+        ("weekly-metrics,w", bpopts::value<string>()->default_value("off"), "Controls the generation of the metrics computation on weekly level. Default is 'off'.")
+        ("cu-output-selection,o", bpopts::value<string>(), "If not given, all control units will generate output for the options `--cu-output`, `--ccmd-output` and `--ev-output`. If a comma separated list of control unit IDs is given, the output will only be generated for these units.");
     bpopts::positional_options_description opts_desc_pos;
     opts_desc_pos.add("scenario", -1);
     bpopts::variables_map opts_vals;
@@ -137,7 +138,7 @@ int main(int argc, char* argv[]) {
         string st_output = opts_vals["ccmd-output"].as<string>();
         if (st_output == "no" || st_output == "off") {
             Global::set_create_control_cmd_output(false);
-        } else if (st_output == "all") {
+        } else if (st_output == "all" || st_output == "on") {
             Global::set_create_control_cmd_output(true);
         } else {
             // invalid argument
@@ -186,6 +187,20 @@ int main(int argc, char* argv[]) {
         } else {
             cerr << "Error when parsing command line arguments: invalid option for --weekly-metrics / -w given!" << endl;
             return 1;
+        }
+    }
+    if (opts_vals.count("cu-output-selection") > 0) {
+        std::string selected_CUs_str = opts_vals["cu-output-selection"].as<string>();
+        // parse the string
+        std::stringstream selected_CUs_strstr( selected_CUs_str );
+        std::string oneStrSection;
+        while (std::getline(selected_CUs_strstr, oneStrSection, ',')) {
+            try {
+                global::unitIDs_selected_for_output.push_back( std::stoul( oneStrSection ) );
+            } catch (const std::exception& e) {
+                std::cerr << "Error when parsing values of command line argument --cu-output-selection for token '" << oneStrSection << "'." << std::endl;
+                return 1;
+            }
         }
     }
     /*

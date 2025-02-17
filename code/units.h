@@ -198,6 +198,7 @@ class ControlUnit {
         Substation *const higher_level_subst;
         const unsigned long locationID;
         const bool residential; ///< is this control unit representing a residential unit?
+        const bool generate_output_for_this_unit; ///< Should an output be generated for this concrete unit?
         // member variables that can change over time
         std::list<MeasurementUnit*>* connected_units;
         bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added

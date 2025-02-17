@@ -59,6 +59,7 @@ namespace global {
     inline const float* emission_ts      = NULL; ///< Reference to the emission time series for grid demanded energy (if present) in g CO2eq per kWh
     inline const float* eprices_local_ts = NULL; ///< Reference to the time series of the energy prices (for residential customers) for grid demanded energy (if present)
     inline const float* eprices_spotm_ts = NULL; ///< Reference to the time series of the energy prices at the spot market (for non-residential customers, without vat or taxes) (if present)
+    inline std::vector<unsigned long> unitIDs_selected_for_output; ///< A vector containing a list of all unitIDs selected for output. If this vector is empty (as it is by default), all units will generate an output.
 
     inline std::list<std::list<std::pair<std::string,float>>>* parameter_var_list = NULL; ///< List of parameters variation settings (i.e. the list contains a list of lists, where the inner lists represent a setting of ONE parameter variation setting (variable name, variable value))
 

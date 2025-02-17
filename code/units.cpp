@@ -146,7 +146,8 @@ bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigne
 }
 
 ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats)
-    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential)
+    : internal_id(internalID), unitID(publicID), higher_level_subst(Substation::GetInstancePublicID(substation_id)), locationID(locationID), residential(residential),
+      generate_output_for_this_unit( global::unitIDs_selected_for_output.size() == 0 || std::find( global::unitIDs_selected_for_output.begin(), global::unitIDs_selected_for_output.end(), publicID ) != global::unitIDs_selected_for_output.end() )
 {
 	//
 	// initialize instance variables
@@ -976,6 +977,11 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 return false;
             }
 
+            // Create output with optimization details if selected
+            if (Global::get_create_control_cmd_output() && generate_output_for_this_unit) {
+                // TODO: Create ccmd details output
+            }
+
         } else {
             // else (i.e., no opti executed in this position):
             // just move the cache by one
@@ -1142,7 +1148,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
     //
     // output current status
-    if (output_obj != NULL)
+    if (output_obj != NULL && generate_output_for_this_unit)
         output_obj->output_for_one_cu(
             unitID, ts,
             current_load_vSM_kW,
