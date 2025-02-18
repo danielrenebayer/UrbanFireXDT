@@ -960,6 +960,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 if (Global::get_stop_on_cc_err()) {
                     // return error ONLY if selected as a program option
                     return false;
+                } else {
+                    // Use value of the last optimization run if there is no new value and shift vector by one position.
+                    // If the control commands received in this way have become invalid, the components themselves detect this and set the demand to a permissible value.
+                    optimized_controller->shiftVectorsByOnePlace();
                 }
             }
 
