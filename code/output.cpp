@@ -399,8 +399,7 @@ void output::outputCurrentCUSettings() {
 // If no metric computetion is selected, the function does nothing
 //
 void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix /* = NULL */) {
-    filesystem::path output_path;
-    //if (Global::get_comp_eval_metrics()) { // option is disabled, check not required anymore
+        filesystem::path output_path;
         if (alt_fname) {
             if (fname_postfix == NULL)
                 throw logic_error("Parameter fname_postfix of function output::outputMetrics is NULL!");
@@ -424,7 +423,6 @@ void output::outputMetrics(bool alt_fname /* = false */, string * fname_postfix 
         }
         //
         ofs.close();
-    //}
 }
 
 

@@ -52,7 +52,6 @@ int main(int argc, char* argv[]) {
         ("scenario", bpopts::value<unsigned long>(),"ID of the scenario that should be used, regardless of parameter variation is selected or not")
         ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation should be repeated - only useful if random variables are used. Modifies the behavior of the 'seed' option.")
         ("n_threads,n",   bpopts::value<uint>()->default_value(3),    "Number of working threads. Defaults to 3. If all tasks should be done by the main thread, set this value to 0. If there is only one working thread, the concept is useless, as the main thread will wait for the workers to finish and does not do anything by itself.")
-      //("metrics,m",                         "SSC and SSR will be computed for every control unit. Therefore the complete time series has to be stored - this requires more RAM.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
@@ -203,13 +202,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    /*
-    if (opts_vals.count("metrics")) {
-        Global::set_comp_eval_metrics(true);
-    } else {
-        Global::set_comp_eval_metrics(false);
-    }
-    */
+
     // get time for time measurement
     auto t1 = std::chrono::system_clock::now();
     // set output flush interval

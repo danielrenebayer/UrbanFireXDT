@@ -113,7 +113,6 @@ unsigned long Global::n_pv_ts     = 0;
 unsigned long Global::n_hp_ts     = 0;
 unsigned int  Global::seed        = 0;
 bool Global::compute_weekly_metrics = false;
-//bool Global::comp_eval_metrics    = 0;
 bool Global::pvar_selected        = false;
 int  Global::pvar_id              = 0;
 bool Global::repetitions_selected = false;
@@ -201,7 +200,6 @@ bool Global::n_MUs_init            = false;
 bool Global::n_pv_ts_init          = false;
 bool Global::n_hp_ts_init          = false;
 bool Global::seed_set              = false;
-//bool Global::comp_eval_metrics_init= false;
 bool Global::pvar_set              = false;
 bool Global::repetitions_selected_set     = false;
 bool Global::n_repetitions_set     = false;
@@ -260,7 +258,6 @@ bool Global::AllVariablesInitialized() {
         n_MUs_init &&
         n_pv_ts_init &&
         n_hp_ts_init &&
-      //comp_eval_metrics_init &&
         pvar_set &&
         repetitions_selected_set &&
         n_threads_set &&
@@ -330,9 +327,6 @@ void Global::PrintUninitializedVariables() {
     if (!n_hp_ts_init) {
         cout << "Variable n_hp_ts not initialized." << endl;
     }
-    //if (!comp_eval_metrics_init) {
-    //    cout << "Variable comp_eval_metrics not initialized." << endl;
-    //}
     if (!pvar_set) {
         cout << "Variable pvar not initialized." << endl;
     }
@@ -529,14 +523,6 @@ void Global::set_compute_weekly_metrics(bool mode) {
         Global::compute_weekly_metrics = mode;
     }
 }
-/*void Global::set_comp_eval_metrics(bool value) {
-    if (is_locked && comp_eval_metrics_init) {
-        cerr << "Global variable comp_eval_metrics is already initialized!" << endl;
-    } else {
-        Global::comp_eval_metrics = value;
-        Global::comp_eval_metrics_init = true;
-    }
-}*/
 void Global::set_pvar_vals(bool pvar_val, int pvarID) {
     if (is_locked && pvar_set) {
         cerr << "Values for parameter variation are already set!" << endl;

@@ -192,7 +192,6 @@ class Global {
         static unsigned int  get_seed()                 { return seed; }
         static bool          is_seed_set()              { return seed_set; }
         static bool get_compute_weekly_metrics()        { return compute_weekly_metrics; }
-      //static bool get_comp_eval_metrics()    { return comp_eval_metrics; }
         static bool is_parameter_variation()   { return pvar_selected;  }
         static int  get_parameter_varID()      { return pvar_id;        }
         static bool get_repetitions_selected() { return repetitions_selected; }
@@ -285,7 +284,6 @@ class Global {
         static void set_n_heatpump_profiles(unsigned long n_hp_ts);
         static void set_seed(unsigned int value);
         static void set_compute_weekly_metrics(bool mode);
-      //static void set_comp_eval_metrics(bool value);
         static void set_pvar_vals(bool pvar_set, int pvarID);
         static void set_repetitions_selected(bool value);
         static void set_n_repetitions(unsigned int value);
@@ -374,7 +372,6 @@ class Global {
         static unsigned long n_hp_ts;      ///< Total number of available normalized heat pump time series that can be used for simulating new heat pumps
         static unsigned int  seed;         ///< The seed for all random number generators
         static bool compute_weekly_metrics;///< Should weekly metrics be computed?
-      //static bool comp_eval_metrics;     ///< True, if evaluation metrics (like SSC,SSR) should be computed directly
         static bool pvar_selected;         ///< True, if a parameter variation is selected
         static int  pvar_id;               ///< ID of the parameter variation
         static bool repetitions_selected;  ///< True, if complete twin (sac planning + param. vari. + simulation) should run more than once
@@ -463,7 +460,6 @@ class Global {
         static bool n_pv_ts_init;
         static bool n_hp_ts_init;
         static bool seed_set;
-      //static bool comp_eval_metrics_init;
         static bool pvar_set;
         static bool repetitions_selected_set;
         static bool n_repetitions_set;

@@ -203,18 +203,7 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
     cweek_peak_grid_demand_kW            = 0.0;
-    /*
-    if (Global::get_comp_eval_metrics()) {
-        create_history_output = true;
-        history_self_prod_load_kW       = new float[Global::get_n_timesteps()];
-        history_pv_generation_kW        = new float[Global::get_n_timesteps()];
-        history_avg_consumption_load_kW = new float[Global::get_n_timesteps()];
-    } else {
-        create_history_output = false;
-        history_self_prod_load_kW       = NULL;
-        history_pv_generation_kW        = NULL;
-        history_avg_consumption_load_kW = NULL;
-    }*/
+
     is_sim_expanded = false;
 
     // Generate new instance for the EV charging station (regardless if it is required or not)
@@ -236,12 +225,6 @@ ControlUnit::~ControlUnit() {
     delete sim_comp_cs;
     if (optimized_controller != NULL)
         delete optimized_controller;
-    /*
-    if (create_history_output) {
-        delete[] history_self_prod_load_kW;
-        delete[] history_pv_generation_kW;
-        delete[] history_avg_consumption_load_kW;
-    }*/
 }
 
 void ControlUnit::add_unit(MeasurementUnit* unit) {
