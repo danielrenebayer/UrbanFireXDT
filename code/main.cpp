@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
         ("pvar",     bpopts::value<int>(),    "ID of parameter variation, that should be applied")
         ("scenario", bpopts::value<unsigned long>(),"ID of the scenario that should be used, regardless of parameter variation is selected or not")
         ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation should be repeated - only useful if random variables are used. Modifies the behavior of the 'seed' option.")
+        ("stop-on-cc-err,e",                        "Stop simulation execution if an computation error occurs inside an optimization-based controller in any control unit.")
         ("n_threads,n",   bpopts::value<uint>()->default_value(3),    "Number of working threads. Defaults to 3. If all tasks should be done by the main thread, set this value to 0. If there is only one working thread, the concept is useless, as the main thread will wait for the workers to finish and does not do anything by itself.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
@@ -95,6 +96,11 @@ int main(int argc, char* argv[]) {
 		scenario_id = opts_vals["scenario"].as<unsigned long>();
     } else {
 		scenario_id = 1;
+    }
+    if (opts_vals.count("stop-on-cc-err") > 0) {
+		Global::set_stop_on_cc_err(true);
+    } else {
+		Global::set_stop_on_cc_err(false);
     }
     if (opts_vals.count("n_threads") > 0) {
         unsigned int n_threads = opts_vals["n_threads"].as<uint>();

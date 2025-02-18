@@ -121,8 +121,9 @@ bool simulation::oneStep(unsigned long ts,
         // Case 2: Parallelization - subsection is ignored!
         // thread_manager MUST be initialized with subsection as argument!
         thread_manager->executeOneStep(ts);
-        thread_manager->waitForWorkersToFinish();
-        // TODO: If there occurs one false from cu->compute_next_values -> Break complete run![]
+        if (!thread_manager->waitForWorkersToFinish()) {
+            return false;
+        }
     }
 
     //

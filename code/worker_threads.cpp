@@ -88,10 +88,17 @@ void CUControllerThreadGroupManager::executeOneStep(unsigned long ts) {
     }
 }
 
-void CUControllerThreadGroupManager::waitForWorkersToFinish() {
+bool CUControllerThreadGroupManager::waitForWorkersToFinish() {
     // for (CUControllerWorkerThread* wt : worker_threads)
     //all_workers_finished_barrier->arrive_and_wait();
     all_workers_finished_latch->wait();
+    //
+    // return false, if an error occured
+    for (CUControllerWorkerThread* wt : worker_threads) {
+        if (wt->errorHappened())
+            return false;
+    }
+    return true;
 }
 
 
@@ -121,6 +128,8 @@ CUControllerWorkerThread::CUControllerWorkerThread(
     atomic_flag_exec    = false;
     atomic_flag_running = false;
     atomic_flag_idling  = true;
+
+    error_happened      = false;
 }
 
 CUControllerWorkerThread::~CUControllerWorkerThread() {
@@ -183,11 +192,12 @@ void CUControllerWorkerThread::executeOneStepForAllConnCUs(
 }
 
 void CUControllerWorkerThread::run() {
+    bool stop_thread = false; // thread-internal variable to stop the thread (only active if an error occurs during the simulation)
     bool exec_task = false; // thread-internal variable to store the value of atomic_flag_exec
     //
     unsigned long ts;          // local copies of the atomic variables required for passing them as an argument to ControlUnit::compute_next_value()
     //
-    while(true)
+    while(!stop_thread)
     {
         {
             // lock the mutex
@@ -217,7 +227,12 @@ void CUControllerWorkerThread::run() {
             // iterate over all connected CUs
             // and execute the compute_next_value()-method
             for (ControlUnit* cu : connected_units) {
-                cu->compute_next_value(ts);
+                bool ret_val = cu->compute_next_value(ts);
+                if (!ret_val) {
+                    stop_thread = true;
+                    error_happened = true; // no mutex for this variable required, as this is the only place where this variable is set
+                    break;
+                }
             }
         }
         // set atomic flag for idling to true AFTER the task has been executed

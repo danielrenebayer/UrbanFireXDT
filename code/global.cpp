@@ -118,6 +118,7 @@ int  Global::pvar_id              = 0;
 bool Global::repetitions_selected = false;
 uint Global::n_repetitions        = 0;
 uint Global::n_threads            = 3;
+bool Global::stop_on_cc_err       = false;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
 int Global::tsteps_per_hour       = 1;
@@ -554,6 +555,13 @@ void Global::set_n_threads(unsigned int value) {
     } else {
         Global::n_threads = value;
         Global::n_threads_set = true;
+    }
+}
+void Global::set_stop_on_cc_err(bool value) {
+    if (is_locked){
+        cerr << "Global variable stop_on_cc_err cannot be set at the moment!" << endl;
+    } else {
+        Global::stop_on_cc_err = value;
     }
 }
 void Global::set_ts_start_tm(struct tm* ts_start_tm) {

@@ -957,7 +957,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 );
             if (!opti_ret_val) {
                 std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
-                return false;
+                if (Global::get_stop_on_cc_err()) {
+                    // return error ONLY if selected as a program option
+                    return false;
+                }
             }
 
             // Create output with optimization details if selected

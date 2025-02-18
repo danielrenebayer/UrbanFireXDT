@@ -73,8 +73,9 @@ class CUControllerThreadGroupManager {
         /*!
          * This function waits until all workers are finished with executed their task,
          * that has been started with ExecuteOneStep().
+         * @returns true, if no error happend during the simulation, or false, if an error occured and the simulation must be stopped.
          */
-        void waitForWorkersToFinish();
+        bool waitForWorkersToFinish();
 
         /*!
          * This function deletes all created worker threads
@@ -127,6 +128,11 @@ class CUControllerWorkerThread {
          */
         bool isIdling() const { return atomic_flag_idling; }
 
+        /**
+         * This method returns true if an error happend and complete simulation must be stopped.
+         */
+        bool errorHappened() const { return error_happened; }
+
     private:
         CUControllerThreadGroupManager& thread_group_manager; ///< Internal reference to the thread group manager
         std::vector<ControlUnit*> connected_units; ///< List of connected control units
@@ -137,6 +143,8 @@ class CUControllerWorkerThread {
         std::atomic<bool> atomic_flag_exec;    ///< Set to true if the main action of this worker (i.e., calling ControlUnit::compute_next_value() ) should be executed
         std::atomic<bool> atomic_flag_running; ///< Set to true if the thread is invoked and running (working or idling)
         std::atomic<bool> atomic_flag_idling;  ///< Set to true if the thread is idling (i.e., running but without work and without planned work)
+        //
+        std::atomic<bool> error_happened;      ///< True, if an error happend and simulation must be stopped
         //
         std::atomic<unsigned long> atomic_param_ts; ///< Parameter required for calling ControlUnit::compute_next_value()
         //
