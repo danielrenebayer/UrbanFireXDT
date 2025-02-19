@@ -216,10 +216,16 @@ bool GurobiLPController::updateController(
             std::cerr << "Optimization not resulting in optimal value.\n";
             std::cerr << "Gurobi model status = " << model_status << std::endl;
             string filepath = "/tmp/gurobi_model_infeasible_";
-            filepath += std::to_string(controlUnitID);
+            filepath += std::to_string(controlUnitID) + "_" + std::to_string(ts);
             filepath += ".lp";
-            std::cerr << "Writing model to " << filepath << std::endl;
+            std::cerr << "    Computing irreducible inconsistent subsystem ...";
             model.write(filepath);
+            filepath = "/tmp/gurobi_model_infeasible_";
+            filepath += std::to_string(controlUnitID) + "_" + std::to_string(ts);
+            filepath += "_iis.ilp";
+            model.computeIIS();
+            model.write(filepath);
+            std::cerr << "    IIS written to " << filepath << std::endl;
             return false;
         }
         //
