@@ -1,5 +1,6 @@
 #include "output.h"
 
+#include <atomic>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -7,6 +8,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "global.h"
 #include "helper.h"
@@ -220,13 +222,13 @@ void output::initializeCUOutput(unsigned long scenario_id) {
     // initialize additional outputs with details about the control units (if selected)
     if (Global::get_create_control_cmd_output()) {
         filesystem::path output_path = *(global::current_output_dir);
-        output_path /= "CU-control-commands.csv";
+        output_path /= "CU-control-commands.json";
         cu_details_ccmd_output = new ofstream(output_path, std::ofstream::out);
         // activate buffers for speedup
         //buffer = new char[bufferSize];
         //cu_details_ccmd_output->rdbuf()->pubsetbuf(buffer, bufferSize);
         // add header to output file
-        *(cu_details_ccmd_output) << "HEADER" << endl;
+        *(cu_details_ccmd_output) << "[\n";
     }
     if (Global::get_create_ev_detailed_output()) {
         filesystem::path output_path = *(global::current_output_dir);
@@ -275,6 +277,9 @@ void output::closeOutputs() {
     }
     //
     if (cu_details_ccmd_output != NULL) {
+        // add a closing bracket to the end
+        (*cu_details_ccmd_output) << "]";
+        // closing part
         cu_details_ccmd_output->close();
         delete cu_details_ccmd_output;
         cu_details_ccmd_output = NULL;
@@ -506,6 +511,103 @@ void output::outputRuntimeInformation(long seconds_setup, long seconds_main_run)
     time_output << "Setup time in s," << seconds_setup << "\n";
     time_output << "Main run time in s," << seconds_main_run << "\n";
     time_output.close();
+}
+
+// Template function to serialize a vector
+template <typename T>
+std::string serializeVector(const std::vector<T>& vec) {
+    std::ostringstream voss;
+    voss << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i > 0) voss << ", ";
+        voss << vec[i];
+    }
+    voss << "]";
+    return voss.str();
+}
+
+// Template function to serialize a vector of vectors
+template <typename T>
+std::string serializeVectorOfVectors(const std::vector<const std::vector<T>*>* vec) {
+    if (!vec) return "[]";
+    std::ostringstream voss;
+    voss << "[";
+    for (size_t i = 0; i < vec->size(); ++i) {
+        if (i > 0) voss << ", ";
+        voss << serializeVector(*((*vec)[i]));
+    }
+    voss << "]";
+    return voss.str();
+}
+
+// Template function to serialize a vector of vectors
+template <typename T>
+std::string serializeVectorOfVectorsB(const std::vector<std::vector<T>>& vec) {
+    std::ostringstream voss;
+    voss << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i > 0) voss << ", ";
+        voss << serializeVector(vec[i]);
+    }
+    voss << "]";
+    return voss.str();
+}
+
+void output::outputControlCommandDetails(
+    unsigned long ts, unsigned long cuID, bool optimization_state_ok,
+    float inp_max_p_bs_kW,
+    float inp_max_e_bs_kWh,
+    float inp_max_p_cs_kW,
+    float inp_current_bs_charge_kWh,
+    const std::vector<float>&  inp_future_resid_demand_kW,
+    const std::vector<double>& inp_future_pv_generation_kW,
+    const std::vector<double>& inp_future_hp_shiftable_maxP,
+    const std::vector<double>& inp_future_hp_shiftable_minP,
+    const std::vector<double>& inp_future_hp_shiftable_maxE,
+    const std::vector<double>& inp_future_hp_shiftable_minE,
+    const std::vector<const std::vector<double>*>* inp_future_ev_shiftable_maxE,
+    const std::vector<const std::vector<double>*>* inp_future_ev_shiftable_minE,
+    const std::vector<const std::vector<double>*>* inp_future_ev_maxP,
+    const std::vector<double>& out_future_bs_power_kW,
+    const std::vector<double>& out_future_hp_power_kW,
+    const std::vector<std::vector<double>>& out_future_ev_power_kW
+) {
+    std::unique_lock lock(mtx_cu_details_ccmd); // secure access by using a mutex to prevent multiple parallel function calls
+
+    static std::atomic<bool> first_call = true; // persistent variable to track, if this is the first call or not
+    //static bool first_call = true;
+
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6); // Ensure consistent floating-point precision
+    oss << "{";
+    oss << "\"ts\": " << ts << ", ";
+    oss << "\"cuID\": " << cuID << ", ";
+    oss << "\"optimization_state_ok\": " << (optimization_state_ok ? "true" : "false") << ", ";
+    oss << "\"inp_max_p_bs_kW\": " << inp_max_p_bs_kW << ", ";
+    oss << "\"inp_max_e_bs_kWh\": " << inp_max_e_bs_kWh << ", ";
+    oss << "\"inp_max_p_cs_kW\": " << inp_max_p_cs_kW << ", ";
+    oss << "\"inp_current_bs_charge_kWh\": " << inp_current_bs_charge_kWh << ", ";
+
+    oss << "\"inp_future_resid_demand_kW\": " << serializeVector(inp_future_resid_demand_kW) << ", ";
+    oss << "\"inp_future_pv_generation_kW\": " << serializeVector(inp_future_pv_generation_kW) << ", ";
+    oss << "\"inp_future_hp_shiftable_maxP\": " << serializeVector(inp_future_hp_shiftable_maxP) << ", ";
+    oss << "\"inp_future_hp_shiftable_minP\": " << serializeVector(inp_future_hp_shiftable_minP) << ", ";
+    oss << "\"inp_future_hp_shiftable_maxE\": " << serializeVector(inp_future_hp_shiftable_maxE) << ", ";
+    oss << "\"inp_future_hp_shiftable_minE\": " << serializeVector(inp_future_hp_shiftable_minE) << ", ";
+    oss << "\"inp_future_ev_shiftable_maxE\": " << serializeVectorOfVectors(inp_future_ev_shiftable_maxE) << ", ";
+    oss << "\"inp_future_ev_shiftable_minE\": " << serializeVectorOfVectors(inp_future_ev_shiftable_minE) << ", ";
+    oss << "\"inp_future_ev_maxP\": " << serializeVectorOfVectors(inp_future_ev_maxP) << ", ";
+    oss << "\"out_future_bs_power_kW\": " << serializeVector(out_future_bs_power_kW) << ", ";
+    oss << "\"out_future_hp_power_kW\": " << serializeVector(out_future_hp_power_kW) << ", ";
+    oss << "\"out_future_ev_power_kW\": " << serializeVectorOfVectorsB<double>(out_future_ev_power_kW);
+    oss << "}";
+
+    if (first_call) {
+        first_call = false;
+    } else {
+        *(cu_details_ccmd_output) << ",";
+    }
+    *(cu_details_ccmd_output) << oss.str() << "\n";
 }
 
 void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh) {

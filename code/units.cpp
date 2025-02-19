@@ -955,6 +955,20 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
                 future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP
                 );
+            // Create output with optimization details if selected
+            if (Global::get_create_control_cmd_output() && generate_output_for_this_unit) {
+                output::outputControlCommandDetails(
+                    ts, unitID, opti_ret_val, max_p_bs_kW, max_e_bs_kWh, max_p_cs_kW, current_bs_charge_kWh,
+                    future_resid_demand_kW,   *future_pv_generation_kW,
+                    *future_hp_shiftable_maxP, *future_hp_shiftable_minP,
+                    *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
+                    future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP,
+                    optimized_controller->get_future_bs_power_kW(),
+                    optimized_controller->get_future_hp_power_kW(),
+                    optimized_controller->get_future_ev_power_kW()
+                );
+            }
+            // Check optimization return value
             if (!opti_ret_val) {
                 std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
                 if (Global::get_stop_on_cc_err()) {
@@ -965,11 +979,6 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                     // If the control commands received in this way have become invalid, the components themselves detect this and set the demand to a permissible value.
                     optimized_controller->shiftVectorsByOnePlace();
                 }
-            }
-
-            // Create output with optimization details if selected
-            if (Global::get_create_control_cmd_output() && generate_output_for_this_unit) {
-                // TODO: Create ccmd details output
             }
 
         } else {

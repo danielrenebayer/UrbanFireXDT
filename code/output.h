@@ -15,6 +15,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // The following classes are defined in this header file:
 class CUOutput;
@@ -146,8 +147,36 @@ namespace output {
     void outputRuntimeInformation(long seconds_setup, long seconds_main_run);
 
     /**
+     * Output the optimization input and output for one time step and control unit.
+     * Call this method only if Global::get_create_control_cmd_output() == true.
+     * This function is thread safe.
+     * All parameters starting with "inp_" are the input parameters for the optimization as defined in BaseOptimizedController::updateController().
+     * All parameters starting with "out_" denote the output parameters returned by the controller / optimization.
+     */
+     void outputControlCommandDetails(
+        unsigned long ts, unsigned long cuID, bool optimization_state_ok,
+        float inp_max_p_bs_kW,
+        float inp_max_e_bs_kWh,
+        float inp_max_p_cs_kW,
+        float inp_current_bs_charge_kWh,
+        const std::vector<float>&  inp_future_resid_demand_kW,
+        const std::vector<double>& inp_future_pv_generation_kW,
+        const std::vector<double>& inp_future_hp_shiftable_maxP,
+        const std::vector<double>& inp_future_hp_shiftable_minP,
+        const std::vector<double>& inp_future_hp_shiftable_maxE,
+        const std::vector<double>& inp_future_hp_shiftable_minE,
+        const std::vector<const std::vector<double>*>* inp_future_ev_shiftable_maxE,
+        const std::vector<const std::vector<double>*>* inp_future_ev_shiftable_minE,
+        const std::vector<const std::vector<double>*>* inp_future_ev_maxP,
+        const std::vector<double>& out_future_bs_power_kW,
+        const std::vector<double>& out_future_hp_power_kW,
+        const std::vector<std::vector<double>>& out_future_ev_power_kW
+    );
+
+    /**
      * Outputs information about one EV for a given time step.
-     * Thread safe.
+     * Call this function only if Global::get_create_ev_detailed_output() == true.
+     * This function is thread safe.
      */
     void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh);
 
