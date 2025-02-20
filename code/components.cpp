@@ -533,31 +533,35 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
         future_maxP_storage[tOffset] = rated_power_kW;
         future_minP_storage[tOffset] = 0.0;
         // energy
-        // for min profile -> left shift
-        size_t maxProfilePos = tsID + tOffset + Global::get_hp_flexibility_in_ts();
-        if (maxProfilePos < Global::get_n_timesteps()) {
-            double new_val = profile_cumsum[maxProfilePos] - total_consumption_kWh;
-            if (new_val < 0)
-                new_val = 0.0;
-            future_maxE_storage[tOffset] = new_val;
-            last_known_maxE_val = new_val;
-        } else {
-            future_maxE_storage[tOffset] = last_known_maxE_val;
-        }
         // for min profile -> right shift
         if (tsID + tOffset < Global::get_hp_flexibility_in_ts()) {
             future_minE_storage[tOffset] = 0.0;
         } else {
             size_t minProfilePos = tsID + tOffset - Global::get_hp_flexibility_in_ts();
             if (minProfilePos < Global::get_n_timesteps()) {
-                double new_val = profile_cumsum[minProfilePos] - total_consumption_kWh;
+                double new_val = profile_cumsum[minProfilePos] * scaling_factor - total_consumption_kWh;
                 if (new_val < 0)
                     new_val = 0.0;
                 future_minE_storage[tOffset] = new_val;
                 last_known_minE_val = new_val;
+                // only required when reaching end of simulation (i.e., maxProfilePos >= Global::get_n_timesteps())
+                // check if last_known_minE_val <= last_known_maxE_val holds
+                if (last_known_maxE_val < last_known_minE_val)
+                    last_known_maxE_val = last_known_minE_val;
             } else {
                 future_minE_storage[tOffset] = last_known_minE_val;
             }
+        }
+        // for max profile -> left shift
+        size_t maxProfilePos = tsID + tOffset + Global::get_hp_flexibility_in_ts();
+        if (maxProfilePos < Global::get_n_timesteps()) {
+            double new_val = profile_cumsum[maxProfilePos] * scaling_factor - total_consumption_kWh;
+            if (new_val < 0)
+                new_val = 0.0;
+            future_maxE_storage[tOffset] = new_val;
+            last_known_maxE_val = new_val;
+        } else {
+            future_maxE_storage[tOffset] = last_known_maxE_val;
         }
     }
 }
