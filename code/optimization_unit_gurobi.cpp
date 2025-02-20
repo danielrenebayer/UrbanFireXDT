@@ -132,10 +132,11 @@ bool GurobiLPController::updateController(
             std::vector<GRBVar> p_cs_kW_1(T);
             std::vector<GRBVar> p_cs_kW_2(T);
             for (unsigned int t = 0; t < T; t++) {
-                p_hp_kW_1[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq1");
-                p_hp_kW_2[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq2");
-                p_cs_kW_1[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq1");
-                p_cs_kW_2[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq2");
+                const std::string tstr = to_string(t);
+                p_hp_kW_1[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq1_" + tstr);
+                p_hp_kW_2[t] = model.addVar(0.0, GRB_INFINITY,  0.0, GRB_CONTINUOUS, "p_hp_kW_BalEq2_" + tstr);
+                p_cs_kW_1[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq1_"  + tstr);
+                p_cs_kW_2[t] = model.addVar(0.0, max_p_cs_kW,  0.0, GRB_CONTINUOUS, "p_cs_kW_BalEq2_"  + tstr);
             }
             for (unsigned int t = 0; t < T; t++) {
                 GRBLinExpr expr_cs_p_at_t = 0.0;
@@ -167,11 +168,11 @@ bool GurobiLPController::updateController(
             for (unsigned int t = 0; t <= tm; t++) {
                 // heat pump: summation variable
                 expr_hp_summation += p_hp_kW[t] * Global::get_time_step_size_in_h();
-                // heat pump balance
-                model.addConstr(e_hp_cum_kWh[tm] <= future_hp_shiftable_maxE[tm]);
-                model.addConstr(e_hp_cum_kWh[tm] >= future_hp_shiftable_minE[tm]);
             }
             model.addConstr(e_hp_cum_kWh[tm] == expr_hp_summation);
+            // heat pump balance
+            model.addConstr(e_hp_cum_kWh[tm] <= future_hp_shiftable_maxE[tm]);
+            model.addConstr(e_hp_cum_kWh[tm] >= future_hp_shiftable_minE[tm]);
         }
         for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
             for (unsigned int tm = 0; tm < T; tm++) {
