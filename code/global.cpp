@@ -252,6 +252,10 @@ bool Global::AllVariablesInitialized() {
     if (cs_max_charging_power_kW > 0.0 && controller_mode != ControllerMode::RuleBased ) {
         std::cerr << "Warning: Setting a upper limit for max charging power per control unit will be ignored if controller mode is other than rule-based." << std::endl;
     }
+    if (control_horizon_in_ts < control_update_freq_in_ts) {
+        std::cerr << "Error: Control horizon < control update frequency!" << std::endl;
+        return false;
+    }
     // Check for initialized variables
     if (n_timesteps_init && 
         n_substations_init &&
