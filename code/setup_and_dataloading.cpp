@@ -1653,6 +1653,7 @@ void configld::output_variable_values() {
     if (Global::is_seed_set()) { PRINT_VAR(Global::get_seed()); }
     PRINT_VAR(Global::get_n_repetitions());
     PRINT_VAR(Global::get_n_threads());
+    PRINT_VAR(Global::get_work_stealing());
     PRINT_TM_VAR(Global::get_ts_start_tm());
     PRINT_TM_VAR(Global::get_ts_end_tm());
     // Data

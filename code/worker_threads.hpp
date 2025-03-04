@@ -77,6 +77,14 @@ class CUControllerThreadGroupManager {
          */
         bool waitForWorkersToFinish();
 
+        /**
+         * This function returns a pointer to the next control unit in the list of all control units for which ControlUnit::compute_next_value()
+         * has not been computed yet. It is thread safe and should be callen by the CUContollerWorkerThread instances.
+         * Relevant for the case of using work stealing.
+         * @returns A pointer to a control unit or null, if there is not control unit left
+         */
+        ControlUnit* getNextControlUnit();
+
         /*!
          * This function deletes all created worker threads
          */
@@ -85,9 +93,10 @@ class CUControllerThreadGroupManager {
     private:
         //bool initialized; /* = false */ ///< True, if the manager is already initialized
         std::vector<CUControllerWorkerThread*> worker_threads; ///< Vector of worker threads
-        //static std::barrier<>* all_workers_finished_barrier;
         std::latch* all_workers_finished_latch;
-        //static std::condition_variable cv_finished_signaling; ///< Internal conditional variable, required for notifying that a worker thread is finished
+        // only required if work stealing is used
+        std::atomic<unsigned long> work_stealing_next_cuID; ///< shared iterator if work stealing is used
+        std::mutex work_stealing_mtx; ///< The mutex object used if work stealing is active to ensure correct access to the global iterator
 };
 
 /*!
@@ -107,6 +116,12 @@ class CUControllerWorkerThread {
          * @param caller: The reference to the thread group manager object
          */
         CUControllerWorkerThread(const std::list<ControlUnit*>* connected_units_, CUControllerThreadGroupManager& caller);
+        /*!
+         * Constructs a new working thread in the case of using work stealing.
+         *
+         * @param caller: The reference to the thread group manager object
+         */
+        CUControllerWorkerThread(CUControllerThreadGroupManager& caller);
         ~CUControllerWorkerThread();
         void start(); ///< Starts this thread. This method has to be called before the call of executeOneStepForAllConnCUs().
         void stop(); ///< Stops this working thread.
@@ -135,9 +150,10 @@ class CUControllerWorkerThread {
 
     private:
         CUControllerThreadGroupManager& thread_group_manager; ///< Internal reference to the thread group manager
+        bool use_work_stealing; ///< True, if work stealing is selected. In this case, the vector of connected_units will not be used at all.
         std::vector<ControlUnit*> connected_units; ///< List of connected control units
         std::thread current_thread;
-        std::mutex mtx; ///< The mutex object per instance
+        std::mutex mtx; ///< The mutex object per instance to ensure correct reading / writing of the atomic flags
         std::condition_variable cv; ///< The conditional variable to signal the requests for running, i.e., by calling executeOneStepForAllConnCUs()
         std::atomic<bool> atomic_flag_stop;    ///< Set to true if the the working thread should stop
         std::atomic<bool> atomic_flag_exec;    ///< Set to true if the main action of this worker (i.e., calling ControlUnit::compute_next_value() ) should be executed

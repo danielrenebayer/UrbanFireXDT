@@ -197,6 +197,7 @@ class Global {
         static bool get_repetitions_selected() { return repetitions_selected; }
         static uint get_n_repetitions()        { return n_repetitions;  }
         static uint get_n_threads()            { return n_threads;      }
+        static bool get_work_stealing()        { return work_stealing;  } ///< True, if work stealing is selected between the running worker threads
         static bool get_stop_on_cc_err()       { return stop_on_cc_err; } ///< Stores the value of command line option 'stop_on_cc_err'. True, if the simulation execution should be stopped on if an computation error occurs inside an optimization-based controller in any control unit.
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
@@ -289,6 +290,7 @@ class Global {
         static void set_repetitions_selected(bool value);
         static void set_n_repetitions(unsigned int value);
         static void set_n_threads(unsigned int value);
+        static void set_work_stealing(bool value);
         static void set_stop_on_cc_err(bool value);
         static void set_ts_start_tm(struct tm* ts_start_tm);
         static void set_ts_end_tm(struct tm* ts_end_tm);
@@ -379,6 +381,7 @@ class Global {
         static bool repetitions_selected;  ///< True, if complete twin (sac planning + param. vari. + simulation) should run more than once
         static unsigned int n_repetitions; ///< Number of repetitions if repetitions_selected == True
         static unsigned int n_threads;     ///< Number of parallel threads
+        static bool work_stealing;
         static bool stop_on_cc_err;
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date

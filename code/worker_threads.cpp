@@ -28,6 +28,7 @@ CUControllerThreadGroupManager::CUControllerThreadGroupManager(
         throw std::logic_error("Thread group manager cannot be started if the number of worker threads is set to 0.");
 
     all_workers_finished_latch = NULL;
+    work_stealing_next_cuID    = 0;
 
     // create as much lists as we have workers where we iteratively add one control unit
     std::vector<std::list<ControlUnit*>> vlc;
@@ -51,7 +52,12 @@ CUControllerThreadGroupManager::CUControllerThreadGroupManager(
     // Initialize the worker threads
     worker_threads.reserve( Global::get_n_threads() );
     for (unsigned int t = 0; t < Global::get_n_threads(); t++) {
-        CUControllerWorkerThread* new_thread = new CUControllerWorkerThread( &vlc[t], *this );
+        CUControllerWorkerThread* new_thread;
+        if (Global::get_work_stealing()) {
+            new_thread = new CUControllerWorkerThread(          *this );
+        } else {
+            new_thread = new CUControllerWorkerThread( &vlc[t], *this );
+        }
         worker_threads.push_back(new_thread);
     }
 }
@@ -78,6 +84,8 @@ void CUControllerThreadGroupManager::stopAllWorkerThreads() {
 }
 
 void CUControllerThreadGroupManager::executeOneStep(unsigned long ts) {
+    // Reset the iterator (used for work stealing)
+    work_stealing_next_cuID = 0;
     // (Re-)Initialize the latch object
     if (all_workers_finished_latch != NULL)
         delete all_workers_finished_latch;
@@ -101,6 +109,19 @@ bool CUControllerThreadGroupManager::waitForWorkersToFinish() {
     return true;
 }
 
+ControlUnit* CUControllerThreadGroupManager::getNextControlUnit() {
+    const std::vector<ControlUnit*>& cuList = ControlUnit::GetArrayOfInstances();
+    // activate the lock
+    std::lock_guard<std::mutex> lock( work_stealing_mtx );
+    if (work_stealing_next_cuID < ControlUnit::GetNumberOfInstances()) {
+        ControlUnit* nextCU = cuList[work_stealing_next_cuID];
+        work_stealing_next_cuID++;
+        return nextCU;
+    } else {
+        return NULL;
+    }
+}
+
 
 
 // ----------------------------- //
@@ -112,6 +133,8 @@ CUControllerWorkerThread::CUControllerWorkerThread(
     CUControllerThreadGroupManager& caller
 ) : thread_group_manager(caller)
 {
+    use_work_stealing = false;
+
     // add the stations to connect to this thread to the internal vector storing all stations
     // check, if a station is not already connected to some other thread
     connected_units = std::vector<ControlUnit*>();
@@ -132,12 +155,28 @@ CUControllerWorkerThread::CUControllerWorkerThread(
     error_happened      = false;
 }
 
+CUControllerWorkerThread::CUControllerWorkerThread(
+    CUControllerThreadGroupManager& caller
+) : thread_group_manager(caller)
+{
+    use_work_stealing   = true;
+
+    atomic_flag_stop    = false;
+    atomic_flag_exec    = false;
+    atomic_flag_running = false;
+    atomic_flag_idling  = true;
+
+    error_happened      = false;
+}
+
 CUControllerWorkerThread::~CUControllerWorkerThread() {
     // Stop the thread and clean up
     stop();
     // Remove the reference to the working thread in the connected units
-    for (ControlUnit* cu : connected_units) {
-        cu->worker_thread = NULL;
+    if (!use_work_stealing) {
+        for (ControlUnit* cu : connected_units) {
+            cu->worker_thread = NULL;
+        }
     }
     // Join the threads and set the falgs to false
     if (current_thread.joinable()) {
@@ -224,14 +263,29 @@ void CUControllerWorkerThread::run() {
         if (exec_task) {
             exec_task = false; // do not execute it again
             //
-            // iterate over all connected CUs
-            // and execute the compute_next_value()-method
-            for (ControlUnit* cu : connected_units) {
-                bool ret_val = cu->compute_next_value(ts);
-                if (!ret_val) {
-                    stop_thread = true;
-                    error_happened = true; // no mutex for this variable required, as this is the only place where this variable is set
-                    break;
+            if (use_work_stealing) {
+                // get the next element
+                ControlUnit* nextCU = thread_group_manager.getNextControlUnit();
+                while (nextCU != NULL) {
+                    bool ret_val = nextCU->compute_next_value(ts);
+                    if (!ret_val) {
+                        stop_thread = true;
+                        error_happened = true; // no mutex for this variable required, as this is the only place where this variable is set
+                        break;
+                    }
+                    // loop until we reached the end of the list
+                    nextCU = thread_group_manager.getNextControlUnit();
+                }
+            } else {
+                // iterate over all connected CUs
+                // and execute the compute_next_value()-method
+                for (ControlUnit* cu : connected_units) {
+                    bool ret_val = cu->compute_next_value(ts);
+                    if (!ret_val) {
+                        stop_thread = true;
+                        error_happened = true; // no mutex for this variable required, as this is the only place where this variable is set
+                        break;
+                    }
                 }
             }
         }

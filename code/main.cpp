@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
         ("repetitions,r", bpopts::value<uint>(),    "Number of times the simulation should be repeated - only useful if random variables are used. Modifies the behavior of the 'seed' option.")
         ("stop-on-cc-err,e",                        "Stop simulation execution if an computation error occurs inside an optimization-based controller in any control unit.")
         ("n_threads,n",   bpopts::value<uint>()->default_value(3),    "Number of working threads. Defaults to 3. If all tasks should be done by the main thread, set this value to 0. If there is only one working thread, the concept is useless, as the main thread will wait for the workers to finish and does not do anything by itself.")
+        ("work-stealing",                           "Enables work stealing between the worker threads if multiple threads are used.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
@@ -108,6 +109,9 @@ int main(int argc, char* argv[]) {
         if (n_threads == 1) {
             cerr << "Warning: Defining only 1 working thread is useless, as the main thread will wait until all workers are finished.\nPlease increase the number of working threads or disable multi-threading by setting n_threads to 0." << std::endl;
         }
+    }
+    if (opts_vals.count("work-stealing") > 0) {
+        Global::set_work_stealing(true);
     }
     if (opts_vals.count("cu-output") > 0) {
         string cu_output = opts_vals["cu-output"].as<string>();

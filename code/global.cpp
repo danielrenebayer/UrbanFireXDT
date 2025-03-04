@@ -118,6 +118,7 @@ int  Global::pvar_id              = 0;
 bool Global::repetitions_selected = false;
 uint Global::n_repetitions        = 0;
 uint Global::n_threads            = 3;
+bool Global::work_stealing        = false;
 bool Global::stop_on_cc_err       = false;
 struct tm* Global::ts_start_tm    = NULL;
 struct tm* Global::ts_end_tm      = NULL;
@@ -559,6 +560,13 @@ void Global::set_n_threads(unsigned int value) {
     } else {
         Global::n_threads = value;
         Global::n_threads_set = true;
+    }
+}
+void Global::set_work_stealing(bool value) {
+    if (is_locked) {
+        cerr << "Global variable work_stealing cannot be set at the moment!" << endl;
+    } else {
+        Global::work_stealing = value;
     }
 }
 void Global::set_stop_on_cc_err(bool value) {
