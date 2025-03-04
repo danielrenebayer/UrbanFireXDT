@@ -887,6 +887,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         // Check number of time steps passed since last optimization run
         ts_since_last_opti_run++;
         if (ts_since_last_opti_run >= Global::get_control_update_freq_in_ts()) {
+            ts_since_last_opti_run = 0;
             // run optimization in this case
             if (optimized_controller == NULL) {
 #ifdef USE_OR_TOOLS
