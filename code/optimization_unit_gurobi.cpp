@@ -219,6 +219,7 @@ bool GurobiLPController::updateController(
             string filepath = "/tmp/gurobi_model_infeasible_";
             filepath += std::to_string(controlUnitID) + "_" + std::to_string(ts);
             filepath += ".lp";
+            /*
             std::cerr << "    Computing irreducible inconsistent subsystem ...";
             model.write(filepath);
             filepath = "/tmp/gurobi_model_infeasible_";
@@ -227,6 +228,7 @@ bool GurobiLPController::updateController(
             model.computeIIS();
             model.write(filepath);
             std::cerr << "    IIS written to " << filepath << std::endl;
+            */
             return false;
         }
         //
@@ -238,6 +240,7 @@ bool GurobiLPController::updateController(
                 ev_power[evIdx][t] = p_ev_kW[evIdx][t].get(GRB_DoubleAttr_X);
             }
         }
+        model.terminate();
 
     } catch (GRBException e) {
         std::cerr << "Error during optimization (code = " << e.getErrorCode() << ") with message:" << std::endl;
