@@ -70,6 +70,8 @@ namespace global {
 
     inline bool time_info_init       = false;
 
+    inline std::chrono::time_point<std::chrono::system_clock> time_of_simulation_start; ///< The time of the simulation start
+
 
     bool all_variables_initialized(); ///< Checks if all variables are initialized
     void vacuum();  ///< Deletes all global variables in the end

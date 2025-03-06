@@ -17,6 +17,7 @@
 #include "output.h"
 #include "setup_and_dataloading.h"
 #include "simulation_logic.h"
+#include "status_output.hpp"
 #include "vehicles.h"
 #include "worker_threads.hpp"
 
@@ -215,6 +216,7 @@ int main(int argc, char* argv[]) {
 
     // get time for time measurement
     auto t1 = std::chrono::system_clock::now();
+    global::time_of_simulation_start = t1;
     // set output flush interval
     global::n_ts_between_flushs = opts_vals["suof"].as<unsigned long>();
 
@@ -281,10 +283,12 @@ int main(int argc, char* argv[]) {
     // - once (if no parameter variation is selected) or
     // - multiple times, if param. vari. is selected
     //
+    StatusOutput::start_status_updater_thread();
     if (!simulation::runCompleteSimulation(expansion_matrix_rel_freq, expansion_matrix_abs_freq, scenario_id)) {
         cerr << "Error during simulation run!" << endl;
         return 3;
     }
+    StatusOutput::stop_status_updater_thread();
 
     // get time for time measurement and send first values to the file
     auto t3 = std::chrono::system_clock::now();
