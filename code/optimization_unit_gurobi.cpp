@@ -7,6 +7,7 @@
 
 GRBEnv* GurobiLPController::env = NULL;
 
+
 bool GurobiLPController::updateController(
     unsigned long ts,
     float max_p_bs_kW,
@@ -26,6 +27,8 @@ bool GurobiLPController::updateController(
 {
     try {
         GRBModel model = GRBModel(*env);
+        // only use the dual simplex (method=1), as barrier based methods lead to memory problems in a paralized setting
+        model.set(GRB_IntParam_Method, 1);
         // create the variables
         const unsigned int T  = Global::get_control_horizon_in_ts(); // number of time steps to consider
         const unsigned int Tp = T + 1; // required for the e_bs
