@@ -2,6 +2,7 @@
 #include "units.h"
 
 #include <algorithm> /* using min() */
+#include <atomic>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -126,6 +127,7 @@ std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
 std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
 const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
+std::atomic<unsigned long> ControlUnit::optimization_call_counter = 0;
 
 bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats) {
     // check, if public_id is known
@@ -949,6 +951,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         }
             //
             // 4. Run the optimization and get the results
+            optimization_call_counter++;
             bool opti_ret_val = optimized_controller->updateController(
                 ts, max_p_bs_kW, max_e_bs_kWh, max_p_cs_kW, current_bs_charge_kWh,
                 future_resid_demand_kW,   *future_pv_generation_kW,

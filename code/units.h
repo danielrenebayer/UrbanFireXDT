@@ -11,6 +11,7 @@
 #ifndef UNITS_H
 #define UNITS_H
 
+#include <atomic>
 #include <string>
 #include <list>
 #include <map>
@@ -184,6 +185,7 @@ class ControlUnit {
         static size_t GetNumberOfCUsWithSimCompEV();        ///< Returns the number of control units that hold a simulatively added (private) EV charging stations
         static double GetAllSimCompBatteriesCharge_kWh();   ///< Returns the charge of all simulatively added battery storage systems at the current ts
         static double GetAllSimCompBatteriesCapacity_kWh(); ///< Returns the capacity of all simulatively added battery storage systems
+        static unsigned long GetTotalNumberOfOptimizationCalls()  { return optimization_call_counter; } ///< Returns the total number of calls of an optimizer up to now
         // 3. modifiers for all created objects
         static void PreprocessEVData(); ///< Preprocesses EV data (min/max consumption until a given ts, states, ...) for all EVs
         static void ResetAllInternalStates();
@@ -261,6 +263,8 @@ class ControlUnit {
         static std::map<unsigned long, unsigned long> public_to_internal_id;
         static std::vector<double>* st__empty_vector_for_time_horizon; ///< An vector of 0.0 with the size of the current control horizon
         //static std::map<unsigned long, ControlUnit*> location_to_cu_map;
+        // other static members
+        static std::atomic<unsigned long> optimization_call_counter; ///< atomic variable of global number of optimization calls
     public:
         static const std::string MetricsStringHeaderAnnual; ///< The header for the output string produced by `ControlUnit::get_metrics_string_annual()`
         static const std::string MetricsStringHeaderWeekly; ///< The header for the output string produced by `ControlUnit::get_metrics_string_weekly_wr()`
