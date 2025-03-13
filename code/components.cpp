@@ -582,7 +582,7 @@ void ComponentHP::setDemandToProfileData(unsigned long ts) {
 }
 
 #define epsilon_hp 0.0001
-void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
+bool ComponentHP::setDemandToGivenValue(float new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (state_s1) {
         state_s1 = false;
@@ -590,12 +590,14 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
         throw std::runtime_error("Method ComponentHP::setDemandToGivenValue() cannot be called at the moment! Call ComponentHP::computeNextInternalState() first.");
     }
 #endif
+    bool no_error = true;
     double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
     double new_total_e = total_consumption_kWh + e;
     // check, if power is within the min/max power bands
     // Output warnings only, if demand is below bound + epsilon
     if (new_demand_kW > future_maxP_storage[0]) {
         if (new_demand_kW > future_maxP_storage[0] + epsilon_hp) {
+            no_error = false;
             std::cerr << "Warning in Component HP: Set demand is violating the upper power bound!\n";
             std::cerr << "     new P = " << std::fixed << std::setprecision(3) << new_demand_kW << ", but upper limit = " << std::fixed << std::setprecision(3) << future_maxP_storage[0] << "\n";
         }
@@ -604,6 +606,7 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
         //
     } else if (new_demand_kW < future_minP_storage[0]) {
         if (new_demand_kW < future_minP_storage[0] - epsilon_hp) {
+            no_error = false;
             std::cerr << "Warning in Component HP: Set demand is violating the lower power bound!\n";
             std::cerr << "     new P = " << std::fixed << std::setprecision(3) << new_demand_kW << ", but lower limit = " << std::fixed << std::setprecision(3) << future_minP_storage[0] << "\n";
         }
@@ -613,6 +616,7 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
     // check, if the new demand is within the min/max energy consumption bands
     if (e > future_maxE_storage[0]) {
         if (e > future_maxE_storage[0] + epsilon_hp) {
+            no_error = false;
             std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper energy consumption bound!\n";
             std::cerr << "     new E = " << std::fixed << std::setprecision(3) << e << ", but upper limit = " << std::fixed << std::setprecision(3) << future_maxE_storage[0] << "\n";
         }
@@ -622,6 +626,7 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
         //std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
     } else if (e < future_minE_storage[0]) {
         if (e < future_minE_storage[0] - epsilon_hp) {
+            no_error = false;
             std::cerr << "Warning in Component HP: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower energy consumption bound!\n";
             std::cerr << "     new E = " << std::fixed << std::setprecision(3) << e << ", but lower limit = " << std::fixed << std::setprecision(3) << future_minE_storage[0] << "\n";
         }
@@ -635,6 +640,8 @@ void ComponentHP::setDemandToGivenValue(float new_demand_kW) {
     // update cumulative variables
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
+
+    return no_error;
 }
 
 void ComponentHP::resetWeeklyCounter() {
@@ -860,7 +867,7 @@ void ComponentCS::setDemandToProfileData(unsigned long ts) {
 
 }
 
-void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW) {
+bool ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW) {
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (is_callable_set_charging_value) {
@@ -870,17 +877,23 @@ void ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_
         throw std::runtime_error("Method ComponentCS::setDemandToGivenValues() cannot be called at the moment!");
     }
 #endif
+    bool no_error = true;
 
     current_demand_kW = 0.0;
     for (size_t ev_idx = 0; ev_idx < listOfEVs.size() && ev_idx < charging_power_per_EV_kW.size(); ev_idx++) {
-        listOfEVs[ev_idx]->setDemandToGivenValue( charging_power_per_EV_kW[ev_idx] );
+        bool ret_val = listOfEVs[ev_idx]->setDemandToGivenValue( charging_power_per_EV_kW[ev_idx] );
         current_demand_kW += listOfEVs[ev_idx]->get_currentDemand_kW();
+        // Check if an 'error' occured, i.e., if the bounds are violated
+        if (!ret_val) {
+            no_error = false;
+        }
     }
     // compute current demand and cumulative sum
     double e = current_demand_kW * Global::get_time_step_size_in_h();
     total_consumption_kWh += e;
     cweek_consumption_kWh += e;
 
+    return no_error;
 }
 
 
@@ -1290,7 +1303,7 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
 // define a small value added to the min/max cumsum energy consumption to remove misplaced warnings due to rounding errors
 #define epsilon_ev 0.001
 
-void EVFSM::setDemandToGivenValue(float new_demand_kW) {
+bool EVFSM::setDemandToGivenValue(float new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (!state_s3) {
         throw std::runtime_error("Method EVFSM::setDemandToGivenValue() cannot be called at the moment!");
@@ -1298,10 +1311,13 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
     state_s2 = true;
     state_s3 = false;
 #endif
+    bool no_error = true;
     if (new_demand_kW < 0) {
-        if (new_demand_kW < -epsilon_ev)
+        if (new_demand_kW < -epsilon_ev) {
             std::cerr << "Warning: Bidirection EV charging (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) currently not supported for EVFSM::setDemandToGivenValue()." << std::endl;
-        return;
+            return false;
+        }
+        return true; // ignore small deviations below epsilon_ev
     }
     double e = new_demand_kW * Global::get_time_step_size_in_h();
     double new_total_e = sum_of_E_charged_home_kWh + e;
@@ -1309,6 +1325,7 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
     // Output warnings only if absolute bound violation > epsilon_ev
     if (new_total_e > prec_vec_of_maxE[current_ts-1]) {
         if (new_total_e > prec_vec_of_maxE[current_ts-1] + epsilon_ev) {
+            no_error = false;
             std::cerr << "Warning in EVFSM: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the upper bound for carID " << carID << " at time step " << current_ts << "!";
         }
         e = prec_vec_of_maxE[current_ts-1] - sum_of_E_charged_home_kWh;
@@ -1316,6 +1333,7 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
         //std::cerr << "Setting the new demand to " << std::fixed << std::setprecision(3) << new_demand_kW << " kW.\n";
     } else if (new_total_e < prec_vec_of_minE[current_ts-1]) {
         if (new_total_e < prec_vec_of_minE[current_ts-1] - epsilon_ev) {
+            no_error = false;
             std::cerr << "Warning in EVFSM: Set demand (" << std::fixed << std::setprecision(3) << new_demand_kW << " kW) is violating the lower bound for carID " << carID << " at time step " << current_ts << "!";
         }
         e = prec_vec_of_minE[current_ts-1] - sum_of_E_charged_home_kWh;
@@ -1332,6 +1350,7 @@ void EVFSM::setDemandToGivenValue(float new_demand_kW) {
     if (Global::get_create_ev_detailed_output()) {
         output::outputEVStateDetails(current_ts, carID, current_state, current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
+    return no_error;
 }
 
 void EVFSM::AddWeeklyTour(

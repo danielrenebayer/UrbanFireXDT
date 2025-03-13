@@ -88,8 +88,9 @@ class BaseComponentSemiFlexible : public BaseComponent {
          * It must be called **before** the current demand and total consumption values are set correctly.
          * If this function is called, BaseComponentSemiFlexible::setDemandToProfileData() must not be called anymore.
          * @param new_demand_kW: The new power for this time step in kW.
+         * @return true if no error occured or false, if the upper or lower bound was violated
          */
-        virtual void setDemandToGivenValue(float new_demand_kW) = 0;
+        virtual bool setDemandToGivenValue(float new_demand_kW) = 0;
 
     protected:
         // cached member variables
@@ -266,7 +267,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToGivenValue;
-        void setDemandToGivenValue(float new_demand_kW);
+        bool setDemandToGivenValue(float new_demand_kW);
         void resetWeeklyCounter();
         void resetInternalState();
         //
@@ -358,7 +359,7 @@ class ComponentCS : public BaseComponent {
         // modifiers (in the course of simulation time)
         void setCarStatesForTimeStep(unsigned long ts); ///< Sets the car states for all attached EVs for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
         void setDemandToProfileData(unsigned long ts); ///< Sets the charging demand to the (immediate charging) profile value. If this method is called once during a simulation run, ComponentCS::setDemandToGivenValues() MUST NOT be called afterwards.
-        void setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW); ///< Sets the charging demand (in kW) per EV as given by any contoller. If this method is called once during a simulation run, ComponentCS::setDemandToProfileData() MUST NOT be called afterwards.
+        bool setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW); ///< Sets the charging demand (in kW) per EV as given by any contoller. If this method is called once during a simulation run, ComponentCS::setDemandToProfileData() MUST NOT be called afterwards. Returns true if no error occured for all connected EVs or false otherwise.
     private:
         // constant members
         const ControlUnit* installation_place;
@@ -419,7 +420,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToGivenValue;
-        void setDemandToGivenValue(float new_demand_kW);
+        bool setDemandToGivenValue(float new_demand_kW);
         using BaseComponentSemiFlexible::resetWeeklyCounter;
         void resetWeeklyCounter() {} ///< Do nothing. The EV has no weekly metrics.
         // static methods

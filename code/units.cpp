@@ -125,8 +125,8 @@ size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
 std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
-const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
-const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
+const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
 std::atomic<unsigned long> ControlUnit::optimization_call_counter = 0;
 
 bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats) {
@@ -192,6 +192,8 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     sum_of_feedin_revenue_EUR      = 0.0;
     sum_of_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_emissions_avoi_kg_CO2eq = 0.0;
+    sum_of_errors_in_cntrl         = 0;
+    sum_of_errors_in_cntrl_cmd_appl= 0;
     peak_grid_demand_kW            = 0.0;
     // weekly counters
     sum_of_cweek_consumption_kWh         = 0.0;
@@ -204,6 +206,8 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     sum_of_cweek_feedin_revenue_EUR      = 0.0;
     sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
+    sum_of_cweek_errors_in_cntrl         = 0;
+    sum_of_cweek_errors_in_cntrl_cmd_appl= 0;
     cweek_peak_grid_demand_kW            = 0.0;
 
     is_sim_expanded = false;
@@ -547,7 +551,9 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(has_sim_pv) + ",";
         *retstr += to_string(has_sim_bs) + ",";
         *retstr += to_string(has_sim_hp) + ",";
-        *retstr += to_string(has_sim_cs);
+        *retstr += to_string(has_sim_cs) + ",";
+        *retstr += to_string(sum_of_errors_in_cntrl) + ",";
+        *retstr += to_string(sum_of_errors_in_cntrl_cmd_appl);
         return retstr;
 }
 
@@ -603,7 +609,9 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         *retstr += to_string(has_sim_pv) + ",";
         *retstr += to_string(has_sim_bs) + ",";
         *retstr += to_string(has_sim_hp) + ",";
-        *retstr += to_string(has_sim_cs);
+        *retstr += to_string(has_sim_cs) + ",";
+        *retstr += to_string(sum_of_cweek_errors_in_cntrl) + ",";
+        *retstr += to_string(sum_of_cweek_errors_in_cntrl_cmd_appl);
         // reset weekly counters
         sum_of_cweek_consumption_kWh         = 0.0;
         sum_of_cweek_self_cons_kWh           = 0.0;
@@ -615,6 +623,8 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         sum_of_cweek_feedin_revenue_EUR      = 0.0;
         sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
         sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
+        sum_of_cweek_errors_in_cntrl         = 0;
+        sum_of_cweek_errors_in_cntrl_cmd_appl= 0;
         cweek_peak_grid_demand_kW            = 0.0;
         // reset HP and CS (PV and BS are resetted above)
         if (has_sim_hp) sim_comp_hp->resetWeeklyCounter();
@@ -828,6 +838,8 @@ void ControlUnit::reset_internal_state() {
     sum_of_feedin_revenue_EUR      = 0.0;
     sum_of_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_emissions_avoi_kg_CO2eq = 0.0;
+    sum_of_errors_in_cntrl         = 0;
+    sum_of_errors_in_cntrl_cmd_appl= 0;
     peak_grid_demand_kW            = 0.0;
     //
     sum_of_cweek_consumption_kWh         = 0.0;
@@ -840,6 +852,8 @@ void ControlUnit::reset_internal_state() {
     sum_of_cweek_feedin_revenue_EUR      = 0.0;
     sum_of_cweek_emissions_cbgd_kg_CO2eq = 0.0;
     sum_of_cweek_emissions_avoi_kg_CO2eq = 0.0;
+    sum_of_cweek_errors_in_cntrl         = 0;
+    sum_of_cweek_errors_in_cntrl_cmd_appl= 0;
     cweek_peak_grid_demand_kW            = 0.0;
     //
     if (has_sim_pv) {
@@ -975,6 +989,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             // Check optimization return value
             if (!opti_ret_val) {
                 std::cerr << "Optimization error for unit with ID " << unitID << " at time step " << ts << ".\n";
+                sum_of_errors_in_cntrl++;
+                sum_of_cweek_errors_in_cntrl++;
                 if (Global::get_stop_on_cc_err()) {
                     // return error ONLY if selected as a program option
                     return false;
@@ -993,19 +1009,28 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
         //
         // 5. Propagate the results to the components
+        bool error_happend_during_cntrl_cmd_appl = false;
         if (has_sim_bs) {
             sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
         }
         if (has_sim_hp) {
-            sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
+            bool ret_val = sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
+            if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
         }
         if (has_sim_cs) {
             const std::vector<std::vector<double>>& ev_power_kW = optimized_controller->get_future_ev_power_kW();
             std::vector<float> ev_power_kW_this_ts;
             for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++)
                 ev_power_kW_this_ts.push_back( ev_power_kW[evIdx][0] );
-            sim_comp_cs->setDemandToGivenValues( ev_power_kW_this_ts );
+            bool ret_val = sim_comp_cs->setDemandToGivenValues( ev_power_kW_this_ts );
+            if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
         }
+
+        if (error_happend_during_cntrl_cmd_appl) {
+            sum_of_errors_in_cntrl_cmd_appl++;
+            sum_of_cweek_errors_in_cntrl_cmd_appl++;
+        }
+
     } else {
         // If the rule-based strategy is selected, just use the current profile for the new demand
         if (has_sim_hp)

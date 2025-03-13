@@ -224,6 +224,8 @@ class ControlUnit {
         double sum_of_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the current simulation run up to the current step
         double sum_of_emissions_cbgd_kg_CO2eq;///< The sum of emissions in kg CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the current simulation run up to the current step
         double sum_of_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the current simulation run up to the current step
+        unsigned long sum_of_errors_in_cntrl; ///< The number of errors happend in the controller / optimization until the current time step
+        unsigned long sum_of_errors_in_cntrl_cmd_appl; ///< The number of errors happend during the application of control commands in the component heat pump or EVFSM until the current time step
         // other variables that are valid from the beginning of the simulation run until the current time step
         float  peak_grid_demand_kW;             ///< The maximum of grid demand that occured during a time step
         // summation variables from the beginning of the currently simulated week until the current time step
@@ -237,6 +239,8 @@ class ControlUnit {
         double sum_of_cweek_feedin_revenue_EUR; ///< The sum of the costs for the demanded energy starting from the beginning of the currently simulated week until the current time step
         double sum_of_cweek_emissions_cbgd_kg_CO2eq;///< The sum of emissions in kg CO2eq. caused by grid demand (thus _bgd_ in the variable name) starting from the beginning of the currently simulated week until the current time step
         double sum_of_cweek_emissions_avoi_kg_CO2eq;///< The sum of avoided emissions in kg CO2eq. because no grid demand was required starting from the beginning of the currently simulated week until the current time step
+        unsigned long sum_of_cweek_errors_in_cntrl; ///< The number of errors happend in the controller / optimization until the current time step
+        unsigned long sum_of_cweek_errors_in_cntrl_cmd_appl; ///< The number of errors happend during the application of control commands in the component heat pump or EVFSM until the current time step
         // other variables that are valid from the beginning of the currently simulated week until the current time step
         float  cweek_peak_grid_demand_kW;       ///< The maximum of grid demand that occured during a time step in the current week
         // caches for optimization
