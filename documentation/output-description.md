@@ -12,6 +12,7 @@ Folders are marked in **bold**.
 |                                                     |                                                    |
 | **`no param vari`**                                 | Output directory if no param variation is selected |
 | &nbsp;&nbsp;\| `metrics-per-cu.csv`                 | Computed metrics per control unit (like SSR, SCR, NPV, total grid demand, ...) including the concrete parameters for the simulated PV, battery and the charging station component |
+| &nbsp;&nbsp;\| `weekly-metrics-per-cu.csv`          | Computed metrics per control unit on a weekly level. See `metrics-per-cu.csv` for details. |
 | &nbsp;&nbsp;\| `XXXX-substation-time-series.csv`    | Time series of the load, wind/o.s. PV feedin, etc. aggregated on substation level |
 | &nbsp;&nbsp;\| `substation-detailed-time-series.csv`| Time series of the additional details on substation level, like residential load (includes feed-in) and demand (only residential grid demand, no surplus feed-in accumulated) |
 | &nbsp;&nbsp;\| `parameter-settings.csv`             | Parameter settings for the concrete simulation run (very useful for parameter variations) |
@@ -36,7 +37,7 @@ Folders are marked in **bold**.
 
 # Detailed description per file
 
-## metrics-per-cu.csv
+## metrics-per-cu.csv and weekly-metrics-per-cu.csv
 
 | Column name | Description |
 | ---         | ------      |
@@ -74,7 +75,10 @@ Folders are marked in **bold**.
 | Simulated BS                     | Indicates whether this control unit contains a simulated battery storage     |
 | Simulated HP                     | Indicates whether this control unit contains a simulated heat pump           |
 | Simulated CS                     | Indicates whether this control unit contains a simulated EV charging station |
+| n errors in cntrl                | Number of error happend in controller optimization (e.g., infeasible optimization problem) |
+| n errors cntrl cmd appl          | Number of error happend during the application of the control commands in at least one component (e.g., bound violations in heat pump or EV charging station / EVFSM) |
 
+In the case of weekly metrics file, an additional column giving the week number (named `Week number`) is added.
 
 ## XXXX-substation-time-series.csv
 
