@@ -12,9 +12,11 @@
 #define UNITS_H
 
 #include <atomic>
+#include <condition_variable>
 #include <string>
 #include <list>
 #include <map>
+#include <mutex>
 
 // The following classes are defined in this header file:
 class Substation;
@@ -186,6 +188,7 @@ class ControlUnit {
         static double GetAllSimCompBatteriesCharge_kWh();   ///< Returns the charge of all simulatively added battery storage systems at the current ts
         static double GetAllSimCompBatteriesCapacity_kWh(); ///< Returns the capacity of all simulatively added battery storage systems
         static unsigned long GetTotalNumberOfOptimizationCalls()  { return optimization_call_counter; } ///< Returns the total number of calls of an optimizer up to now
+        static unsigned long GetCurrentNumberOfOptiVars()         { return n_curr_optimization_vars;  } ///< Returns the current number of variables used in the currently running (parallel) optimizations. Only set if program option 'max-parallel-opti-vars' is set, i.e., Global::get_max_parallel_opti_vars() > 0.
         // 3. modifiers for all created objects
         static void PreprocessEVData(); ///< Preprocesses EV data (min/max consumption until a given ts, states, ...) for all EVs
         static void ResetAllInternalStates();
@@ -269,6 +272,9 @@ class ControlUnit {
         //static std::map<unsigned long, ControlUnit*> location_to_cu_map;
         // other static members
         static std::atomic<unsigned long> optimization_call_counter; ///< atomic variable of global number of optimization calls
+        static std::atomic<unsigned long> n_curr_optimization_vars; ///< The number of optimization variables in the currently running parallel optimization threads
+        static std::mutex n_curr_optimization_vars_mutex;
+        static std::condition_variable curr_opti_cv; ///< Condition variable for the parallel optimization to limit the number of parallel optimization calls based on the number of variables
     public:
         static const std::string MetricsStringHeaderAnnual; ///< The header for the output string produced by `ControlUnit::get_metrics_string_annual()`
         static const std::string MetricsStringHeaderWeekly; ///< The header for the output string produced by `ControlUnit::get_metrics_string_weekly_wr()`

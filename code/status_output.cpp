@@ -99,11 +99,20 @@ void StatusOutput::status_updater() {
             current_status += to_string( time_diff );
             current_status += "s - ";
             current_status += "Number of optimization calls = ";
-            current_status += to_string( ControlUnit::GetTotalNumberOfOptimizationCalls() ) + "\r";
+            current_status += to_string( ControlUnit::GetTotalNumberOfOptimizationCalls() );
+            if (Global::get_max_parallel_opti_vars() > 0) {
+                current_status += " with ";
+                current_status += to_string( ControlUnit::GetCurrentNumberOfOptiVars() );
+                current_status += " parallel optimization variables";
+            }
+            current_status += "\r";
             //
             ofstream ofs("/tmp/simulation-status.txt", std::ofstream::out);
             ofs << "Time since simulation start  = " << to_string( time_diff ) << "s\n";
             ofs << "Number of optimization calls = " << to_string( ControlUnit::GetTotalNumberOfOptimizationCalls() ) << "\n";
+            if (Global::get_max_parallel_opti_vars() > 0) {
+                ofs << "Number of parallel optimization vars     = " << to_string( ControlUnit::GetCurrentNumberOfOptiVars() ) << "\n";
+            }
             ofs << "ControlUnit::GetNumberOfCUsWithSimCompPV = " << to_string( ControlUnit::GetNumberOfCUsWithSimCompPV()  ) << "\n";
             ofs << "ControlUnit::GetNumberOfCUsWithSimCompHP = " << to_string (ControlUnit::GetNumberOfCUsWithSimCompHP() ) << "\n";
             ofs << "ControlUnit::GetNumberOfCUsWithSimCompEV = " << to_string( ControlUnit::GetNumberOfCUsWithSimCompEV() ) << "\n";
@@ -115,7 +124,7 @@ void StatusOutput::status_updater() {
             // writing to stdout
             std::cout << current_status << std::flush;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(4));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 

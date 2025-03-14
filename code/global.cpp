@@ -174,6 +174,7 @@ bool  Global::select_only_residential_buildings = false;
 uint  Global::control_horizon_in_ts       =   24;
 uint  Global::control_update_freq_in_ts   =    1;
 bool  Global::controller_allow_bs_grid_charging = false;
+ulong Global::max_parallel_opti_vars      =    0;
 string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
@@ -1155,6 +1156,13 @@ void Global::set_controller_allow_bs_grid_charging(bool value) {
         cerr << "Variable controller_allow_bs_grid_charging cannot be set at the moment." << endl;
     } else {
         controller_allow_bs_grid_charging = value;
+    }
+}
+void Global::set_max_parallel_opti_vars(unsigned long value) {
+    if (is_locked) {
+        cerr << "Variable max_parallel_opti_vars cannot be set at the moment." << endl;
+    } else {
+        max_parallel_opti_vars = value;
     }
 }
 void Global::set_annual_heat_demand_limit_fsac(float value) {

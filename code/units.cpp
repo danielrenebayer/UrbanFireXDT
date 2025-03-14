@@ -3,12 +3,14 @@
 
 #include <algorithm> /* using min() */
 #include <atomic>
+#include <condition_variable>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <list>
+#include <mutex>
 #include <vector>
 
 #include <cmath> /* using: pow() */
@@ -128,6 +130,9 @@ std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
 const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
 const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
 std::atomic<unsigned long> ControlUnit::optimization_call_counter = 0;
+std::atomic<unsigned long> ControlUnit::n_curr_optimization_vars = 0;
+std::mutex ControlUnit::n_curr_optimization_vars_mutex;
+std::condition_variable ControlUnit::curr_opti_cv;
 
 bool ControlUnit::InstantiateNewControlUnit(unsigned long public_unitID, unsigned long substation_id, unsigned long locationID, bool residential, unsigned int n_flats) {
     // check, if public_id is known
@@ -964,7 +969,37 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             max_p_bs_kW           = sim_comp_bs->get_maxP_kW();
         }
             //
-            // 4. Run the optimization and get the results
+            // 4a. Check if number of optimization vars would not exceed the current limit
+            unsigned long n_opti_vars = 0;
+            if (Global::get_max_parallel_opti_vars() > 0) {
+                // Compute the number of optimization variables for this unit
+                n_opti_vars  = Global::get_control_horizon_in_ts() * 7 + 1;
+                n_opti_vars += Global::get_control_horizon_in_ts() * n_cars * 2;
+                if (Global::get_controller_allow_bs_grid_charging()) {
+                    n_opti_vars += Global::get_control_horizon_in_ts() * 4;
+                }
+                if (Global::get_controller_optimization_target() == global::ControllerOptimizationTarget::PeakLoad) {
+                    n_opti_vars += 1;
+                }
+                // Check only if a limit is set
+                {
+                    std::unique_lock<std::mutex> lock(n_curr_optimization_vars_mutex);
+                    // If n_curr_optimization_vars == 0, we execute the optimization regardless of n_opti_vars,
+                    // because we would end up in a dead lock otherwise
+                    if (n_curr_optimization_vars == 0) {
+                        n_curr_optimization_vars += n_opti_vars;
+                    } else {
+                        // wait until it is possible to continue
+                        curr_opti_cv.wait(lock, [&]() {
+                            return n_curr_optimization_vars + n_opti_vars <= Global::get_max_parallel_opti_vars() ||
+                                   n_curr_optimization_vars == 0;
+                        } );
+                        n_curr_optimization_vars += n_opti_vars;
+                    }
+                }
+            }
+            //
+            // 4b. Run the optimization and get the results
             optimization_call_counter++;
             bool opti_ret_val = optimized_controller->updateController(
                 ts, max_p_bs_kW, max_e_bs_kWh, max_p_cs_kW, current_bs_charge_kWh,
@@ -973,6 +1008,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
                 future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP
                 );
+            // Reduce the number of variables for currently running optimizations again
+            if (Global::get_max_parallel_opti_vars() > 0) {
+                //std::unique_lock<std::mutex> lock(n_curr_optimization_vars_mutex);
+                n_curr_optimization_vars -= n_opti_vars;
+                //lock.unlock(); // locking / unlocking not required here!
+                curr_opti_cv.notify_all();
+            }
             // Create output with optimization details if selected
             if (Global::get_create_control_cmd_output() && generate_output_for_this_unit) {
                 output::outputControlCommandDetails(
