@@ -1495,7 +1495,7 @@ bool MeasurementUnit::load_data() {
             #endif
             cerr << "One smart meter data file header has not exactly 5 columns!" << endl;
             cerr << "The data file must have the following columns (mind the order):" << endl;
-            cerr << "TimestepID,Value_Demand,Status_Demand,Value_Feedin,Status_Feedin" << endl;
+            cerr << "TimestepID,PowerDemand_kW,PowerDemandStatus,PowerFeedin_kW,PowerFeedinStatus" << endl;
             return false; // destructor of smeter_input closes it by default
         }
         stringstream headerSStream(currLineString);
@@ -1504,15 +1504,15 @@ bool MeasurementUnit::load_data() {
             std::getline( headerSStream, headerSplitted[col], ',' );
         }
         if (
-            headerSplitted[0] != "TimestepID"    ||
-            headerSplitted[1] != "Value_Demand"  ||
-            headerSplitted[2] != "Status_Demand" ||
-            headerSplitted[3] != "Value_Feedin"  ||
-            headerSplitted[4] != "Status_Feedin"
+            headerSplitted[0] != "TimestepID"        ||
+            headerSplitted[1] != "PowerDemand_kW"    ||
+            headerSplitted[2] != "PowerDemandStatus" ||
+            headerSplitted[3] != "PowerFeedin_kW"    ||
+            headerSplitted[4] != "PowerFeedinStatus"
         ) {
             cerr << "There is one smart meter data file with a wrong header!" << endl;
             cerr << "The data file must have the following columns (mind the order):" << endl;
-            cerr << "TimestepID,Value_Demand,Status_Demand,Value_Feedin,Status_Feedin" << endl;
+            cerr << "TimestepID,PowerDemand_kW,PowerDemandStatus,PowerFeedin_kW,PowerFeedinStatus" << endl;
             return false; // destructor of smeter_input closes it by default
         }
         //

@@ -38,10 +38,10 @@ Each smart meter csv file must have the following columns in this order:
 | Column name   | Description |
 | ---           | -------     |
 | TimestepID    | The id of the time step (key: `time_indices.TimestepID`) |
-| Value_Demand  | Reading of the demand in kWh at the given time step |
-| Status_Demand | *ignored*   |
-| Value_Feedin  | Reading of the feed-in in kWh at the given time step |
-| Status_Feedin | *ignored*   |
+| PowerDemand_kW  | Reading of the demand in kWh at the given time step |
+| PowerDemandStatus | *ignored*   |
+| PowerFeedin_kW  | Reading of the feed-in in kWh at the given time step |
+| PowerFeedinStatus | *ignored*   |
 
 
 
@@ -109,7 +109,7 @@ Documentation of the configuration database in detail
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | The time step for which the dataset is valid [Foreign key] |
-| Value_Feedin  | REAL      | The normalized feed-in value at the given timestep |
+| PowerFeedin_kW| REAL      | The normalized feed-in value at the given timestep |
 | Orientation   | TEXT / VARCHAR(2) | The orientation of the given feedin value |
 | SameOrientationTimeSeriesIndex | INTEGER | If there are more time series for one orientation, this number gives the id (starting with 0) of the time series with the same direction |
 

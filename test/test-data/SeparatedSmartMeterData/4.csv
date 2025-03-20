@@ -1,4 +1,4 @@
-TimestepID,Value_Demand,Status_Demand,Value_Feedin,Status_Feedin
+TimestepID,PowerDemand_kW,PowerDemandStatus,PowerFeedin_kW,PowerFeedinStatus
 1,0.0,W,0.0,W
 2,0.0,W,0.0,W
 3,0.0,W,0.0,W

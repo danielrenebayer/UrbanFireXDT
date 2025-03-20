@@ -837,8 +837,8 @@ int load_data_from_central_database_callback_PV(void* data, int argc, char** arg
      * data should be written into.
      *
      * Columns:
-     * 0           1             2            3
-     * TimestepID  Value_Feedin  Orientation  SameOrientationTimeSeriesIndex
+     * 0           1               2            3
+     * TimestepID  PowerFeedin_kW  Orientation  SameOrientationTimeSeriesIndex
      */
     static unsigned long callcounter_timestepID = 1; // internal counter for the timestep ID
     static unsigned long callcounter_timeseries = 0; // internal counter for the timeseries
@@ -1377,7 +1377,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
                 new_pv_array[pv_idx][l] = 0;
         }
-        sql_query = "SELECT TimestepID,Value_Feedin,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
+        sql_query = "SELECT TimestepID,PowerFeedin_kW,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
@@ -1424,7 +1424,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             }
         }
         callcounter_callback_HP = 0;
-        sql_query = "SELECT TimestepID,ShiftableDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
+        sql_query = "SELECT TimestepID,PowerDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_s_array  /*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
             cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
