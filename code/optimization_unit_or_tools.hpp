@@ -125,7 +125,7 @@ class ORToolsLPController : public BaseOptimizedController {
             }
         }
         // Power balance equation on control unit level
-        if (Global::get_controller_allow_bs_grid_charging()) {
+        if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::GridChargingAndDischarging) {
             // Case A: Battery charging from grid allowed
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
@@ -140,8 +140,65 @@ class ORToolsLPController : public BaseOptimizedController {
                     c->SetCoefficient(p_ev_kW[evIdx][t], 1.0);
                 }
             }
+        } else if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::OnlyGridCharging) {
+            // Case B: Charging from the grid allowed, but no discharging into the grid possible
+            // VARIANT WITH TWO BALANCE EQUATIONS
+            std::vector<MPVariable*> p_bs_in_kW_1(T);
+            std::vector<MPVariable*> p_bs_in_kW_2(T);
+            std::vector<MPVariable*> p_hp_kW_1(T);
+            std::vector<MPVariable*> p_hp_kW_2(T);
+            std::vector<MPVariable*> p_cs_kW_1(T);
+            std::vector<MPVariable*> p_cs_kW_2(T);
+            for (unsigned int t = 0; t < T; t++) {
+                const std::string tstr = to_string(t);
+                p_bs_kW_1[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq1_" + tstr);
+                p_bs_kW_2[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq2_" + tstr);
+                p_hp_kW_1[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq1_" + tstr);
+                p_hp_kW_2[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq2_" + tstr);
+                p_cs_kW_1[t] = model->MakeNumVar(0.0, max_p_cs_kW, "p_cs_kW_BalEq1_" + tstr);
+                p_cs_kW_2[t] = model->MakeNumVar(0.0, max_p_cs_kW, "p_cs_kW_BalEq2_" + tstr);
+            }
+            for (unsigned int t = 0; t < T; t++) {
+                const std::string tstr = to_string(t);
+                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
+                double local_plus = 0, local_minus = 0;
+                if (resid_minus_pv_kW > 0) {
+                    local_plus  =  resid_minus_pv_kW;
+                } else {
+                    local_minus = -resid_minus_pv_kW;
+                }
+                // balance euqation 1
+                MPConstraint* const c1 = model->MakeRowConstraint(-local_plus, -local_plus, "CU Power Balance EQ1 " + tstr);
+                c1->SetCoefficient(p_hp_kW_1[t],    1.0);
+                c1->SetCoefficient(p_cs_kW_1[t],    1.0);
+                c1->SetCoefficient(p_bs_out_kW[t], -1.0);
+                c1->SetCoefficient(x_demand_kW[t], -1.0);
+                c2->SetCoefficient(p_bs_in_kW_1[t], 1.0);
+                // balance equation 2
+                MPConstraint* const c2 = model->MakeRowConstraint(local_minus, local_minus, "CU Power Balance EQ2 " + tstr);
+                c2->SetCoefficient(p_hp_kW_2[t],   1.0);
+                c2->SetCoefficient(p_cs_kW_2[t],   1.0);
+                c2->SetCoefficient(x_feedin_kW[t], 1.0);
+                c2->SetCoefficient(p_bs_in_kW_2[t],1.0);
+                // linkage of the power parts of BS, HP and CS with actual power
+                MPConstraint* const cl0 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage BS " + tstr);
+                cl0->SetCoefficient(p_bs_in_kW[t],  -1.0);
+                cl0->SetCoefficient(p_bs_in_kW_1[t], 1.0);
+                cl0->SetCoefficient(p_bs_in_kW_2[t], 1.0);
+                MPConstraint* const cl1 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage HP " + tstr);
+                cl1->SetCoefficient(p_hp_kW[t],  -1.0);
+                cl1->SetCoefficient(p_hp_kW_1[t], 1.0);
+                cl1->SetCoefficient(p_hp_kW_2[t], 1.0);
+                MPConstraint* const cl2 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage CS " + tstr);
+                cl2->SetCoefficient(p_cs_kW[t],  -1.0);
+                cl2->SetCoefficient(p_cs_kW_1[t], 1.0);
+                cl2->SetCoefficient(p_cs_kW_2[t], 1.0);
+                for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
+                    cl2->SetCoefficient(p_ev_kW[evIdx][t], -1.0);
+                }
+            }
         } else {
-            // Case B: No charging of the battery from grid allowed!
+            // Case C: No charging of the battery from grid allowed!
             // VARIANT WITH TWO BALANCE EQUATIONS
             std::vector<MPVariable*> p_hp_kW_1(T);
             std::vector<MPVariable*> p_hp_kW_2(T);

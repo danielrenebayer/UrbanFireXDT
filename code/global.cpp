@@ -173,7 +173,6 @@ bool  Global::use_prices_time_series_ia   = true;
 bool  Global::select_only_residential_buildings = false;
 uint  Global::control_horizon_in_ts       =   24;
 uint  Global::control_update_freq_in_ts   =    1;
-bool  Global::controller_allow_bs_grid_charging = false;
 ulong Global::max_parallel_opti_vars      =    0;
 string Global::input_path         = "";
 string Global::output_path        = "";
@@ -185,6 +184,7 @@ global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::Or
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 global::BatteryCapacityComputationMode Global::bat_capacity_comp_mode = global::BatteryCapacityComputationMode::Constant;
 global::ControllerMode Global::controller_mode = global::ControllerMode::RuleBased;
+global::ControllerBSGridChargingMode Global::controller_bs_grid_charging_mode = global::ControllerBSGridChargingMode::NoGridCharging;
 global::ControllerOptimizationTarget Global::controller_optimization_target = global::ControllerOptimizationTarget::ElectricityCosts;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
@@ -1151,11 +1151,11 @@ void Global::set_controller_optimization_target(global::ControllerOptimizationTa
         controller_optimization_target = mode;
     }
 }
-void Global::set_controller_allow_bs_grid_charging(bool value) {
+void Global::set_controller_bs_grid_charging_mode(global::ControllerBSGridChargingMode mode) {
     if (is_locked) {
-        cerr << "Variable controller_allow_bs_grid_charging cannot be set at the moment." << endl;
+        cerr << "Variable controller_bs_grid_charging_mode cannot be set at the moment." << endl;
     } else {
-        controller_allow_bs_grid_charging = value;
+        controller_bs_grid_charging_mode = mode;
     }
 }
 void Global::set_max_parallel_opti_vars(unsigned long value) {

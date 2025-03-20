@@ -145,6 +145,15 @@ namespace global {
     };
 
     /**
+     * This enum defines the possible battery storage (BS) charging and discharging options.
+     */
+    enum struct ControllerBSGridChargingMode {
+        NoGridCharging, ///< Do not allow charging from the grid and discharging into the grid
+        OnlyGridCharging, ///< Only allow charging from the grid, but no discharging into the grid
+        GridChargingAndDischarging, ///< Allow both, charging from and discharging into the grid
+    };
+
+    /**
      * This enum defines the possible optimization targets used inside the
      * control units for making decissions if a optimized controller is used.
      */
@@ -256,7 +265,6 @@ class Global {
         static bool  get_select_only_residential_buildings()  { return select_only_residential_buildings; } ///< Should only be residential buildings be considered for simulated component addition (SAC planning)?
         static uint  get_control_horizon_in_ts()              { return control_horizon_in_ts;       } ///< The control horizon in time steps (only if controller_mode is set to a value including optimization)
         static uint  get_control_update_freq_in_ts()          { return control_update_freq_in_ts;   } ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
-        static bool  get_controller_allow_bs_grid_charging()  { return controller_allow_bs_grid_charging; } ///< Is it possible to charge the battery from the grid?
         static unsigned long get_max_parallel_opti_vars()     { return max_parallel_opti_vars;      } ///< Returns the number of maximum parallel optimization variables, or 0, if not set
         static const std::string& get_input_path()  { return input_path;  }
         static const std::string& get_output_path() { return output_path; }
@@ -268,6 +276,7 @@ class Global {
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         static global::BatteryCapacityComputationMode get_battery_capacity_computation_mode() { return bat_capacity_comp_mode; }
         static global::ControllerMode get_controller_mode() { return controller_mode; }
+        static global::ControllerBSGridChargingMode get_controller_bs_grid_charging_mode()  { return controller_bs_grid_charging_mode; } ///< Return whether the battery can be charged from the grid / discharged into the grid - only effective if an optimized charging strategy is selected
         static global::ControllerOptimizationTarget get_controller_optimization_target() { return controller_optimization_target; } ///< Returns the selected optimization target (only valid if a controller mode with optimization is selected)
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
@@ -346,7 +355,6 @@ class Global {
         static void set_select_only_residential_buildings(bool value);
         static void set_control_horizon_in_ts(unsigned int value);
         static void set_control_update_freq_in_ts(unsigned int value);
-        static void set_controller_allow_bs_grid_charging(bool value);
         static void set_max_parallel_opti_vars(unsigned long value);
         static void set_input_path(std::string* path);
         static void set_output_path(std::string* path);
@@ -358,6 +366,7 @@ class Global {
         static void set_battery_power_computation_mode(global::BatteryPowerComputationMode mode);
         static void set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode mode);
         static void set_controller_mode(global::ControllerMode mode);
+        static void set_controller_bs_grid_charging_mode(global::ControllerBSGridChargingMode mode);
         static void set_controller_optimization_target(global::ControllerOptimizationTarget mode);
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
@@ -440,7 +449,6 @@ class Global {
         static bool  select_only_residential_buildings;
         static uint  control_horizon_in_ts;      ///< The control horizont in time steps (only if controller_mode is set to a value including optimization)
         static uint  control_update_freq_in_ts;   ///< The update frequency of the optimization inside the control units (only if controller_mode is set to a value including optimization)
-        static bool  controller_allow_bs_grid_charging;
         static unsigned long max_parallel_opti_vars;
         static std::string input_path;     ///< reference to the string holding the input path of the data
         static std::string output_path;    ///< reference to the string holding the output path of the data
@@ -452,6 +460,7 @@ class Global {
         static global::BatteryPowerComputationMode bat_power_comp_mode; ///< The selected mode for computing the (maximal) power of all batteries
         static global::BatteryCapacityComputationMode bat_capacity_comp_mode; ///< The selected mode for computing the battery capacity
         static global::ControllerMode controller_mode; ///< The mode how the control units make decisions
+        static global::ControllerBSGridChargingMode controller_bs_grid_charging_mode;
         static global::ControllerOptimizationTarget controller_optimization_target;
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data

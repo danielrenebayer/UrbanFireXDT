@@ -324,7 +324,17 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             }
             else if ( element_name.compare("controller allow bs charging from grid")  == 0 )
             {
-                Global::set_controller_allow_bs_grid_charging( scenario_dict.get_value<bool>() );
+                string selection = scenario_dict.get_value<string>();
+                if (selection == "no grid charging") {
+                    Global::set_controller_bs_grid_charging_mode( global::ControllerBSGridChargingMode::NoGridCharging );
+                } else if (selection == "only grid charging") {
+                    Global::set_controller_bs_grid_charging_mode( global::ControllerBSGridChargingMode::OnlyGridCharging );
+                } else if (selection == "grid charging and discharging") {
+                    Global::set_controller_bs_grid_charging_mode( global::ControllerBSGridChargingMode::GridChargingAndDischarging );
+                } else {
+                    cerr << "Parameter 'controller allow bs charging from grid' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'controller allow bs charging from grid' as defined in config-json is unknown.");
+                }
             }
             else if ( element_name.compare("controller optimization target")          == 0 )
             {
@@ -1676,7 +1686,7 @@ void configld::output_variable_values() {
     PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});
     PRINT_VAR(Global::get_control_horizon_in_ts());
     PRINT_VAR(Global::get_control_update_freq_in_ts());
-    PRINT_VAR(Global::get_controller_allow_bs_grid_charging);
+    PRINT_ENUM_VAR(Global::get_controller_bs_grid_charging_mode(), [](auto var){switch(var){case global::ControllerBSGridChargingMode::NoGridCharging: return "NoGridCharging"; case global::ControllerBSGridChargingMode::OnlyGridCharging: return "OnlyGridCharging"; case global::ControllerBSGridChargingMode::GridChargingAndDischarging: return "GridChargingAndDischarging"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_controller_optimization_target(), [](auto var){switch(var){case global::ControllerOptimizationTarget::ElectricityCosts: return "ElectricityCosts"; case global::ControllerOptimizationTarget::PeakLoad: return "PeakLoad"; case global::ControllerOptimizationTarget::Emissions: return "Emissions"; default: return "";}});
     // Selection settings
     cout << "  Selection settings:\n";
