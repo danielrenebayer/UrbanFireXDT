@@ -181,7 +181,6 @@ class ORToolsLPController : public BaseOptimizedController {
                 cl1->SetCoefficient(p_hp_kW_1[t], 1.0);
                 cl1->SetCoefficient(p_hp_kW_2[t], 1.0);
                 MPConstraint* const cl2 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage 2 " + tstr);
-                cl2->SetCoefficient(p_hp_kW[t],  -1.0);
                 cl2->SetCoefficient(p_cs_kW_1[t], 1.0);
                 cl2->SetCoefficient(p_cs_kW_2[t], 1.0);
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
