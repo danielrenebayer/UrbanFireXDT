@@ -69,13 +69,13 @@ for di in $dirs_to_compare; do
     # Sort the file ST1-AllCUs-ts.csv, as the output can be mixed up due to parallelization
     find test-output/$di -name ST1-AllCUs-ts.csv -type f -exec sh -c '
 for file; do
-    sort "$file" > "${file}-sorted"
+    cat "$file" | (sed -u 1q; sort) > "${file}-sorted"
     done
 ' sh {} +
     # Sort ev-details.csv
     find test-output/$di -name ev-details.csv -type f -exec sh -c '
 for file; do
-    sort "$file" > "${file}-sorted"
+    cat "$file" | (sed -u 1q; sort) > "${file}-sorted"
     done
 ' sh {} +
     #

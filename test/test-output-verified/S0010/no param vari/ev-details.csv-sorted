@@ -1,3 +1,4 @@
+TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh
 10,1,ConnectedAtHome,0,0,0,5,5
 10,2,Driving,0,0,0,0,2
 10,3,Driving,0,0,0,0,2
@@ -70,4 +71,3 @@
 9,1,ConnectedAtHome,0,0,0,5,5
 9,2,Driving,0,0,0,0,3.6
 9,3,Driving,0,0,0,0,3.6
-TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh
