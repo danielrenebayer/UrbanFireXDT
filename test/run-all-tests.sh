@@ -23,7 +23,7 @@ echo -e "\n-- 1. Simulation run --"
 ../bin/simulation-opti --config ../test/test-config/test_config.json 1
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 2. Simulation run --"
-../bin/simulation-opti --config ../test/test-config/test_config.json 2
+../bin/simulation-opti --config ../test/test-config/test_config.json --n_threads 5 --work-stealing 2
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 3. Simulation run --"
 ../bin/simulation-opti --config ../test/test-config/test_config.json 3
