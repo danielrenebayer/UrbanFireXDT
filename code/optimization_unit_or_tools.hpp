@@ -151,8 +151,8 @@ class ORToolsLPController : public BaseOptimizedController {
             std::vector<MPVariable*> p_cs_kW_2(T);
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                p_bs_kW_1[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq1_" + tstr);
-                p_bs_kW_2[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq2_" + tstr);
+                p_bs_in_kW_1[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq1_" + tstr);
+                p_bs_in_kW_2[t] = model->MakeNumVar(0.0, max_p_bs_kW, "p_bs_kW_BalEq2_" + tstr);
                 p_hp_kW_1[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq1_" + tstr);
                 p_hp_kW_2[t] = model->MakeNumVar(0.0, infinity, "p_hp_kW_BalEq2_" + tstr);
                 p_cs_kW_1[t] = model->MakeNumVar(0.0, max_p_cs_kW, "p_cs_kW_BalEq1_" + tstr);
@@ -173,7 +173,7 @@ class ORToolsLPController : public BaseOptimizedController {
                 c1->SetCoefficient(p_cs_kW_1[t],    1.0);
                 c1->SetCoefficient(p_bs_out_kW[t], -1.0);
                 c1->SetCoefficient(x_demand_kW[t], -1.0);
-                c2->SetCoefficient(p_bs_in_kW_1[t], 1.0);
+                c1->SetCoefficient(p_bs_in_kW_1[t], 1.0);
                 // balance equation 2
                 MPConstraint* const c2 = model->MakeRowConstraint(local_minus, local_minus, "CU Power Balance EQ2 " + tstr);
                 c2->SetCoefficient(p_hp_kW_2[t],   1.0);
@@ -190,7 +190,6 @@ class ORToolsLPController : public BaseOptimizedController {
                 cl1->SetCoefficient(p_hp_kW_1[t], 1.0);
                 cl1->SetCoefficient(p_hp_kW_2[t], 1.0);
                 MPConstraint* const cl2 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage CS " + tstr);
-                cl2->SetCoefficient(p_cs_kW[t],  -1.0);
                 cl2->SetCoefficient(p_cs_kW_1[t], 1.0);
                 cl2->SetCoefficient(p_cs_kW_2[t], 1.0);
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
