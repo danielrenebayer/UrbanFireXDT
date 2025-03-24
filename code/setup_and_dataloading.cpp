@@ -374,6 +374,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_select_only_residential_buildings( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("structure db column name energy prices") == 0 )
+            {
+                global::structure_db_column_name_energy_prices = scenario_dict.get_value<std::string>();
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment") == 0 )
@@ -1525,7 +1529,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             }
             float* new_arrays[2] = {new_arrayA, new_arrayB};
             // run query
-            sql_query = "SELECT TimestepID,local_price,spotmarket_price FROM electricity_prices ORDER BY TimestepID;";
+            sql_query = "SELECT TimestepID," + global::structure_db_column_name_energy_prices + ",spotmarket_price FROM electricity_prices ORDER BY TimestepID;";
             ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_prices, new_arrays, &sqlErrorMsgF);
             if (ret_valF != 0) {
                 cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
@@ -1681,6 +1685,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_ev_data_path());
     PRINT_VAR(Global::get_use_emission_time_series_ia());
     PRINT_VAR(Global::get_use_prices_time_series_ia());
+    PRINT_VAR(global::structure_db_column_name_energy_prices);
     // Control strategy settings
     cout << "  Control strategy settings:\n";
     PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});
