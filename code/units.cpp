@@ -1137,9 +1137,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     if (has_sim_bs) {
         if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
             sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
-        } else {
-            // TODO set charge request according to the optimization result
-        }
+        } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();
         current_load_vSM_kW += load_bs;
