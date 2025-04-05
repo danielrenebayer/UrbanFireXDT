@@ -145,8 +145,9 @@ Notice the difference between individual EVs and the EV charging station (CS): T
 | expansion PV max total kWp addition    | float | no  | no max. set |  | Maximal size of all added PV installations over all control units | no |
 | expansion BS max total E addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the accumulated capacity of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
 | expansion BS max total P addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the accumulated power of all added resid. battery storage systems. If this limit has been reached, no further components will be added to other control units, even if the expansion matrix tells so. | no
-| expansion HP max total addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the total number of added heat pumps. See also `expansion PV max total kWp addition` | no |
-| expansion EV max total addition | float | no | -1 | -1 (for no limit) or a value >= 0.0 | Upper limit for the total number of added EVs. See also `expansion PV max total kWp addition` | no |
+| expansion HP max total addition | unsigned long | no | unset | value >= 0 | Upper limit for the total number of added heat pumps. Once the parameter has been set for a scenario from which it is inherited, it can no longer be set to -1! | no |
+| expansion EV max total addition | unsigned long | no | unset | value >= 0 | Upper limit for the total number of added EVs. Once the parameter has been set for a scenario from which it is inherited, it can no longer be set to -1! | no |
+| expansion CS max EV per CU      | unsigned long | no | unset | value > 0  | Maximum number of EVs per control unit. Units with more EVs will be excluded. Usefull for optimizations. Once the parameter has been set for a scenario from which it is inherited, it can no longer be set to -1! | no |
 
 
 ## Group 4a: Selection / Deselection of the substations for addition

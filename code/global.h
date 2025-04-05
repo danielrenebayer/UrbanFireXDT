@@ -241,7 +241,8 @@ class Global {
         static bool          is_exp_hp_max_n_addition_set() { return exp_hp_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added heat pumps is set. The concrete value would be given by Global::get_exp_hp_max_n_addition().
         static unsigned long get_exp_hp_max_n_addition() { return exp_hp_max_n_addition; } //!< Upper limit for the number of added simulated heat pumps
         static bool          is_exp_ev_max_n_addition_set() { return exp_ev_max_n_addition_set; } //!< Returns true iif a upper limit for the number of added EVs is set. The concrete value would be given by Global::get_exp_ev_max_n_addition().
-        static unsigned long get_exp_ev_max_n_addition() { return exp_ev_max_n_addition; } //!< Upper limit for the number of added EVs
+        static unsigned long get_exp_ev_max_n_addition() { return exp_ev_max_n_addition; } //!< Upper limit for the (total) number of added EVs (summed over all control units)
+        static unsigned long get_exp_cs_max_ev_per_cs()  { return exp_cs_max_ev_per_cs;  } ///< 0 if not selected. Returns the upper limit for the number of added EVs per control unit / EV charging station. Units with more EVs are not selected.
         static float get_open_space_pv_kWp()   { return open_space_pv_kWp; }
         static float get_wind_kWp()            { return wind_kWp; }
         static float get_feed_in_tariff()      { return feed_in_tariff; }
@@ -333,6 +334,7 @@ class Global {
         static void set_exp_bess_max_P_total(float value);
         static void set_exp_hp_max_n_addition(unsigned long value);
         static void set_exp_ev_max_n_addition(unsigned long value);
+        static void set_exp_cs_max_ev_per_cs(unsigned long value);
         static void set_open_space_pv_kWp(float open_space_kWp);
         static void set_wind_kWp(float wind_kWp);
         static void set_feed_in_tariff(float value);
@@ -426,6 +428,7 @@ class Global {
         static float exp_bess_max_P_total; ///< Upper limit of installed battery storage power (only residential)
         static unsigned long exp_hp_max_n_addition;///< Upper limit for the number of added simulated heat pumps
         static unsigned long exp_ev_max_n_addition;///< Upper limit for the number of added EVs
+        static unsigned long exp_cs_max_ev_per_cs;
         static float open_space_pv_kWp;    ///< kWp of the open space PV installations (complete)
         static float wind_kWp;             ///< kWp of the wind turbines
         static float feed_in_tariff;       ///< Tariff for feed in of energy into the grid

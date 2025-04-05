@@ -1096,6 +1096,11 @@ void expansion::add_expansion_to_units(
         if (Global::get_select_buildings_wg_heatd_only() && !current_unit->heat_demand_given_in_data())
             continue;
         */
+        // Select Control Unit only if the number of added EVs would not exceed the individual limit (if it is set)
+        if (Global::get_exp_cs_max_ev_per_cs() > 0) {
+            if (current_unit->get_sim_comp_cs_possible_n_EVs() > Global::get_exp_cs_max_ev_per_cs())
+                continue;
+        }
         // select only residential buildings if selected
         if (Global::get_select_only_residential_buildings()) {
             if (!current_unit->is_residential())

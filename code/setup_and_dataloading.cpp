@@ -366,6 +366,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_exp_ev_max_n_addition( scenario_dict.get_value<unsigned long>() );
             }
+            else if ( element_name.compare("expansion CS max EV per CU") == 0 )
+            {
+                Global::set_exp_cs_max_ev_per_cs( scenario_dict.get_value<unsigned long>() );
+            }
             else if ( element_name.compare("break SAC loop if limit reached") == 0 )
             {
                 Global::set_break_sac_loop_if_limit_reached( scenario_dict.get_value<bool>() );
@@ -1729,6 +1733,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_exp_hp_max_n_addition());
     PRINT_VAR(Global::is_exp_ev_max_n_addition_set());
     PRINT_VAR(Global::get_exp_ev_max_n_addition());
+    PRINT_VAR(Global::get_exp_cs_max_ev_per_cs());
     PRINT_VAR(Global::get_open_space_pv_kWp());
     PRINT_VAR(Global::get_wind_kWp());
     PRINT_VAR(Global::get_feed_in_tariff());

@@ -148,6 +148,7 @@ float Global::exp_bess_max_E_total  =-1.0;
 float Global::exp_bess_max_P_total  =-1.0;
 ulong Global::exp_hp_max_n_addition = 0;
 ulong Global::exp_ev_max_n_addition = 0;
+ulong Global::exp_cs_max_ev_per_cs  = 0;
 float Global::open_space_pv_kWp     = 0.0;
 float Global::wind_kWp              = 0.0;
 float Global::feed_in_tariff        = 0.0;
@@ -833,6 +834,13 @@ void Global::set_exp_ev_max_n_addition(unsigned long value) {
     } else {
         Global::exp_ev_max_n_addition = value;
         Global::exp_ev_max_n_addition_set = true;
+    }
+}
+void Global::set_exp_cs_max_ev_per_cs(unsigned long value) {
+    if (is_locked) {
+        cerr << "Global variable exp_cs_max_ev_per_cs cannot be overwritten at the moment!" << endl;
+    } else {
+        Global::exp_cs_max_ev_per_cs = value;
     }
 }
 void Global::set_open_space_pv_kWp(float open_space_kWp) {
