@@ -657,6 +657,7 @@ void ControlUnit::add_exp_pv() {
             sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_per_m2(),
                                           Global::get_exp_pv_min_kWp_roof_sec(),
                                           Global::get_exp_pv_max_kWp_roof_sec(),
+                                          Global::get_exp_pv_max_kWp_per_unit(),
                                           locationID);
         }
     }
@@ -751,14 +752,14 @@ void ControlUnit::set_exp_pv_params_A(float value) {
     }
 }
 
-void ControlUnit::set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp) {
+void ControlUnit::set_exp_pv_params_B(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit) {
     // do something only if this unit is selected for PV expansion
     if (has_sim_pv) {
         if (Global::get_exp_pv_static_mode()) {
             throw runtime_error("Error: ControlUnit::set_exp_pv_params_B() has been callen even though PV static mode is not set!");
         } else {
             delete sim_comp_pv;
-            sim_comp_pv = new ComponentPV(kWp_per_m2, min_kWp, max_kWp, locationID);
+            sim_comp_pv = new ComponentPV(kWp_per_m2, min_kWp_sec, max_kWp_sec, max_kWp_unit, locationID);
         }
     }
 }

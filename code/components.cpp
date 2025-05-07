@@ -157,7 +157,7 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
     set_horizon_in_ts( Global::get_control_horizon_in_ts() );
 }
 
-ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID)
+ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit, unsigned long locationID)
 {
     /*
      *
@@ -170,8 +170,8 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     if (kWp_per_m2 <= 0.0) {
         throw runtime_error("Error in ComponentPV constructor: kWp_per_m2 <= 0!");
     }
-    if (max_kWp > 0 && min_kWp > max_kWp) {
-        throw runtime_error("Error in ComponentPV constructor: min_kWp > max_kWp");
+    if (max_kWp_sec > 0 && min_kWp_sec > max_kWp_sec) {
+        throw runtime_error("Error in ComponentPV constructor: min_kWp_sec > max_kWp_sec");
     }
 
     currentGeneration_kW = 0;
@@ -192,13 +192,13 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
         // 1)
         // compute the kWp of this area and decide whether to use it or not
         float section_kWp = section_roof_area * kWp_per_m2;
-        if (section_kWp < min_kWp) {
+        if (section_kWp < min_kWp_sec) {
             // ignore this section
             continue;
         }
         // if max_kWp == 0 -> ignore this value
-        if (max_kWp > 0 && section_kWp > max_kWp) {
-            section_kWp = max_kWp;
+        if (max_kWp_sec > 0 && section_kWp > max_kWp_sec) {
+            section_kWp = max_kWp_sec;
         }
         total_kWp += section_kWp;
         // 2)
@@ -207,12 +207,12 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigne
     }
     // 2)
     // only in the case of Global::exp_pv_max_kWp_per_unit is set (i.e. >= 0.0)
-    if (Global::get_exp_pv_max_kWp_per_unit() >= 0.0) {
-        // is total_kWp > Global::get_exp_pv_max_kWp_per_unit()
+    if (max_kWp_unit >= 0.0) {
+        // is total_kWp > max_kWp_unit (which is most of the time = Global::get_exp_pv_max_kWp_per_unit(), except of parameter variations)
         // if yes, lower installed power with the same percantage over all sections
-        if ( total_kWp > Global::get_exp_pv_max_kWp_per_unit() ) {
-            float reduction_factor = Global::get_exp_pv_max_kWp_per_unit() / total_kWp;
-            total_kWp = Global::get_exp_pv_max_kWp_per_unit();
+        if ( total_kWp > max_kWp_unit ) {
+            float reduction_factor = max_kWp_unit / total_kWp;
+            total_kWp = max_kWp_unit;
             for (auto& section_tuple : vec_of_sections) {
                 section_tuple.first = section_tuple.first * reduction_factor;
             }

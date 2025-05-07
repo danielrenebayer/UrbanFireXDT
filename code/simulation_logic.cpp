@@ -240,6 +240,10 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUCont
                     cParamVals.exp_pv_kWp_per_m2     = var_name_and_val.second;
                     cParamVals.exp_pv_kWp_per_m2_set = true;
 
+                } else if (var_name_and_val.first.compare("expansion PV max inst kWp per unit") == 0) {
+                    cParamVals.exp_pv_max_kWp_per_unit     = var_name_and_val.second;
+                    cParamVals.exp_pv_max_kWp_per_unit_set = true;
+
                 } else if (var_name_and_val.first.compare("expansion BS P in kW")  == 0) {
                     for (ControlUnit* current_unit : units_list)
                         current_unit->set_exp_bs_maxP_kW(var_name_and_val.second);
@@ -281,15 +285,19 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUCont
             // 1b. if expansion PV kWp min/max or kWp per m2 is set, apply it here
             //     it cannot be set directly at the place above (like the other parameters)
             //     as these values can only be set together
-            if (cParamVals.exp_pv_min_kWp_roof_sec_set || cParamVals.exp_pv_max_kWp_roof_sec_set || cParamVals.exp_pv_kWp_per_m2_set) {
+            if (cParamVals.exp_pv_min_kWp_roof_sec_set || cParamVals.exp_pv_max_kWp_roof_sec_set || cParamVals.exp_pv_kWp_per_m2_set ||
+                cParamVals.exp_pv_max_kWp_per_unit_set
+            ) {
                 float kWp_per_m2 = Global::get_exp_pv_kWp_per_m2();
-                float min_kWp    = Global::get_exp_pv_min_kWp_roof_sec();
-                float max_kWp    = Global::get_exp_pv_max_kWp_roof_sec();
+                float min_kWp_sec  = Global::get_exp_pv_min_kWp_roof_sec();
+                float max_kWp_sec  = Global::get_exp_pv_max_kWp_roof_sec();
+                float max_kWp_unit = Global::get_exp_pv_max_kWp_per_unit();
                 if (cParamVals.exp_pv_kWp_per_m2_set)       kWp_per_m2 = cParamVals.exp_pv_kWp_per_m2;
-                if (cParamVals.exp_pv_min_kWp_roof_sec_set) min_kWp    = cParamVals.exp_pv_min_kWp_roof_sec;
-                if (cParamVals.exp_pv_max_kWp_roof_sec_set) max_kWp    = cParamVals.exp_pv_max_kWp_roof_sec;
+                if (cParamVals.exp_pv_min_kWp_roof_sec_set) min_kWp_sec  = cParamVals.exp_pv_min_kWp_roof_sec;
+                if (cParamVals.exp_pv_max_kWp_roof_sec_set) max_kWp_sec  = cParamVals.exp_pv_max_kWp_roof_sec;
+                if (cParamVals.exp_pv_max_kWp_per_unit_set) max_kWp_unit = cParamVals.exp_pv_max_kWp_per_unit;
                 for (ControlUnit* current_unit : units_list)
-                    current_unit->set_exp_pv_params_B(kWp_per_m2, min_kWp, max_kWp);
+                    current_unit->set_exp_pv_params_B(kWp_per_m2, min_kWp_sec, max_kWp_sec, max_kWp_unit);
             }
 
             //

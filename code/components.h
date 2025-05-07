@@ -134,7 +134,7 @@ class RoofSectionPV {
 class ComponentPV : public BaseComponent {
     public:
         ComponentPV(float kWp_static, unsigned long locationID); ///< Constructor in the case of static kWp computation
-        ComponentPV(float kWp_per_m2, float min_kWp, float max_kWp, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
+        ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
         // getter methods
         float get_kWp() const            { return total_kWp; }
         float get_currentGeneration_kW() { return currentGeneration_kW; }

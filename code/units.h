@@ -160,7 +160,7 @@ class ControlUnit {
         void preprocess_ev_data(); ///< Preprocesses EV data, calls EVFSM::preprocessTourInformation() for all attached EVs. Call this method only once right before the first simulation run.
         void set_output_object(CUOutput* output_obj);
         void set_exp_pv_params_A(float kWp_static); ///< Set the kWp of expanded PV installations in the case of static kWp computation per section
-        void set_exp_pv_params_B(float kWp_per_m2, float min_kWp, float max_kWp); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
+        void set_exp_pv_params_B(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit); ///< Set the kWp of expanded PV installations in the case of dynamic kWp computation per section
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value

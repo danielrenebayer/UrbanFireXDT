@@ -332,6 +332,9 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion PV max inst kWp per section,";
     if (cParamVals.exp_pv_max_kWp_roof_sec_set) ofs << cParamVals.exp_pv_max_kWp_roof_sec; else ofs << Global::get_exp_pv_max_kWp_roof_sec();
     ofs << "\n";
+    ofs << "expansion PV max inst kWp per unit,";
+    if (cParamVals.exp_pv_max_kWp_per_unit_set) ofs << cParamVals.exp_pv_max_kWp_per_unit; else ofs << Global::get_exp_pv_max_kWp_per_unit();
+    ofs << "\n";
     ofs << "expansion PV kWp per roof area in m2,";
     if (cParamVals.exp_pv_kWp_per_m2_set)       ofs << cParamVals.exp_pv_kWp_per_m2;       else ofs << Global::get_exp_pv_kWp_per_m2();
     ofs << "\n";
