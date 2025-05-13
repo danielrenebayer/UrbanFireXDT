@@ -72,7 +72,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
 | expansion PV min kWp for section usage | float | no  |  0      |  | Minimal size of a PV installation on a roof section, to include this section | yes |
 | expansion PV max inst kWp per section  | float | no  | -1      |  | Maximal size of a PV installation in kW per roof section | yes |
-| expansion PV max inst kWp per unit     | float | no  | -1      |  | Maximal size of the total PV installation in kW per control unit | no |
+| expansion PV max inst kWp per unit     | float | no  | -1      |  | Maximal size of the total PV installation in kW per control unit | yes |
 | expansion PV kWp per roof area in m2   | float | yes |         |  | kWp per roof area (how it is in the three dimensional space) | yes |
 | expansion PV kWp static                | float | only if ‘expansion PV kWp static mode’ is set to true |  |  | see next variable | yes |
 | expansion PV kWp static mode           | float | yes |         |  | If set to true, ignore all roof information and just add a static pv installation per roof | no |
