@@ -765,9 +765,9 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
      * Columns:
      * 0      1       2             3           4           5
      * MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential
-     * 6                  7         8       9        10     11        12
-     * has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_biomass
-     * 13        14
+     * 6                  7         8       9        10     11
+     * has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind
+     * 12        13
      * has_evcs  has_public_evcs
      */
     if (argc != 15) {
@@ -785,8 +785,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
     bool has_hp        = argv[8][0] == '1';
     bool has_chp       = argv[9][0] == '1';
     bool has_wind      = argv[11][0] == '1';
-    bool has_evchst    = argv[13][0] == '1';
-  //bool has_pub_evchst= argv[14][0] == '1'; // TODO -> implement public EV charging stations
+    bool has_evchst    = argv[12][0] == '1';
+  //bool has_pub_evchst= argv[13][0] == '1'; // TODO -> implement public EV charging stations
     size_t locID       = stoul(argv[10]);
 
     stringstream data_input_path;
@@ -1346,7 +1346,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
             return false;
         }
         // 3. MUs
-        string sql_queryE = "SELECT MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_biomass, has_evcs, has_public_evcs FROM list_of_measurement_units ORDER BY MeUID;";
+        string sql_queryE = "SELECT MeUID, UnitID, MeterPointID, has_demand, has_feedin, has_pv_residential, has_pv_open_space, has_bess, has_hp, has_chp, LocID, has_wind, has_evcs, has_public_evcs FROM list_of_measurement_units ORDER BY MeUID;";
         char* sqlErrorMsgE;
         int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
         if (ret_valE != 0) {

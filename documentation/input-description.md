@@ -99,7 +99,6 @@ Documentation of the configuration database in detail
 | has_chp       | INTEGER | Holds the value 1, iff a CHP is connected (exclusivley and not exclusivley) to the measuremt unit |
 | LocID         | INTEGER | ID of the location where the measurement unit is located at [Foreign key] |
 | has_wind      | INTEGER | Holds the value 1, iff a wind farm is connected (exclusivley and not exclusivley) to the measuremt unit |
-| has_biomass   | INTEGER | Holds the value 1, iff a bio mass power plant is connected (exclusivley and not exclusivley) to the measuremt unit |
 | has_evcs      | INTEGER | Holds the value 1, iff a residential EV charging station is connected (exclusivley and not exclusivley) to the measuremt unit |
 | has_public_evcs | INTEGER | Holds the value 1, iff a public EV charging station is connected (exclusivley and not exclusivley) to the measuremt unit |
 
