@@ -770,8 +770,8 @@ int load_data_from_central_database_callbackE(void* data, int argc, char** argv,
      * 12        13
      * has_evcs  has_public_evcs
      */
-    if (argc != 15) {
-        cerr << "Number of arguments not equal to 15 for one row!" << endl;
+    if (argc != 14) {
+        cerr << "Number of arguments not equal to 14 for one row!" << endl;
         return 1;
     }
     size_t current_mu_id  = stoul(argv[0]);
