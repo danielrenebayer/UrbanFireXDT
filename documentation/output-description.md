@@ -87,8 +87,11 @@ In the case of weekly metrics file, an additional column giving the week number 
 | Timestep              | The time step ID of the current record |
 | _Per substation YYYY_ |             |
 | &nbsp;&nbsp; YYYY     | Active power in kW at substation YYYY |
-| open_space_pv_feedin  | Total feed-in of open-space PV installations in kW |
-| wind_feedin           | Total wind feed-in at grid level in kW |
+| pv_feedin_kW          | Sum of feed-in from control units caused by PV installations in kW |
+| bs_feedin_kW          | Sum of feed-in from control units caused by battery storage systems in kW |
+| chp_feedin_kW         | Sum of feed-in from control units caused by CHPs in kW |
+| wind_feedin_kW        | Sum of feed-in from control units caused by wind turbines in kW |
+| unknown_feedin_kW     | Sum of feed-in from control units in kW where the source is unknown or not attributable to any generation technology |
 | OverallBatterySOC     | Mean SOC over all simulated battery storage systems on control unit level |
 | total_load            | Total active power in kW in the grid |
 

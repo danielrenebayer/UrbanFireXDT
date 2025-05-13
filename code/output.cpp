@@ -155,7 +155,7 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     for (Substation* s : subList) {
         *(substation_output) << "," << s->get_name()->c_str();
     }
-    *(substation_output) << ",open_space_pv_feedin,wind_feedin,OverallBatterySOC,total_load" << endl;
+    *(substation_output) << ",pv_feedin_kW,bs_feedin_kW,chp_feedin_kW,wind_feedin_kW,unknown_feedin_kW,OverallBatterySOC,total_load" << endl;
     //
     //
     // Part 2: The secondary file for additional information about the substations

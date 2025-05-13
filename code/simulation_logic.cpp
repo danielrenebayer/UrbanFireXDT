@@ -126,20 +126,33 @@ bool simulation::oneStep(unsigned long ts,
         }
     }
 
+    const std::vector<Substation*>& substations_list = Substation::GetArrayOfInstances();
+
+    // Compute power on substation level
+    // AND compute generation (that is fed into the grid) per generation technology
+    double pv_gen_kW      = 0.0;
+    double bs_gen_kW      = 0.0;
+    double chp_gen_kW     = 0.0;
+    double wind_gen_kW    = 0.0;
+    double unknown_gen_kW = 0.0;
+    for (Substation* s : substations_list) {
+        s->calc_load();
+        pv_gen_kW      += s->get_current_PV_feedin_to_grid_kW();
+        bs_gen_kW      += s->get_current_BS_feedin_to_grid_kW();
+        chp_gen_kW     += s->get_current_CHP_feedin_to_grid_kW();
+        wind_gen_kW    += s->get_current_wind_feedin_to_grid_kW();
+        unknown_gen_kW += s->get_current_unknown_feedin_to_grid_kW();
+    }
+
     //
-    // set new global radiation values for PV and wind speed
+    // compute total load on grid level and add residual gridload (if present)
     float total_load = 0.0;
     float total_residential_load   = 0.0;
     float total_residential_demand = 0.0;
-    global::unit_open_space_pv->compute_next_value(ts);
-    global::unit_open_space_wind->compute_next_value(ts);
-    total_load -= global::unit_open_space_pv->get_current_feedin_kW();
-    total_load -= global::unit_open_space_wind->get_current_feedin_kW();
     total_load += global::residual_gridload_kW[ts-1];
     //
     // loop over all substations: compute new load values
     // and calculate total grid load
-    const std::vector<Substation*>& substations_list = Substation::GetArrayOfInstances();
 
     if (output::substation_output != NULL && output::substation_output_details != NULL) {
         //
@@ -154,7 +167,6 @@ bool simulation::oneStep(unsigned long ts,
         *(output::substation_output) << ts << ","; // add timestep to output
         *(output::substation_output_details) << ts << ",";
         for (Substation* s : substations_list) {
-            s->calc_load(); // TODO: This could be moved outside the test, if substation output exist -> Propably we need information on grid load later
             float current_station_load = s->get_station_load();
             float current_station_resident_load   = s->get_residential_load();
             float current_station_resident_demand = s->get_residential_demand();
@@ -166,8 +178,11 @@ bool simulation::oneStep(unsigned long ts,
             *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
             *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
         }
-        *(output::substation_output) << round_float_5( global::unit_open_space_pv->get_current_feedin_kW() )   << ",";
-        *(output::substation_output) << round_float_5( global::unit_open_space_wind->get_current_feedin_kW() ) << ",";
+        *(output::substation_output) << pv_gen_kW      << ",";
+        *(output::substation_output) << bs_gen_kW      << ",";
+        *(output::substation_output) << chp_gen_kW     << ",";
+        *(output::substation_output) << wind_gen_kW    << ",";
+        *(output::substation_output) << unknown_gen_kW << ",";
         *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
         *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
         *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";

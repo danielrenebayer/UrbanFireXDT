@@ -67,6 +67,11 @@ Substation::Substation(unsigned long internal_id, unsigned long public_id, std::
     station_load    = 0.0;
     resident_load   = 0.0;
     resident_demand = 0.0;
+    pv_gen_kW       = 0.0;
+    bs_gen_kW       = 0.0;
+    chp_gen_kW      = 0.0;
+    wind_gen_kW     = 0.0;
+    unknown_gen_kW  = 0.0;
 }
 
 Substation::~Substation() {
@@ -82,6 +87,11 @@ void Substation::calc_load() {
     station_load    = 0.0;
     resident_load   = 0.0; // Load only of residential buildings
     resident_demand = 0.0; // Residential load, only demand
+    pv_gen_kW       = 0.0;
+    bs_gen_kW       = 0.0;
+    chp_gen_kW      = 0.0;
+    wind_gen_kW     = 0.0;
+    unknown_gen_kW  = 0.0;
     for (ControlUnit* cu : *connected_units) {
         station_load += cu->get_current_load_vSMeter_kW();
         if (cu->is_residential()) {
@@ -89,6 +99,14 @@ void Substation::calc_load() {
             if (cu->get_current_load_vSMeter_kW() > 0) {
                 resident_demand += cu->get_current_load_vSMeter_kW();
             }
+        }
+        // In case of a feed-in, detect the source of the feed-in
+        if (cu->get_current_load_vSMeter_kW() < 0.0) {
+            pv_gen_kW      += cu->get_current_PV_feedin_to_grid_kW();
+            bs_gen_kW      += cu->get_current_BS_feedin_to_grid_kW();
+            chp_gen_kW     += cu->get_current_CHP_feedin_to_grid_kW();
+            wind_gen_kW    += cu->get_current_wind_feedin_to_grid_kW();
+            unknown_gen_kW += cu->get_current_unknown_feedin_to_grid_kW();
         }
     }
 }
@@ -168,6 +186,12 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
 	sim_comp_hp     = NULL;
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
+    current_PV_feedin_to_grid_kW      = 0.0;
+    current_BS_feedin_to_grid_kW      = 0.0;
+    current_CHP_feedin_to_grid_kW     = 0.0;
+    current_wind_feedin_to_grid_kW    = 0.0;
+    current_unknown_feedin_to_grid_kW = 0.0;
+
     output_obj      = NULL;
     is_expandable_with_pv_cache          = false;
     is_expandable_with_pv_cache_computed = false;
@@ -293,6 +317,14 @@ bool ControlUnit::has_cs() {
 bool ControlUnit::has_chp() {
     for (MeasurementUnit* mu : *connected_units) {
         if (mu->has_chp())
+            return true;
+    }
+    return false;
+}
+
+bool ControlUnit::has_wind() {
+    for (MeasurementUnit* mu : *connected_units) {
+        if (mu->has_wind())
             return true;
     }
     return false;
@@ -834,6 +866,12 @@ void ControlUnit::remove_sim_added_components() {
 void ControlUnit::reset_internal_state() {
     current_load_vSM_kW = 0.0;
     self_produced_load_kW = 0.0;
+    current_PV_feedin_to_grid_kW      = 0.0;
+    current_BS_feedin_to_grid_kW      = 0.0;
+    current_CHP_feedin_to_grid_kW     = 0.0;
+    current_wind_feedin_to_grid_kW    = 0.0;
+    current_unknown_feedin_to_grid_kW = 0.0;
+    //
     sum_of_consumption_kWh    = 0.0;
     sum_of_self_cons_kWh      = 0.0;
     sum_of_mu_cons_kWh        = 0.0;
@@ -1216,6 +1254,63 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     if (cweek_peak_grid_demand_kW < current_load_vSM_kW)
         cweek_peak_grid_demand_kW = current_load_vSM_kW;
+
+    // Part C.2: In case of a grid feed-in, determine the source of the feed-in
+    current_PV_feedin_to_grid_kW      = 0.0;
+    current_BS_feedin_to_grid_kW      = 0.0;
+    current_CHP_feedin_to_grid_kW     = 0.0;
+    current_wind_feedin_to_grid_kW    = 0.0;
+    current_unknown_feedin_to_grid_kW = 0.0;
+    if (current_load_vSM_kW < 0.0) {
+        // Attribute the feedin iteratively to the components, until the remaining power is zero
+        double remaining_feedin_to_attribute_kW = -current_load_vSM_kW;
+        //
+        if (has_sim_pv && sim_comp_pv->get_currentGeneration_kW() > 0.0) {
+            current_PV_feedin_to_grid_kW = sim_comp_pv->get_currentGeneration_kW();
+            if (current_PV_feedin_to_grid_kW > remaining_feedin_to_attribute_kW)
+                current_PV_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            remaining_feedin_to_attribute_kW -= current_PV_feedin_to_grid_kW;
+        }
+        if (remaining_feedin_to_attribute_kW > 0.0 &&
+            !has_sim_pv && has_pv() )
+        {
+            // No simulated PV, but still a PV existing
+            // --> Attribute completly to the PV installation
+            current_PV_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            remaining_feedin_to_attribute_kW = 0.0;
+        }
+        //
+        if (remaining_feedin_to_attribute_kW > 0.0 &&
+            has_sim_bs && sim_comp_bs->get_currentLoad_kW() < 0.0)
+        {
+            current_BS_feedin_to_grid_kW = sim_comp_bs->get_currentLoad_kW();
+            if (current_BS_feedin_to_grid_kW > remaining_feedin_to_attribute_kW)
+                current_BS_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            remaining_feedin_to_attribute_kW -= current_BS_feedin_to_grid_kW;
+        }
+        //
+        if (remaining_feedin_to_attribute_kW > 0.0 &&
+            has_chp())
+        {
+            // If CHP is present in the input data -> attribute all remaining feed-in to the CHP
+            current_CHP_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            remaining_feedin_to_attribute_kW = 0.0;
+        }
+        //
+        if (remaining_feedin_to_attribute_kW > 0.0 &&
+            has_wind())
+        {
+            // If wind turbine is present in the input data -> attribute all remaining feed-in to the wind turbine
+            current_wind_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            remaining_feedin_to_attribute_kW = 0.0;
+        }
+        // Attribute the final feedin to unknown
+        if (remaining_feedin_to_attribute_kW > 0.0)
+        {
+            current_unknown_feedin_to_grid_kW = remaining_feedin_to_attribute_kW;
+            // obsolet: remaining_feedin_to_attribute_kW = 0.0;
+        }
+    }
 
     //
     // output current status
