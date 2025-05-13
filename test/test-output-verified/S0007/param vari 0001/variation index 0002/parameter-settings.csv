@@ -1,6 +1,7 @@
 Parameter Name,Value
 expansion PV min kWp for section usage,0.001
 expansion PV max inst kWp per section,100
+expansion PV max inst kWp per unit,100
 expansion PV kWp per roof area in m2,0.1
 expansion PV kWp static,10
 expansion PV kWp static mode,1
