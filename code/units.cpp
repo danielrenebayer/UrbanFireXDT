@@ -186,6 +186,7 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
 	sim_comp_hp     = NULL;
 	current_load_vSM_kW   = 0;
 	self_produced_load_kW = 0;
+    current_total_consumption_kW = 0.0;
     current_PV_feedin_to_grid_kW      = 0.0;
     current_BS_feedin_to_grid_kW      = 0.0;
     current_CHP_feedin_to_grid_kW     = 0.0;
@@ -866,6 +867,7 @@ void ControlUnit::remove_sim_added_components() {
 void ControlUnit::reset_internal_state() {
     current_load_vSM_kW = 0.0;
     self_produced_load_kW = 0.0;
+    current_total_consumption_kW = 0.0;
     current_PV_feedin_to_grid_kW      = 0.0;
     current_BS_feedin_to_grid_kW      = 0.0;
     current_CHP_feedin_to_grid_kW     = 0.0;
@@ -1124,8 +1126,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
     // Part C: Compute the load at the virtual smart meter
 
+    current_total_consumption_kW = 0.0;
     float current_load_all_rSMs_kW = 0.0;
-    float total_consumption = 0.0;
     float load_pv = 0.0;
     float load_hp = 0.0;
     float load_cs = 0.0;
@@ -1142,8 +1144,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         current_load_all_rSMs_kW += mu->get_current_ts_rsm_value();
     }
     current_load_vSM_kW = current_load_all_rSMs_kW;
-    total_consumption   = current_load_all_rSMs_kW;
-    if (total_consumption < 0) total_consumption = 0;
+    current_total_consumption_kW = current_load_all_rSMs_kW;
+    if (current_total_consumption_kW < 0) current_total_consumption_kW = 0;
     // // //float load_bevore_local_pv_bess = current_load_vSM_kW;
     //
     // 2. get PV feedin
@@ -1156,7 +1158,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     if (has_sim_hp) {
         load_hp = sim_comp_hp->get_currentDemand_kW();
         current_load_vSM_kW += load_hp;
-        total_consumption   += load_hp;
+        current_total_consumption_kW += load_hp;
     }
     //
     // 4. get the effect of the EV charging station
@@ -1164,13 +1166,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         load_cs = sim_comp_cs->get_currentDemand_kW();
         current_load_vSM_kW += load_cs;
         if (load_cs > 0)
-            total_consumption += load_cs;
+            current_total_consumption_kW += load_cs;
         // TODO in bidirectional charging case: If load_cs < 0 (ie the battery is discharged), we need to account that as well!
         // information for output
         n_cars_pc  = sim_comp_cs->get_n_EVs_pc();
         n_cars_pnc = sim_comp_cs->get_n_EVs_pnc();
     }
-    // if load_evchst > 0: total_consumption += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
+    // if load_evchst > 0: current_total_consumption_kW += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
     // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
@@ -1203,7 +1205,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         grid_demand_kWh =  current_load_vSM_kW  * Global::get_time_step_size_in_h();
     }
     double self_cons_kWh       = Global::get_time_step_size_in_h() * self_produced_load_kW;
-    double cons_kWh            = Global::get_time_step_size_in_h() * total_consumption;
+    double cons_kWh            = Global::get_time_step_size_in_h() * current_total_consumption_kW;
     // add values to summation variables
     sum_of_consumption_kWh       += cons_kWh;
     sum_of_cweek_consumption_kWh += cons_kWh;
