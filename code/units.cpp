@@ -67,11 +67,18 @@ Substation::Substation(unsigned long internal_id, unsigned long public_id, std::
     station_load    = 0.0;
     resident_load   = 0.0;
     resident_demand = 0.0;
-    pv_gen_kW       = 0.0;
-    bs_gen_kW       = 0.0;
-    chp_gen_kW      = 0.0;
-    wind_gen_kW     = 0.0;
-    unknown_gen_kW  = 0.0;
+    total_demand    = 0.0;
+    total_BESS_demand = 0.0;
+    pv_gen_total_kW       = 0.0;
+    bs_gen_total_kW       = 0.0;
+    chp_gen_total_kW      = 0.0;
+    wind_gen_total_kW     = 0.0;
+    unknown_gen_total_kW  = 0.0;
+    pv_gen_expo_kW        = 0.0;
+    bs_gen_expo_kW        = 0.0;
+    chp_gen_expo_kW       = 0.0;
+    wind_gen_expo_kW      = 0.0;
+    unknown_gen_expo_kW   = 0.0;
 }
 
 Substation::~Substation() {
@@ -87,13 +94,27 @@ void Substation::calc_load() {
     station_load    = 0.0;
     resident_load   = 0.0; // Load only of residential buildings
     resident_demand = 0.0; // Residential load, only demand
-    pv_gen_kW       = 0.0;
-    bs_gen_kW       = 0.0;
-    chp_gen_kW      = 0.0;
-    wind_gen_kW     = 0.0;
-    unknown_gen_kW  = 0.0;
+    total_demand    = 0.0;
+    total_BESS_demand = 0.0;
+    pv_gen_total_kW       = 0.0;
+    bs_gen_total_kW       = 0.0;
+    chp_gen_total_kW      = 0.0;
+    wind_gen_total_kW     = 0.0;
+    unknown_gen_total_kW  = 0.0;
+    pv_gen_expo_kW        = 0.0;
+    bs_gen_expo_kW        = 0.0;
+    chp_gen_expo_kW       = 0.0;
+    wind_gen_expo_kW      = 0.0;
+    unknown_gen_expo_kW   = 0.0;
     for (ControlUnit* cu : *connected_units) {
         station_load += cu->get_current_load_vSMeter_kW();
+        total_demand += cu->get_current_demand_wo_BS_or_gen_kW();
+        total_BESS_demand    += cu->get_current_BS_demand_kW();
+        pv_gen_total_kW      += cu->get_current_PV_generation_kW();
+        bs_gen_total_kW      += cu->get_current_BS_generation_kW();
+        chp_gen_total_kW     += cu->get_current_CHP_generation_kW();
+        wind_gen_total_kW    += cu->get_current_wind_generation_kW();
+        unknown_gen_total_kW += cu->get_current_unknown_generation_kW();
         if (cu->is_residential()) {
             resident_load += cu->get_current_load_vSMeter_kW();
             if (cu->get_current_load_vSMeter_kW() > 0) {
@@ -102,11 +123,11 @@ void Substation::calc_load() {
         }
         // In case of a feed-in, detect the source of the feed-in
         if (cu->get_current_load_vSMeter_kW() < 0.0) {
-            pv_gen_kW      += cu->get_current_PV_feedin_to_grid_kW();
-            bs_gen_kW      += cu->get_current_BS_feedin_to_grid_kW();
-            chp_gen_kW     += cu->get_current_CHP_feedin_to_grid_kW();
-            wind_gen_kW    += cu->get_current_wind_feedin_to_grid_kW();
-            unknown_gen_kW += cu->get_current_unknown_feedin_to_grid_kW();
+            pv_gen_expo_kW       += cu->get_current_PV_feedin_to_grid_kW();
+            bs_gen_expo_kW       += cu->get_current_BS_feedin_to_grid_kW();
+            chp_gen_expo_kW      += cu->get_current_CHP_feedin_to_grid_kW();
+            wind_gen_expo_kW     += cu->get_current_wind_feedin_to_grid_kW();
+            unknown_gen_expo_kW  += cu->get_current_unknown_feedin_to_grid_kW();
         }
     }
 }
@@ -422,6 +443,60 @@ int ControlUnit::get_exp_combi_bit_repr_sim_added() {
     if (has_sim_cs)
         combination = combination | expansion::MaskWB;
     return combination;
+}
+
+double ControlUnit::get_current_BS_demand_kW() const {
+    if (has_sim_bs) {
+        double cl = sim_comp_bs->get_currentLoad_kW();
+        if (cl > 0.0)
+            return cl;
+    }
+    return 0.0;
+}
+
+double ControlUnit::get_current_PV_generation_kW() const {
+    if (has_sim_pv) {
+        return sim_comp_pv->get_currentGeneration_kW();
+    }
+    return 0.0;
+}
+
+double ControlUnit::get_current_BS_generation_kW() const {
+    if (has_sim_bs) {
+        double cl = sim_comp_bs->get_currentLoad_kW();
+        if (cl < 0.0)
+            return -cl;
+    }
+    return 0.0;
+}
+
+double ControlUnit::get_current_CHP_generation_kW() const {
+    double current_generation_kW = 0.0;
+    for (MeasurementUnit* mu : *connected_units) {
+        if (mu->has_chp()) {
+            double cf = mu->get_current_ts_rsm_value();
+            if (cf < 0.0) {
+                current_generation_kW += -cf;
+            }
+        }
+    }
+    return current_generation_kW;
+}
+double ControlUnit::get_current_wind_generation_kW() const {
+    double current_generation_kW = 0.0;
+    for (MeasurementUnit* mu : *connected_units) {
+        if (mu->has_wind()) {
+            double cf = mu->get_current_ts_rsm_value();
+            if (cf < 0.0) {
+                current_generation_kW += -cf;
+            }
+        }
+    }
+    return current_generation_kW;
+}
+
+double ControlUnit::get_current_unknown_generation_kW() const {
+    return 0.0;
 }
 
 double ControlUnit::get_mean_annual_MU_el_demand_kWh() const {

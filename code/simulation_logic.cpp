@@ -130,23 +130,35 @@ bool simulation::oneStep(unsigned long ts,
 
     // Compute power on substation level
     // AND compute generation (that is fed into the grid) per generation technology
-    double pv_gen_kW      = 0.0;
-    double bs_gen_kW      = 0.0;
-    double chp_gen_kW     = 0.0;
-    double wind_gen_kW    = 0.0;
-    double unknown_gen_kW = 0.0;
+    double pv_gen_total_kW      = 0.0;
+    double bs_gen_total_kW      = 0.0;
+    double chp_gen_total_kW     = 0.0;
+    double wind_gen_total_kW    = 0.0;
+    double unknown_gen_total_kW = 0.0;
+    double pv_gen_expo_kW      = 0.0;
+    double bs_gen_expo_kW      = 0.0;
+    double chp_gen_expo_kW     = 0.0;
+    double wind_gen_expo_kW    = 0.0;
+    double unknown_gen_expo_kW = 0.0;
     for (Substation* s : substations_list) {
         s->calc_load();
-        pv_gen_kW      += s->get_current_PV_feedin_to_grid_kW();
-        bs_gen_kW      += s->get_current_BS_feedin_to_grid_kW();
-        chp_gen_kW     += s->get_current_CHP_feedin_to_grid_kW();
-        wind_gen_kW    += s->get_current_wind_feedin_to_grid_kW();
-        unknown_gen_kW += s->get_current_unknown_feedin_to_grid_kW();
+        pv_gen_total_kW      += s->get_current_PV_generation_total_kW();
+        bs_gen_total_kW      += s->get_current_BS_generation_total_kW();
+        chp_gen_total_kW     += s->get_current_CHP_generation_total_kW();
+        wind_gen_total_kW    += s->get_current_wind_generation_total_kW();
+        unknown_gen_total_kW += s->get_current_unknown_generation_total_kW();
+        pv_gen_expo_kW      += s->get_current_PV_feedin_to_grid_kW();
+        bs_gen_expo_kW      += s->get_current_BS_feedin_to_grid_kW();
+        chp_gen_expo_kW     += s->get_current_CHP_feedin_to_grid_kW();
+        wind_gen_expo_kW    += s->get_current_wind_feedin_to_grid_kW();
+        unknown_gen_expo_kW += s->get_current_unknown_feedin_to_grid_kW();
     }
 
     //
     // compute total load on grid level and add residual gridload (if present)
     float total_load = 0.0;
+    double total_demand_wo_BESS = 0.0; // without BESS or any consideration of self-consumption
+    double total_demand_only_BESS = 0.0;
     float total_residential_load   = 0.0;
     float total_residential_demand = 0.0;
     total_load += global::residual_gridload_kW[ts-1];
@@ -171,18 +183,28 @@ bool simulation::oneStep(unsigned long ts,
             float current_station_resident_load   = s->get_residential_load();
             float current_station_resident_demand = s->get_residential_demand();
             total_load += current_station_load;
+            total_demand_wo_BESS += s->get_current_demand_no_BESS();
+            total_demand_only_BESS += s->get_current_BESS_demand();
             total_residential_load   += current_station_resident_load;
             total_residential_demand += current_station_resident_demand;
             // stuff for output
             *(output::substation_output) << round_float_5( current_station_load ) << ",";
             *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
             *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
+            *(output::substation_output_details) << s->get_current_demand_no_BESS() << ",";
         }
-        *(output::substation_output) << pv_gen_kW      << ",";
-        *(output::substation_output) << bs_gen_kW      << ",";
-        *(output::substation_output) << chp_gen_kW     << ",";
-        *(output::substation_output) << wind_gen_kW    << ",";
-        *(output::substation_output) << unknown_gen_kW << ",";
+        *(output::substation_output) << pv_gen_total_kW      << ",";
+        *(output::substation_output) << pv_gen_expo_kW       << ",";
+        *(output::substation_output) << bs_gen_total_kW      << ",";
+        *(output::substation_output) << bs_gen_expo_kW       << ",";
+        *(output::substation_output) << chp_gen_total_kW     << ",";
+        *(output::substation_output) << chp_gen_expo_kW      << ",";
+        *(output::substation_output) << wind_gen_total_kW    << ",";
+        *(output::substation_output) << wind_gen_expo_kW     << ",";
+        *(output::substation_output) << unknown_gen_total_kW << ",";
+        *(output::substation_output) << unknown_gen_expo_kW  << ",";
+        *(output::substation_output) << total_demand_wo_BESS << ",";
+        *(output::substation_output) << total_demand_only_BESS << ",";
         *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
         *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
         *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
