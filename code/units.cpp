@@ -166,8 +166,8 @@ size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
 std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
-const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
-const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costst [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
+const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costst [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
 std::atomic<unsigned long> ControlUnit::optimization_call_counter = 0;
 std::atomic<unsigned long> ControlUnit::n_curr_optimization_vars = 0;
 std::mutex ControlUnit::n_curr_optimization_vars_mutex;
@@ -653,6 +653,7 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(peak_grid_demand_kW) + ",";
         *retstr += to_string(sum_of_emissions_cbgd_kg_CO2eq) + ",";
         *retstr += to_string(sum_of_emissions_avoi_kg_CO2eq) + ",";
+        *retstr += to_string(sum_of_rem_pow_costs_EUR - sum_of_feedin_revenue_EUR) + ",";
         *retstr += to_string(sum_of_rem_pow_costs_EUR)       + ",";
         *retstr += to_string(sum_of_saved_pow_costs_EUR)     + ",";
         *retstr += to_string(sum_of_feedin_revenue_EUR)      + ",";
@@ -711,6 +712,7 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         *retstr += to_string(cweek_peak_grid_demand_kW) + ",";
         *retstr += to_string(sum_of_cweek_emissions_cbgd_kg_CO2eq) + ",";
         *retstr += to_string(sum_of_cweek_emissions_avoi_kg_CO2eq) + ",";
+        *retstr += to_string(sum_of_cweek_rem_pow_costs_EUR - sum_of_cweek_feedin_revenue_EUR) + ",";
         *retstr += to_string(sum_of_cweek_rem_pow_costs_EUR)       + ",";
         *retstr += to_string(sum_of_cweek_saved_pow_costs_EUR)     + ",";
         *retstr += to_string(sum_of_cweek_feedin_revenue_EUR)      + ",";

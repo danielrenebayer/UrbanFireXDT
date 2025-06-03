@@ -63,6 +63,7 @@ Folders are marked in **bold**.
 | Peak grid demand [kW]            | The peak grid demand in kW over the complete simulated time span |
 | Emissions cbgd [kg CO2eq]        | The CO2e emissions caused by grid demand including upstream emissions (but no installation emissions for PV panels, battery storage or heat pumps) |
 | Avoided emissions [kg CO2eq]     | The avioded CO2e emissions caused by local production (and possibly storing) of renewable energy |
+| Actual electricity costst [CU]   | The actual electricity costs, i.e., `Electricity cons. costs [CU] - Feed-in revenue [CU]`. Keep in mind that this value might be negative as well |
 | Electricity cons. costs [CU]     | The total electricity costs for consumption from the grid over the complete simulation horizon in the general currency unit (CU) |
 | Avoided electricity cons. costs [CU] | The sum of electricity costs that were saved by local self-consumption over the complete simulation horizon |
 | Feed-in revenue [CU]             | The summed revenue of feed-in to the grid in the general currency unit (CU) |
