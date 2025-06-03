@@ -52,6 +52,9 @@ class ORToolsLPController : public BaseOptimizedController {
         // Create the variables
         const unsigned int T  = Global::get_control_horizon_in_ts(); // number of time steps to consider
         const unsigned int Tp = T + 1; // required for the e_bs
+        std::vector<MPVariable*> p_resid_eq1(T);
+        std::vector<MPVariable*> p_pv_to_resid(T);
+        std::vector<MPVariable*> p_pv_eq2(T);
         std::vector<MPVariable*> p_hp_kW(T);
         std::vector<MPVariable*> e_hp_cum_kWh(T);
         std::vector<std::vector<MPVariable*>> p_ev_kW(n_cars);      // first index -> EV, second index -> time step
@@ -63,6 +66,9 @@ class ORToolsLPController : public BaseOptimizedController {
         std::vector<MPVariable*> x_feedin_kW(T); // power of grid feedin in kW
         for (unsigned int t = 0; t < T; t++) {
             const std::string tstr = to_string(t);
+            p_resid_eq1[t]  = model->MakeNumVar(0.0, infinity, "p_resid_eq1_"     + tstr);
+            p_pv_to_resid[t]= model->MakeNumVar(0.0, infinity, "p_pv_to_resid_"   + tstr);
+            p_pv_eq2[t]     = model->MakeNumVar(0.0, infinity, "p_pv_eq2_"        + tstr);
             p_hp_kW[t]      = model->MakeNumVar(future_hp_shiftable_minP[t], future_hp_shiftable_maxP[t],  "p_hp_kW_"     + tstr);
             // NOTICE: The next line is the only difference to the gurobi implementation: Bounds for cumsum E are set here directly
             e_hp_cum_kWh[t] = model->MakeNumVar(future_hp_shiftable_minE[t], future_hp_shiftable_maxE[t], "e_hp_cum_kWh_"+ tstr);
@@ -124,6 +130,17 @@ class ORToolsLPController : public BaseOptimizedController {
                 c->SetCoefficient( p_ev_kW[evIdx][t], 1.0 );
             }
         }
+        // Power balance for PV and residential demand
+        for (unsigned int t = 0; t < T; t++) {
+            MPConstraint* const c1 = model->MakeRowConstraint(0.0, 0.0, "Residential demand linkage");
+            MPConstraint* const c2 = model->MakeRowConstraint(0.0, 0.0, "PV generation linkage");
+            c1->SetCoefficient(future_resid_demand_kW[t],  -1.0);
+            c1->SetCoefficient(p_resid_eq1[t],    1.0);
+            c1->SetCoefficient(p_pv_to_resid[t],  1.0);
+            c2->SetCoefficient(future_pv_generation_kW[t], -1.0);
+            c2->SetCoefficient(p_pv_eq2[t],       1.0);
+            c2->SetCoefficient(p_pv_to_resid[t],  1.0);
+        }
         // Power balance equation on control unit level
         if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::GridChargingAndDischarging) {
             // Case A: Battery charging from grid allowed
@@ -160,26 +177,21 @@ class ORToolsLPController : public BaseOptimizedController {
             }
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
-                double local_plus = 0, local_minus = 0;
-                if (resid_minus_pv_kW > 0) {
-                    local_plus  =  resid_minus_pv_kW;
-                } else {
-                    local_minus = -resid_minus_pv_kW;
-                }
                 // balance euqation 1
-                MPConstraint* const c1 = model->MakeRowConstraint(-local_plus, -local_plus, "CU Power Balance EQ1 " + tstr);
+                MPConstraint* const c1 = model->MakeRowConstraint(0.0, 0.0, "CU Power Balance EQ1 " + tstr);
+                c1->SetCoefficient(p_resid_eq1[t],  1.0);
                 c1->SetCoefficient(p_hp_kW_1[t],    1.0);
                 c1->SetCoefficient(p_cs_kW_1[t],    1.0);
                 c1->SetCoefficient(p_bs_out_kW[t], -1.0);
                 c1->SetCoefficient(x_demand_kW[t], -1.0);
                 c1->SetCoefficient(p_bs_in_kW_1[t], 1.0);
                 // balance equation 2
-                MPConstraint* const c2 = model->MakeRowConstraint(local_minus, local_minus, "CU Power Balance EQ2 " + tstr);
+                MPConstraint* const c2 = model->MakeRowConstraint(0.0, 0.0, "CU Power Balance EQ2 " + tstr);
                 c2->SetCoefficient(p_hp_kW_2[t],   1.0);
                 c2->SetCoefficient(p_cs_kW_2[t],   1.0);
                 c2->SetCoefficient(x_feedin_kW[t], 1.0);
                 c2->SetCoefficient(p_bs_in_kW_2[t],1.0);
+                c2->SetCoefficient(p_pv_eq2[t],   -1.0);
                 // linkage of the power parts of BS, HP and CS with actual power
                 MPConstraint* const cl0 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage BS " + tstr);
                 cl0->SetCoefficient(p_bs_in_kW[t],  -1.0);
@@ -212,25 +224,20 @@ class ORToolsLPController : public BaseOptimizedController {
             }
             for (unsigned int t = 0; t < T; t++) {
                 const std::string tstr = to_string(t);
-                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
-                double local_plus = 0, local_minus = 0;
-                if (resid_minus_pv_kW > 0) {
-                    local_plus  =  resid_minus_pv_kW;
-                } else {
-                    local_minus = -resid_minus_pv_kW;
-                }
                 // balance euqation 1
-                MPConstraint* const c1 = model->MakeRowConstraint(-local_plus, -local_plus, "CU Power Balance EQ1 " + tstr);
+                MPConstraint* const c1 = model->MakeRowConstraint(0.0, 0.0, "CU Power Balance EQ1 " + tstr);
+                c1->SetCoefficient(p_resid_eq1[t],  1.0);
                 c1->SetCoefficient(p_hp_kW_1[t],    1.0);
                 c1->SetCoefficient(p_cs_kW_1[t],    1.0);
                 c1->SetCoefficient(p_bs_out_kW[t], -1.0);
                 c1->SetCoefficient(x_demand_kW[t], -1.0);
                 // balance equation 2
-                MPConstraint* const c2 = model->MakeRowConstraint(local_minus, local_minus, "CU Power Balance EQ2 " + tstr);
+                MPConstraint* const c2 = model->MakeRowConstraint(0.0, 0.0, "CU Power Balance EQ2 " + tstr);
                 c2->SetCoefficient(p_hp_kW_2[t],   1.0);
                 c2->SetCoefficient(p_cs_kW_2[t],   1.0);
                 c2->SetCoefficient(x_feedin_kW[t], 1.0);
                 c2->SetCoefficient(p_bs_in_kW[t],  1.0);
+                c2->SetCoefficient(p_pv_eq2[t],   -1.0);
                 // linkage of the power parts of HP and CS with actual power
                 MPConstraint* const cl1 = model->MakeRowConstraint(0.0, 0.0, "CU P Bal Linkage 1 " + tstr);
                 cl1->SetCoefficient(p_hp_kW[t],  -1.0);

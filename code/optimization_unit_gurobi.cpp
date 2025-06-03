@@ -32,6 +32,9 @@ bool GurobiLPController::updateController(
         // create the variables
         const unsigned int T  = Global::get_control_horizon_in_ts(); // number of time steps to consider
         const unsigned int Tp = T + 1; // required for the e_bs
+        std::vector<GRBVar> p_resid_eq1(T);
+        std::vector<GRBVar> p_pv_to_resid(T);
+        std::vector<GRBVar> p_pv_eq2(T);
         std::vector<GRBVar> p_hp_kW(T);
         std::vector<GRBVar> e_hp_cum_kWh(T);
         std::vector<std::vector<GRBVar>> p_ev_kW(n_cars);      // first index -> EV, second index -> time step
@@ -43,6 +46,9 @@ bool GurobiLPController::updateController(
         std::vector<GRBVar> x_feedin_kW(T); // power of grid feedin in kW
         for (unsigned int t = 0; t < T; t++) {
             const std::string tstr = to_string(t);
+            p_resid_eq1[t]  = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "p_resid_eq1_"   + tstr);
+            p_pv_to_resid[t]= model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "p_pv_to_resid_" + tstr);
+            p_pv_eq2[t]     = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "p_pv_eq2_"      + tstr);
             p_hp_kW[t]      = model.addVar(future_hp_shiftable_minP[t], future_hp_shiftable_maxP[t], 0.0, GRB_CONTINUOUS, "p_hp_kW" + tstr);
             e_hp_cum_kWh[t] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "e_hp_cum_kWh" + tstr);
             p_bs_in_kW[t]   = model.addVar(0.0, max_p_bs_kW,  0.0, GRB_CONTINUOUS, "p_bs_in_kW" + tstr);
@@ -93,6 +99,11 @@ bool GurobiLPController::updateController(
             }
             model.addConstr( expr_cs_p_at_t <= max_p_cs_kW );
         }
+        // Power balance for PV and residential demand
+        for (unsigned int t = 0; t < T; t++) {
+            model.addConstr(future_resid_demand_kW[t]  == p_resid_eq1[t] + p_pv_to_resid[t]);
+            model.addConstr(future_pv_generation_kW[t] == p_pv_eq2[t]    + p_pv_to_resid[t]);
+        }
         // Power balance equation on control unit level
         if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::GridChargingAndDischarging) {
             // Case A: Battery charging from grid allowed
@@ -101,8 +112,7 @@ bool GurobiLPController::updateController(
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                     expr_cs_p_at_t += p_ev_kW[evIdx][t];
                 }
-                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
-                model.addConstr(resid_minus_pv_kW
+                model.addConstr(p_resid_eq1[t]   - p_pv_eq2[t]
                                 + p_bs_in_kW[t]  - p_bs_out_kW[t]
                                 + p_hp_kW[t]     + expr_cs_p_at_t
                                 + x_feedin_kW[t] - x_demand_kW[t] == 0);
@@ -129,20 +139,13 @@ bool GurobiLPController::updateController(
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                     expr_cs_p_at_t += p_ev_kW[evIdx][t];
                 }
-                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
-                double local_plus = 0, local_minus = 0;
-                if (resid_minus_pv_kW > 0) {
-                    local_plus  =  resid_minus_pv_kW;
-                } else {
-                    local_minus = -resid_minus_pv_kW;
-                }
                 // balance euqation 1
-                model.addConstr(local_plus + p_hp_kW_1[t] + p_cs_kW_1[t]
+                model.addConstr(p_resid_eq1[t] + p_hp_kW_1[t] + p_cs_kW_1[t]
                                 + p_bs_in_kW_1[t]
                                 - p_bs_out_kW[t] - x_demand_kW[t] == 0);
                 // balance equation 2
                 model.addConstr(p_hp_kW_2[t] + p_cs_kW_2[t] + x_feedin_kW[t] + p_bs_in_kW_2[t]
-                                - local_minus == 0);
+                                - p_pv_eq2[t] == 0);
                 // linkage of the power parts of BS, HP and CS with actual power
                 model.addConstr(p_bs_in_kW[t]  == p_bs_in_kW_1[t] + p_bs_in_kW_2[t]);
                 model.addConstr(p_hp_kW[t]     == p_hp_kW_1[t]    + p_hp_kW_2[t]);
@@ -187,19 +190,12 @@ bool GurobiLPController::updateController(
                 for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                     expr_cs_p_at_t += p_ev_kW[evIdx][t];
                 }
-                double resid_minus_pv_kW = future_resid_demand_kW[t] - future_pv_generation_kW[t]; // i.e. local balance at time step t
-                double local_plus = 0, local_minus = 0;
-                if (resid_minus_pv_kW > 0) {
-                    local_plus  =  resid_minus_pv_kW;
-                } else {
-                    local_minus = -resid_minus_pv_kW;
-                }
                 // balance euqation 1
-                model.addConstr(local_plus + p_hp_kW_1[t] + p_cs_kW_1[t]
+                model.addConstr(p_resid_eq1[t] + p_hp_kW_1[t] + p_cs_kW_1[t]
                                 - p_bs_out_kW[t] - x_demand_kW[t] == 0);
                 // balance equation 2
                 model.addConstr(p_hp_kW_2[t] + p_cs_kW_2[t] + x_feedin_kW[t] + p_bs_in_kW[t]
-                                - local_minus == 0);
+                                - p_pv_eq2[t] == 0);
                 // linkage of the power parts of HP and CS with actual power
                 model.addConstr(p_hp_kW[t] == p_hp_kW_1[t] + p_hp_kW_2[t]);
                 model.addConstr(expr_cs_p_at_t == p_cs_kW_1[t] + p_cs_kW_2[t]);

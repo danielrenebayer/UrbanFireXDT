@@ -1089,7 +1089,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             unsigned long n_opti_vars = 0;
             if (Global::get_max_parallel_opti_vars() > 0) {
                 // Compute the number of optimization variables for this unit
-                n_opti_vars  = Global::get_control_horizon_in_ts() * 7 + 1;
+                n_opti_vars  = Global::get_control_horizon_in_ts() * 10 + 1;
                 n_opti_vars += Global::get_control_horizon_in_ts() * n_cars * 2;
                 if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging) {
                     n_opti_vars += Global::get_control_horizon_in_ts() * 4;
