@@ -412,6 +412,7 @@ bool add_expansion_to_units_random_or_data_order(
                 if (expBS) { // BS -> Do not install BS if BS addition limit is reached OR if PV addition is reached and this CU has no existing PV
                     if (!bs_addition_limit && (!pv_addition_limit || cu->has_pv()))
                         cu->add_exp_bs();
+                        // TODO: Wenn wir keine PV haben, geht das hier nicht ... evtl als sonderloesung?
                 }
                 // 2. if Global::exp_pv_max_kWp_total_set is set, we have to stop if this value has been reached
                 cumsum_added_pv_kWp += cu->get_sim_comp_pv_kWp();

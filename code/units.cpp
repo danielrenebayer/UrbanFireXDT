@@ -786,6 +786,7 @@ void ControlUnit::add_exp_bs() {
             new_battery_capacity_kWh = Global::get_exp_bess_kWh();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnNominalPVPower) {
             float pv_kWp = sim_comp_pv->get_kWp();
+            // TODO: Wenn es keine PV anlage gibt, gaebe es hier ein Problem !
             new_battery_capacity_kWh = pv_kWp * Global::get_exp_bess_sizingE_boPV();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumption) {
             // round on two digits
