@@ -28,8 +28,13 @@ for file in "${diff_files[@]}"; do
 
     # Print filename and wait for user input
     echo "Showing differences for: $relative_path"
-    read -n 1 -s -r -p "Please press any key to continue..."
+    read -n 1 -s -r -p "Please press any key (except of 's', 'c' or 'n') to continue or 's', 'c' or 'n' to skip this file ..." key
     echo ""
+
+    if [[ "$key" == "s" || "$key" == "c" || "$key" == "n" ]]; then
+        echo " -> skipping this file."
+        continue
+    fi
 
     # Convert CSV to tabbed format
     cat "$file" | column -t -s ',' > "$tabbed_test_file"
@@ -40,5 +45,12 @@ for file in "${diff_files[@]}"; do
 
     # Clean up
     rm -f "$tabbed_test_file" "$tabbed_verified_file"
+
+    # Should this file be copied to the verified output dir?
+    read -n 1 -s -r -p "Overwrite the verified output? (y/N)" key
+    if [[ "$key" == "y" || "$key" == "Y" ]]; then
+        cp "$file" "$verified_file"
+        echo -e "\nFile moved."
+    fi
 done
 
