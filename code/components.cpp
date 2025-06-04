@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "cache_helper.hpp"
 #include "vehicles.h"
 #include "global.h"
 #include "output.h"
@@ -47,7 +48,7 @@ std::map<std::string, size_t> RoofSectionPV::next_pv_idx;
 std::map<std::string, std::default_random_engine>            RoofSectionPV::random_generators;
 std::map<std::string, std::uniform_int_distribution<size_t>> RoofSectionPV::distributions;
 
-RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
+RoofSectionPV::RoofSectionPV(size_t locationID, float this_section_kWp, const std::string& orientation)
     : this_section_kWp(this_section_kWp), orientation(orientation)
 {
     // 1)
@@ -75,12 +76,22 @@ RoofSectionPV::RoofSectionPV(float this_section_kWp, std::string& orientation)
         }
     } else {
         // case random selection
-        if (!random_generators.contains(orientation)) {
-            random_generators[orientation] = std::default_random_engine{};
-            if (Global::is_seed_set()) random_generators[orientation].seed(Global::get_seed());
-            distributions[orientation] = std::uniform_int_distribution<size_t>(0, global::pv_profiles_information[orientation]-1);
+        std::optional<size_t> cached_profile_idx = PVProfileIDCache::GetInstance().readCache(locationID, orientation);
+        if (cached_profile_idx.has_value()) {
+            //If there is a cache file for the profile allocation -> use it!
+            profile_index = *cached_profile_idx;
+        } else {
+            // Otherwise, sample a new number
+            if (!random_generators.contains(orientation)) {
+                random_generators[orientation] = std::default_random_engine{};
+                if (Global::is_seed_set()) random_generators[orientation].seed(Global::get_seed());
+                distributions[orientation] = std::uniform_int_distribution<size_t>(0, global::pv_profiles_information[orientation]-1);
+            }
+            // randomly select new index
+            profile_index = distributions[orientation](random_generators[orientation]);
+            // update cache
+            PVProfileIDCache::GetInstance().updateCache(locationID, orientation, profile_index);
         }
-        profile_index = distributions[orientation](random_generators[orientation]);
     }
     // 2)
     // select the correct profile
@@ -145,12 +156,12 @@ ComponentPV::ComponentPV(float kWp, unsigned long locationID)
         // 2)
         // create and add section to list
         float section_kWp = share_of_total_area * kWp;
-        roof_sections.emplace_back(section_kWp, section_orientation);
+        roof_sections.emplace_back(locationID, section_kWp, section_orientation);
     }
   } else {
     // Case 2: Only use one component facing the given orientation
     string ori = Global::get_exp_pv_static_profile_orientation();
-    roof_sections.emplace_back(kWp, ori);
+    roof_sections.emplace_back(locationID, kWp, ori);
   }
 
     // initialization of the cached vector
@@ -223,7 +234,7 @@ ComponentPV::ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec,
     for (auto& section_tuple : vec_of_sections) {
         float       section_kWp         = section_tuple.first;
         std::string section_orientation = section_tuple.second;
-        roof_sections.emplace_back(section_kWp, section_orientation);
+        roof_sections.emplace_back(locationID, section_kWp, section_orientation);
     }
 
     // initialization of the cached vector
@@ -460,9 +471,10 @@ bool   ComponentHP::random_generator_init = false;
 std::default_random_engine*            ComponentHP::random_generator = NULL;
 std::uniform_int_distribution<size_t>* ComponentHP::distribution     = NULL;
 
-ComponentHP::ComponentHP(float yearly_econs_kWh)
-    : yearly_electricity_consumption_kWh(yearly_econs_kWh),
-      scaling_factor(yearly_econs_kWh/1000.0f)
+ComponentHP::ComponentHP(const ControlUnit* connected_unit, float annual_econs_kWh)
+    : connected_unit(connected_unit),
+      yearly_electricity_consumption_kWh(annual_econs_kWh),
+      scaling_factor(annual_econs_kWh/1000.0f)
 {
     // initialize the unshiftable load storage
     future_maxP_storage.clear();
@@ -479,10 +491,19 @@ ComponentHP::ComponentHP(float yearly_econs_kWh)
         if (next_hp_idx >= Global::get_n_heatpump_profiles())
             next_hp_idx = 0;
     } else {
-        if (!random_generator_init)
-            ComponentHP::InitializeRandomGenerator();
-        // randomly select new index
-        this_hp_profile_idx = (*distribution)(*random_generator);
+        std::optional<size_t> cached_profile_idx = HPProfileIDCache::GetInstance().readCache(connected_unit->get_unitID());
+        if (cached_profile_idx.has_value()) {
+            //If there is a cache file for the profile allocation -> use it!
+            this_hp_profile_idx = *cached_profile_idx;
+        } else {
+            // Otherwise, sample a new number
+            if (!random_generator_init)
+                ComponentHP::InitializeRandomGenerator();
+            // randomly select new index
+            this_hp_profile_idx = (*distribution)(*random_generator);
+            // update cache
+            HPProfileIDCache::GetInstance().updateCache(connected_unit->get_unitID(), this_hp_profile_idx);
+        }
     }
     //
     // reference the profile

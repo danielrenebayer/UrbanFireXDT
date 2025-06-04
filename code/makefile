@@ -1,7 +1,7 @@
 CC = g++
 FLAGS = -std=c++23 -pedantic -Wall
 FLAGS_EXTRA = -Wconversion -Wextra
-LIBS  = -pthread -l sqlite3 -l boost_program_options -l ncurses
+LIBS  = -pthread -l sqlite3 -l boost_program_options -l boost_json -l ncurses
 FILES = main.cpp components.cpp units.cpp global.cpp sac_planning.cpp setup_and_dataloading.cpp simulation_logic.cpp status_output.cpp output.cpp helper.cpp worker_threads.cpp
 OUTPUT_DIR = ../bin
 

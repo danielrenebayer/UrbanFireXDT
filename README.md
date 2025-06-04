@@ -28,6 +28,7 @@ This project requires the following libraries to build and run:
 * **libsqlite3-dev:** For SQLite3 database interaction
 * **libboost-dev:** For parsing the JSON-based configuration file and the command line options
 * **libboost-program-options-dev:** Specifically for command-line option parsing
+* **libboost-json-dev:** Specifically for parsing JSON files (that are used as cache files)
 
 These dependencies can be installed on Debian/Ubuntu with:
 ```

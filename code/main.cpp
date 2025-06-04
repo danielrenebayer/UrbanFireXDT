@@ -12,6 +12,7 @@
 
 #include "global.h"
 
+#include "cache_helper.hpp"
 #include "components.h"
 #include "units.h"
 #include "output.h"
@@ -256,6 +257,12 @@ int main(int argc, char* argv[]) {
 		return 4;
 	}
 
+    //
+    // Set cache file path
+    //
+    HPProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_HP_profiles.json");
+    PVProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_PV_profiles.json");
+
 	//
 	// Create the control units and load the data for the connected measurement units
 	//
@@ -304,6 +311,8 @@ int main(int argc, char* argv[]) {
 	//
 	// clean up
 	//
+    HPProfileIDCache::GetInstance().saveCacheFile();
+    PVProfileIDCache::GetInstance().saveCacheFile();
     EVFSM::VacuumStaticVariables();
     ComponentHP::VacuumStaticVariables();
 	MeasurementUnit::VacuumInstancesAndStaticVariables();

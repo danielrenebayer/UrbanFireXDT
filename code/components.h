@@ -112,7 +112,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
 
 class RoofSectionPV {
     public:
-        RoofSectionPV(float this_section_kWp, std::string& orientation);
+        RoofSectionPV(size_t locationID, float this_section_kWp, const std::string& orientation);
         float get_generation_at_ts_kW(unsigned long ts) const; ///< Returns the current feed in at a given time step. This method does not change the object. The validity of the arguments is NOT checked anymore!
         float get_section_kWp()    const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
@@ -222,7 +222,7 @@ class ComponentBS : public BaseComponent {
 
 class ComponentHP : public BaseComponentSemiFlexible {
     public:
-        ComponentHP(float yearly_econs_kWh);
+        ComponentHP(const ControlUnit* connected_unit, float annual_econs_kWh);
         // getter methods
         using BaseComponentSemiFlexible::get_currentDemand_kW;
         float  get_currentDemand_kW() const { return currentDemand_kW; }
@@ -276,6 +276,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         static void VacuumStaticVariables();
     private:
         // constant member variables
+        const ControlUnit* connected_unit;
         const float yearly_electricity_consumption_kWh;
         const float scaling_factor; ///< Factor to scale the profile to fit the yearly_electricity_consumption_kWh
         const float* profile_data; ///< Reference to the profile of the demand in kW per time step, should be one of global::hp_profiles

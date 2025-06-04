@@ -826,7 +826,7 @@ void ControlUnit::add_exp_hp() {
         //
         // create and link component
         has_sim_hp  = true;
-        sim_comp_hp = new ComponentHP(this->get_annual_hp_el_cons_kWh());
+        sim_comp_hp = new ComponentHP(this, this->get_annual_hp_el_cons_kWh());
     }
 }
 
