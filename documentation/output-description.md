@@ -88,13 +88,20 @@ In the case of weekly metrics file, an additional column giving the week number 
 | Timestep              | The time step ID of the current record |
 | _Per substation YYYY_ |             |
 | &nbsp;&nbsp; YYYY     | Active power in kW at substation YYYY |
-| pv_feedin_kW          | Sum of feed-in from control units caused by PV installations in kW |
-| bs_feedin_kW          | Sum of feed-in from control units caused by battery storage systems in kW |
-| chp_feedin_kW         | Sum of feed-in from control units caused by CHPs in kW |
-| wind_feedin_kW        | Sum of feed-in from control units caused by wind turbines in kW |
-| unknown_feedin_kW     | Sum of feed-in from control units in kW where the source is unknown or not attributable to any generation technology |
+| pv\_total\_generation\_kW       | Sum of total PV generation (regardless of self-consumption) in kW |
+| pv\_feedin\_expo\_kW            | Sum of feed-in from control units caused by PV installations in kW |
+| bs\_total\_generation\_kW       | Sum of total battery storage system discharging power (regardless of self-consumption) in kW |
+| bs\_feedin\_expo\_kW            | Sum of feed-in from control units caused by battery storage systems in kW |
+| chp\_total\_generation\_kW      | Sum of total CHP power generation (regardless of self-consumption) in kW |
+| chp\_feedin\_expo\_kW           | Sum of feed-in from control units caused by CHPs in kW |
+| wind\_total\_generation\_kW     | Sum of total wind power generation (regardless of self-consumption) in kW |
+| wind\_feedin\_expo\_kW          | Sum of feed-in from control units caused by wind turbines in kW |
+| unknown\_total\_generation\_kW  | Sum of total power generation (regardless of self-consumption) where the source is unknown or not attributable to any generation technology |
+| unknown\_feedin\_expo\_kW       | Sum of feed-in from control units in kW where the source is unknown or not attributable to any generation technology |
+| total\_demand\_wo\_BS\_SC\_kW   | Total demand of the buildings-energy consumption, the heat pump and the EV charging station over all control units in kW |
+| total\_BS\_charging\_power\_kW  | Total charging power of all battery stroage systems for all connected control units in kW |
 | OverallBatterySOC     | Mean SOC over all simulated battery storage systems on control unit level |
-| total_load            | Total active power in kW in the grid |
+| total\_load           | Total active power in kW in the grid |
 
 
 ## substation-detailed-time-series.csv
@@ -110,6 +117,7 @@ The columns of this output follows the following nomenclature:
 | _Per substation YYYY_   |             |
 | &nbsp;&nbsp; YYYY_resident_load_kW   | Sum of residential load in kW of all residential buildings connected to substation YYYY |
 | &nbsp;&nbsp; YYYY_resident_demand_kW | Sum of residential demand in kW of all residential buildings connected to substation YYYY |
+| &nbsp;&nbsp; YYYY_demand_wo_BESS_or_selfcons_kW  | Sum of total demand (without BESS) or the consideration of the self-consumption of PV or wind or CHP generation in kW of all buildings (not only the residential ones) connected to substation YYYY |
 | total_residential_load   | Total residential load in kW   |
 | total_residential_demand | Total residential demand in kW |
 
