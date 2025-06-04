@@ -282,9 +282,9 @@ int main(int argc, char* argv[]) {
 	}
 
     //
-    // Output all variable values
+    // Output all variable values (first time to stdout / cout)
     //
-    configld::output_variable_values();
+    configld::output_variable_values(std::cout);
 
     // get time for time measurement
     auto t2 = std::chrono::system_clock::now();
@@ -307,6 +307,13 @@ int main(int argc, char* argv[]) {
     long s_setup = std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count();
     long s_main  = std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count();
     output::outputRuntimeInformation(s_setup, s_main);
+
+    //
+    // Output all variable values (second time to a file)
+    //
+    std::ofstream log_file(*global::current_global_output_dir / "parameter-settings-general.txt");
+    configld::output_variable_values(log_file);
+    log_file.close();
 	
 	//
 	// clean up

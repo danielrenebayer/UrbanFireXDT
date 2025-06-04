@@ -1640,29 +1640,29 @@ bool helper_read_ev_profile_data(const std::string& filepath) {
 
 
 
-#define PRINT_VAR(varname) cout << "    " << std::setw(44) << std::left << #varname << " = " << varname << "\n"
-#define PRINT_TM_VAR(varname) cout << "    " << std::setw(44) << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
-#define PRINT_ENUM_VAR(varname, lambda_expr) cout << "    " << std::setw(44) << #varname << " = " << lambda_expr(varname) << "\n"
+#define PRINT_VAR(varname) current_outstream << "    " << std::setw(44) << std::left << #varname << " = " << varname << "\n"
+#define PRINT_TM_VAR(varname) current_outstream << "    " << std::setw(44) << #varname << " = " << std::put_time(varname, "%F %R") << "\n"
+#define PRINT_ENUM_VAR(varname, lambda_expr) current_outstream << "    " << std::setw(44) << #varname << " = " << lambda_expr(varname) << "\n"
 
 //
 // Implementation of configld::output_variable_values()
 //
-void configld::output_variable_values() {
-    cout << "Simulation information:\n";
-    cout << "    Simulation build at " << __DATE__ << " " << __TIME__ <<  "\n";
+void configld::output_variable_values(std::ostream& current_outstream) {
+    current_outstream << "Simulation information:\n";
+    current_outstream << "    Simulation build at " << __DATE__ << " " << __TIME__ <<  "\n";
     #ifdef __GNUC__
-    cout << "    GCC was used as compiler.\n    GCC Version = " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << "\n";
+    current_outstream << "    GCC was used as compiler.\n    GCC Version = " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << "\n";
     #endif
     #ifdef __VERSION__
-    cout << "    Compiler version = " << __VERSION__ << "\n";
+    current_outstream << "    Compiler version = " << __VERSION__ << "\n";
     #endif
     #ifdef __OPTIMIZE__
-    cout << "    Optimization was enabled during compile time.\n";
+    current_outstream << "    Optimization was enabled during compile time.\n";
     #endif
-    cout << "    C++ standard = " << __cplusplus << "\n\n";
-    cout << "List of parameter settings:\n";
+    current_outstream << "    C++ standard = " << __cplusplus << "\n\n";
+    current_outstream << "List of parameter settings (Attention - Values can be altered during parameter variations):\n";
     // Scenario selection
-    cout << "  Scenario selection and simulation flow control:\n";
+    current_outstream << "  Scenario selection and simulation flow control:\n";
     PRINT_VAR(Global::get_expansion_scenario_id());
     PRINT_VAR(Global::is_parameter_variation());
     PRINT_VAR(Global::get_parameter_varID());
@@ -1675,7 +1675,7 @@ void configld::output_variable_values() {
     PRINT_TM_VAR(Global::get_ts_start_tm());
     PRINT_TM_VAR(Global::get_ts_end_tm());
     // Data
-    cout << "  Data:\n";
+    current_outstream << "  Data:\n";
     PRINT_VAR(Global::get_output_path());
     PRINT_VAR(Global::get_input_path());
     PRINT_VAR(Global::get_structure_database_name());
@@ -1691,14 +1691,14 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_use_prices_time_series_ia());
     PRINT_VAR(global::structure_db_column_name_energy_prices);
     // Control strategy settings
-    cout << "  Control strategy settings:\n";
+    current_outstream << "  Control strategy settings:\n";
     PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});
     PRINT_VAR(Global::get_control_horizon_in_ts());
     PRINT_VAR(Global::get_control_update_freq_in_ts());
     PRINT_ENUM_VAR(Global::get_controller_bs_grid_charging_mode(), [](auto var){switch(var){case global::ControllerBSGridChargingMode::NoGridCharging: return "NoGridCharging"; case global::ControllerBSGridChargingMode::OnlyGridCharging: return "OnlyGridCharging"; case global::ControllerBSGridChargingMode::GridChargingAndDischarging: return "GridChargingAndDischarging"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_controller_optimization_target(), [](auto var){switch(var){case global::ControllerOptimizationTarget::ElectricityCosts: return "ElectricityCosts"; case global::ControllerOptimizationTarget::PeakLoad: return "PeakLoad"; case global::ControllerOptimizationTarget::Emissions: return "Emissions"; default: return "";}});
     // Selection settings
-    cout << "  Selection settings:\n";
+    current_outstream << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
@@ -1708,7 +1708,7 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_break_sac_loop_if_limit_reached());
     PRINT_VAR(Global::get_select_only_residential_buildings());
     // Scenario settings
-    cout << "  Scenario settings:\n";
+    current_outstream << "  Scenario settings:\n";
     PRINT_VAR(Global::get_exp_pv_static_mode());
     PRINT_VAR(Global::get_exp_pv_kWp_static());
     PRINT_VAR(Global::get_exp_pv_kWp_per_m2());
@@ -1754,11 +1754,11 @@ void configld::output_variable_values() {
     PRINT_VAR(Global::get_ev_charging_effi());
     PRINT_VAR(Global::get_cs_max_charging_power_kW());
     // Output settings
-    cout << "  Output settings:\n";
+    current_outstream << "  Output settings:\n";
     PRINT_VAR(Global::get_compute_weekly_metrics());
     PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});
     PRINT_VAR(global::n_ts_between_flushs);
     PRINT_VAR(Global::get_create_substation_output());
-    cout << global::output_section_delimiter << "\n";
+    current_outstream << global::output_section_delimiter << "\n";
 }
 
