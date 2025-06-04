@@ -9,6 +9,7 @@ Folders are marked in **bold**.
 | ---                                                 | -----       |
 | `expansion-matrix-abs-values.csv`                   | Expansion matrix filled with absolute numbers      |
 | `expansion-per-cu.csv`                              | List the expansion that happens per control unit   |
+| `parameter-settings-general.txt`                    | A complete list of the defined parameters. The values noted there can be changed during a parameter variation. |
 |                                                     |                                                    |
 | **`no param vari`**                                 | Output directory if no param variation is selected |
 | &nbsp;&nbsp;\| `metrics-per-cu.csv`                 | Computed metrics per control unit (like SSR, SCR, NPV, total grid demand, ...) including the concrete parameters for the simulated PV, battery and the charging station component |
