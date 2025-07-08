@@ -132,12 +132,11 @@ class ORToolsLPController : public BaseOptimizedController {
         }
         // Power balance for PV and residential demand
         for (unsigned int t = 0; t < T; t++) {
-            MPConstraint* const c1 = model->MakeRowConstraint(0.0, 0.0, "Residential demand linkage");
-            MPConstraint* const c2 = model->MakeRowConstraint(0.0, 0.0, "PV generation linkage");
-            c1->SetCoefficient(future_resid_demand_kW[t],  -1.0);
+            const std::string tstr = to_string(t);
+            MPConstraint* const c1 = model->MakeRowConstraint(future_resid_demand_kW[t],  future_resid_demand_kW[t],  "Residential demand linkage " + tstr);
             c1->SetCoefficient(p_resid_eq1[t],    1.0);
             c1->SetCoefficient(p_pv_to_resid[t],  1.0);
-            c2->SetCoefficient(future_pv_generation_kW[t], -1.0);
+            MPConstraint* const c2 = model->MakeRowConstraint(future_pv_generation_kW[t], future_pv_generation_kW[t], "PV generation linkage " + tstr);
             c2->SetCoefficient(p_pv_eq2[t],       1.0);
             c2->SetCoefficient(p_pv_to_resid[t],  1.0);
         }
