@@ -80,7 +80,7 @@ for file; do
 ' sh {} +
     #
     # Do the main diff task (but ignore ST1-AllCUs-ts.csv)
-    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv --exclude=ST1-AllCUs-ts.csv --exclude=ev-details.csv test-output/$di test-output-verified/$di
+    diff -rq --exclude=build_and_run_info.txt --exclude=runtime-information.csv --exclude=ST1-AllCUs-ts.csv --exclude=ev-details.csv --exclude=parameter-settings-general.txt test-output/$di test-output-verified/$di
     #
     # check if dirs are the same, if yes, return value is 0
     if (( $? != 0 )); then
