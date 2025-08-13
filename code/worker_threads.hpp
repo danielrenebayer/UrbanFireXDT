@@ -79,7 +79,7 @@ class CUControllerThreadGroupManager {
 
         /**
          * This function returns a pointer to the next control unit in the list of all control units for which ControlUnit::compute_next_value()
-         * has not been computed yet. It is thread safe and should be callen by the CUContollerWorkerThread instances.
+         * has not been computed yet. It is thread safe and should be called by the CUContollerWorkerThread instances.
          * Relevant for the case of using work stealing.
          * @returns A pointer to a control unit or null, if there is not control unit left
          */

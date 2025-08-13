@@ -110,9 +110,9 @@ void output::initializeDirectoriesBase(unsigned long scenario_id) {
 
 void output::initializeDirectoriesPerPVar() {
     //
-    // check, if initializeDirectoriesBase() is already callen
+    // check, if initializeDirectoriesBase() is already called
     if (!base_directories_initialized) {
-        throw logic_error("Error: output::initializeDirectoriesPerPVar() MUST be callen after output::initializeDirectoriesBase() has been callen.");
+        throw logic_error("Error: output::initializeDirectoriesPerPVar() MUST be called after output::initializeDirectoriesBase() has been called.");
     }
     //
     // in case of a parameter variation: create subfolder for

@@ -43,19 +43,19 @@ namespace output {
     /**
      * This function initializes the base direcory (or directories) for the output,
      * for the current scenario but not for individual parameter variations.
-     * It has to be callen once (or multiple times if repetition is selected as
+     * It has to be called once (or multiple times if repetition is selected as
      * cmd-line argument).
-     * It must be callen before initializeDirectoriesPerPVar().
+     * It must be called before initializeDirectoriesPerPVar().
      * @param scenario_id The current scenario ID
      */
     void initializeDirectoriesBase(unsigned long scenario_id);
     /**
      * This function initializes the direcory (or directories)
      * for the current parameter variation (if selected).
-     * Thus, it has to be callen for every parameter variation
+     * Thus, it has to be called for every parameter variation
      * setting individually again.
-     * Even in the case of no parameter variation, it has to be callen once.
-     * It MUST be callen AFTER initializeDirectoriesBase().
+     * Even in the case of no parameter variation, it has to be called once.
+     * It MUST be called AFTER initializeDirectoriesBase().
      */
     void initializeDirectoriesPerPVar();
     /**
@@ -139,7 +139,7 @@ namespace output {
 
     /**
      * Output information on the run time to a file.
-     * Thus function must not be callen before initializeDirectoriesBase().
+     * Thus function must not be called before initializeDirectoriesBase().
      * 
      * @param seconds_setup: The duration of the setup and data loading in seconds
      * @param seconds_main_run: The duration of the main run in seconds
