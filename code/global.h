@@ -101,7 +101,7 @@ namespace global {
 
     /*!
      * This struct defines the
-     * Control Unit Selectio Mode For Component Addition
+     * Control Unit Selection Mode For Component Addition
      * i.e. it defines how the control units are selected, that get simulatively added components (like PV, BS, HP, ...)
      */
     enum struct CUSModeFCA {
@@ -126,15 +126,32 @@ namespace global {
 
     /*!
      * This enum defines how the battery capacity sizing mode.
-     * There are two options:
+     * There are the following options:
      * 1. by using the constant value given in config-variable 'expansion BS E in kWh'
      * 2. by using the following formula (only, if a simulated PV is present): E_BS = P_PV * config-variable 'expansion BS capacity sizing factor for PV'
+     * 3. by using the annual electricity consumption - only of the connected measurement units
+     * 4. by using the annual electricity consumption - only of the connected measurement units + the heat pump (but not the EVs!)
+     * 5. determine the optimal size based on a optimization with a perfect forecast
      */
     enum struct BatteryCapacityComputationMode {
         Constant,
         BasedOnNominalPVPower,
         BasedOnAnnualConsumption,
-        BasedOnAnnualConsumptionWithHeatPump
+        BasedOnAnnualConsumptionWithHeatPump,
+        Optimized,
+    };
+
+    /**
+     * This enum defines the different PV sizing modes. This is the analogon to the enum struct `BatteryCapacityComputationMode`.
+     * There are the following options:
+     * 1. use the maximum available roof area
+     * 2. use a constant, i.e., static, PV size for all simulatively added PV installations with the same (configurable) orientation
+     * 3. determine the optimal size based on a optimization with a perfect forecast
+     */
+    enum struct PVSizingMode : short {
+        MaxAvailableRoofArea,
+        StaticPVSize,
+        Optimized,
     };
 
     /**
@@ -218,7 +235,6 @@ class Global {
         static unsigned long get_expansion_scenario_id() { return expansion_scenario_id; }
         static float get_time_step_size_in_h() { return time_step_size_in_h; }
         static bool  get_break_sac_loop_if_limit_reached() { return break_sac_loop_if_limit_reached; } //!< Returns true if the SAC loop should be stopped for an individual combination (like PV + HP) if one of the limits is reached (either PV or HP) (even though HP components should still be added)
-        static bool  get_exp_pv_static_mode()   { return exp_pv_kWp_static_mode; }
         static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
         static float get_exp_pv_kWp_per_m2()    { return exp_pv_kWp_per_m2;      }
         static float get_exp_pv_min_kWp_roof_sec()   { return exp_pv_min_kWp_roof_sec; }  //!< Returns the min. kWp per roof section - smaller sections will be ignored, defaults to 0.0
@@ -278,6 +294,7 @@ class Global {
         static global::CUSModeFCA get_cu_selection_mode_fca() { return cu_selection_mode_fca; }
         static global::BatteryPowerComputationMode get_battery_power_computation_mode() { return bat_power_comp_mode; }
         static global::BatteryCapacityComputationMode get_battery_capacity_computation_mode() { return bat_capacity_comp_mode; }
+        static global::PVSizingMode   get_exp_pv_sizing_mode()   { return exp_pv_sizing_mode; }
         static global::ControllerMode get_controller_mode() { return controller_mode; }
         static global::ControllerBSGridChargingMode get_controller_bs_grid_charging_mode()  { return controller_bs_grid_charging_mode; } ///< Return whether the battery can be charged from the grid / discharged into the grid - only effective if an optimized charging strategy is selected
         static global::ControllerOptimizationTarget get_controller_optimization_target() { return controller_optimization_target; } ///< Returns the selected optimization target (only valid if a controller mode with optimization is selected)
@@ -312,7 +329,7 @@ class Global {
         static void set_tsteps_per_hour(int tsteps_per_hour);
         static void set_expansion_scenario_id(unsigned long expansion_scenario_id);
         static void set_break_sac_loop_if_limit_reached(bool value);
-        static void set_exp_pv_mode(bool mode);
+        static void set_exp_pv_sizing_mode(global::PVSizingMode mode);
         static void set_exp_pv_kWp_static(float value);
         static void set_exp_pv_kWp_per_m2(float value);
         static void set_exp_pv_min_kWp_roof_sec(float value);
@@ -406,7 +423,7 @@ class Global {
         static unsigned long expansion_scenario_id;  ///< ID of the expansion scenario
         static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
         static bool  break_sac_loop_if_limit_reached; ///< true, if the SAC loop should be stopped for an individual combination (like PV+HP) if one of the limits is reached (either PV or HP)
-        static bool  exp_pv_kWp_static_mode; ///< true, if static PV kWp calculation is selected, otherwise false
+        static global::PVSizingMode exp_pv_sizing_mode;
         static float exp_pv_kWp_static;    ///< kWp of in the simulation added PV installations, if all units should get the same kWp in the end
         static float exp_pv_kWp_per_m2;    ///< kWp per m2 roof area, if dynamic kWp calculation is selected
         static float exp_pv_min_kWp_roof_sec; ///< minimal size in kWp that a PV section on a given roof section must have so that this section is used for expansion, only applicable with dynamic kWp calculation
@@ -493,7 +510,6 @@ class Global {
         static bool ts_end_str_init;
         static bool tsteps_per_hour_init;
         static bool expansion_scenario_id_init;
-        static bool exp_pv_kWp_static_mode_init;
         static bool exp_pv_kWp_static_init;
         static bool exp_pv_kWp_per_m2_init;
         static bool exp_pv_min_kWp_roof_sec_init;

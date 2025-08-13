@@ -760,15 +760,24 @@ void ControlUnit::add_exp_pv() {
     if (has_pv())
         cerr << "Warning: Control unit with location id " << locationID << " already has a PV installation!" << endl;
     if (!has_sim_pv) {
+        if (has_sim_bs) {
+            std::string error_msg = "Error in ControlUnit::add_exp_pv(): Control unit with ID " + std::to_string( unitID ) + " and location ID " + std::to_string( locationID ) + " has already a simulated BS. This method (adding PV) MUST be called before adding BS!";
+            cerr << error_msg << endl;
+            throw std::logic_error(error_msg);
+        }
+        // if no error occurs ...
         has_sim_pv  = true;
-        if (Global::get_exp_pv_static_mode()) {
+        if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize) {
             sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_static(), locationID);
-        } else {
+        } else if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::MaxAvailableRoofArea) {
             sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_per_m2(),
                                           Global::get_exp_pv_min_kWp_roof_sec(),
                                           Global::get_exp_pv_max_kWp_roof_sec(),
                                           Global::get_exp_pv_max_kWp_per_unit(),
                                           locationID);
+        } else /* if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized) */ {
+            // TODO ... Optimization MUST be executed HERE ALREADY ... because we need to know the optimal installed PV kWp here ...
+            throw std::runtime_error("This feature is currently not implemented: Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized");
         }
     }
 }
@@ -793,13 +802,17 @@ void ControlUnit::add_exp_bs() {
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumption) {
             // round on two digits
             new_battery_capacity_kWh = round( (float) (get_mean_annual_MU_el_demand_kWh() / 1000) * 100 ) / 100.0;
-        } else {
+        } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumptionWithHeatPump) {
             float ann_cons_kWh = get_mean_annual_MU_el_demand_kWh();
             if (has_sim_hp) {
                 ann_cons_kWh += get_annual_hp_el_cons_kWh();
             }
             // round on two digits
             new_battery_capacity_kWh = round( (float) (ann_cons_kWh / 1000) * 100 ) / 100.0;
+        } else /* if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized) */ {
+            // TODO ... Optimization MUST be executed HERE ALREADY ... because we need to know the actual BS capacity here ...
+            new_battery_capacity_kWh = 0.0; // TODO: The result of the optimization!
+            throw std::runtime_error("This feature is currently not implemented: Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized");
         }
         // respect maximum addition
         if (Global::get_exp_bess_max_capacity() > 0.0) {
@@ -854,7 +867,7 @@ void ControlUnit::set_output_object(CUOutput* output_obj) {
 void ControlUnit::set_exp_pv_params_A(float value) {
     // do something only if this unit is selected for PV expansion
     if (has_sim_pv) {
-        if (Global::get_exp_pv_static_mode()) {
+        if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize) {
             delete sim_comp_pv;
             sim_comp_pv = new ComponentPV(value, locationID);
         } else {
@@ -866,7 +879,7 @@ void ControlUnit::set_exp_pv_params_A(float value) {
 void ControlUnit::set_exp_pv_params_B(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit) {
     // do something only if this unit is selected for PV expansion
     if (has_sim_pv) {
-        if (Global::get_exp_pv_static_mode()) {
+        if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize) {
             throw runtime_error("Error: ControlUnit::set_exp_pv_params_B() has been callen even though PV static mode is not set!");
         } else {
             delete sim_comp_pv;
@@ -1163,6 +1176,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                     optimized_controller->shiftVectorsByOnePlace();
                 }
             }
+            // TODO: In case of the first call
+            // AND
+            // Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized;
+            // or
+            // Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized;
+            // we must output the result of the optimal PV / BS size!
 
         } else {
             // else (i.e., no opti executed in this position):

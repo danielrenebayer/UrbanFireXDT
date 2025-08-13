@@ -14,7 +14,7 @@
         "expansion PV max inst kWp per unit":    100.0,
         "expansion PV kWp per roof area in m2":    0.1,
         "expansion PV kWp static":                 0.0,
-        "expansion PV kWp static mode":          false,
+        "expansion PV sizing mode":              "MaxAvailableRoofArea",
         "__disabled expansion PV max total kWp addition": 10000.0,
         
         "expansion BS P in kW":        1.0,
@@ -77,7 +77,7 @@
             "id": 7,
             "expansion id": 2,
             "expansion BS P in kW": 20,
-            "expansion PV kWp static mode": true,
+            "expansion PV sizing mode": "StaticPVSize",
             "comment": "Test scenario for parameter variation, based on Scnario 2"
         },
         {

@@ -91,7 +91,6 @@ namespace output {
      * This struct is important especially for outputting the current parameter setting.
      */ 
     struct CurrentParamValues {
-        bool  exp_pv_static_mode    = false; bool exp_pv_static_mode_set      = false;
         float exp_pv_kWp_static       = 0.0; bool exp_pv_kWp_static_set       = false;
         float exp_pv_kWp_per_m2       = 0.0; bool exp_pv_kWp_per_m2_set       = false;
         float exp_pv_min_kWp_roof_sec = 0.0; bool exp_pv_min_kWp_roof_sec_set = false;

@@ -342,9 +342,6 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion PV kWp static,";
     if (cParamVals.exp_pv_kWp_static_set)       ofs << cParamVals.exp_pv_kWp_static;       else ofs << Global::get_exp_pv_kWp_static();
     ofs << "\n";
-    ofs << "expansion PV kWp static mode,";
-    if (cParamVals.exp_pv_static_mode_set)      ofs << cParamVals.exp_pv_static_mode;      else ofs << Global::get_exp_pv_static_mode();
-    ofs << "\n";
     ofs << "expansion BS E in kWh,";
     if (cParamVals.exp_bs_maxE_kWh_set) ofs << cParamVals.exp_bs_maxE_kWh; else ofs << Global::get_exp_bess_kWh();
     ofs << "\n";

@@ -54,7 +54,7 @@ RoofSectionPV::RoofSectionPV(size_t locationID, float this_section_kWp, const st
     // 1)
     // take the correct profile
     profile_index = 0;
-    if (Global::get_exp_pv_static_mode() &&
+    if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize &&
         Global::get_exp_pv_static_profile_orientation() != "" &&
         Global::get_exp_pv_static_profile_idx() >= 0)
     {

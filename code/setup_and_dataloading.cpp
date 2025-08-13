@@ -53,8 +53,6 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
         string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         string sac_planning_mode   = ""; bool sac_planning_mode_set   = false;
         string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
-        // variables for PV expansion
-        bool   exp_pv_mode_static = false; bool exp_pv_mode_static_set= false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -119,6 +117,8 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumption);
                 } else if (selection == "use mean annual consumption with heat pump") {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumptionWithHeatPump);
+                } else if (selection == "optimized") {
+                    Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::Optimized);
                 } else {
                     cerr << "Parameter 'expansion BS capacity computation mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
                     throw runtime_error("Parameter 'expansion BS capacity computation mode' as defined in config-json is unknown.");
@@ -194,10 +194,19 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_exp_pv_kWp_per_m2( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV kWp static mode")            == 0 )
+            else if ( element_name.compare("expansion PV sizing mode")                == 0 )
             {
-                exp_pv_mode_static     = scenario_dict.get_value<bool>();
-                exp_pv_mode_static_set = true;
+                string selection = scenario_dict.get_value<string>();
+                if (selection == "MaxAvailableRoofArea") {
+                    Global::set_exp_pv_sizing_mode(global::PVSizingMode::MaxAvailableRoofArea);
+                } else if (selection == "StaticPVSize") {
+                    Global::set_exp_pv_sizing_mode(global::PVSizingMode::StaticPVSize);
+                } else if (selection == "Optimized") {
+                    Global::set_exp_pv_sizing_mode(global::PVSizingMode::Optimized);
+                } else {
+                    cerr << "Parameter 'expansion PV sizing mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'expansion PV sizing mode' as defined in config-json is unknown.");
+                }
             }
             else if ( element_name.compare("tariff feed-in per kWh")                  == 0 )
             {
@@ -590,7 +599,6 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             // other values
             if (exp_profile_mode_set)   Global::set_exp_profile_mode(exp_profile_mode_transf);
             if (sac_planning_mode_set)  Global::set_cu_selection_mode_fca(sac_planning_mode_transl);
-            if (exp_pv_mode_static_set) Global::set_exp_pv_mode(exp_pv_mode_static);
             if (exp_bs_P_comp_mode_set) Global::set_battery_power_computation_mode(exp_bs_P_comp_mode_transl);
             //
             Global::LockAllVariables();
@@ -1702,14 +1710,14 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
-    PRINT_ENUM_VAR(Global::get_battery_capacity_computation_mode(), [](auto var){switch(var){case global::BatteryCapacityComputationMode::Constant: return "Constant"; case global::BatteryCapacityComputationMode::BasedOnNominalPVPower: return "BasedOnNominalPVPower"; case global::BatteryCapacityComputationMode::BasedOnAnnualConsumption: return "BasedOnAnnualConsumption"; default: return "";}});
+    PRINT_ENUM_VAR(Global::get_battery_capacity_computation_mode(), [](auto var){switch(var){case global::BatteryCapacityComputationMode::Constant: return "Constant"; case global::BatteryCapacityComputationMode::BasedOnNominalPVPower: return "BasedOnNominalPVPower"; case global::BatteryCapacityComputationMode::BasedOnAnnualConsumption: return "BasedOnAnnualConsumption"; case global::BatteryCapacityComputationMode::Optimized: return "Optimized"; default: return "";}});
     PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
     PRINT_VAR(Global::get_select_buildings_wg_heatd_only());
     PRINT_VAR(Global::get_break_sac_loop_if_limit_reached());
     PRINT_VAR(Global::get_select_only_residential_buildings());
     // Scenario settings
     current_outstream << "  Scenario settings:\n";
-    PRINT_VAR(Global::get_exp_pv_static_mode());
+    PRINT_ENUM_VAR(Global::get_exp_pv_sizing_mode(), [](auto var){switch(var){case global::PVSizingMode::MaxAvailableRoofArea: return "MaxAvailableRoofArea"; case global::PVSizingMode::StaticPVSize: return "StaticPVSize"; case global::PVSizingMode::Optimized: return "Optimized"; default: return "";}});
     PRINT_VAR(Global::get_exp_pv_kWp_static());
     PRINT_VAR(Global::get_exp_pv_kWp_per_m2());
     PRINT_VAR(Global::get_exp_pv_min_kWp_roof_sec());

@@ -126,7 +126,6 @@ int Global::tsteps_per_hour       = 1;
 unsigned long Global::expansion_scenario_id = 0;
 float Global::time_step_size_in_h   = 0.0;
 bool  Global::break_sac_loop_if_limit_reached = true;
-bool  Global::exp_pv_kWp_static_mode  = false;
 float Global::exp_pv_kWp_static       = 0.0;
 float Global::exp_pv_kWp_per_m2       = 0.0;
 float Global::exp_pv_min_kWp_roof_sec = 0.0;
@@ -184,6 +183,7 @@ ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAlloca
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
 global::BatteryPowerComputationMode Global::bat_power_comp_mode = global::BatteryPowerComputationMode::AsDefinedByConfigVar;
 global::BatteryCapacityComputationMode Global::bat_capacity_comp_mode = global::BatteryCapacityComputationMode::Constant;
+global::PVSizingMode Global::exp_pv_sizing_mode = global::PVSizingMode::MaxAvailableRoofArea;
 global::ControllerMode Global::controller_mode = global::ControllerMode::RuleBased;
 global::ControllerBSGridChargingMode Global::controller_bs_grid_charging_mode = global::ControllerBSGridChargingMode::NoGridCharging;
 global::ControllerOptimizationTarget Global::controller_optimization_target = global::ControllerOptimizationTarget::ElectricityCosts;
@@ -212,7 +212,6 @@ bool Global::ts_start_str_init     = false;
 bool Global::ts_end_str_init       = false;
 bool Global::tsteps_per_hour_init  = false;
 bool Global::expansion_scenario_id_init = false;
-bool Global::exp_pv_kWp_static_mode_init  = false;
 bool Global::exp_pv_kWp_static_init       = false;
 bool Global::exp_pv_kWp_per_m2_init       = false;
 bool Global::exp_pv_min_kWp_roof_sec_init = false;
@@ -259,6 +258,14 @@ bool Global::AllVariablesInitialized() {
         std::cerr << "Error: Control horizon < control update frequency!" << std::endl;
         return false;
     }
+    if ((
+            exp_pv_sizing_mode == global::PVSizingMode::Optimized  ||
+            bat_capacity_comp_mode == global::BatteryCapacityComputationMode::Optimized
+        ) && controller_mode != global::ControllerMode::OptimizedWithPerfectForecast
+    ) {
+        std::cerr << "Error: PV sizing mode or BS capacity computation mode ist set to be optimized, but the controller mode is not set to use an optimized strategy. This is an impossible combination." << std::endl;
+        return false;
+    }
     // Check for initialized variables
     if (n_timesteps_init && 
         n_substations_init &&
@@ -273,7 +280,6 @@ bool Global::AllVariablesInitialized() {
         ts_end_str_init &&
         tsteps_per_hour_init &&
         expansion_scenario_id_init &&
-        exp_pv_kWp_static_mode_init &&
         exp_bess_kWh_init &&
         exp_bess_start_soc_init &&
         input_path_init &&
@@ -291,6 +297,7 @@ bool Global::AllVariablesInitialized() {
         input_path_init &&
         bat_power_comp_mode_init)
     {
+        bool exp_pv_kWp_static_mode = exp_pv_sizing_mode == global::PVSizingMode::StaticPVSize; // only a helper variable in this function
         if ((
              ( exp_pv_kWp_static_mode && exp_pv_kWp_static_init) ||
              (!exp_pv_kWp_static_mode && exp_pv_kWp_per_m2_init
@@ -359,9 +366,6 @@ void Global::PrintUninitializedVariables() {
     if (!expansion_scenario_id_init) {
         cout << "Variable expansion_scenario_id not initialized." << endl;
     }
-    if (!exp_pv_kWp_static_mode_init) {
-        cout << "Variable exp_pv_kWp_static_mode not initialized." << endl;
-    }
     if (!exp_bess_kWh_init) {
         cout << "Variable exp_bess_kWh not initialized." << endl;
     }
@@ -383,13 +387,13 @@ void Global::PrintUninitializedVariables() {
     if (!cu_selection_mode_fca_init) {
         cout << "Variable cu_selection_mode_fca not initialized." << endl;
     }
-    if (exp_pv_kWp_static_mode && !exp_pv_kWp_static_init) {
+    if (!exp_pv_kWp_static_init && Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize) {
         cout << "Variable exp_pv_kWp_static not initialized." << endl;
     }
-    if (!exp_pv_kWp_static_mode && !exp_pv_kWp_per_m2_init) {
+    if (!exp_pv_kWp_per_m2_init && Global::get_exp_pv_sizing_mode() != global::PVSizingMode::StaticPVSize) {
         cout << "Variable exp_pv_kWp_per_m2 not initialized." << endl;
     }
-    if (!exp_pv_kWp_static_mode && !exp_pv_min_kWp_roof_sec_init) {
+    if (!exp_pv_min_kWp_roof_sec_init && Global::get_exp_pv_sizing_mode() != global::PVSizingMode::StaticPVSize) {
         cout << "Variable exp_pv_min_kWp_roof_sec not initialized." << endl;
     }
     if (!feed_in_tariff_set) {
@@ -627,12 +631,11 @@ void Global::set_break_sac_loop_if_limit_reached(bool value) {
         Global::break_sac_loop_if_limit_reached = value;
     }
 }
-void Global::set_exp_pv_mode(bool mode) {
-    if (is_locked && exp_pv_kWp_static_mode_init) {
-        cerr << "Global variable exp_pv_kWp_static_mode is already initialized!" << endl;
+void Global::set_exp_pv_sizing_mode(global::PVSizingMode mode) {
+    if (is_locked) {
+        cerr << "Global variable exp_pv_sizing_mode cannot be modified at the moment!" << endl;
     } else {
-        Global::exp_pv_kWp_static_mode      = mode;
-        Global::exp_pv_kWp_static_mode_init = true;
+        Global::exp_pv_sizing_mode = mode;
     }
 }
 void Global::set_exp_pv_kWp_static(float value) {
