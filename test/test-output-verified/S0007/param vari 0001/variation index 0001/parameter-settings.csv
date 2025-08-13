@@ -4,7 +4,6 @@ expansion PV max inst kWp per section,100
 expansion PV max inst kWp per unit,100
 expansion PV kWp per roof area in m2,0.1
 expansion PV kWp static,20
-expansion PV kWp static mode,1
 expansion BS E in kWh,20
 expansion BS E:P ratio,0
 expansion BS initial SOC,0
