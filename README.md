@@ -1,9 +1,16 @@
-# Simulation for a Digital Twin of a Local Energy System
+# Digital Twin for the eXploration of Future Integrated Renewable Energy systems - Working component (DTXFireWorks)
+
+<p align="center">
+    <img src="documentation/logos/DTXFireWorks_Logo_v1.png" alt="DTXFireWorks Logo" />
+</p>
 
 <!-- About the repository -->
 ## About the repository
 
-This repository contains the code for the simulation developed in the DigiSWM research project.
+This repository contains the code for the simulation component that is part of the digital twin for the analysis of future integrated renewable energy systems, as presented for example in [1].
+For details, please read the scientific publications linked below.
+This README contains all important information to compile the code and run the examples.
+Parts of this code were developed as part of the *DigiSWM* research project founded by the Bavarian State Ministry of Economic Affairs, Regional Development and Energy under grant number DIK-2103-0017 / DIK0298/02.
 
 
 <!-- Structure of the repository -->
@@ -19,7 +26,7 @@ This repository contains the code for the simulation developed in the DigiSWM re
 <!-- Installation -->
 ## Installation and Requirements
 
-This code is mainly written in C++ in standard C++23 and developed for a Debian or Ubuntu environment.
+This code is mainly written in C++ in standard **C++23** and developed for a **Debian or Ubuntu** environment.
 For compilation of the code, **gcc in version 14 or above** is required.
 
 ### Dependencies
@@ -80,8 +87,21 @@ The makefile `code/makefile` contains different targets.
 If using a local makefile, the local paths and settings will be ignored by git, as it is in the list of ignored files.
 
 
+<!-- Scientific References -->
+## Scientific References
+[1] D. Bayer and M. Pruckner, "A digital twin of a local energy system based on real smart meter data," *Energy Informatics*, vol. 6, no. 1, Mar. 2023. doi: [10.1186/s42162-023-00263-6](https://dx.doi.org/10.1186/s42162-023-00263-6).
+
+
 <!-- LICENSE -->
 ## License
 
 This code is distributed unter the MIT License. See `LICENSE` for more details.
+
+
+<!-- Logo License -->
+## Logo License
+
+The logos included in `documentation/logos` are distributed under the Creative Commons Attribution-NoDerivatives (CC BY-ND) license.
+See [https://creativecommons.org/licenses/by-nd/4.0/](https://creativecommons.org/licenses/by-nd/4.0/) for more details.
+
 
