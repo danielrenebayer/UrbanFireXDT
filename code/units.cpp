@@ -143,6 +143,8 @@ void Substation::VacuumInstancesAndStaticVariables() {
         st__substation_list[i] = NULL;
     }
 	st__n_substations = 0;
+    st__substation_list.clear();
+    public_to_internal_id.clear();
 }
 
 Substation* Substation::GetInstancePublicID(unsigned long public_id) {
@@ -1456,6 +1458,7 @@ void ControlUnit::VacuumInstancesAndStaticVariables() {
         delete st__empty_vector_for_time_horizon;
         st__empty_vector_for_time_horizon = NULL;
     }
+    public_to_internal_id.clear();
     if (Global::get_controller_mode() != global::ControllerMode::RuleBased) {
 #ifdef USE_OR_TOOLS
 #elif USE_GUROBI
