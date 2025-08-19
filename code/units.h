@@ -32,10 +32,49 @@ class OpenSpacePVOrWind;
 
 
 /*!
+ * This class represents the base class for all kind of units, i.e., Substation, ControlUnit and MeasurementUnit.
+ * This template class is using the so-called Curiously Recurring Template Pattern (CRTP) technique.
+ *
+ * @tparam Derived The derived unit class.
+ */
+template<class Derived>
+class BaseUnit {
+    public:
+        /*!
+         * Even though not required, this default destructor is added for safety reasons.
+         */
+        ~BaseUnit() = default;
+
+        /*!
+         * @brief Initialize the number of instances for the derived class that must be known when simulation is started.
+         *
+         * This method forwards the call to @c Derived::InitializeStaticVariables().
+         *
+         * @param n  The number of units to initialize (e.g., number of substations or control units).
+         */
+        static void InitializeStaticVariables(unsigned long n) {
+            Derived::InitializeStaticVariables(n);
+        }
+
+        /*!
+         * @brief Clean up all instances and static variables of the derived class.
+         *
+         * This method forwards the call to @c Derived::VacuumInstancesAndStaticVariables().
+         * Each derived class must implement this function, which should remove
+         * all dynamically created instances and reset static variables (including
+         * @c public_to_internal_id if appropriate).
+         */
+        static void VacuumInstancesAndStaticVariables() {
+            Derived::VacuumInstancesAndStaticVariables();
+        }
+};
+
+
+/*!
  * This class represents a substation.
  * One or more control units are connected to one instance of this class.
  */
-class Substation {
+class Substation : BaseUnit<Substation> {
     public:
         /*!
          * Instantiates a new substation object.
@@ -118,7 +157,7 @@ class Substation {
  * All simulatively added components are added in this control unit.
  * It holds a set (at least one) of measurement units.
  */
-class ControlUnit {
+class ControlUnit : BaseUnit<ControlUnit> {
     public:
         /*!
          * Instantiates a new control unit.
@@ -329,7 +368,7 @@ class ControlUnit {
  *  smart meter where we have real measured data for.
  *  If there exist additional components, like PV, in reality, an instance of this class knows this.
  */
-class MeasurementUnit {
+class MeasurementUnit : BaseUnit<MeasurementUnit> {
     public:
         /*!
          * Instantiates a new measurement unit.
