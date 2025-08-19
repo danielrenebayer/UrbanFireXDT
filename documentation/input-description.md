@@ -5,7 +5,7 @@
 # General overview of the input data
 
 - The simulation requires a sqlite3-database with the structure of the system that should be simulated (default filename is SystemStructure.db).
-- The existing smart meter data of the individual measurement units must be stored in a subfolder called 'SeparatedSmartMeterData' as individual comma-seperated values (csv) files.
+- The existing smart meter data of the individual measurement units must be stored in a subfolder called 'SeparatedSmartMeterData' as individual comma-separated values (csv) files.
 - The file name of the CSV files must equal the measurement unit ID (key: `list_of_measurement_units.MeUID`) as they are defined in the system structure database.
 
 

@@ -245,7 +245,7 @@ class ControlUnit {
         std::list<MeasurementUnit*>* connected_units;
         bool has_sim_pv; ///< boolean variable that states if a PV installation is simulatively added
         bool has_sim_bs; ///< boolean variable that states if a battery storage is simulatively added
-        bool has_sim_hp; ///< boolean variable that states if a heap pump is simulatively added
+        bool has_sim_hp; ///< boolean variable that states if a heat pump is simulatively added
         bool has_sim_cs; ///< boolean variable that states if an EV charging station is simulatively added
         ComponentPV* sim_comp_pv; ///< Reference to the simulated PV-Component (if it exists)
         ComponentBS* sim_comp_bs; ///< Reference to the simulated battery storage component (if it exists)
