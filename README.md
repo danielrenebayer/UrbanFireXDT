@@ -1,7 +1,7 @@
-# Digital Twin for the eXploration of Future Integrated Renewable Energy systems - Working component (DTXFireWorks)
+# Urban Future Integrated Renewable Energy systems eXploration Digital Twin
 
 <p align="center">
-    <img src="documentation/logos/DTXFireWorks_Logo_v1.png" alt="DTXFireWorks Logo" />
+    <img src="documentation/logos/UrbanFireXDT_Logo_v1.png" alt="UrbanFireXDT Logo" />
 </p>
 
 <!-- About the repository -->
