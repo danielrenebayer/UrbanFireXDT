@@ -311,13 +311,13 @@ void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
 // ----------------------------- //
 
 ComponentBS::ComponentBS(
-    float maxE_kWh,
-    float maxP_kW,
-    float E_over_P_ratio,
-    float discharge_rate_per_step,
-    float efficiency_in,
-    float efficiency_out,
-    float initial_SoC
+    double maxE_kWh,
+    double maxP_kW,
+    double E_over_P_ratio,
+    double discharge_rate_per_step,
+    double efficiency_in,
+    double efficiency_out,
+    double initial_SoC
 ) : maxE_kWh(maxE_kWh),
     discharge_rate_per_step(discharge_rate_per_step), efficiency_in(efficiency_in),
     efficiency_out(efficiency_out), initial_SoC(initial_SoC)
@@ -348,10 +348,10 @@ ComponentBS::ComponentBS(
 }
 
 ComponentBS::ComponentBS(
-    float maxE_kWh,
-    float discharge_rate_per_step,
-    float efficiency_in,
-    float initial_SoC
+    double maxE_kWh,
+    double discharge_rate_per_step,
+    double efficiency_in,
+    double initial_SoC
 ) : maxE_kWh(maxE_kWh),
     discharge_rate_per_step(discharge_rate_per_step),
     efficiency_in(efficiency_in),
@@ -390,24 +390,24 @@ void ComponentBS::set_grid_charged_amount(double grid_charged_kW) {
     }
 }
 
-void ComponentBS::set_SOE_without_computations(float new_SOE_kWh) {
+void ComponentBS::set_SOE_without_computations(double new_SOE_kWh) {
     currentE_kWh = new_SOE_kWh;
 }
 
-void ComponentBS::set_maxE_kWh(float value) {
+void ComponentBS::set_maxE_kWh(double value) {
     maxE_kWh = value;
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio)
         this->maxP_kW = maxE_kWh / E_over_P_ratio;
 }
 
-void ComponentBS::set_maxP_kW(float value) {
+void ComponentBS::set_maxP_kW(double value) {
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::AsDefinedByConfigVar) {
         maxP_kW  = value;
         E_over_P_ratio = maxE_kWh / maxP_kW;
     }
 }
 
-void ComponentBS::set_maxP_by_EPRatio(float EP_ratio) {
+void ComponentBS::set_maxP_by_EPRatio(double EP_ratio) {
     if (Global::get_battery_power_computation_mode() == global::BatteryPowerComputationMode::UseEOverPRatio) {
         this->E_over_P_ratio = EP_ratio;
         this->maxP_kW = this->maxE_kWh / EP_ratio;
@@ -415,8 +415,8 @@ void ComponentBS::set_maxP_by_EPRatio(float EP_ratio) {
 }
 
 void ComponentBS::calculateActions() {
-    float timestep_size_in_h = Global::get_time_step_size_in_h();
-    float new_charge_kWh;
+    double timestep_size_in_h = Global::get_time_step_size_in_h();
+    double new_charge_kWh;
 
     currentP_kW = 0;
 
@@ -440,7 +440,7 @@ void ComponentBS::calculateActions() {
         new_charge_kWh = currentE_kWh + timestep_size_in_h*charge_request_kW/efficiency_out;
         if (new_charge_kWh < 0)
             new_charge_kWh = 0;
-        float energy_taken_kWh = new_charge_kWh - currentE_kWh;
+        double energy_taken_kWh = new_charge_kWh - currentE_kWh;
         currentP_kW  = energy_taken_kWh / timestep_size_in_h * efficiency_out;
         currentE_kWh = new_charge_kWh;
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
@@ -629,7 +629,7 @@ void ComponentHP::setDemandToProfileData(unsigned long ts) {
 }
 
 #define epsilon_hp 0.0001
-bool ComponentHP::setDemandToGivenValue(float new_demand_kW) {
+bool ComponentHP::setDemandToGivenValue(double new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (state_s1) {
         state_s1 = false;
@@ -639,7 +639,7 @@ bool ComponentHP::setDemandToGivenValue(float new_demand_kW) {
 #endif
     bool no_error = true;
     double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
-    double new_total_e = total_consumption_kWh + e;
+    //double new_total_e = total_consumption_kWh + e;
     // check, if power is within the min/max power bands
     // Output warnings only, if demand is below bound + epsilon
     if (new_demand_kW > future_maxP_storage[0]) {
@@ -739,7 +739,7 @@ ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_
     cweek_consumption_kWh  = 0.0;
 
     // Computation of maximum charging power
-    max_charging_power = 11.0 * number_of_flats;
+    max_charging_power = 11.0f * number_of_flats;
     if (Global::get_cs_max_charging_power_kW() > 0.0 &&
         Global::get_cs_max_charging_power_kW() < max_charging_power
     ) {
@@ -1171,7 +1171,7 @@ void EVFSM::preprocessTourInformation() {
     // main loop for simulation time span
     bool ev_fully_charged_at_next_dep = false; // True, if the EV must be fully charged at the next departure (or at least charged in every time step)!
     unsigned long ts_since_last_connection = 0;
-    double current_min_cumsum_SOE_kWh = battery->get_maxE_kWh(); // Start with a full battery
+    // double current_min_cumsum_SOE_kWh = battery->get_maxE_kWh(); // Start with a full battery
     for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
         unsigned long tsID = ts - 1;
         ts_since_last_connection++;
@@ -1343,14 +1343,14 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
     }
 
     if (Global::get_create_ev_detailed_output()) {
-        output::outputEVStateDetails(ts, carID, current_state, current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
+        output::outputEVStateDetails(ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
 }
 
 // define a small value added to the min/max cumsum energy consumption to remove misplaced warnings due to rounding errors
 #define epsilon_ev 0.001
 
-bool EVFSM::setDemandToGivenValue(float new_demand_kW) {
+bool EVFSM::setDemandToGivenValue(double new_demand_kW) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (!state_s3) {
         throw std::runtime_error("Method EVFSM::setDemandToGivenValue() cannot be called at the moment!");
@@ -1395,7 +1395,7 @@ bool EVFSM::setDemandToGivenValue(float new_demand_kW) {
     sum_of_E_charged_home_kWh += e;
 
     if (Global::get_create_ev_detailed_output()) {
-        output::outputEVStateDetails(current_ts, carID, current_state, current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
+        output::outputEVStateDetails(current_ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
     return no_error;
 }

@@ -16,7 +16,7 @@
 class BaseOptimizedController {
     protected:
         const unsigned long controlUnitID; ///< ID of the connected control unit
-        const unsigned int n_cars; ///< Number of EVs with the given control unit as home place
+        const unsigned long n_cars; ///< Number of EVs with the given control unit as home place
         unsigned long time_horizon;
         std::vector<double> bs_power; ///< The battery storage power for every time step in the time horizon
         std::vector<double> hp_power; ///< The heat pump power for every time step in the time horizon
@@ -26,7 +26,7 @@ class BaseOptimizedController {
         /**
          * Constructs a new object with 0.0-initialized vectors with length of parameter time_horizon
          */
-        BaseOptimizedController(unsigned long cuID, unsigned int time_horizon, unsigned int n_cars) :
+        BaseOptimizedController(unsigned long cuID, unsigned int time_horizon, unsigned long n_cars) :
             controlUnitID(cuID), n_cars(n_cars), bs_power(time_horizon, 0.0), hp_power(time_horizon, 0.0)
         {
             this->time_horizon = time_horizon;
@@ -100,10 +100,10 @@ class BaseOptimizedController {
          */
         virtual bool updateController(
             unsigned long ts,
-            float max_p_bs_kW,
-            float max_e_bs_kWh,
-            float max_p_cs_kW,
-            float current_bs_charge_kWh,
+            double max_p_bs_kW,
+            double max_e_bs_kWh,
+            double max_p_cs_kW,
+            double current_bs_charge_kWh,
             const std::vector<float>& future_resid_demand_kW,
             const std::vector<double>& future_pv_generation_kW,
             const std::vector<double>& future_hp_shiftable_maxP,

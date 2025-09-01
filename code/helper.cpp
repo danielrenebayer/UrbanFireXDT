@@ -109,6 +109,10 @@ float round_float_n(float x, unsigned int decimal_places) {
         return std::round( x * m ) / m;
 }
 
+float round_float_5(double x) {
+        return (float) (std::round( x * 100000 ) / 100000);
+}
+
 float round_float_5(float x) {
         return std::round( x * 100000 ) / 100000;
 }

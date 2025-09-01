@@ -520,13 +520,13 @@ float ControlUnit::get_sim_comp_pv_kWp() {
     return 0;
 }
 
-float ControlUnit::get_sim_comp_bs_P_kW() {
+double ControlUnit::get_sim_comp_bs_P_kW() {
     if (has_sim_bs)
         return sim_comp_bs->get_maxP_kW();
     return 0;
 }
 
-float ControlUnit::get_sim_comp_bs_E_kWh() {
+double ControlUnit::get_sim_comp_bs_E_kWh() {
     if (has_sim_bs)
         return sim_comp_bs->get_maxE_kWh();
     return 0;
@@ -789,7 +789,7 @@ void ControlUnit::add_exp_bs() {
         cerr << "Warning: Control unit with location id " << locationID << " already has a battery!" << endl;
     if (!has_sim_bs) {
         // compute the battery capacity
-        float new_battery_capacity_kWh = 0.0;
+        double new_battery_capacity_kWh = 0.0;
         if ( !has_sim_pv ||
              Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Constant
            )
@@ -803,14 +803,14 @@ void ControlUnit::add_exp_bs() {
             new_battery_capacity_kWh = pv_kWp * Global::get_exp_bess_sizingE_boPV();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumption) {
             // round on two digits
-            new_battery_capacity_kWh = round( (float) (get_mean_annual_MU_el_demand_kWh() / 1000) * 100 ) / 100.0;
+            new_battery_capacity_kWh = round( (get_mean_annual_MU_el_demand_kWh() / 1000) * 100 ) / 100.0;
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumptionWithHeatPump) {
-            float ann_cons_kWh = get_mean_annual_MU_el_demand_kWh();
+            double ann_cons_kWh = get_mean_annual_MU_el_demand_kWh();
             if (has_sim_hp) {
                 ann_cons_kWh += get_annual_hp_el_cons_kWh();
             }
             // round on two digits
-            new_battery_capacity_kWh = round( (float) (ann_cons_kWh / 1000) * 100 ) / 100.0;
+            new_battery_capacity_kWh = round( (ann_cons_kWh / 1000) * 100 ) / 100.0;
         } else /* if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized) */ {
             // TODO ... Optimization MUST be executed HERE ALREADY ... because we need to know the actual BS capacity here ...
             new_battery_capacity_kWh = 0.0; // TODO: The result of the optimization!
@@ -1031,9 +1031,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         sim_comp_cs->setCarStatesForTimeStep(ts);
     }
 
-    unsigned int n_cars = 0;
+    unsigned long n_cars = 0;
     if (has_sim_cs)
         n_cars = sim_comp_cs->get_n_EVs();
+    
     // Part B: Make decisions using an optimization if selected
     if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast &&
         ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
@@ -1083,7 +1084,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             //max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
         }
         // - charging station
-        float max_p_cs_kW = 0.0;
+        double max_p_cs_kW = 0.0;
         const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE = NULL;
         const std::vector<const std::vector<double>*>* future_ev_shiftable_minE = NULL;
         const std::vector<const std::vector<double>*>* future_ev_maxP           = NULL;
@@ -1093,15 +1094,15 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             future_ev_maxP = sim_comp_cs->get_future_max_power_kW();
             max_p_cs_kW = sim_comp_cs->get_max_P_kW();
         }
-        // - current battery SOC
-        float current_bs_charge_kWh = 0.0;
-        float max_e_bs_kWh          = 0.0;
-        float max_p_bs_kW           = 0.0;
-        if (has_sim_bs) {
-            current_bs_charge_kWh = sim_comp_bs->get_currentCharge_kWh();
-            max_e_bs_kWh          = sim_comp_bs->get_maxE_kWh();
-            max_p_bs_kW           = sim_comp_bs->get_maxP_kW();
-        }
+            // - current battery SOC
+            double current_bs_charge_kWh = 0.0;
+            double max_e_bs_kWh          = 0.0;
+            double max_p_bs_kW           = 0.0;
+            if (has_sim_bs) {
+                current_bs_charge_kWh = sim_comp_bs->get_currentCharge_kWh();
+                max_e_bs_kWh          = sim_comp_bs->get_maxE_kWh();
+                max_p_bs_kW           = sim_comp_bs->get_maxP_kW();
+            }
             //
             // 4a. Check if number of optimization vars would not exceed the current limit
             unsigned long n_opti_vars = 0;
@@ -1226,12 +1227,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // Part C: Compute the load at the virtual smart meter
 
     current_total_consumption_kW = 0.0;
-    float current_load_all_rSMs_kW = 0.0;
-    float load_pv = 0.0;
-    float load_hp = 0.0;
-    float load_cs = 0.0;
-    float load_bs = 0.0;
-    float bs_SOC  = 0.0;
+    double current_load_all_rSMs_kW = 0.0;
+    double load_pv = 0.0;
+    double load_hp = 0.0;
+    double load_cs = 0.0;
+    double load_bs = 0.0;
+    double bs_SOC  = 0.0;
     unsigned long n_cars_pc  = 0; // Number of cars parking at home, and connected
     unsigned long n_cars_pnc = 0; // Number of cars parking at home, but not connected
 
@@ -1292,15 +1293,15 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
           ( Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast && Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging )
     ) {
         // in this case, load_pv - load_bs >= 0 always holds --> calculation is easy as BS can ouly be charged from the PV, and thus stores always 100% PV generated energy
-        self_produced_load_kW = std::min(current_total_consumption_kW, (double)load_pv - load_bs);
+        self_produced_load_kW = std::min(current_total_consumption_kW, load_pv - load_bs);
     } else {
         // separate two cases: BS charging or discharging
         if (load_bs > 0) {
             // - case: BS charging
-            self_produced_load_kW = std::min( (double)load_pv, current_total_consumption_kW);
+            self_produced_load_kW = std::min( load_pv, current_total_consumption_kW);
             // analyze the source of the charged energy and send this information to the BS
             if (has_sim_bs) {
-                double bs_charging_from_pv = std::min( (double)load_bs, (double)load_pv - self_produced_load_kW);
+                double bs_charging_from_pv = std::min( load_bs, load_pv - self_produced_load_kW);
                 sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage
             }
         } else {

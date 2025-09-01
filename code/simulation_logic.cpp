@@ -181,11 +181,11 @@ bool simulation::oneStep(unsigned long ts,
 
     //
     // compute total load on grid level and add residual gridload (if present)
-    float total_load = 0.0;
+    double total_load = 0.0;
     double total_demand_wo_BESS = 0.0; // without BESS or any consideration of self-consumption
     double total_demand_only_BESS = 0.0;
-    float total_residential_load   = 0.0;
-    float total_residential_demand = 0.0;
+    double total_residential_load   = 0.0;
+    double total_residential_demand = 0.0;
     total_load += global::residual_gridload_kW[ts-1];
     //
     // loop over all substations: compute new load values
@@ -204,9 +204,9 @@ bool simulation::oneStep(unsigned long ts,
         *(output::substation_output) << ts << ","; // add timestep to output
         *(output::substation_output_details) << ts << ",";
         for (Substation* s : substations_list) {
-            float current_station_load = s->get_station_load();
-            float current_station_resident_load   = s->get_residential_load();
-            float current_station_resident_demand = s->get_residential_demand();
+            double current_station_load = s->get_station_load();
+            double current_station_resident_load   = s->get_residential_load();
+            double current_station_resident_demand = s->get_residential_demand();
             total_load += current_station_load;
             total_demand_wo_BESS += s->get_current_demand_no_BESS();
             total_demand_only_BESS += s->get_current_BESS_demand();

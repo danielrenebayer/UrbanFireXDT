@@ -42,6 +42,11 @@ int compare_struct_tm(struct tm* a, struct tm* b);
 float round_float_n(float x, unsigned int decimal_places);
 
 /**
+ * Rounds a double on 5 decimal places and returns it as a float
+ */
+float round_float_5(double x);
+
+/**
  * Rounds a float on 5 decimal places
  */
 float round_float_5(float x);

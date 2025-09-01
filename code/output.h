@@ -155,10 +155,10 @@ namespace output {
      */
      void outputControlCommandDetails(
         unsigned long ts, unsigned long cuID, bool optimization_state_ok,
-        float inp_max_p_bs_kW,
-        float inp_max_e_bs_kWh,
-        float inp_max_p_cs_kW,
-        float inp_current_bs_charge_kWh,
+        double inp_max_p_bs_kW,
+        double inp_max_e_bs_kWh,
+        double inp_max_p_cs_kW,
+        double inp_current_bs_charge_kWh,
         const std::vector<float>&  inp_future_resid_demand_kW,
         const std::vector<double>& inp_future_pv_generation_kW,
         const std::vector<double>& inp_future_hp_shiftable_maxP,
@@ -192,12 +192,12 @@ class CUOutput {
     public:
         virtual ~CUOutput();
         virtual void output_for_one_cu(
-                size_t cuID,         size_t ts,
-                float load_vsm,      float load_rsm,
-                float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs,
-                float load_hp,       float load_cs,
-                size_t n_cars_pc,    size_t n_cars_pnc) = 0;
+                size_t cuID,          size_t ts,
+                double load_vsm,      double load_rsm,
+                double load_selfprod, double load_pv,
+                double bs_SOC,        double load_bs,
+                double load_hp,       double load_cs,
+                size_t n_cars_pc,     size_t n_cars_pnc) = 0;
         virtual void flush_buffer() = 0;
         void close_buffer();
     protected:
@@ -220,12 +220,12 @@ class CUOutputSingleFile : public CUOutput {
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
-                size_t cuID,         size_t ts,
-                float load_vsm,      float load_rsm,
-                float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs,
-                float load_hp,       float load_cs,
-                size_t n_cars_pc,    size_t n_cars_pnc);
+                size_t cuID,          size_t ts,
+                double load_vsm,      double load_rsm,
+                double load_selfprod, double load_pv,
+                double bs_SOC,        double load_bs,
+                double load_hp,       double load_cs,
+                size_t n_cars_pc,     size_t n_cars_pnc);
         void flush_buffer();
     private:
         mutex  single_file_mutex; ///< If a single file is selected as CU output, this variable holds the mutex to ensure correct concurrency behavior
@@ -242,12 +242,12 @@ class CUOutputOneFilePerCU : public CUOutput {
         //
         // definition of virtual methods from base class
         void output_for_one_cu(
-                size_t cuID,         size_t ts,
-                float load_vsm,      float load_rsm,
-                float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs,
-                float load_hp,       float load_cs,
-                size_t n_cars_pc,    size_t n_cars_pnc);
+                size_t cuID,          size_t ts,
+                double load_vsm,      double load_rsm,
+                double load_selfprod, double load_pv,
+                double bs_SOC,        double load_bs,
+                double load_hp,       double load_cs,
+                size_t n_cars_pc,     size_t n_cars_pnc);
         void flush_buffer();
 };
 
@@ -265,10 +265,10 @@ class CUOutputOneFilePerSubstation : public CUOutput {
         // definition of virtual methods from base class
         void output_for_one_cu(
                 size_t cuID,         size_t ts,
-                float load_vsm,      float load_rsm,
-                float load_selfprod, float load_pv,
-                float bs_SOC,        float load_bs,
-                float load_hp,       float load_cs,
+                double load_vsm,      double load_rsm,
+                double load_selfprod, double load_pv,
+                double bs_SOC,        double load_bs,
+                double load_hp,       double load_cs,
                 size_t n_cars_pc,    size_t n_cars_pnc);
         void flush_buffer();
     private:

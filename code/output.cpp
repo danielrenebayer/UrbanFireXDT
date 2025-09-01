@@ -556,10 +556,10 @@ std::string serializeVectorOfVectorsB(const std::vector<std::vector<T>>& vec) {
 
 void output::outputControlCommandDetails(
     unsigned long ts, unsigned long cuID, bool optimization_state_ok,
-    float inp_max_p_bs_kW,
-    float inp_max_e_bs_kWh,
-    float inp_max_p_cs_kW,
-    float inp_current_bs_charge_kWh,
+    double inp_max_p_bs_kW,
+    double inp_max_e_bs_kWh,
+    double inp_max_p_cs_kW,
+    double inp_current_bs_charge_kWh,
     const std::vector<float>&  inp_future_resid_demand_kW,
     const std::vector<double>& inp_future_pv_generation_kW,
     const std::vector<double>& inp_future_hp_shiftable_maxP,
@@ -695,10 +695,10 @@ CUOutputOneFilePerSubstation::CUOutputOneFilePerSubstation(const string* substNa
 }
 
 void CUOutputSingleFile::output_for_one_cu(
-        size_t cuID,    size_t ts,           float load_vsm,
-        float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs,       float load_hp,
-        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
+        size_t cuID,     size_t ts,            double load_vsm,
+        double load_rsm, double load_selfprod, double load_pv,
+        double bs_SOC,   double load_bs,       double load_hp,
+        double load_cs,  size_t n_cars_pc,     size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
     *(output_stream) << ts << "," << cuID << ","
@@ -714,10 +714,10 @@ void CUOutputSingleFile::output_for_one_cu(
 }
 
 void CUOutputOneFilePerCU::output_for_one_cu(
-        size_t cuID,    size_t ts,           float load_vsm,
-        float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs,       float load_hp,
-        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
+        size_t cuID,     size_t ts,            double load_vsm,
+        double load_rsm, double load_selfprod, double load_pv,
+        double bs_SOC,   double load_bs,       double load_hp,
+        double load_cs,  size_t n_cars_pc,     size_t n_cars_pnc)
 {
     *(output_stream) << ts << "," << cuID << ","
         << round_float_5(load_vsm) << ","
@@ -731,10 +731,10 @@ void CUOutputOneFilePerCU::output_for_one_cu(
 }
 
 void CUOutputOneFilePerSubstation::output_for_one_cu(
-        size_t cuID,    size_t ts,           float load_vsm,
-        float load_rsm, float load_selfprod, float load_pv,
-        float bs_SOC,   float load_bs,       float load_hp,
-        float load_cs,  size_t n_cars_pc,    size_t n_cars_pnc)
+        size_t cuID,     size_t ts,            double load_vsm,
+        double load_rsm, double load_selfprod, double load_pv,
+        double bs_SOC,   double load_bs,       double load_hp,
+        double load_cs,  size_t n_cars_pc,     size_t n_cars_pnc)
 {
     unique_lock lock(single_file_mutex); // secure access by using a mutex
     *(output_stream) << ts << "," << cuID << ","

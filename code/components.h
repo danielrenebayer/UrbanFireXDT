@@ -50,7 +50,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
     public:
         BaseComponentSemiFlexible();
         ~BaseComponentSemiFlexible();
-        virtual float get_currentDemand_kW() const = 0;
+        virtual double get_currentDemand_kW() const = 0;
 
         /**
          * Returns the maximum electricity consumption of a component for the next n time steps (given some flexibility).
@@ -90,7 +90,7 @@ class BaseComponentSemiFlexible : public BaseComponent {
          * @param new_demand_kW: The new power for this time step in kW.
          * @return true if no error occured or false, if the upper or lower bound was violated
          */
-        virtual bool setDemandToGivenValue(float new_demand_kW) = 0;
+        virtual bool setDemandToGivenValue(double new_demand_kW) = 0;
 
     protected:
         // cached member variables
@@ -172,16 +172,16 @@ class ComponentPV : public BaseComponent {
 class ComponentBS : public BaseComponent {
     friend class EVFSM;
     public:
-        ComponentBS(float maxE_kWh, float maxP_kW, float E_over_P_ratio, float discharge_rate_per_step, float efficiency_in, float efficiency_out, float initial_SoC); ///< Default constructor if the battery should represent a large-scale or household-style battery system
-        ComponentBS(float maxE_kWh, float discharge_rate_per_step, float efficiency_in, float initial_SoC); ///< Constructor to use if it is the battery of an EV
+        ComponentBS(double maxE_kWh, double maxP_kW, double E_over_P_ratio, double discharge_rate_per_step, double efficiency_in, double efficiency_out, double initial_SoC); ///< Default constructor if the battery should represent a large-scale or household-style battery system
+        ComponentBS(double maxE_kWh, double discharge_rate_per_step, double efficiency_in, double initial_SoC); ///< Constructor to use if it is the battery of an EV
         // getter methods
-        float get_SOC() const               { return SOC; }          ///< Returns the current state of charge of the battery
-        float get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
-        float get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
-        float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
+        double get_SOC() const               { return SOC; }          ///< Returns the current state of charge of the battery
+        double get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
+        double get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
+        double get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
         double get_gridAmountDischarged_kW() const { return currentP_from_BS_kW; } ///< Returns the amount of energy that is currently discharged, see ComponentBS::get_currentLoad_kW() if smaller 0.0, in kW that has been stored in the BS from the grid and not from surplus PV. With values from 0.0 to maxP.
-        float get_maxE_kWh()       const    { return maxE_kWh;     }
-        float get_maxP_kW()        const    { return maxP_kW;      }
+        double get_maxE_kWh()       const    { return maxE_kWh;     }
+        double get_maxP_kW()        const    { return maxP_kW;      }
         double get_current_EFC()   const    { return (maxE_kWh > 0) ? total_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC)
         double get_cweek_EFC()     const    { return (maxE_kWh > 0) ? cweek_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC) for the current week only
         unsigned long get_n_ts_empty() const { return n_ts_SOC_empty; } ///< Returns the number of time steps where the battery is empty
@@ -189,35 +189,35 @@ class ComponentBS : public BaseComponent {
         double get_cweek_withdrawn_E_kWh() const { return cweek_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the current week until now
         double get_total_withdrawn_E_kWh() const { return total_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the simulation run until now
         // setter methods
-        void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
+        void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
     protected:
-        void  set_SOE_without_computations(float new_SOE_kWh); ///< Changes the current SOE without updating other internal variables! Should only be used by class EVFSM for the pre-computation!
+        void  set_SOE_without_computations(double new_SOE_kWh); ///< Changes the current SOE without updating other internal variables! Should only be used by class EVFSM for the pre-computation!
     public:
-        void  set_maxE_kWh(float value);
-        void  set_maxP_kW (float value);
-        void  set_maxP_by_EPRatio(float EP_ratio);
+        void  set_maxE_kWh(double value);
+        void  set_maxP_kW (double value);
+        void  set_maxP_by_EPRatio(double EP_ratio);
         // update / action methods
         void calculateActions();
         void resetWeeklyCounter();
         void resetInternalState();
     private:
         // semi-constant member variables, i.e. they might change for parameter variations
-        float maxE_kWh;
-        float maxP_kW;
-        float E_over_P_ratio;
+        double maxE_kWh;
+        double maxP_kW;
+        double E_over_P_ratio;
         // constant member variables (other languages might call this 'final')
-        const float discharge_rate_per_step;
-        const float efficiency_in;
-        const float efficiency_out;
-        const float initial_SoC;
+        const double discharge_rate_per_step;
+        const double efficiency_in;
+        const double efficiency_out;
+        const double initial_SoC;
         // member variables that can change over time
-        float SOC;
-        float currentE_kWh; ///< current energy inside the battery
-        float currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
+        double SOC;
+        double currentE_kWh; ///< current energy inside the battery
+        double currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
         double currentE_from_BS_kWh;  ///< current energy stored inside the battery that was feed-in by the grid, not by the PV surplus - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh
         double currentP_from_BS_kW;   ///< current power that was sourced not by surplus PV, but by grid charging
-        float charge_request_kW;
+        double charge_request_kW;
         double cweek_E_withdrawn_kWh; ///< summation variable for EFC computation for this current week
         double total_E_withdrawn_kWh; ///< summation variable for EFC computation from the beginning of the simulation run
         unsigned long n_ts_SOC_empty; ///< Number of time steps where battery is empty (from the beginning of the simulation run)
@@ -229,7 +229,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         ComponentHP(const ControlUnit* connected_unit, float annual_econs_kWh);
         // getter methods
         using BaseComponentSemiFlexible::get_currentDemand_kW;
-        float  get_currentDemand_kW() const { return currentDemand_kW; }
+        double get_currentDemand_kW() const { return currentDemand_kW; }
         /**
          * Returns the total consumption from the beginning of the simulation up to the latest executed step in kWh.
          */
@@ -271,7 +271,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToGivenValue;
-        bool setDemandToGivenValue(float new_demand_kW);
+        bool setDemandToGivenValue(double new_demand_kW);
         void resetWeeklyCounter();
         void resetInternalState();
         //
@@ -287,7 +287,7 @@ class ComponentHP : public BaseComponentSemiFlexible {
         const double* profile_cumsum; ///< Reference to the cumsum of the profile_data
         float rated_power_kW; ///< Rated power of the heat pump in kW
         // member variables that can change over time
-        float currentDemand_kW;
+        double currentDemand_kW;
         double total_consumption_kWh; ///< Total consumption since the beginning of the simulation period
         double cweek_consumption_kWh; ///< Total consumption since the beginning of the the currently simulated week
         /**
@@ -321,7 +321,7 @@ class ComponentCS : public BaseComponent {
         // getters
         bool is_enabled() const { return enabled; }
         float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW (regardless if this is currently available, as some EVs might already be fully charged or not available)
-        float  get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
+        double get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         unsigned long get_n_EVs_pc()  const; ///< Returns the number of EVs that are currently at home AND connected with the station
@@ -373,7 +373,7 @@ class ComponentCS : public BaseComponent {
         bool enabled;
         std::vector<EVFSM*> listOfEVs;
         // variable members, variable during simulation run
-        float  current_demand_kW;
+        double current_demand_kW;
         double total_consumption_kWh;
         double cweek_consumption_kWh; ///< Total demand since the beginning of the the currently simulated week
         std::vector<const std::vector<double>*> future_maxE_storage; ///< Internal storage of future max energy consumption per EV and time step
@@ -412,7 +412,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::get_future_min_consumption_kWh;
         using BaseComponentSemiFlexible::get_currentDemand_kW;
         const std::vector<double>* get_future_max_power_kW() const { return &future_maxP_storage; } ///< Returns the maximum power of this EV per time step in the controller horizon. Attention: Returned object will be overwritten after calling EVFSM::setCarStateForTimeStep().
-        float get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
+        double get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
         // modifiers (on structural level of the simulation)
         using BaseComponentSemiFlexible::set_horizon_in_ts;
@@ -425,7 +425,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         using BaseComponentSemiFlexible::setDemandToProfileData;
         void setDemandToProfileData(unsigned long ts);
         using BaseComponentSemiFlexible::setDemandToGivenValue;
-        bool setDemandToGivenValue(float new_demand_kW);
+        bool setDemandToGivenValue(double new_demand_kW);
         using BaseComponentSemiFlexible::resetWeeklyCounter;
         void resetWeeklyCounter() {} ///< Do nothing. The EV has no weekly metrics.
         // static methods
@@ -457,8 +457,8 @@ class EVFSM : public BaseComponentSemiFlexible {
         EVState current_state;           ///< Internal current state of the EV
         unsigned long current_ts;        ///< Internal variable storing the current time step
         //EVStateIfConnAtHome current_state_icah; ///< Internal current state of the EV iff it is connected at home
-        float energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
-        float current_P_kW;  ///< The current charging power in kW
+        double energy_demand_per_tour_ts; ///< The mean energy demand per tour time step. This is the demand of the total tour divided by the number of time steps of the tour -> We assume a linear decay of the battery SOC, ignoring stops
+        double current_P_kW;  ///< The current charging power in kW
         // variables for the final metrics calculation
         double sum_of_driving_distance_km;    ///< Sum of driven distance in km (only updated at the end of a tour, when the home place is reached again)
         double sum_of_E_used_for_driving_kWh; ///< Sum of electricity consumed by the EV required for driving in kWh

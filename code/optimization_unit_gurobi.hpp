@@ -19,17 +19,17 @@ class GurobiLPController : public BaseOptimizedController {
         static GRBEnv* env; ///< The global gurobi environment
 
     public:
-        GurobiLPController(unsigned long cuID, unsigned int time_horizon, unsigned int n_cars) :
+        GurobiLPController(unsigned long cuID, unsigned int time_horizon, unsigned long n_cars) :
             BaseOptimizedController(cuID, time_horizon, n_cars)
         {}
 
         using BaseOptimizedController::updateController;
         bool updateController(
                 unsigned long ts,
-                float max_p_bs_kW,
-                float max_e_bs_kWh,
-                float max_p_cs_kW,
-                float current_bs_charge_kWh,
+                double max_p_bs_kW,
+                double max_e_bs_kWh,
+                double max_p_cs_kW,
+                double current_bs_charge_kWh,
                 const std::vector<float>& future_resid_demand_kW,
                 const std::vector<double>& future_pv_generation_kW,
                 const std::vector<double>& future_hp_shiftable_maxP,
