@@ -55,6 +55,9 @@ opti: directories
 verbose_debug: directories
 	$(CC) $(FILES) -o $(OUTPUT_DIR)/simulation-dbg $(FLAGS) $(FLAGS_EXTRA) $(MACROS) -g -D DEBUG -D ADD_METHOD_ACCESS_PROTECTION_VARS -D DEBUG_EXTRA_OUTPUT $(LIBS) $(OPTIMIZATION_OPTIONS)
 
+python_module: directories
+	$(CC) $(FILES) -o $(OUTPUT_DIR)/UrbanFireXDT`python3-config --extension-suffix` $(FLAGS) -D PYTHON_MODULE -O3 $(MACROS) -shared -fPIC `python3 -m pybind11 --includes` $(LIBS) $(OPTIMIZATION_OPTIONS)
+
 clean:
 	rm -f $(OUTPUT_DIR)/simulation-dbg $(OUTPUT_DIR)/simulation-opti
 

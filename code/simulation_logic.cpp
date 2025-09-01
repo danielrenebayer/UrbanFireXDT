@@ -8,12 +8,21 @@ using namespace simulation;
 #include <sstream>
 #include <vector>
 
+#ifdef PYTHON_MODULE
+#include <condition_variable>
+#include <mutex>
+#endif
+
 #include "helper.h"
 #include "global.h"
 #include "output.h"
 #include "sac_planning.h"
 #include "units.h"
 #include "worker_threads.hpp"
+
+#ifdef PYTHON_MODULE
+#include "python_module.hpp"
+#endif
 
 //
 // Internal variables required for output control
@@ -66,6 +75,22 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
             week_number++;
         }
         last_step_weekday = dayOfWeek_l;
+        //
+        // In case of compiling this code as python library: Wait for new command
+#ifdef PYTHON_MODULE
+        if (pyconn::g_simulation_main_part_started) {
+            pyconn::g_atomic_next_tsID  = ts;
+            pyconn::g_simulation_idling = true;
+            pyconn::g_cv_sim_state_update.notify_all();
+            {
+                // wait for next call by the python code
+                std::unique_lock<std::mutex> lock_obj(pyconn::g_mtx_simulation);
+                pyconn::g_cv_sim_state_update.wait(lock_obj, [] { return pyconn::g_next_step_requested.load(); } );
+                pyconn::g_next_step_requested = false; // set to false to prevent of executing steps
+                pyconn::g_simulation_idling   = false; // block future acces WITHIN the mutex-secured region
+            }
+        }
+#endif
         //
         // execute one step
         if (!oneStep(ts, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
@@ -396,6 +421,9 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     // 1) add expansion to units in the other cases
     //
     expansion::add_expansion_to_units(expansion_matrix_rel_freq, expansion_matrix_abs_freq);
+#ifdef PYTHON_MODULE
+    pyconn::g_simulation_main_part_started = true;
+#endif
     //
     // 2a) Initialize and start the CUControllerThreadGroup if multi-threading is selected
     CUControllerThreadGroupManager* tgm = NULL;
@@ -404,7 +432,30 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
         tgm->startAllWorkerThreads();
     }
     // 2b) run the simulation (for all parameter variations or a single run)
+#ifndef PYTHON_MODULE
     bool return_value = runSimulationForAllVariations(scenario_id, tgm);
+#else
+    bool return_value = true;
+    while (!pyconn::g_worker_threads_shutdown_cmd) {
+        // Main simulation call
+        return_value = runSimulationForAllVariations(scenario_id, tgm);
+//      std::cout << "pyconn::g_simulation_idling = " << pyconn::g_simulation_idling << std::endl;
+//      std::cout << "pyconn::g_sim_finished      = " << pyconn::g_sim_finished << std::endl;
+        // notify all waiting threads that the simulation finished
+        pyconn::g_sim_finished = true;
+        pyconn::g_cv_sim_state_update.notify_all();
+        // finish simulation if error occurs
+        if (!return_value) break;
+        // wait until pyconn::vacuum() is called or the simulation is reset
+        {
+            std::unique_lock<std::mutex> lock_obj(pyconn::g_mtx_simulation);
+            pyconn::g_cv_sim_state_update.wait(lock_obj, [] {
+                return pyconn::g_worker_threads_shutdown_cmd.load() || pyconn::g_restart_simulation.load();
+            });
+            pyconn::g_restart_simulation = false;
+        }
+    }
+#endif
     // 2c) delete the thread group manager
     if (tgm != NULL) {
         tgm->stopAllWorkerThreads();

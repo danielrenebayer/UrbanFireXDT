@@ -8,7 +8,12 @@
 #include <cstdio>
 
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#ifndef PYTHON_MODULE
 #include <boost/program_options.hpp>
+#else
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h> // for converting C++ containers like std::map
+#endif
 
 #include "global.h"
 
@@ -22,24 +27,37 @@
 #include "vehicles.h"
 #include "worker_threads.hpp"
 
+#ifdef PYTHON_MODULE
+#include "python_module.hpp"
+#endif
 
 using namespace std;
+#ifndef PYTHON_MODULE
 namespace bpopts = boost::program_options;
+#endif
 
 
 
-/*
-Return values of the program:
-0	Normal execution, no errors occured
-1	Wrong parameters
-2	A required file was not found or error during database connections
-3	Errors duing the simulation
-4	Erroneous input files
-5   No simulation executed / e.g. help displayed
-*/
-
+/**
+ * @brief Entry point of the simulation.
+ *
+ * This function initializes and runs the simulation based on the provided command line parameters.
+ * Finally, the storage is cleaned up again.
+ *
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line argument strings.
+ *
+ * @return Return code indicating the execution result of the program:
+ *   - **0**  Normal execution, no errors occurred
+ *   - **1**  Wrong parameters
+ *   - **2**  Required file not found / error during database connections
+ *   - **3**  Errors during the simulation
+ *   - **4**  Erroneous input files
+ *   - **5**  No simulation executed (e.g., help displayed)
+ */
 int main(int argc, char* argv[]) {
 
+#ifndef PYTHON_MODULE
 	//
 	// parsing command line arguments
 	//
@@ -336,6 +354,50 @@ int main(int argc, char* argv[]) {
     cout << "  Clean up:               " << std::chrono::duration_cast<std::chrono::seconds>(t4-t3).count() << "s\n";
     cout << "  Complete run time:      " << std::chrono::duration_cast<std::chrono::seconds>(t4-t1).count() << "s" << std::endl;
 
+#endif
+
 	return 0;
 }
 
+#ifdef PYTHON_MODULE
+
+using namespace pybind11::literals;
+
+// Module definition
+PYBIND11_MODULE(UrbanFireXDT, m) {
+    m.doc() = "Python bindings for the UrbanFireDTX C++ simulation.";
+
+    pybind11::class_<pyconn::SimulationControlUnitState>(m, "SimulationControlUnitState",
+        "State of a control unit during a simulation step.")
+        .def_readonly("controlUnitID", &pyconn::SimulationControlUnitState::controlUnitID,
+                      "Public ID of the control unit.")
+        .def_readonly("internalID", &pyconn::SimulationControlUnitState::internalID,
+                      "Internal ID of the control unit.")
+        .def_readonly("has_pv", &pyconn::SimulationControlUnitState::has_pv,
+                      "True if a PV system (simulated or in data) is present.")
+        .def_readonly("has_cntrl_bs", &pyconn::SimulationControlUnitState::has_cntrl_bs,
+                      "True if a controllable (i.e., simulated) battery storage is present.")
+        .def_readonly("has_cntrl_hp", &pyconn::SimulationControlUnitState::has_cntrl_hp,
+                      "True if a controllable (i.e., simulated) heat pump is present.")
+        .def_readonly("has_cntrl_evchst", &pyconn::SimulationControlUnitState::has_cntrl_evchst,
+                      "True if a controllable (i.e., simulated) EV charging station is present.");
+
+    m.def("initialize", &pyconn::initialize_simulation,
+          "Initialize the simulation with a Python dict of options.");
+    m.def("get_next_timestep_id", &pyconn::get_next_timestep_id,
+         "Returns the timestep ID of the next time step.");
+    m.def("simulation_finished", &pyconn::simulation_finished,
+         "Returns true, if the simulation is finished, otherwise false. In the latter case, run_step() can be called.");
+    m.def("get_state", &pyconn::getState, "controlUnitID"_a,
+          "Get the state of a control unit.");
+    m.def("send_commands", &pyconn::sendCommands, "controlUnitID"_a, "commands"_a,
+          "Send a command to a control unit.");
+    m.def("run_one_step", &pyconn::run_one_step,
+          "Advance the simulation by one time step.");
+    m.def("reset_simulation_to_start", &pyconn::reset_simulation_to_start,
+          "Resets the simulation and all internal states to the first time step.");
+    m.def("vacuum", &pyconn::vacuum,
+          "Clean up and release resources.");
+}
+
+#endif

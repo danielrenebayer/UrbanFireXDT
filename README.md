@@ -36,6 +36,8 @@ This project requires the following libraries to build and run:
 * **libboost-dev:** For parsing the JSON-based configuration file and the command line options
 * **libboost-program-options-dev:** Specifically for command-line option parsing
 * **libboost-json-dev:** Specifically for parsing JSON files (that are used as cache files)
+* **pybind11-dev:** Exporting the simulation as python module (only required for compilation target `python_module`)
+* **python3-pybind11:** The target python module (only required for compilation target `python_module`)
 
 These dependencies can be installed on Debian/Ubuntu with:
 ```
@@ -58,6 +60,19 @@ The simulation currently supports two optimization backends:
 apt-get install libprotobuf-dev
 ```
 
+<!-- Usage options -->
+## Usage options
+
+This simulation can be used in two ways:
+
+- **Standalone executable**: run directly from the command line, using configuration files and command-line options to define scenarios.  
+  This mode is well suited for batch experiments, scenario studies, and reproducible evaluations.
+
+- **Python module**: import the simulation into Python, e.g. for integration with data analysis pipelines or the training of reinforcement learning (RL)-based control strategies.  
+  This mode provides step-by-step control and access to internal simulation states.
+
+For both versions, examples can be found in the `test` folder.
+
 
 <!-- First steps -->
 ## First steps
@@ -79,6 +94,7 @@ The makefile `code/makefile` contains different targets.
 | `debug`     | Compiles the code with all debugging symbols (for `gdb`) and without any optimizaation. Additionally, the access protection variables will be included that ensure the correct chronological sequence of method calls for the individual components. |
 | `opti`      | Compiles the code for the final usage. Includes code optimization, and no access protection stuff. |
 | `all`       | `debug` and `opti` together |
+| `python_module` | Compile the simulation as python module. Not part of the target `all`. |
 | `verbose_debug` | Like `debug`, with extra output |
 | `clean`     | Removes compiled files in the output directory |
 | `print-vars` | Prints out all finally (i.e., after reading both the makefile and the local makefile) effective configuration variables |
@@ -95,7 +111,7 @@ If using a local makefile, the local paths and settings will be ignored by git, 
 <!-- LICENSE -->
 ## License
 
-This code is distributed unter the MIT License. See `LICENSE` for more details.
+This code is distributed under the MIT License. See `LICENSE` for more details.
 
 
 <!-- Logo License -->
