@@ -325,6 +325,8 @@ ComponentBS::ComponentBS(
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
+    currentE_from_BS_kWh = 0.0;
+    currentP_from_BS_kW  = 0.0;
     charge_request_kW = 0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty    = 0;
@@ -359,6 +361,8 @@ ComponentBS::ComponentBS(
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
+    currentE_from_BS_kWh = 0.0;
+    currentP_from_BS_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
@@ -370,6 +374,19 @@ ComponentBS::ComponentBS(
     if (initial_SoC > 0) {
         SOC = initial_SoC;
         currentE_kWh = maxE_kWh * initial_SoC;
+    }
+}
+
+void ComponentBS::set_grid_charged_amount(double grid_charged_kW) {
+    // a guard, that it is only called when the BS is charged
+    if (currentP_kW > 0) {
+#ifdef DEBUG
+        // a check, if grid_charged_kW <= currentP_kW
+        if (grid_charged_kW > currentP_kW) {
+            throw std::runtime_error("Error in ComponentBS: grid_charged_kW > currentP_kW");
+        }
+#endif
+        currentE_from_BS_kWh += grid_charged_kW * Global::get_time_step_size_in_h() * efficiency_in;
     }
 }
 
@@ -429,6 +446,12 @@ void ComponentBS::calculateActions() {
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
         total_E_withdrawn_kWh -= energy_taken_kWh;
         cweek_E_withdrawn_kWh -= energy_taken_kWh;
+        // update currentE_from_BS_kWh as well ...
+        currentP_from_BS_kW = 0.0;
+        if (currentE_kWh < currentE_from_BS_kWh) {
+            currentP_from_BS_kW = ( currentE_from_BS_kWh - currentE_kWh ) / timestep_size_in_h;
+            currentE_from_BS_kWh = currentE_kWh;
+        }
     }
 
     // calculate new SOC value
@@ -451,6 +474,9 @@ void ComponentBS::resetInternalState() {
     //
     SOC = initial_SoC;
     currentE_kWh = maxE_kWh * initial_SoC;
+    currentE_from_BS_kWh  = 0.0;
+    currentP_kW           = 0.0;
+    currentP_from_BS_kW   = 0.0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
     n_ts_SOC_empty = 0;

@@ -179,6 +179,7 @@ class ComponentBS : public BaseComponent {
         float get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
         float get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
         float get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
+        double get_gridAmountDischarged_kW() const { return currentP_from_BS_kW; } ///< Returns the amount of energy that is currently discharged, see ComponentBS::get_currentLoad_kW() if smaller 0.0, in kW that has been stored in the BS from the grid and not from surplus PV. With values from 0.0 to maxP.
         float get_maxE_kWh()       const    { return maxE_kWh;     }
         float get_maxP_kW()        const    { return maxP_kW;      }
         double get_current_EFC()   const    { return (maxE_kWh > 0) ? total_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC)
@@ -189,6 +190,7 @@ class ComponentBS : public BaseComponent {
         double get_total_withdrawn_E_kWh() const { return total_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the simulation run until now
         // setter methods
         void  set_chargeRequest(float requested_charge_kW) { charge_request_kW = requested_charge_kW; }
+        void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
     protected:
         void  set_SOE_without_computations(float new_SOE_kWh); ///< Changes the current SOE without updating other internal variables! Should only be used by class EVFSM for the pre-computation!
     public:
@@ -213,6 +215,8 @@ class ComponentBS : public BaseComponent {
         float SOC;
         float currentE_kWh; ///< current energy inside the battery
         float currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
+        double currentE_from_BS_kWh;  ///< current energy stored inside the battery that was feed-in by the grid, not by the PV surplus - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh
+        double currentP_from_BS_kW;   ///< current power that was sourced not by surplus PV, but by grid charging
         float charge_request_kW;
         double cweek_E_withdrawn_kWh; ///< summation variable for EFC computation for this current week
         double total_E_withdrawn_kWh; ///< summation variable for EFC computation from the beginning of the simulation run

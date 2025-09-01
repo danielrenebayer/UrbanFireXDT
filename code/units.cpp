@@ -1287,11 +1287,32 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
     //
     // compute self-produced load, that is directly consumed
-    if (current_load_all_rSMs_kW < 0) { // MIND: sum of real smart meters, not the power reading of the virtual smart meter!
-        self_produced_load_kW = std::min(load_hp, load_pv-load_bs);
-        // ignore feed-back from the existing systems in this situation
+    if (
+          Global::get_controller_mode() == global::ControllerMode::RuleBased ||
+          ( Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast && Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging )
+    ) {
+        // in this case, load_pv - load_bs >= 0 always holds --> calculation is easy as BS can ouly be charged from the PV, and thus stores always 100% PV generated energy
+        self_produced_load_kW = std::min(current_total_consumption_kW, (double)load_pv - load_bs);
     } else {
-        self_produced_load_kW = std::min(current_load_all_rSMs_kW + load_hp + load_cs, load_pv - load_bs);
+        // separate two cases: BS charging or discharging
+        if (load_bs > 0) {
+            // - case: BS charging
+            self_produced_load_kW = std::min( (double)load_pv, current_total_consumption_kW);
+            // analyze the source of the charged energy and send this information to the BS
+            if (has_sim_bs) {
+                double bs_charging_from_pv = std::min( (double)load_bs, (double)load_pv - self_produced_load_kW);
+                sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage
+            }
+        } else {
+            // - case: BS discharging
+            // get amount of load_bs that has been taken from PV feed-in
+            double bs_generation_from_pv = 0.0;
+            if (has_sim_bs) {
+                bs_generation_from_pv = sim_comp_bs->get_gridAmountDischarged_kW();
+            }
+            // calculate self-produced amount of locally consumed energy
+            self_produced_load_kW = std::min(load_pv + bs_generation_from_pv, current_total_consumption_kW);
+        }
     }
 
     // Compute current energy flows out of the power flows
