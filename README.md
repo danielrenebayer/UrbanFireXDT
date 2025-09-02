@@ -1,4 +1,4 @@
-# Urban Future Integrated Renewable Energy systems eXploration Digital Twin
+# UrbanFireXDT: the Urban Future Integrated Renewable Energy systems eXploration Digital Twin
 
 <p align="center">
     <img src="documentation/logos/UrbanFireXDT_Logo_v1.png" alt="UrbanFireXDT Logo" />
