@@ -1058,46 +1058,44 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 throw std::runtime_error("No optimization backend selected during compile time!");
 #endif
             }
-            // TODO: indention!
-
-        //
-        // 3. Get the not-shiftable and shiftable loads over the prediction horizon
-        // - measurement units
-        std::vector<float> future_resid_demand_kW(Global::get_control_horizon_in_ts());
-        for (size_t fts = 0; fts < Global::get_control_horizon_in_ts(); fts++) {
-            future_resid_demand_kW[fts] = 0.0;
-            for (MeasurementUnit* mu : *connected_units)
-                future_resid_demand_kW[fts] += mu->get_rsm_value_at_ts(ts + fts);
-        }
-        // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
-        const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
-        if (has_sim_pv) {
-            future_pv_generation_kW = sim_comp_pv->get_future_generation_kW();
-        }
-        // - heat pump
-        const std::vector<double>* future_hp_shiftable_maxP = st__empty_vector_for_time_horizon;
-        const std::vector<double>* future_hp_shiftable_minP = st__empty_vector_for_time_horizon;
-        const std::vector<double>* future_hp_shiftable_maxE = st__empty_vector_for_time_horizon;
-        const std::vector<double>* future_hp_shiftable_minE = st__empty_vector_for_time_horizon;
-        //float max_p_hp_kW = 0.0;
-        if (has_sim_hp) {
-            future_hp_shiftable_maxP = sim_comp_hp->get_future_max_power_kW();
-            future_hp_shiftable_minP = sim_comp_hp->get_future_min_power_kW();
-            future_hp_shiftable_maxE = sim_comp_hp->get_future_max_consumption_kWh();
-            future_hp_shiftable_minE = sim_comp_hp->get_future_min_consumption_kWh();
-            //max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
-        }
-        // - charging station
-        double max_p_cs_kW = 0.0;
-        const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE = NULL;
-        const std::vector<const std::vector<double>*>* future_ev_shiftable_minE = NULL;
-        const std::vector<const std::vector<double>*>* future_ev_maxP           = NULL;
-        if (has_sim_cs) {
-            future_ev_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
-            future_ev_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
-            future_ev_maxP = sim_comp_cs->get_future_max_power_kW();
-            max_p_cs_kW = sim_comp_cs->get_max_P_kW();
-        }
+            //
+            // 3. Get the not-shiftable and shiftable loads over the prediction horizon
+            // - measurement units
+            std::vector<float> future_resid_demand_kW(Global::get_control_horizon_in_ts());
+            for (size_t fts = 0; fts < Global::get_control_horizon_in_ts(); fts++) {
+                future_resid_demand_kW[fts] = 0.0;
+                for (MeasurementUnit* mu : *connected_units)
+                    future_resid_demand_kW[fts] += mu->get_rsm_value_at_ts(ts + fts);
+            }
+            // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
+            const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
+            if (has_sim_pv) {
+                future_pv_generation_kW = sim_comp_pv->get_future_generation_kW();
+            }
+            // - heat pump
+            const std::vector<double>* future_hp_shiftable_maxP = st__empty_vector_for_time_horizon;
+            const std::vector<double>* future_hp_shiftable_minP = st__empty_vector_for_time_horizon;
+            const std::vector<double>* future_hp_shiftable_maxE = st__empty_vector_for_time_horizon;
+            const std::vector<double>* future_hp_shiftable_minE = st__empty_vector_for_time_horizon;
+            //float max_p_hp_kW = 0.0;
+            if (has_sim_hp) {
+                future_hp_shiftable_maxP = sim_comp_hp->get_future_max_power_kW();
+                future_hp_shiftable_minP = sim_comp_hp->get_future_min_power_kW();
+                future_hp_shiftable_maxE = sim_comp_hp->get_future_max_consumption_kWh();
+                future_hp_shiftable_minE = sim_comp_hp->get_future_min_consumption_kWh();
+                //max_p_hp_kW = sim_comp_hp->get_rated_power_without_AUX();
+            }
+            // - charging station
+            double max_p_cs_kW = 0.0;
+            const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE = NULL;
+            const std::vector<const std::vector<double>*>* future_ev_shiftable_minE = NULL;
+            const std::vector<const std::vector<double>*>* future_ev_maxP           = NULL;
+            if (has_sim_cs) {
+                future_ev_shiftable_maxE = sim_comp_cs->get_future_max_consumption_kWh();
+                future_ev_shiftable_minE = sim_comp_cs->get_future_min_consumption_kWh();
+                future_ev_maxP = sim_comp_cs->get_future_max_power_kW();
+                max_p_cs_kW = sim_comp_cs->get_max_P_kW();
+            }
             // - current battery SOC
             double current_bs_charge_kWh = 0.0;
             double max_e_bs_kWh          = 0.0;
