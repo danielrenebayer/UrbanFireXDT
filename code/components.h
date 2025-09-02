@@ -179,7 +179,7 @@ class ComponentBS : public BaseComponent {
         double get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
         double get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
         double get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
-        double get_gridAmountDischarged_kW() const { return currentP_from_BS_kW; } ///< Returns the amount of energy that is currently discharged, see ComponentBS::get_currentLoad_kW() if smaller 0.0, in kW that has been stored in the BS from the grid and not from surplus PV. With values from 0.0 to maxP.
+        double get_gridOnly_discharge_kW() const { return currentP_from_grid_kW; } ///< Returns the amount of energy that is currently discharged, see ComponentBS::get_currentLoad_kW() if smaller 0.0, in kW that has been stored in the BS from the grid and not from surplus PV. With values from 0.0 to maxP.
         double get_maxE_kWh()       const    { return maxE_kWh;     }
         double get_maxP_kW()        const    { return maxP_kW;      }
         double get_current_EFC()   const    { return (maxE_kWh > 0) ? total_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC)
@@ -188,6 +188,8 @@ class ComponentBS : public BaseComponent {
         unsigned long get_n_ts_full()  const { return n_ts_SOC_full;  } ///< Returns the number of time steps where the battery is fully charged
         double get_cweek_withdrawn_E_kWh() const { return cweek_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the current week until now
         double get_total_withdrawn_E_kWh() const { return total_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the simulation run until now
+        double get_cweek_withdrawn_E_gridOnly_kWh() const { return cweek_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the current week until now
+        double get_total_withdrawn_E_gridOnly_kWh() const { return total_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the simulation run until now
         // setter methods
         void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
@@ -215,11 +217,13 @@ class ComponentBS : public BaseComponent {
         double SOC;
         double currentE_kWh; ///< current energy inside the battery
         double currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
-        double currentE_from_BS_kWh;  ///< current energy stored inside the battery that was feed-in by the grid, not by the PV surplus - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh
-        double currentP_from_BS_kW;   ///< current power that was sourced not by surplus PV, but by grid charging
+        double currentE_from_grid_kWh;  ///< current energy stored inside the battery that was feed-in by the grid, not by the PV surplus - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh
+        double currentP_from_grid_kW;   ///< current power that was sourced not by surplus PV, but by grid charging
         double charge_request_kW;
         double cweek_E_withdrawn_kWh; ///< summation variable for EFC computation for this current week
         double total_E_withdrawn_kWh; ///< summation variable for EFC computation from the beginning of the simulation run
+        double cweek_E_withdrawn_from_grid_kWh; ///< summation variable for EFC computation for this current week - only considering energy that was charged from the grid (and not the PV)
+        double total_E_withdrawn_from_grid_kWh; ///< summation variable for EFC computation from the beginning of the simulation run - only considering energy that was charged from the grid (and not the PV)
         unsigned long n_ts_SOC_empty; ///< Number of time steps where battery is empty (from the beginning of the simulation run)
         unsigned long n_ts_SOC_full;  ///< Number of time steps where battery is full (from the beginning of the simulation run)
 };

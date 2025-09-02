@@ -325,10 +325,13 @@ ComponentBS::ComponentBS(
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
-    currentE_from_BS_kWh = 0.0;
-    currentP_from_BS_kW  = 0.0;
+    currentE_from_grid_kWh = 0.0;
+    currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
+    cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
+    cweek_E_withdrawn_from_grid_kWh = 0.0;
+    total_E_withdrawn_from_grid_kWh = 0.0;
     n_ts_SOC_empty    = 0;
     n_ts_SOC_full     = 0;
 
@@ -361,11 +364,13 @@ ComponentBS::ComponentBS(
     SOC               = 0;
     currentE_kWh      = 0;
     currentP_kW       = 0;
-    currentE_from_BS_kWh = 0.0;
-    currentP_from_BS_kW  = 0.0;
+    currentE_from_grid_kWh = 0.0;
+    currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
+    cweek_E_withdrawn_from_grid_kWh = 0.0;
+    total_E_withdrawn_from_grid_kWh = 0.0;
     n_ts_SOC_empty    = 0;
     n_ts_SOC_full     = 0;
 
@@ -386,7 +391,7 @@ void ComponentBS::set_grid_charged_amount(double grid_charged_kW) {
             throw std::runtime_error("Error in ComponentBS: grid_charged_kW > currentP_kW");
         }
 #endif
-        currentE_from_BS_kWh += grid_charged_kW * Global::get_time_step_size_in_h() * efficiency_in;
+        currentE_from_grid_kWh += grid_charged_kW * Global::get_time_step_size_in_h() * efficiency_in;
     }
 }
 
@@ -447,10 +452,14 @@ void ComponentBS::calculateActions() {
         total_E_withdrawn_kWh -= energy_taken_kWh;
         cweek_E_withdrawn_kWh -= energy_taken_kWh;
         // update currentE_from_BS_kWh as well ...
-        currentP_from_BS_kW = 0.0;
-        if (currentE_kWh < currentE_from_BS_kWh) {
-            currentP_from_BS_kW = ( currentE_from_BS_kWh - currentE_kWh ) / timestep_size_in_h;
-            currentE_from_BS_kWh = currentE_kWh;
+        currentP_from_grid_kW = 0.0;
+        if (currentE_kWh < currentE_from_grid_kWh) {
+            double removed_amount_from_grid_kWh = currentE_from_grid_kWh - currentE_kWh;
+            currentP_from_grid_kW = removed_amount_from_grid_kWh / timestep_size_in_h;
+            currentE_from_grid_kWh = currentE_kWh; // set to current SOE
+            // add to summation variables
+            cweek_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
+            total_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
         }
     }
 
@@ -466,6 +475,7 @@ void ComponentBS::calculateActions() {
 
 void ComponentBS::resetWeeklyCounter() {
     cweek_E_withdrawn_kWh = 0.0;
+    cweek_E_withdrawn_from_grid_kWh = 0.0;
 }
 
 void ComponentBS::resetInternalState() {
@@ -474,11 +484,13 @@ void ComponentBS::resetInternalState() {
     //
     SOC = initial_SoC;
     currentE_kWh = maxE_kWh * initial_SoC;
-    currentE_from_BS_kWh  = 0.0;
+    currentE_from_grid_kWh  = 0.0;
     currentP_kW           = 0.0;
-    currentP_from_BS_kW   = 0.0;
+    currentP_from_grid_kW   = 0.0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
+    cweek_E_withdrawn_from_grid_kWh = 0.0;
+    total_E_withdrawn_from_grid_kWh = 0.0;
     n_ts_SOC_empty = 0;
     n_ts_SOC_full  = 0;
 }
