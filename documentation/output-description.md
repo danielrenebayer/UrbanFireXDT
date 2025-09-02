@@ -59,6 +59,7 @@ Folders are marked in **bold**.
 | BS n\_ts\_empty                  | The number of time steps where the battery was empty (if not battery is simulated, this value defaults to 0.0) |
 | BS n\_ts\_full                   | The number of time steps where the battery was full (if not battery is simulated, this value defaults to 0.0) |
 | BS total E withdrawn [kWh]       | The sum of electricity that was withdrawn from the battery in kWh (if not battery is simulated, this value defaults to 0.0) - Attention: The battery might not be empty at the end of the simulation procedure |
+| BS total E withdrawn grid-originated [kWh] | The sum of electricity that was withdrawn from the battery in kWh like `BS total E withdrawn [kWh]`, but only the amount that originated from prior **grid charging**  |
 | Sum of HP demand [kWh]           | The sum of demanded electricity of the heat pump in kWh (if no heat pump is simulated, this value defaults to 0.0) |
 | Sum of CS demand [kWh]           | The sum of demanded electricity of the EV charging station in kWh (if no EV charging station is simulated, this value defaults to 0.0) |
 | Peak grid demand [kW]            | The peak grid demand in kW over the complete simulated time span |

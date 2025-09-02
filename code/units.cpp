@@ -168,8 +168,8 @@ size_t ControlUnit::st__n_CUs = 0;
 std::vector<ControlUnit*> ControlUnit::st__cu_list;
 std::map<unsigned long, unsigned long> ControlUnit::public_to_internal_id;
 std::vector<double>* ControlUnit::st__empty_vector_for_time_horizon = NULL;
-const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costs [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
-const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costs [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
+const std::string ControlUnit::MetricsStringHeaderAnnual = "UnitID,SCR,SSR,NPV,ALR,BDR,RBC,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS n_ts_empty,BS n_ts_full,BS total E withdrawn [kWh],BS total E withdrawn grid-originated [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costs [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
+const std::string ControlUnit::MetricsStringHeaderWeekly = "UnitID,Week number,SCR,SSR,Sum of demand [kWh],Sum of MU demand [kWh],Sum of self-consumed e. [kWh],Sum of PV-generated e. [kWh],Sum of grid feed-in [kWh],Sum of grid demand [kWh],BS EFC,BS total E withdrawn [kWh],BS total E withdrawn grid-originated [kWh],Sum of HP demand [kWh],Sum of CS demand [kWh],Peak grid demand [kW],Emissions cbgd [kg CO2eq],Avoided emissions [kg CO2eq],Actual electricity costs [CU],Electricity cons. costs [CU],Avoided electricity cons. costs [CU],Feed-in revenue [CU],Sim. PV max P [kWp],Sim. BS P [kW],Sim. BS E [kWh],n EVs,Sim. CS max P [kW],Simulated PV,Simulated BS,Simulated HP,Simulated CS,n errors in cntrl,n error cntrl cmd appl";
 std::atomic<unsigned long> ControlUnit::optimization_call_counter = 0;
 std::atomic<unsigned long> ControlUnit::n_curr_optimization_vars = 0;
 std::mutex ControlUnit::n_curr_optimization_vars_mutex;
@@ -650,6 +650,7 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(bat_n_ts_empyt) + ",";
         *retstr += to_string(bat_n_ts_full) + ",";
         *retstr += to_string(bat_E_withdrawn) + ",";
+        *retstr += to_string((has_sim_bs) ? sim_comp_bs->get_total_withdrawn_E_gridOnly_kWh() : 0.0) + ",";
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_total_consumption_kWh() : 0.0) + ",";
         *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_total_consumption_kWh() : 0.0) + ",";
         *retstr += to_string(peak_grid_demand_kW) + ",";
@@ -689,9 +690,11 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         }
         double bat_EFC_cweek = 0.0;
         double bat_E_cweek_withdrawn = 0.0;
+        double bat_E_cweek_gridOnly_withdrawn = 0.0;
         if (has_sim_bs) {
             bat_EFC_cweek = sim_comp_bs->get_cweek_EFC();
             bat_E_cweek_withdrawn= sim_comp_bs->get_cweek_withdrawn_E_kWh();
+            bat_E_cweek_gridOnly_withdrawn = sim_comp_bs->get_cweek_withdrawn_E_gridOnly_kWh();
             sim_comp_bs->resetWeeklyCounter();
         }
         // See ControlUnit::MetricsStringHeader for the header definition
@@ -709,6 +712,7 @@ string* ControlUnit::get_metrics_string_weekly_wr(unsigned long week_number) {
         *retstr += to_string(sum_of_cweek_grid_demand_kWh)   + ",";
         *retstr += to_string(bat_EFC_cweek)         + ",";
         *retstr += to_string(bat_E_cweek_withdrawn) + ",";
+        *retstr += to_string(bat_E_cweek_gridOnly_withdrawn) + ",";
         *retstr += to_string((has_sim_hp) ? sim_comp_hp->get_cweek_consumption_kWh() : 0.0) + ",";
         *retstr += to_string((has_sim_cs) ? sim_comp_cs->get_cweek_consumption_kWh() : 0.0) + ",";
         *retstr += to_string(cweek_peak_grid_demand_kW) + ",";
@@ -1309,7 +1313,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             // get amount of load_bs that has been taken from PV feed-in
             double bs_generation_from_pv = 0.0;
             if (has_sim_bs) {
-                bs_generation_from_pv = sim_comp_bs->get_gridAmountDischarged_kW();
+                bs_generation_from_pv = sim_comp_bs->get_gridOnly_discharge_kW();
             }
             // calculate self-produced amount of locally consumed energy
             self_produced_load_kW = std::min(load_pv + bs_generation_from_pv, current_total_consumption_kW);
