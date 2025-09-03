@@ -117,10 +117,12 @@ class RoofSectionPV {
         float get_section_kWp()    const { return this_section_kWp; }
         const std::string& get_orientation()   const { return orientation;      }
         size_t get_profile_index() const { return profile_index;    }
+        // structural modifiers
+        void update_section_kWp(float new_kWp); ///< This structural modifier sets a new kWp for the roof section.
     private:
         // constant member variables
         const float* profile_data; ///< Reference to the array of size Global::get_n_timesteps(), where the profile is stored. Should be a part of global::pv_profiles_data
-        const float  this_section_kWp;
+        float this_section_kWp; // not const, because it can be changed (e.g., by the optimization when integrating PV optimization)
         const std::string orientation;
         size_t profile_index;
         //
@@ -136,18 +138,29 @@ class ComponentPV : public BaseComponent {
         ComponentPV(float kWp_static, unsigned long locationID); ///< Constructor in the case of static kWp computation
         ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
         // getter methods
-        float get_kWp() const            { return total_kWp; }
+        float get_kWp() const            { return total_kWp; } ///< Returns the total peak power, summed over all sections. See also ComponentPV::get_kWp_per_section().
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         double get_cweek_generation_kWh(){ return generation_cumsum_cweek_kWh; } ///< Returns the produced energy in kWh from the start of the current week until the current time step
         double get_total_generation_kWh(){ return generation_cumsum_total_kWh; } ///< Returns the total produced energy in kWh from the start of the simulation run until the current time step
         float get_generation_at_ts_kW(unsigned long ts) const; ///< Returns the generation at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
         std::string* get_section_string(const std::string& prefix_per_line); ///< Returns a string listing information about all existing, simulated roof sections - one line per section
         /**
-         * Returns the future electricity generation power for the future time steps over the complete time horizon.
+         * Returns the future electricity generation power for the future time steps over the complete (control) time horizon.
          * Attention: The object the returned pointer referes to is overwritten on subsequent calls! Do NOT delete the returned object.
          * @return: Returns a vector storing future generation in kW per future time step - READ THE ATTENTION NOTICE
          */
         const std::vector<double>* get_future_generation_kW() const { return &future_generation_kW; }
+        /**
+         * Computes and returns the total electricity generation for the future, starting at time step 0 and ending with the final time step of the simulation.
+         * @returns: A list of orientations, containing the vector with the length of the full simulation horizon - with the same ordering as the internal variable ComponentPV::roof_sections.
+         */
+        std::list<std::vector<double>> get_total_generation_by_section_kW() const;
+        /**
+         * Computes and returns the installed power in kWp per section (not in total).
+         * See also ComponentPV::get_kWp().
+         * @returns: A list of kWp per orientation with the same ordering as the internal variable ComponentPV::roof_sections.
+         */
+        std::list<double> get_kWp_per_section() const;
         //
         // update / action methods during simulation run
         void  calculateCurrentFeedin(unsigned long ts);
@@ -156,7 +169,10 @@ class ComponentPV : public BaseComponent {
         void resetInternalState();
         void set_horizon_in_ts(unsigned int new_horizon); ///< Sets another horizon for the number of time steps returned by ComponentPV::get_future_generation_kW()
         // modification methods for structural modifications
-        //void  set_kWp(float value);
+        /**
+         * This method updates the PV size per section, according to the given list. The order must be the ssame as it is in the internal variable roof_sections.
+         */
+        void set_kWp_per_section(const std::list<double>& new_values);
     private:
         // constant members
         std::vector<RoofSectionPV> roof_sections;

@@ -112,6 +112,11 @@ float RoofSectionPV::get_generation_at_ts_kW(unsigned long ts) const {
     return this_section_kWp * profile_data[tsID];
 }
 
+void RoofSectionPV::update_section_kWp(float new_kWp) {
+    if (new_kWp < 0.0f) new_kWp = 0.0f;
+    this_section_kWp = new_kWp;
+}
+
 
 
 
@@ -272,6 +277,34 @@ string* ComponentPV::get_section_string(const string& prefix_per_line) {
     return return_str;
 }
 
+std::list<std::vector<double>> ComponentPV::get_total_generation_by_section_kW() const {
+    const unsigned long ts_start = Global::get_first_timestep();
+    const unsigned long ts_end   = Global::get_last_timestep();
+    const unsigned long horizon_len = ts_end - ts_start + 1;
+    std::list<std::vector<double>> output_list;
+
+    for (const RoofSectionPV& section : roof_sections) {
+        std::vector<double>& this_sec_vec = output_list.emplace_back();
+        this_sec_vec.reserve(horizon_len);
+
+        for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
+            this_sec_vec.push_back( section.get_generation_at_ts_kW(ts) );
+        }
+    }
+
+    return output_list;
+}
+
+std::list<double> ComponentPV::get_kWp_per_section() const {
+    std::list<double> output_list;
+
+    for (const RoofSectionPV& section : roof_sections) {
+        output_list.push_back( section.get_section_kWp() );
+    }
+
+    return output_list;
+}
+
 void ComponentPV::calculateCurrentFeedin(unsigned long ts) {
     currentGeneration_kW = 0.0;
     for (RoofSectionPV& section : roof_sections)
@@ -301,6 +334,25 @@ void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
     future_generation_kW.resize(new_horizon, 0.0);
 }
 
+void ComponentPV::set_kWp_per_section(const std::list<double>& new_values) {
+    total_kWp = 0.0;
+    auto it = new_values.begin();
+    for (RoofSectionPV& section : roof_sections) {
+        // safety checks
+        if (it == new_values.end()) {
+            throw std::runtime_error("ComponentPV::set_kWp_per_section(): not enough values provided for all roof sections");
+        }
+        // set the new value
+        float v = static_cast<float>(*it++);
+        if (v < 0.0) v = 0.0;
+        section.update_section_kWp(v);
+        total_kWp += v;
+    }
+    // final safety checks
+    if (it != new_values.end()) {
+        throw std::runtime_error("ComponentPV::set_kWp_per_section(): too many values provided compared to roof sections");
+    }
+}
 
 
 
