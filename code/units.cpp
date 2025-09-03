@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <list>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 #include <cmath> /* using: pow() */
@@ -775,15 +776,17 @@ void ControlUnit::add_exp_pv() {
         has_sim_pv  = true;
         if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::StaticPVSize) {
             sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_static(), locationID);
-        } else if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::MaxAvailableRoofArea) {
+        } else if (
+            Global::get_exp_pv_sizing_mode() == global::PVSizingMode::MaxAvailableRoofArea ||
+            Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized
+        ) {
             sim_comp_pv = new ComponentPV(Global::get_exp_pv_kWp_per_m2(),
                                           Global::get_exp_pv_min_kWp_roof_sec(),
                                           Global::get_exp_pv_max_kWp_roof_sec(),
                                           Global::get_exp_pv_max_kWp_per_unit(),
                                           locationID);
-        } else /* if (Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized) */ {
-            // TODO ... Optimization MUST be executed HERE ALREADY ... because we need to know the optimal installed PV kWp here ...
-            throw std::runtime_error("This feature is currently not implemented: Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized");
+            // Hint for the case of Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized
+            //    --> Just instanciate a arbitrarily sized PV installation - the final sizing will be done when the optimization is called for the first time
         }
     }
 }
@@ -815,9 +818,9 @@ void ControlUnit::add_exp_bs() {
             }
             // round on two digits
             new_battery_capacity_kWh = round( (ann_cons_kWh / 1000) * 100 ) / 100.0;
-        } else /* if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized) */ {
-            // TODO ... Optimization MUST be executed HERE ALREADY ... because we need to know the actual BS capacity here ...
-            new_battery_capacity_kWh = 0.0; // TODO: The result of the optimization!
+        } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized) {
+            // Just set the battery capacity to 0.0 - the actual value will be set later, when the optimization is called (for the first time)
+            new_battery_capacity_kWh = 0.0;
             throw std::runtime_error("This feature is currently not implemented: Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized");
         }
         // respect maximum addition
@@ -1058,6 +1061,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 throw std::runtime_error("No optimization backend selected during compile time!");
 #endif
             }
+            bool optimize_PV_size = false; // this value is set some lines below, if true required
+            bool optimize_BS_size = has_sim_bs && Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized;
             //
             // 3. Get the not-shiftable and shiftable loads over the prediction horizon
             // - measurement units
@@ -1071,6 +1076,14 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
             if (has_sim_pv) {
                 future_pv_generation_kW = sim_comp_pv->get_future_generation_kW();
+            }
+            // - -> get PV generation over the complete time span if Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized
+            std::optional< std::list<std::vector<double>> > total_PV_generation_per_section_kW;
+            std::optional< std::list<double>              > max_PV_power_per_section_kWp;
+            if (has_sim_pv && Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized) {
+                total_PV_generation_per_section_kW = sim_comp_pv->get_total_generation_by_section_kW();
+                max_PV_power_per_section_kWp       = sim_comp_pv->get_kWp_per_section();
+                optimize_PV_size = true;
             }
             // - heat pump
             const std::vector<double>* future_hp_shiftable_maxP = st__empty_vector_for_time_horizon;
@@ -1138,14 +1151,17 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                 }
             }
             //
-            // 4b. Run the optimization and get the results
+            // 4b. Run the optimization and get the results (and apply optimal PV/BS size if required)
             optimization_call_counter++;
             bool opti_ret_val = optimized_controller->updateController(
                 ts, max_p_bs_kW, max_e_bs_kWh, max_p_cs_kW, current_bs_charge_kWh,
                 future_resid_demand_kW,   *future_pv_generation_kW,
                 *future_hp_shiftable_maxP, *future_hp_shiftable_minP,
                 *future_hp_shiftable_maxE, *future_hp_shiftable_minE,
-                future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP
+                 future_ev_shiftable_maxE,  future_ev_shiftable_minE,  future_ev_maxP,
+                 optimize_PV_size, optimize_BS_size,
+                 optimize_PV_size ? &*total_PV_generation_per_section_kW : NULL,
+                 optimize_PV_size ? &*max_PV_power_per_section_kWp : NULL
                 );
             // Reduce the number of variables for currently running optimizations again
             if (Global::get_max_parallel_opti_vars() > 0) {
@@ -1181,12 +1197,14 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
                     optimized_controller->shiftVectorsByOnePlace();
                 }
             }
-            // TODO: In case of the first call
-            // AND
-            // Global::get_exp_pv_sizing_mode() == global::PVSizingMode::Optimized;
-            // or
-            // Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized;
-            // we must output the result of the optimal PV / BS size!
+            // Process result of PV and/or BS sizing
+            if (optimize_PV_size) {
+                auto new_values = optimized_controller->get_optimal_PV_size_per_section_kW();
+                sim_comp_pv->set_kWp_per_section( new_values );
+            }
+            if (optimize_BS_size) {
+                sim_comp_bs->set_maxE_kWh( optimized_controller->get_optimal_BS_size_kWh() );
+            }
 
         } else {
             // else (i.e., no opti executed in this position):

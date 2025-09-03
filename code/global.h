@@ -269,6 +269,7 @@ class Global {
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
         static double get_npv_factor_if_const()       { return npv_factor_if_const; } ///< Returns the factor for multiplication in the NPV formula for the discounted revenues if the cashflow is constant
+        static double get_annuity_factor()            { return 1.0 / npv_factor_if_const; } ///< Returns the annuity factor for economic assesment
         static unsigned int get_hp_flexibility_in_ts()        { return hp_flexibility_in_ts;       } ///< Returns the flexibility of the heat pump profiles in time steps
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_heat_cons_bobv_slope()               { return heat_cons_bobv_slope;        } ///< Parameter of linear regression (slope) for estimating annual heat consumption based on the building volume (bobv)

@@ -1,5 +1,7 @@
 #include "optimization_unit_gurobi.hpp"
 
+#include <optional>
+
 #include "global.h"
 #include "optimization_unit_general.hpp"
 
@@ -9,7 +11,7 @@ GRBEnv* GurobiLPController::env = NULL;
 
 
 bool GurobiLPController::updateController(
-    unsigned long ts,
+    const unsigned long ts,
     double max_p_bs_kW,
     double max_e_bs_kWh,
     double max_p_cs_kW,
@@ -22,7 +24,11 @@ bool GurobiLPController::updateController(
     const std::vector<double>& future_hp_shiftable_minE,
     const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE,
     const std::vector<const std::vector<double>*>* future_ev_shiftable_minE,
-    const std::vector<const std::vector<double>*>* future_ev_maxP
+    const std::vector<const std::vector<double>*>* future_ev_maxP,
+    const bool optimize_PV_size,
+    const bool optimize_BS_size,
+    const std::list<std::vector<double>>* total_PV_generation_per_section_kW,
+    const std::list<double>* max_PV_power_per_section_kWp
 )
 {
     try {
@@ -32,6 +38,7 @@ bool GurobiLPController::updateController(
         // create the variables
         const unsigned int T  = Global::get_control_horizon_in_ts(); // number of time steps to consider
         const unsigned int Tp = T + 1; // required for the e_bs
+        const unsigned long n_pv_sections = optimize_PV_size ? total_PV_generation_per_section_kW->size() : 0;
         std::vector<GRBVar> p_resid_eq1(T);
         std::vector<GRBVar> p_pv_to_resid(T);
         std::vector<GRBVar> p_pv_eq2(T);
@@ -44,6 +51,43 @@ bool GurobiLPController::updateController(
         std::vector<GRBVar> e_bs_kWh(Tp);
         std::vector<GRBVar> x_demand_kW(T); // power of grid demand in kW
         std::vector<GRBVar> x_feedin_kW(T); // power of grid feedin in kW
+        std::optional<GRBVar> dim_bs_E_kWh; // the optimal BS size
+        std::optional<GRBVar> dim_bs_P_kW; // the (bound) actual battery power dependent on the (free) BS dimension
+        std::vector<GRBVar> dim_pv_per_sec_kW(n_pv_sections); // optimal PV size per section
+        // pre-initialization in case of PV or BS optimal sizing
+        if (optimize_PV_size) {
+            auto it  = max_PV_power_per_section_kWp->cbegin();
+            auto it2 = total_PV_generation_per_section_kW->cbegin();
+            for (unsigned long sectionIdx = 0; sectionIdx < n_pv_sections; sectionIdx++) {
+                // safety checks
+                if (it == max_PV_power_per_section_kWp->cend()) {
+                    throw std::runtime_error("Error in the optimization unit: not enough values provided in argument 'max_PV_power_per_section_kWp' for method updateController().");
+                }
+                // another check for the content of the other list
+                if ( (*it2).size() < T ) {
+                    throw std::runtime_error("Error in the optimization unit: parameter 'max_PV_power_per_section_kWp' has a vector to small size for section with index " + to_string(sectionIdx) + ".");
+                }
+                // set upper limit for the PV size for this section
+                double upper_limit_for_this_section_kWp = *it;
+                dim_pv_per_sec_kW[sectionIdx] = model.addVar(0.0, upper_limit_for_this_section_kWp, 0.0, GRB_CONTINUOUS, "dim_pv_per_sec_kW_" + std::to_string(sectionIdx));
+                // increment the iterators
+                it++; it2++;
+            }
+        }
+        if (optimize_BS_size) {
+            max_e_bs_kWh = GRB_INFINITY; // set maximum BS size to infinity
+            max_p_bs_kW  = GRB_INFINITY; // set maximum BS power to infinity
+            dim_bs_E_kWh = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "dim_bs_E_kWh");
+            dim_bs_P_kW  = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "dim_bs_P_kW");
+            // bound the battery power to the free battery capacity
+            model.addConstr( *dim_bs_P_kW * Global::get_exp_bess_E_P_ratio() == *dim_bs_E_kWh );
+            // a final check
+            if (current_bs_charge_kWh > 0.0) {
+                std::cerr << "Warning: current_bs_charge_kWh > 0 --> Setting this value to 0.0" << std::endl;
+                current_bs_charge_kWh = 0.0;
+            }
+        }
+        // standard initialization
         for (unsigned int t = 0; t < T; t++) {
             const std::string tstr = to_string(t);
             p_resid_eq1[t]  = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "p_resid_eq1_"   + tstr);
@@ -55,11 +99,18 @@ bool GurobiLPController::updateController(
             p_bs_out_kW[t]  = model.addVar(0.0, max_p_bs_kW,  0.0, GRB_CONTINUOUS, "p_bs_out_kW" + tstr);
             x_demand_kW[t]  = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "x_demand_kW" + tstr);
             x_feedin_kW[t]  = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "x_feedin_kW" + tstr);
+            // add bounds for BS power if this BS size is an optimization variable
+            if (optimize_BS_size) {
+                model.addConstr( p_bs_in_kW[t] + p_bs_out_kW[t] <= *dim_bs_P_kW );
+            }
         }
         // one additional time step of the battery storage
         for (unsigned int t = 0; t < Tp; t++) {
             const std::string tstr = to_string(t);
             e_bs_kWh[t]     = model.addVar(0.0, max_e_bs_kWh, 0.0, GRB_CONTINUOUS, "e_bs_kWh_" + tstr); // energy of the battery storage at the beginning of a time step
+            if (optimize_BS_size) {
+                model.addConstr( e_bs_kWh[t] <= *dim_bs_E_kWh );
+            }
         }
         // separate initialization for the EVs
         for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
@@ -102,7 +153,18 @@ bool GurobiLPController::updateController(
         // Power balance for PV and residential demand
         for (unsigned int t = 0; t < T; t++) {
             model.addConstr(future_resid_demand_kW[t]  == p_resid_eq1[t] + p_pv_to_resid[t]);
+          if (!optimize_PV_size) {
             model.addConstr(future_pv_generation_kW[t] == p_pv_eq2[t]    + p_pv_to_resid[t]);
+          } else {
+                GRBLinExpr expr_pv_gen_sum = 0.0;
+                auto it = total_PV_generation_per_section_kW->cbegin();
+                for (unsigned long sectionIdx = 0; sectionIdx < n_pv_sections; sectionIdx++) {
+                    // safety checks not required, as n_pv_sections equals total_PV_generation_per_section_kW->size()
+                    const std::vector<double>& time_series_for_this_section = *it++;
+                    expr_pv_gen_sum += dim_pv_per_sec_kW[sectionIdx] * time_series_for_this_section[t];
+                }
+                model.addConstr( p_pv_eq2[t] + p_pv_to_resid[t] == expr_pv_gen_sum );
+          }
         }
         // Power balance equation on control unit level
         if (Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::GridChargingAndDischarging) {
@@ -233,6 +295,14 @@ bool GurobiLPController::updateController(
                     current_demand_tariff = global::eprices_local_ts[ts - 1 + t];
                 obj += x_demand_kW[t] * current_demand_tariff - x_feedin_kW[t] * Global::get_feed_in_tariff();
             }
+            if (optimize_PV_size) {
+                for (unsigned long sectionIdx = 0; sectionIdx < n_pv_sections; sectionIdx++) {
+                    obj += dim_pv_per_sec_kW[sectionIdx] * Global::get_annuity_factor() * Global::get_inst_cost_PV_per_kWp();
+                }
+            }
+            if (optimize_BS_size) {
+                obj += *dim_bs_E_kWh * Global::get_annuity_factor() * Global::get_inst_cost_BS_per_kWh();
+            }
         } else if (Global::get_controller_optimization_target() == global::ControllerOptimizationTarget::PeakLoad) {
             GRBVar max_demand_kW = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "max_demand_kW");
             obj = max_demand_kW;
@@ -278,6 +348,15 @@ bool GurobiLPController::updateController(
             hp_power[t] = p_hp_kW[t].get(GRB_DoubleAttr_X);
             for (unsigned long evIdx = 0; evIdx < n_cars; evIdx++) {
                 ev_power[evIdx][t] = p_ev_kW[evIdx][t].get(GRB_DoubleAttr_X);
+            }
+            if (optimize_PV_size) {
+                optimal_pv_size_per_section_kW.clear();
+                for (unsigned long sectionIdx = 0; sectionIdx < n_pv_sections; sectionIdx++) {
+                    optimal_pv_size_per_section_kW.push_back( dim_pv_per_sec_kW[sectionIdx].get(GRB_DoubleAttr_X) );
+                }
+            }
+            if (optimize_BS_size) {
+                optimal_bs_size_kWh = dim_bs_E_kWh.value().get(GRB_DoubleAttr_X);
             }
         }
         model.terminate();

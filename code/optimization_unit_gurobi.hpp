@@ -25,7 +25,7 @@ class GurobiLPController : public BaseOptimizedController {
 
         using BaseOptimizedController::updateController;
         bool updateController(
-                unsigned long ts,
+                const unsigned long ts,
                 double max_p_bs_kW,
                 double max_e_bs_kWh,
                 double max_p_cs_kW,
@@ -38,7 +38,11 @@ class GurobiLPController : public BaseOptimizedController {
                 const std::vector<double>& future_hp_shiftable_minE,
                 const std::vector<const std::vector<double>*>* future_ev_shiftable_maxE,
                 const std::vector<const std::vector<double>*>* future_ev_shiftable_minE,
-                const std::vector<const std::vector<double>*>* future_ev_maxP
+                const std::vector<const std::vector<double>*>* future_ev_maxP,
+                const bool optimize_PV_size,
+                const bool optimize_BS_size,
+                const std::list<std::vector<double>>* total_PV_generation_per_section_kW,
+                const std::list<double>* max_PV_power_per_section_kWp
             );
 
         /**

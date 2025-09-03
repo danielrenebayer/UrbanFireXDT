@@ -313,6 +313,27 @@ bool Global::AllVariablesInitialized() {
                     cerr << "Warning: The combination of setting a maximal kWp per unit and using static mode does not make sens! The first will be ignored!" << endl;
                 }
 
+                if ( (bat_capacity_comp_mode == global::BatteryCapacityComputationMode::Optimized ||
+                      exp_pv_sizing_mode == global::PVSizingMode::Optimized )
+                    &&
+                     (controller_optimization_target != global::ControllerOptimizationTarget::ElectricityCosts ||
+                      controller_mode != global::ControllerMode::OptimizedWithPerfectForecast)
+                ) {
+                    std::cerr << "Error: When the battery or the PV installation should be sized to optimize the electricity costs, the configuration parameter 'controller optimization target' must be set to 'electricity costs' and 'controller mode' must be set to 'opti with perfect forecast'!" << std::endl;
+                    return false;
+                }
+
+                if (exp_pv_sizing_mode == global::PVSizingMode::Optimized && exp_pv_max_kWp_total >= 0.0) {
+                    std::cerr << "Warning: Parameter 'expansion PV max total kWp addition' has no effect when using 'expansion PV sizing mode' == 'Optimized'!" << std::endl;
+                }
+                if (bat_capacity_comp_mode == global::BatteryCapacityComputationMode::Optimized && ( exp_bess_max_P_total >= 0.0 || exp_bess_max_E_total >= 0.0 )) {
+                    std::cerr << "Warning: Parameter 'expansion PV max total kWp addition' and 'expansion BS max total E addition' have no effect when using 'expansion BS capacity computation mode' == 'Optimized'!" << std::endl;
+                }
+                if (bat_capacity_comp_mode == global::BatteryCapacityComputationMode::Optimized && Global::get_battery_power_computation_mode() != global::BatteryPowerComputationMode::UseEOverPRatio) {
+                    std::cerr << "Error: Configuration parameter 'expansion BS capacity computation mode' == 'Optimized' can only be used in conjunction with 'expansion BS power computation mode' == 'Use E:P-ratio'!" << std::endl;
+                    return false;
+                }
+
             return true;
         } else {
             return false;
