@@ -29,8 +29,8 @@ namespace simulation {
      * @param output_prefix (optional, default "") A prefix that should be added to the output file names
      * @param subsection (optional, default NULL) Execut the simulation for the current step only for a given sub-set of all known control units
      */
-    bool oneStep(unsigned long ts,
-                 double totalBatteryCapacity_kWh,
+    bool oneStep(const unsigned long ts,
+                 const double totalBatteryCapacity_kWh,
                  CUControllerThreadGroupManager* thread_manager = NULL,
                  const char* output_prefix = "",
                  std::vector<ControlUnit*>* subsection = NULL);
@@ -56,7 +56,7 @@ namespace simulation {
      * This function also handels the correct initialization
      * of the output folders.
      */
-    bool runSimulationForAllVariations(unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager = NULL);
+    bool runSimulationForAllVariations(const unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager = NULL);
 
     /**
      * This function is called by simulation::runSimulationFAVsAndSAC().
@@ -66,7 +66,7 @@ namespace simulation {
      * simulation (i.e., NOT for the SAC planning, this is done by 
      * the SAC planning function itselfe) if multi-processing is selected.
      */
-    bool runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id); ///< Runs the complete simulation for all parameter variations and add sim. added components to the CUs
+    bool runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], const unsigned long scenario_id); ///< Runs the complete simulation for all parameter variations and add sim. added components to the CUs
 
     /**
      * Run the complete simulation for a given scenario.
@@ -80,6 +80,6 @@ namespace simulation {
      * 
      * @return false, if an error occurs during simulation run or expansion planning, otherwise true
      */
-    bool runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id);
+    bool runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], const unsigned long scenario_id);
 
 }

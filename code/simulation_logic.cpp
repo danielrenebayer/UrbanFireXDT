@@ -41,11 +41,11 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
         std::cout << output_prefix << "Run simulation for a complete episode ..." << std::endl;
 
     // get variable values that remain equal during this simulation run
-    double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
+    const double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
 
     // get time data
-    unsigned long ts_start = Global::get_first_timestep();
-    unsigned long ts_end   = Global::get_last_timestep();
+    const unsigned long ts_start = Global::get_first_timestep();
+    const unsigned long ts_end   = Global::get_last_timestep();
     struct tm* current_tm_l; // left-aligned time stamp as struct tm
     unsigned int last_step_weekday = 0; // required to identify new weeks
     unsigned long week_number = 1;
@@ -108,8 +108,8 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
 
 }
 
-bool simulation::oneStep(unsigned long ts,
-                        double totalBatteryCapacity_kWh,
+bool simulation::oneStep(const unsigned long ts,
+                        const double totalBatteryCapacity_kWh,
                         CUControllerThreadGroupManager* thread_manager /* = NULL */,
                         const char* output_prefix /* = "" */,
                         std::vector<ControlUnit*>* subsection /* = NULL */) {
@@ -255,7 +255,7 @@ bool simulation::oneStep(unsigned long ts,
 
 }
 
-bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager /*= NULL */) {
+bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, CUControllerThreadGroupManager* thread_manager /*= NULL */) {
     //
     // This function runs the simulation for all given parameter
     // variations. If no variation is selected, it executes the
@@ -413,7 +413,7 @@ bool simulation::runSimulationForAllVariations(unsigned long scenario_id, CUCont
     return true;
 }
 
-bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
+bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], const unsigned long scenario_id) {
     //
     // This function executes the expansion / adds sim. added components to selected CUs
     // and then calls runSimulationForAllVariations(int)
@@ -465,7 +465,7 @@ bool simulation::runSimulationFAVsAndSAC(float expansion_matrix_rel_freq[16][16]
     return return_value;
 }
 
-bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], unsigned long scenario_id) {
+bool simulation::runCompleteSimulation(float expansion_matrix_rel_freq[16][16], unsigned long expansion_matrix_abs_freq[16][16], const unsigned long scenario_id) {
     // Initialize and precompute EV states
     ControlUnit::PreprocessEVData();
     //
