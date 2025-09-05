@@ -117,4 +117,8 @@ float round_float_5(float x) {
         return std::round( x * 100000 ) / 100000;
 }
 
+void to_lowercase(std::string& s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+}
+
 

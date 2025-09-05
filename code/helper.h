@@ -9,6 +9,8 @@
 #ifndef __HELPER_H_
 #define __HELPER_H_
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <list>
 #include <memory>
@@ -50,6 +52,12 @@ float round_float_5(double x);
  * Rounds a float on 5 decimal places
  */
 float round_float_5(float x);
+
+/**
+ * Transform a std::string (only showing ASCII text) to a lower-case string.
+ * This is an example from https://en.cppreference.com/w/cpp/string/byte/tolower
+ */
+void to_lowercase(std::string& s);
 
 
 #endif
