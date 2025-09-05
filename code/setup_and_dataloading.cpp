@@ -109,9 +109,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if (element_name.compare("expansion BS capacity computation mode")     == 0)
             {
                 string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
                 if (selection == "const") {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::Constant);
-                } else if (selection == "use PV power") {
+                } else if (selection == "use pv power") {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnNominalPVPower);
                 } else if (selection == "use mean annual consumption") {
                     Global::set_battery_capacity_computation_mode(global::BatteryCapacityComputationMode::BasedOnAnnualConsumption);
@@ -197,11 +198,12 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("expansion PV sizing mode")                == 0 )
             {
                 string selection = scenario_dict.get_value<string>();
-                if (selection == "MaxAvailableRoofArea") {
+                to_lowercase(selection);
+                if (selection == "maxavailableroofarea") {
                     Global::set_exp_pv_sizing_mode(global::PVSizingMode::MaxAvailableRoofArea);
-                } else if (selection == "StaticPVSize") {
+                } else if (selection == "staticpvsize") {
                     Global::set_exp_pv_sizing_mode(global::PVSizingMode::StaticPVSize);
-                } else if (selection == "Optimized") {
+                } else if (selection == "optimized") {
                     Global::set_exp_pv_sizing_mode(global::PVSizingMode::Optimized);
                 } else {
                     cerr << "Parameter 'expansion PV sizing mode' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
@@ -314,6 +316,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("controller mode")                         == 0 )
             {
                 string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
                 if (selection == "rule-based") {
                     Global::set_controller_mode( global::ControllerMode::RuleBased );
                 } else if (selection == "opti with perfect forecast") {
@@ -334,6 +337,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("controller allow bs charging from grid")  == 0 )
             {
                 string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
                 if (selection == "no grid charging") {
                     Global::set_controller_bs_grid_charging_mode( global::ControllerBSGridChargingMode::NoGridCharging );
                 } else if (selection == "only grid charging") {
@@ -348,6 +352,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("controller optimization target")          == 0 )
             {
                 string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
                 if (selection == "electricity costs") {
                     Global::set_controller_optimization_target( global::ControllerOptimizationTarget::ElectricityCosts );
                 } else if (selection == "peak load") {
