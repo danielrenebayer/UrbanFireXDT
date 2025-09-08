@@ -59,7 +59,7 @@ class BaseOptimizedController {
         /**
          * Returns the optimal BS size in kWh if the BS size was also part of the optimization
          */
-        std::list<double>& get_optimal_PV_size_per_section_kW() { return optimal_pv_size_per_section_kW; }
+        const std::list<double>& get_optimal_PV_size_per_section_kW() { return optimal_pv_size_per_section_kW; }
 
         /**
          * Returns the optimal BS size in kWh if the BS size was also part of the optimization

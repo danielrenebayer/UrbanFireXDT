@@ -821,7 +821,6 @@ void ControlUnit::add_exp_bs() {
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized) {
             // Just set the battery capacity to 0.0 - the actual value will be set later, when the optimization is called (for the first time)
             new_battery_capacity_kWh = 0.0;
-            throw std::runtime_error("This feature is currently not implemented: Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::Optimized");
         }
         // respect maximum addition
         if (Global::get_exp_bess_max_capacity() > 0.0) {
@@ -1328,8 +1327,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             // - case: BS discharging
             // get amount of load_bs that has been taken from PV feed-in
             double bs_generation_from_pv = 0.0;
-            if (has_sim_bs) {
-                bs_generation_from_pv = sim_comp_bs->get_gridOnly_discharge_kW();
+            if (has_sim_bs && load_bs < 0.0) {
+                bs_generation_from_pv = - ( sim_comp_bs->get_gridOnly_discharge_kW() + load_bs ); // Mind: load_bs < 0, but sim_comp_bs->get_gridOnly_discharge_kW() >= 0
             }
             // calculate self-produced amount of locally consumed energy
             self_produced_load_kW = std::min(load_pv + bs_generation_from_pv, current_total_consumption_kW);

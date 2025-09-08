@@ -507,7 +507,7 @@ void ComponentBS::calculateActions() {
         currentP_from_grid_kW = 0.0;
         if (currentE_kWh < currentE_from_grid_kWh) {
             double removed_amount_from_grid_kWh = currentE_from_grid_kWh - currentE_kWh;
-            currentP_from_grid_kW = removed_amount_from_grid_kWh / timestep_size_in_h;
+            currentP_from_grid_kW = removed_amount_from_grid_kWh / timestep_size_in_h * efficiency_out;
             currentE_from_grid_kWh = currentE_kWh; // set to current SOE
             // add to summation variables
             cweek_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
