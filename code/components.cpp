@@ -665,7 +665,7 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
         }
         // for max profile -> left shift
         size_t maxProfilePos = tsID + tOffset + Global::get_hp_flexibility_in_ts();
-        if (maxProfilePos < Global::get_n_timesteps()) {
+        if (maxProfilePos < Global::get_n_timesteps() && tOffset < Global::get_control_horizon_in_ts() - Global::get_hp_flexibility_in_ts()) {
             double new_val = profile_cumsum[maxProfilePos] * scaling_factor - total_consumption_kWh;
             if (new_val < 0)
                 new_val = 0.0;
@@ -674,6 +674,11 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
         } else {
             future_maxE_storage[tOffset] = last_known_maxE_val;
         }
+    }
+    // in the end, min and max profiles must come to the same point
+    unsigned long last_tOffset = Global::get_control_horizon_in_ts() - 1;
+    if (last_tOffset + ts >= Global::get_n_timesteps()) {
+        future_minE_storage[last_tOffset] = future_maxE_storage[last_tOffset];
     }
 }
 
@@ -1363,7 +1368,7 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
         if (tsIDaOffset < Global::get_n_timesteps()) {
             last_known_maxE_val = prec_vec_of_maxE[tsIDaOffset] - sum_of_E_charged_home_kWh;
             last_known_minE_val = prec_vec_of_minE[tsIDaOffset] - sum_of_E_charged_home_kWh;
-            if (last_known_maxE_val < 0) // TODO: How can this happen?
+            if (last_known_maxE_val < 0) // this might happen due to precission/rounding errors
                 last_known_maxE_val = 0.0;
             if (last_known_minE_val < 0)
                 last_known_minE_val = 0.0;
@@ -1372,6 +1377,11 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
         future_maxE_storage[tOffset] = last_known_maxE_val;
         future_minE_storage[tOffset] = last_known_minE_val;
         future_maxP_storage[tOffset] = last_known_maxP_val;
+    }
+    // in the end (of the complete simulation span), min and max profiles must come to the same point
+    unsigned long last_tOffset = Global::get_control_horizon_in_ts() - 1;
+    if (last_tOffset + ts >= Global::get_n_timesteps()) {
+        future_minE_storage[last_tOffset] = future_maxE_storage[last_tOffset];
     }
     // Remove energy from the battery if car is driving
     if (current_state == EVState::Driving) {
