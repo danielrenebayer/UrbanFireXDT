@@ -87,7 +87,7 @@ class ORToolsLPController : public BaseOptimizedController {
                 }
                 // set upper limit for the PV size for this section
                 double upper_limit_for_this_section_kWp = *it;
-                dim_pv_per_sec_kW = model->MakeNumVar(0.0, upper_limit_for_this_section_kWp, "dim_pv_per_sec_kW_" + std::to_string(sectionIdx));
+                dim_pv_per_sec_kW[sectionIdx] = model->MakeNumVar(0.0, upper_limit_for_this_section_kWp, "dim_pv_per_sec_kW_" + std::to_string(sectionIdx));
                 // increment the iterators
                 it++; it2++;
             }
@@ -398,7 +398,7 @@ class ORToolsLPController : public BaseOptimizedController {
         if (optimize_PV_size) {
             optimal_pv_size_per_section_kW.clear();
             for (unsigned long sectionIdx = 0; sectionIdx < n_pv_sections; sectionIdx++) {
-                optimal_pv_size_per_section_kW.push_back( dim_pv_per_sec_kW->solution_value() );
+                optimal_pv_size_per_section_kW.push_back( dim_pv_per_sec_kW[sectionIdx]->solution_value() );
             }
         }
         if (optimize_BS_size) {
