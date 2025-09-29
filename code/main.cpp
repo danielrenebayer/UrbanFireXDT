@@ -380,7 +380,17 @@ PYBIND11_MODULE(UrbanFireXDT, m) {
         .def_readonly("has_cntrl_hp", &pyconn::SimulationControlUnitState::has_cntrl_hp,
                       "True if a controllable (i.e., simulated) heat pump is present.")
         .def_readonly("has_cntrl_evchst", &pyconn::SimulationControlUnitState::has_cntrl_evchst,
-                      "True if a controllable (i.e., simulated) EV charging station is present.");
+                      "True if a controllable (i.e., simulated) EV charging station is present.")
+        .def_readonly("timestepID", &pyconn::SimulationControlUnitState::timestepID,
+                      "The timestep ID of the current time step.")
+        // BS
+        .def_readonly("bs_soc", &pyconn::SimulationControlUnitState::bs_soc,
+                      "State of charge of the battery storage, if present. -1.0 if no battery is present.")
+        .def_readonly("bs_soe", &pyconn::SimulationControlUnitState::bs_soe,
+                      "State of energy (in kWh) of the battery storage, if present. -1.0 if no battery is present.");
+        // HP
+
+        // EV charging station
 
     m.def("initialize", &pyconn::initialize_simulation,
           "Initialize the simulation with a Python dict of options.");

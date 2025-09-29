@@ -40,6 +40,21 @@ namespace pyconn {
         bool has_cntrl_bs;
         bool has_cntrl_hp;
         bool has_cntrl_evchst;
+        unsigned long timestepID;
+        // BS
+        double bs_soc;
+        double bs_soe;
+        // HP
+        // double hp_cumulative_energy_kWh;
+        // double temp_indoor;
+        // double hp_cop;
+        // // EV 1, 2, 3
+        // // SOC, SOE, Whether EV is connected, time until departure, required energy until departure, time until next arrival
+        // // environmental data
+        // double temp_outdoor;
+        // double pv_generation;
+        // double household_demand;
+        // double electricity_price;
     };
 
     // ---------------------------
@@ -354,7 +369,21 @@ namespace pyconn {
         s.has_cntrl_bs     = cu->has_bs();
         s.has_cntrl_hp     = cu->has_hp();
         s.has_cntrl_evchst = cu->has_cs();
-        // TODO add more if required
+        s.timestepID       = get_next_timestep_id();
+        // BS
+        s.bs_soc           = cu->has_bs() ? cu->get_component_BS()->get_SOC() : -1.0;
+        s.bs_soe           = cu->has_bs() ? cu->get_component_BS()->get_SOE() : -1.0;
+        // HP
+        //s.hp_cumulative_energy_kWh = cu->has_hp() ? cu->get_component_HP()->get_currentDemand_kW() : -1.0; //TODO: subtract actual demand
+        //s.temp_indoor      = 
+        //s.hp_cop           = 
+        // EV 1, 2, 3
+        // SOC, SOE, Whether EV is connected, time until departure, required energy until departure, time until next arrival
+        // environmental data
+        //s.temp_outdoor;
+        //s.pv_generation    = cu->has_pv() ? cu->get_current_PV_generation_kW() : -1.0;
+        //s.household_demand = cu->get_current_load_vSMeter_kW();
+        //s.electricity_price = 
         return s;
     }
 
