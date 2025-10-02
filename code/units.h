@@ -246,6 +246,9 @@ class ControlUnit : BaseUnit<ControlUnit> {
         void reset_internal_state(); ///< Resets the internal state of the object, without removing added components
         // for simulation runs
         bool compute_next_value(unsigned long ts); ///< Computes the value for the (next) time step. The parameter 'ts' defines the current time step (starting counting at 1). This method must be called with strictly consecutive values ​​of parameter 'ts'.
+#ifdef PYTHON_MODULE
+        void send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<float>& p_ev_kW); ///< Send the commands from the python interface for this control unit for the next step to the given control unit. The commands will be processed (i.e., forewarded to the components) in the next call of ControlUnit::compute_next_value(). The ordering of @param p_ev_kW must be the same as the EVs were added to the control unit.
+#endif
         //
         // static functions
         // 1. Initializers and destructors
@@ -292,6 +295,12 @@ class ControlUnit : BaseUnit<ControlUnit> {
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         BaseOptimizedController* optimized_controller; ///< Reference to the controller (except of rule-based control)
+#ifdef PYTHON_MODULE
+        bool py_control_commands_obtained;
+        double py_cmd_p_bs_kW;
+        double py_cmd_p_hp_kW;
+        std::vector<float> py_cmd_p_ev_kW;
+#endif
         // summation variables from the beginning of the simulation run until the current time step
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run

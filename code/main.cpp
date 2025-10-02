@@ -391,7 +391,22 @@ PYBIND11_MODULE(UrbanFireXDT, m) {
     m.def("get_state", &pyconn::getState, "controlUnitID"_a,
           "Get the state of a control unit.");
     m.def("send_commands", &pyconn::sendCommands, "controlUnitID"_a, "commands"_a,
-          "Send a command to a control unit.");
+          R"pbdoc(
+Send a command to a control unit.
+
+Args:
+    controlUnitID (int): The external (public) ID of the control unit.
+    commands (dict): A dictionary with control signals. Supported keys:
+        - "p_bs_kW": float, battery storage power [kW]
+        - "p_hp_kW": float, heat pump power [kW]
+        - "p_ev_kW": list of floats, EV charging powers [kW]
+
+Example:
+    >>> UrbanFireXDT.send_commands(
+    ...     1,
+    ...     {"p_bs_kW": -2.5, "p_hp_kW": 3.1, "p_ev_kW": [0.0, 11.0]}
+    ... )
+)pbdoc");
     m.def("run_one_step", &pyconn::run_one_step,
           "Advance the simulation by one time step.");
     m.def("reset_simulation_to_start", &pyconn::reset_simulation_to_start,

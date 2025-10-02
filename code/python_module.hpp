@@ -382,10 +382,21 @@ namespace pyconn {
 
         ControlUnit* cu = ControlUnit::GetInstancePublicIDWE( controlUnitID );
         // process the commands
-        /* if (commands.contains("command_name")) {
-            config_filepath = commands["command_name"].cast<unsigned long>();
+        double p_bs_kW = 0.0;
+        double p_hp_kW = 0.0;
+        std::vector<float> p_ev_kW;
+        if (commands.contains("p_bs_kW")) {
+            p_bs_kW = commands["p_bs_kW"].cast<double>();
         }
-        */
+        if (commands.contains("p_hp_kW")) {
+            p_hp_kW = commands["p_hp_kW"].cast<double>();
+        }
+        if (commands.contains("p_ev_kW")) {
+            p_ev_kW = commands["p_ev_kW"].cast<std::vector<float>>();
+        }
+
+        // send commands to the control unit
+        cu->send_control_commands_from_py_interface(p_bs_kW, p_hp_kW, p_ev_kW);
     }
 
     /**
