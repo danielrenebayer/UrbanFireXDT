@@ -187,6 +187,7 @@ global::PVSizingMode Global::exp_pv_sizing_mode = global::PVSizingMode::MaxAvail
 global::ControllerMode Global::controller_mode = global::ControllerMode::RuleBased;
 global::ControllerBSGridChargingMode Global::controller_bs_grid_charging_mode = global::ControllerBSGridChargingMode::NoGridCharging;
 global::ControllerOptimizationTarget Global::controller_optimization_target = global::ControllerOptimizationTarget::ElectricityCosts;
+const std::set<unsigned long>* Global::cu_list_for_sac_planning = NULL;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
@@ -247,6 +248,10 @@ void Global::InitializeStaticVariables() {
 void Global::DeleteStaticVariables() {
     delete ts_start_tm;
     delete ts_end_tm;
+    if (Global::cu_list_for_sac_planning != NULL) {
+        delete Global::cu_list_for_sac_planning;
+        Global::cu_list_for_sac_planning = NULL;
+    }
 }
 
 bool Global::AllVariablesInitialized() {
@@ -1182,6 +1187,9 @@ void Global::set_controller_optimization_target(global::ControllerOptimizationTa
     } else {
         controller_optimization_target = mode;
     }
+}
+void Global::set_cu_list_for_sac_planning(const std::set<unsigned long>* selected_cuIDs) {
+    Global::cu_list_for_sac_planning = selected_cuIDs;
 }
 void Global::set_controller_bs_grid_charging_mode(global::ControllerBSGridChargingMode mode) {
     if (is_locked) {

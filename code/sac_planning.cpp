@@ -15,6 +15,7 @@ using namespace expansion;
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 
@@ -302,6 +303,26 @@ bool add_expansion_to_units_random_or_data_order(
         //
         // convert the vector containint all list of CUs with the current expansion status to a set to be able to remove elements quickly later
         std::set<ControlUnit*> setOfCUs (listOfCUs->begin(), listOfCUs->end());
+        //
+        // If only list of CUs should be considered: Remove elements if they are not in this list
+        if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::UseList) {
+            if (Global::get_cu_list_for_sac_planning() == NULL) {
+                std::cerr << "Warning: No list of control units is given, even though the addition of components should be done by the given list!\nFalling back to the all units in data order." << std::endl;
+            } else {
+                const std::set<unsigned long>& allowed_cu_ids = *(Global::get_cu_list_for_sac_planning());
+                // Remove any CU not present in allowed_cu_ids
+                for (auto it = setOfCUs.begin(); it != setOfCUs.end(); ) {
+                    ControlUnit* cu = *it;
+                    const unsigned long cu_id = cu->get_unitID();
+                    if (allowed_cu_ids.find(cu_id) == allowed_cu_ids.end()) {
+                        it = setOfCUs.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+        }
+        //
         // loop over all **target** expansion states
         // start at iMatO + 1, as all combinations bevore are impossible / or do not need any expansion
         // If one loops over them as well, the order of the ordered_list (in case it is set) would be useless!
@@ -1154,8 +1175,9 @@ void expansion::add_expansion_to_units(
     // 4. plan and execute expansion
     //
     if (Global::get_cu_selection_mode_fca() == global::CUSModeFCA::RandomSelection ||
-        Global::get_cu_selection_mode_fca() == global::CUSModeFCA::OrderAsInData)
-    {
+        Global::get_cu_selection_mode_fca() == global::CUSModeFCA::OrderAsInData   ||
+        Global::get_cu_selection_mode_fca() == global::CUSModeFCA::UseList
+    ) {
         add_expansion_to_units_random_or_data_order(
             expansion_matrix_abs_freq,
             cuRefLstVectBitOrder

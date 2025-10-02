@@ -109,7 +109,8 @@ namespace global {
         OrderAsInData,
         RandomSelection,
         BestSSR,
-        BestNPV
+        BestNPV,
+        UseList
     };
 
     /*!
@@ -299,6 +300,7 @@ class Global {
         static global::ControllerMode get_controller_mode() { return controller_mode; }
         static global::ControllerBSGridChargingMode get_controller_bs_grid_charging_mode()  { return controller_bs_grid_charging_mode; } ///< Return whether the battery can be charged from the grid / discharged into the grid - only effective if an optimized charging strategy is selected
         static global::ControllerOptimizationTarget get_controller_optimization_target() { return controller_optimization_target; } ///< Returns the selected optimization target (only valid if a controller mode with optimization is selected)
+        static const std::set<unsigned long>* get_cu_list_for_sac_planning() { return cu_list_for_sac_planning; } ///< Returns the std::set of control unit IDs (if existing, otherwise NULL) that contains the IDs of the units that should be selected for SAC addition
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
@@ -390,6 +392,7 @@ class Global {
         static void set_controller_mode(global::ControllerMode mode);
         static void set_controller_bs_grid_charging_mode(global::ControllerBSGridChargingMode mode);
         static void set_controller_optimization_target(global::ControllerOptimizationTarget mode);
+        static void set_cu_list_for_sac_planning(const std::set<unsigned long>* selected_cuIDs);
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
@@ -485,6 +488,7 @@ class Global {
         static global::ControllerMode controller_mode; ///< The mode how the control units make decisions
         static global::ControllerBSGridChargingMode controller_bs_grid_charging_mode;
         static global::ControllerOptimizationTarget controller_optimization_target;
+        static const std::set<unsigned long>* cu_list_for_sac_planning;
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
