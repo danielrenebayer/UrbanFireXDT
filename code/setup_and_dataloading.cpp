@@ -172,11 +172,13 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("expansion profile selection")             == 0 )
             {
                 exp_profile_mode       = scenario_dict.get_value<string>();
+                to_lowercase( exp_profile_mode );
                 exp_profile_mode_set   = true;
             }
             else if ( element_name.compare("CU selection mode for comp. add.")        == 0 )
             {
                 sac_planning_mode      = scenario_dict.get_value<string>();
+                to_lowercase( sac_planning_mode );
                 sac_planning_mode_set  = true;
             }
             else if ( element_name.compare("expansion PV kWp static")                 == 0 )
@@ -499,9 +501,9 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 sac_planning_mode_transl = global::CUSModeFCA::OrderAsInData;
             } else if (sac_planning_mode == "random")  {
                 sac_planning_mode_transl = global::CUSModeFCA::RandomSelection;
-            } else if (sac_planning_mode == "best SSR")  {
+            } else if (sac_planning_mode == "best ssr")  {
                 sac_planning_mode_transl = global::CUSModeFCA::BestSSR;
-            } else if (sac_planning_mode == "best NPV")  {
+            } else if (sac_planning_mode == "best npv")  {
                 sac_planning_mode_transl = global::CUSModeFCA::BestNPV;
             } else {
                 cerr << "Parameter 'CU selection mode for comp. add' is defined as '" << sac_planning_mode << "' in config-json, but this value is unknown." << endl;
