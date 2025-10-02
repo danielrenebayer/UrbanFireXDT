@@ -223,6 +223,13 @@ ControlUnit::ControlUnit(unsigned long internalID, unsigned long publicID, unsig
     is_expandable_with_hp_cache          = false;
     is_expandable_with_hp_cache_computed = false;
 
+#ifdef PYTHON_MODULE
+    py_control_commands_obtained = false;
+    py_cmd_p_bs_kW = 0.0;
+    py_cmd_p_hp_kW = 0.0;
+    py_cmd_p_ev_kW.clear();
+#endif
+
 	//
 	// add this control unit to the list of
 	// connected units in the connected substation
@@ -866,6 +873,9 @@ void ControlUnit::preprocess_ev_data() {
 
 void ControlUnit::add_ev(unsigned long carID) {
     sim_comp_cs->add_ev(carID);
+#ifdef PYTHON_MODULE
+    py_cmd_p_ev_kW.push_back(0.0);
+#endif
 }
 
 void ControlUnit::set_output_object(CUOutput* output_obj) {
@@ -973,6 +983,12 @@ void ControlUnit::reset_internal_state() {
     current_wind_feedin_to_grid_kW    = 0.0;
     current_unknown_feedin_to_grid_kW = 0.0;
     //
+#ifdef PYTHON_MODULE
+    py_control_commands_obtained = false;
+    py_cmd_p_bs_kW = 0.0;
+    py_cmd_p_hp_kW = 0.0;
+#endif
+    //
     sum_of_consumption_kWh    = 0.0;
     sum_of_self_cons_kWh      = 0.0;
     sum_of_mu_cons_kWh        = 0.0;
@@ -1041,6 +1057,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     if (has_sim_cs)
         n_cars = sim_comp_cs->get_n_EVs();
     
+    bool error_happend_during_cntrl_cmd_appl = false;
+
     // Part B: Make decisions using an optimization if selected
     if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast &&
         ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
@@ -1069,7 +1087,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             for (size_t fts = 0; fts < Global::get_control_horizon_in_ts(); fts++) {
                 future_resid_demand_kW[fts] = 0.0;
                 for (MeasurementUnit* mu : *connected_units)
-                    future_resid_demand_kW[fts] += mu->get_rsm_value_at_ts(ts + fts);
+                    future_resid_demand_kW[fts] += mu->get_rsm_demand_at_ts(ts + fts);
             }
             // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
             const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
@@ -1213,7 +1231,6 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 
         //
         // 5. Propagate the results to the components
-        bool error_happend_during_cntrl_cmd_appl = false;
         if (has_sim_bs) {
             sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
         }
@@ -1242,6 +1259,27 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         if (has_sim_cs)
             sim_comp_cs->setDemandToProfileData(ts);
     }
+
+    // In case of presence of control commands obtained from the python module: apply those
+#ifdef PYTHON_MODULE
+    if (py_control_commands_obtained) {
+        if (has_sim_bs) {
+            sim_comp_bs->set_chargeRequest( py_cmd_p_bs_kW );
+        }
+        if (has_sim_hp) {
+            bool ret_val = sim_comp_hp->setDemandToGivenValue( py_cmd_p_hp_kW );
+            if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
+        }
+        if (has_sim_cs) {
+            bool ret_val = sim_comp_cs->setDemandToGivenValues( py_cmd_p_ev_kW );
+            if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
+        }
+        if (error_happend_during_cntrl_cmd_appl) {
+            sum_of_errors_in_cntrl_cmd_appl++;
+            sum_of_cweek_errors_in_cntrl_cmd_appl++;
+        }
+    }
+#endif
 
     // Part C: Compute the load at the virtual smart meter
 
@@ -1295,7 +1333,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
-        if (Global::get_controller_mode() == global::ControllerMode::RuleBased) {
+        if (
+#ifndef PYTHON_MODULE
+            Global::get_controller_mode() == global::ControllerMode::RuleBased
+#else
+            !py_control_commands_obtained
+#endif
+        ) {
             sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
         } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
@@ -1466,8 +1510,23 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             load_hp, load_cs,
             n_cars_pc, n_cars_pnc);
 
+#ifdef PYTHON_MODULE
+    py_control_commands_obtained = false;
+#endif
+
     return true;
 }
+
+#ifdef PYTHON_MODULE
+void ControlUnit::send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<float>& p_ev_kW) {
+    py_control_commands_obtained = true;
+    py_cmd_p_bs_kW = p_bs_kW;
+    py_cmd_p_hp_kW = p_hp_kW;
+    for (unsigned long evIdx = 0; evIdx < py_cmd_p_ev_kW.size() && evIdx < p_ev_kW.size(); evIdx++) {
+        py_cmd_p_ev_kW[evIdx] = p_ev_kW[evIdx];
+    }
+}
+#endif
 
 void ControlUnit::InitializeStaticVariables(unsigned long n_CUs) {
     // reserve enough space in vector of CUs
@@ -1810,10 +1869,22 @@ bool MeasurementUnit::compute_next_value(unsigned long ts) {
     return true;
 }
 
-float MeasurementUnit::get_rsm_value_at_ts(unsigned long ts) const {
+float MeasurementUnit::get_rsm_load_at_ts(unsigned long ts) const {
     if (ts <= 0 || ts > Global::get_n_timesteps())
         return 0.0;
     return data_value_demand[ts - 1] - data_value_feedin[ts - 1];
+}
+
+float MeasurementUnit::get_rsm_demand_at_ts(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    return data_value_demand[ts - 1];
+}
+
+float MeasurementUnit::get_rsm_feedin_at_ts(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    return data_value_feedin[ts - 1];
 }
 
 void MeasurementUnit::InitializeStaticVariables(unsigned long n_MUs) {

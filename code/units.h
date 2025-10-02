@@ -249,6 +249,9 @@ class ControlUnit : BaseUnit<ControlUnit> {
         void reset_internal_state(); ///< Resets the internal state of the object, without removing added components
         // for simulation runs
         bool compute_next_value(unsigned long ts); ///< Computes the value for the (next) time step. The parameter 'ts' defines the current time step (starting counting at 1). This method must be called with strictly consecutive values ​​of parameter 'ts'.
+#ifdef PYTHON_MODULE
+        void send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<float>& p_ev_kW); ///< Send the commands from the python interface for this control unit for the next step to the given control unit. The commands will be processed (i.e., forewarded to the components) in the next call of ControlUnit::compute_next_value(). The ordering of @param p_ev_kW must be the same as the EVs were added to the control unit.
+#endif
         //
         // static functions
         // 1. Initializers and destructors
@@ -295,6 +298,12 @@ class ControlUnit : BaseUnit<ControlUnit> {
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         BaseOptimizedController* optimized_controller; ///< Reference to the controller (except of rule-based control)
+#ifdef PYTHON_MODULE
+        bool py_control_commands_obtained;
+        double py_cmd_p_bs_kW;
+        double py_cmd_p_hp_kW;
+        std::vector<float> py_cmd_p_ev_kW;
+#endif
         // summation variables from the beginning of the simulation run until the current time step
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run
         double sum_of_self_cons_kWh;      ///< The sum of self-consumed energy in kWh starting from the beginning of the current simulation run
@@ -413,9 +422,30 @@ class MeasurementUnit : BaseUnit<MeasurementUnit> {
          * Returns the load at the smart meter at a given time step in kW.
          * If there is no data available, it returns 0.0.
          * This method does not change the object.
+         * The results equals to get_rsm_demand_at_ts(ts) - get_rsm_feedin_at_ts(ts)
          * @param ts: The time step for which the load should be computed
+         * @see get_rsm_demand_at_ts(), get_rsm_feedin_at_ts()
          */
-        float get_rsm_value_at_ts(unsigned long ts) const;
+        float get_rsm_load_at_ts(unsigned long ts) const;
+        /**
+         * Returns the demand at the smart meter at a given time step in kW.
+         * In contrast to MeasurementUnit::get_rsm_load_at_ts(), it ignores feed-in.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_feedin_at_ts()
+         */
+        float get_rsm_demand_at_ts(unsigned long ts) const;
+        /**
+         * Returns the feed-in at the smart meter at a given time step in kW.
+         * In contrast to MeasurementUnit::get_rsm_load_at_ts(), it ignores the demand.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @return only positive numbers (for a feedin - in contrast to get_rsm_load_at_ts()), or 0.0
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_demand_at_ts()
+         */
+        float get_rsm_feedin_at_ts(unsigned long ts) const;
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors

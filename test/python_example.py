@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath("../bin"))
 import UrbanFireXDT
 
 # Initialize the C++ simulation
-UrbanFireXDT.initialize({"config":"test-config/test_config.json", "scenario": 1})
+UrbanFireXDT.initialize({"config":"test-config/test_config.json", "scenario": 4})
 
 # The number of episodes (i.e., repetitions of the complete simulation time span) to execute
 n_episodes = 3
@@ -33,8 +33,18 @@ for episode_id in range(1, n_episodes+1):
         #print(f"C++ state of control unit with ID {cuID} = {current_state}")
 
         # 2. Determine and send new commands
-        new_commands = {"test_cmd": 1234.0}
-        UrbanFireXDT.send_commands(controlUnitID=cuID, commands=new_commands)
+        for cuID in [1,2,3]:
+            bs_load = 0.0
+            if this_timestep_id >= 12 and this_timestep_id <= 13:
+                bs_load =  1.0
+            if this_timestep_id >= 19 and this_timestep_id <= 21:
+                bs_load = -1.0
+            new_commands = {
+                "p_bs_kW": bs_load,
+                "p_hp_kW": 0.0 if this_timestep_id < 2 else 1.0,
+                "p_ev_kW": [0.0, 0.0]
+            }
+            UrbanFireXDT.send_commands(controlUnitID=cuID, commands=new_commands)
 
         # 3. Tell C++ to run the next step
         UrbanFireXDT.run_one_step()

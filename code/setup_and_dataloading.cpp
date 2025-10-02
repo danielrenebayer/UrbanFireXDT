@@ -9,6 +9,7 @@
 #include <memory>
 #include <numeric>
 #include <sqlite3.h>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -172,12 +173,27 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if ( element_name.compare("expansion profile selection")             == 0 )
             {
                 exp_profile_mode       = scenario_dict.get_value<string>();
+                to_lowercase( exp_profile_mode );
                 exp_profile_mode_set   = true;
             }
             else if ( element_name.compare("CU selection mode for comp. add.")        == 0 )
             {
                 sac_planning_mode      = scenario_dict.get_value<string>();
+                to_lowercase( sac_planning_mode );
                 sac_planning_mode_set  = true;
+            }
+            else if ( element_name.compare("cu selection: list of unit IDs to expand")     == 0 )
+            {
+                std::set<unsigned long>* selected_cuIDs = new std::set<unsigned long>();
+                try {
+                    for (auto &v : scenario_dict) {
+                        selected_cuIDs->insert(v.second.get_value<unsigned long>());
+                    }
+                    Global::set_cu_list_for_sac_planning(selected_cuIDs);
+                } catch (std::exception &e) {
+                    std::cerr << "Error parsing 'CU selection: list of unit IDs to expand': " << e.what() << std::endl;
+                    throw;
+                }
             }
             else if ( element_name.compare("expansion PV kWp static")                 == 0 )
             {
@@ -499,10 +515,12 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 sac_planning_mode_transl = global::CUSModeFCA::OrderAsInData;
             } else if (sac_planning_mode == "random")  {
                 sac_planning_mode_transl = global::CUSModeFCA::RandomSelection;
-            } else if (sac_planning_mode == "best SSR")  {
+            } else if (sac_planning_mode == "best ssr")  {
                 sac_planning_mode_transl = global::CUSModeFCA::BestSSR;
-            } else if (sac_planning_mode == "best NPV")  {
+            } else if (sac_planning_mode == "best npv")  {
                 sac_planning_mode_transl = global::CUSModeFCA::BestNPV;
+            } else if (sac_planning_mode == "use list")  {
+                sac_planning_mode_transl = global::CUSModeFCA::UseList;
             } else {
                 cerr << "Parameter 'CU selection mode for comp. add' is defined as '" << sac_planning_mode << "' in config-json, but this value is unknown." << endl;
                 throw runtime_error("Parameter 'CU selection mode for comp. add' as defined in config-json is unknown.");
@@ -1713,7 +1731,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     // Selection settings
     current_outstream << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
-    PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; default: return "";}});
+    PRINT_ENUM_VAR(Global::get_cu_selection_mode_fca(),   [](auto var){switch(var){case global::CUSModeFCA::Uninitialized: return "Uninitialized"; case global::CUSModeFCA::OrderAsInData: return "OrderAsInData"; case global::CUSModeFCA::RandomSelection: return "RandomSelection"; case global::CUSModeFCA::BestSSR: return "BestSSR"; case global::CUSModeFCA::BestNPV: return "BestNPV"; case global::CUSModeFCA::UseList: return "Use List"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_power_computation_mode(), [](auto var){switch(var){case global::BatteryPowerComputationMode::AsDefinedByConfigVar: return "AsDefinedByConfigVar"; case global::BatteryPowerComputationMode::UseEOverPRatio: return "UseEOverPRatio"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_battery_capacity_computation_mode(), [](auto var){switch(var){case global::BatteryCapacityComputationMode::Constant: return "Constant"; case global::BatteryCapacityComputationMode::BasedOnNominalPVPower: return "BasedOnNominalPVPower"; case global::BatteryCapacityComputationMode::BasedOnAnnualConsumption: return "BasedOnAnnualConsumption"; case global::BatteryCapacityComputationMode::Optimized: return "Optimized"; default: return "";}});
     PRINT_VAR(Global::get_annual_heat_demand_limit_fsac());
