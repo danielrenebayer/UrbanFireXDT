@@ -1810,10 +1810,22 @@ bool MeasurementUnit::compute_next_value(unsigned long ts) {
     return true;
 }
 
-float MeasurementUnit::get_rsm_value_at_ts(unsigned long ts) const {
+float MeasurementUnit::get_rsm_load_at_ts(unsigned long ts) const {
     if (ts <= 0 || ts > Global::get_n_timesteps())
         return 0.0;
     return data_value_demand[ts - 1] - data_value_feedin[ts - 1];
+}
+
+float MeasurementUnit::get_rsm_demand_at_ts(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    return data_value_demand[ts - 1];
+}
+
+float MeasurementUnit::get_rsm_feedin_at_ts(unsigned long ts) const {
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    return data_value_feedin[ts - 1];
 }
 
 void MeasurementUnit::InitializeStaticVariables(unsigned long n_MUs) {

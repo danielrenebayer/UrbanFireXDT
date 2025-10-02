@@ -410,9 +410,30 @@ class MeasurementUnit : BaseUnit<MeasurementUnit> {
          * Returns the load at the smart meter at a given time step in kW.
          * If there is no data available, it returns 0.0.
          * This method does not change the object.
+         * The results equals to get_rsm_demand_at_ts(ts) - get_rsm_feedin_at_ts(ts)
          * @param ts: The time step for which the load should be computed
+         * @see get_rsm_demand_at_ts(), get_rsm_feedin_at_ts()
          */
-        float get_rsm_value_at_ts(unsigned long ts) const;
+        float get_rsm_load_at_ts(unsigned long ts) const;
+        /**
+         * Returns the demand at the smart meter at a given time step in kW.
+         * In contrast to MeasurementUnit::get_rsm_load_at_ts(), it ignores feed-in.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_feedin_at_ts()
+         */
+        float get_rsm_demand_at_ts(unsigned long ts) const;
+        /**
+         * Returns the feed-in at the smart meter at a given time step in kW.
+         * In contrast to MeasurementUnit::get_rsm_load_at_ts(), it ignores the demand.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @return only positive numbers (for a feedin - in contrast to get_rsm_load_at_ts()), or 0.0
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_demand_at_ts()
+         */
+        float get_rsm_feedin_at_ts(unsigned long ts) const;
         //
         // Class (i.e. static) functions
         // 1. Initializers and destructors
