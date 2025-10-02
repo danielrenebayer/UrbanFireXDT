@@ -1069,7 +1069,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             for (size_t fts = 0; fts < Global::get_control_horizon_in_ts(); fts++) {
                 future_resid_demand_kW[fts] = 0.0;
                 for (MeasurementUnit* mu : *connected_units)
-                    future_resid_demand_kW[fts] += mu->get_rsm_value_at_ts(ts + fts);
+                    future_resid_demand_kW[fts] += mu->get_rsm_demand_at_ts(ts + fts);
             }
             // - PV generation: sim_comp_pv->get_generation_at_ts_kW( ... future steps over horizon ... )
             const std::vector<double>* future_pv_generation_kW = st__empty_vector_for_time_horizon;
