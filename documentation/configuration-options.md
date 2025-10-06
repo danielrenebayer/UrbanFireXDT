@@ -48,8 +48,10 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | emissions per kWh     | float   | no       | 100                  | 0.0 - inf       | The emissions in CO2eq per kWh of energy taken from the grid - This parameter is ignored if a time series on emissions is given | no |
 | net present value discount rate | float | yes |                   |                 | The discount rate for the computation of the metric `NPV` in the metrics-per-cu.csv. If `expansion PV sizing mode` or `expansion BS capacity computation mode` is set to `Optimized`, this value is also used there. | no |
 | net present value time horizon in years | float | yes |           |                 | The time horizon for the NPV calculation. See also the remarks for parameter `net present value discount rate`. | no |
-| installation cost PV per kWp | float | yes |                      |                 |             | no |
-| installation cost BS per kWh | float | yes |                      |                 |             | no |
+| installation cost PV per kWp  | float | yes |                     |                 | Installation costs for a simulated PV installation per peak-power. Required for the NPV and EAC calculation. | no |
+| installation cost BS per kWh  | float | yes |                     |                 | Installation costs for a simulated BS installation per kWh of capacity. Required for the NPV and EAC calculation. | no |
+| installation cost HP per kW   | float | no  |                     |                 | Installation costs for a simulated HP installation per power. Required for the NPV and EAC calculation. | no |
+| installation cost CS per unit | float | no  |                     |                 | Installation costs for a simulated charging station installation per charging unit. Required for the NPV and EAC calculation. Mind: A control unit might have multiple chargers per charging station. | no |
 
 ## Group 2: Data sources and output definition
 

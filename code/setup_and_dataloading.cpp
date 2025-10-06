@@ -254,6 +254,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_inst_cost_BS_per_kWh( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("installation cost hp per kW")             == 0 )
+            {
+                Global::set_inst_cost_HP_per_kW( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("installation cost cs per unit")           == 0 )
+            {
+                Global::set_inst_cost_CS_per_unit( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("expansion BS power computation mode")     == 0 )
             {
                 exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
@@ -1772,6 +1780,8 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_emissions_g_CO2eq_per_kWh());
     PRINT_VAR(Global::get_inst_cost_PV_per_kWp());
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
+    PRINT_VAR(Global::get_inst_cost_HP_per_kW());
+    PRINT_VAR(Global::get_inst_cost_CS_per_unit());
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
     PRINT_VAR(Global::get_hp_flexibility_in_ts());

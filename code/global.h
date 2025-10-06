@@ -267,6 +267,8 @@ class Global {
         static float get_emissions_g_CO2eq_per_kWh() { return emissions_per_kWh; } ///!< Returns the mean emissions in g CO2eq for one kWh of grid demanded energy. If a time series is available, use the latter one!
         static float get_inst_cost_PV_per_kWp(){ return inst_cost_PV_per_kWp; }
         static float get_inst_cost_BS_per_kWh(){ return inst_cost_BS_per_kWh; }
+        static float get_inst_cost_HP_per_kW() { return inst_cost_HP_per_kW;  }
+        static float get_inst_cost_CS_per_unit(){return inst_cost_CS_per_unit;}
         static float get_npv_discount_rate()   { return npv_discount_rate; }
         static unsigned int get_npv_time_horizon()    { return npv_time_horizon; }
         static double get_npv_factor_if_const()       { return npv_factor_if_const; } ///< Returns the factor for multiplication in the NPV formula for the discounted revenues if the cashflow is constant
@@ -362,6 +364,8 @@ class Global {
         static void set_emissions_g_CO2eq_per_kWh(float value);
         static void set_inst_cost_PV_per_kWp(float value);
         static void set_inst_cost_BS_per_kWh(float value);
+        static void set_inst_cost_HP_per_kW(float value);
+        static void set_inst_cost_CS_per_unit(float value);
         static void set_npv_discount_rate(float value);
         static void set_npv_time_horizon(unsigned int value);
         static void set_hp_flexibility_in_ts(unsigned int value);
@@ -457,6 +461,8 @@ class Global {
         static float emissions_per_kWh;    ///< The emissions in CO2eq for one kWh of energy taken from the grid
         static float inst_cost_PV_per_kWp; ///< Installation cost of a PV installation per kWp installed
         static float inst_cost_BS_per_kWh; ///< Installation cost of a battery storage per kWh capacity
+        static float inst_cost_HP_per_kW;
+        static float inst_cost_CS_per_unit;
         static float npv_discount_rate;    ///< Discount rate for the net present value computation
         static unsigned int npv_time_horizon; ///< Time horizont for the net present value computation
         static double npv_factor_if_const; ///< The NPV constant multiplication factor - no setter available

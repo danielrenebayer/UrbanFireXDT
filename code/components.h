@@ -349,6 +349,7 @@ class ComponentCS : public BaseComponent {
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
+        unsigned long get_n_chargers() const { return n_chargers; } ///< Returns the number of chargers available at this charging station (typically the number of flats of the building)
         /**
          * Returns the maximum electricity consumption of this component for the next n time steps (given some flexibility).
          * This means that the value at position 0 returns the maximum cummulated consumption AT THE END of the current time step.
@@ -388,6 +389,7 @@ class ComponentCS : public BaseComponent {
     private:
         // constant members
         const ControlUnit* installation_place;
+        const unsigned long n_chargers; ///< The number of chargers available at this charging station
         float max_charging_power; // Not const, as the value might not be known on pre-initialization
         // variable members, constant during one simulation run
         bool enabled;
