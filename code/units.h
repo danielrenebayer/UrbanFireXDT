@@ -228,6 +228,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         const ComponentBS* get_component_BS() const { if (has_sim_bs) return sim_comp_bs; else return nullptr; } ///< Returns a pointer to battery storage component, or nullptr if no such component is added.
         const ComponentHP* get_component_HP() const { if (has_sim_hp) return sim_comp_hp; else return nullptr; } ///< Returns a pointer to heat pump component, or nullptr if no such component is added.
         const ComponentCS* get_component_CS() const { if (has_sim_cs) return sim_comp_cs; else return nullptr; } ///< Returns a pointer to EV charging station component, or nullptr if no such component is added.
+        const ComponentPV* get_component_PV() const { if (has_sim_pv) return sim_comp_pv; else return nullptr; } ///< Returns a pointer to PV component, or nullptr if no such component is added.
         // public members
         bool is_sim_expanded; ///< Puplicly accessible member, weather the control unit is expanded or not (required for SAC Planning). This flag has no internal effect inside the class.
         // modifiers

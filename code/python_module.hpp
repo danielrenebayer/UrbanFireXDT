@@ -44,17 +44,32 @@ namespace pyconn {
         // BS
         double bs_soc;
         double bs_soe;
+        double bs_maxP_kW;
         // HP
-        // double hp_cumulative_energy_kWh;
-        // double temp_indoor;
-        // double hp_cop;
-        // // EV 1, 2, 3
-        // // SOC, SOE, Whether EV is connected, time until departure, required energy until departure, time until next arrival
-        // // environmental data
-        // double temp_outdoor;
-        // double pv_generation;
-        // double household_demand;
-        // double electricity_price;
+        float hp_rated_power_kW;
+        double hp_current_demand_kW;
+        std::vector<double> hp_future_max_power_kW;
+        std::vector<double> hp_future_min_power_kW;
+        std::vector<double> hp_future_max_consumption_kWh;
+        std::vector<double> hp_future_min_consumption_kWh;
+        //double hp_cumulative_energy_kWh;
+        // EVs
+        struct SimulationEVState {
+            EVState ev_state;
+            double ev_current_demand_kW;
+            double ev_soc;
+            double ev_soe;
+            std::vector<double> ev_future_max_power_kW;
+            std::vector<double> ev_future_max_consumption_kWh;
+            std::vector<double> ev_future_min_consumption_kWh;
+            // required energy until departure
+        };
+        std::vector<SimulationEVState> ev_states;
+        unsigned long n_EVs;
+        // environmental data
+        float pv_currentGeneration_kW;
+        float pv_kWp;
+        double electricity_price;
     };
 
     // ---------------------------
@@ -371,19 +386,53 @@ namespace pyconn {
         s.has_cntrl_evchst = cu->has_cs();
         s.timestepID       = get_next_timestep_id();
         // BS
-        s.bs_soc           = cu->has_bs() ? cu->get_component_BS()->get_SOC() : -1.0;
-        s.bs_soe           = cu->has_bs() ? cu->get_component_BS()->get_SOE() : -1.0;
+        s.bs_soc           = cu->has_bs() ? cu->get_component_BS()->get_SOC() : -1.0; // State of Charge BS
+        s.bs_soe           = cu->has_bs() ? cu->get_component_BS()->get_SOE() : -1.0; // State of Energy BS
+        s.bs_maxP_kW       = cu->has_bs() ? cu->get_component_BS()->get_maxP_kW() : -1.0; // Max possible charging/discharging power
         // HP
-        //s.hp_cumulative_energy_kWh = cu->has_hp() ? cu->get_component_HP()->get_currentDemand_kW() : -1.0; //TODO: subtract actual demand
-        //s.temp_indoor      = 
-        //s.hp_cop           = 
-        // EV 1, 2, 3
-        // SOC, SOE, Whether EV is connected, time until departure, required energy until departure, time until next arrival
+        s.hp_rated_power_kW = cu->has_hp() ? cu->get_component_HP()->get_rated_power_without_AUX() : -1.0; // Rated power of the heat pump in kW
+        s.hp_current_demand_kW = cu->has_hp() ? cu->get_component_HP()->get_currentDemand_kW() : -1.0; // Current demand of the heat pump in kW
+        s.hp_future_max_power_kW = cu->has_hp() ? *cu->get_component_HP()->get_future_max_power_kW() : std::vector<double>{};
+        s.hp_future_min_power_kW = cu->has_hp() ? *cu->get_component_HP()->get_future_min_power_kW() : std::vector<double>{};
+        s.hp_future_max_consumption_kWh = cu->has_hp() ? *cu->get_component_HP()->get_future_max_consumption_kWh() : std::vector<double>{};
+        s.hp_future_min_consumption_kWh = cu->has_hp() ? *cu->get_component_HP()->get_future_min_consumption_kWh() : std::vector<double>{};
+        //s.hp_cumulative_energy_kWh = cu->has_hp() ? cu->get_component_HP()->get_total_consumption_kWh() : -1.0; //TODO: subtract actual demand
+        // EVs
+        s.ev_states.clear();
+        if (cu->has_cs()) {
+            const ComponentCS* cs = cu->get_component_CS();
+            const std::vector<const EVFSM*>& ev_list = cs->get_listOfEVs();
+
+            for (size_t i = 0; i < 3; ++i) { // 3 EVs
+                SimulationControlUnitState::SimulationEVState ev_state_struct{};
+                
+                if (i < ev_list.size()) {
+                    const EVFSM* ev = ev_list[i];
+
+                    ev_state_struct.ev_state = ev->get_current_state();
+                    ev_state_struct.ev_current_demand_kW = ev->get_currentDemand_kW();
+
+                    // SOC / SOE
+                    const ComponentBS* battery = ev->get_battery();
+                    ev_state_struct.ev_soc = battery ? battery->get_SOC() : -1.0;
+                    ev_state_struct.ev_soe = battery ? battery->get_SOE() : -1.0;
+
+                    // Future power / energy
+                    ev_state_struct.ev_future_max_power_kW = *ev->get_future_max_power_kW();
+                    ev_state_struct.ev_future_max_consumption_kWh = *ev->get_future_max_consumption_kWh();
+                    ev_state_struct.ev_future_min_consumption_kWh = *ev->get_future_min_consumption_kWh();
+                } else {
+                    // If there is no EV, leave default values
+                }
+                s.ev_states.push_back(ev_state_struct);
+            }
+        }
+        s.n_EVs = cu->has_cs() ? cu->get_component_CS()->get_n_EVs() : 0;
         // environmental data
-        //s.temp_outdoor;
-        //s.pv_generation    = cu->has_pv() ? cu->get_current_PV_generation_kW() : -1.0;
-        //s.household_demand = cu->get_current_load_vSMeter_kW();
-        //s.electricity_price = 
+        s.pv_currentGeneration_kW = cu->has_pv() ? cu->get_component_PV()->get_currentGeneration_kW() : -1.0;
+        s.pv_kWp           = cu->has_pv() ? cu->get_component_PV()->get_kWp() : -1.0;
+        //s.household_demand = cu->get_current_load_vSMeter_kW(); get_current_demand_wo_BS_or_gen_kW ??
+        s.electricity_price = global::eprices_local_ts[s.timestepID];
         return s;
     }
 
