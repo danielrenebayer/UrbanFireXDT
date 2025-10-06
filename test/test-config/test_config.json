@@ -34,8 +34,6 @@
 
         "expansion profile selection":      "as in data",
 
-        "use BS for creating SSR list for SAC planning": false,
-
         "th. E to HP el. E conversion factor":          2.0,
         "Heat consumption apo building V: slope":       4.0,
         "Heat consumption apo building V: intercept": 400.0
@@ -95,7 +93,7 @@
             "ev data path": "../test-data/ev-data/",
             "controller mode": "opti with perfect forecast",
             "EV plugin probability": 1.0,
-            "control horizont in ts": 12,
+            "control horizon in ts": 24,
             "controller optimization target": "electricity costs",
             "use prices time series ia": true,
             "comment": "Based on ID 8 - with optimized control strategy."
@@ -107,7 +105,7 @@
             "controller mode": "opti with perfect forecast",
             "EV plugin probability": 1.0,
             "EV battery size kWh": 10.0,
-            "control horizont in ts": 12,
+            "control horizon in ts": 24,
             "controller optimization target": "electricity costs",
             "use prices time series ia": true,
             "comment": "Based on ID 9, but reduced number of cars - with optimized control strategy."
@@ -119,7 +117,7 @@
             "controller mode": "opti with perfect forecast",
             "EV plugin probability": 0.8,
             "EV battery size kWh": 10.0,
-            "control horizont in ts": 12,
+            "control horizon in ts": 24,
             "controller optimization target": "electricity costs",
             "use prices time series ia": true,
             "comment": "Based on ID 10, but reduced plug-in probability"

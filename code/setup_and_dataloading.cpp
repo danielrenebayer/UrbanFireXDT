@@ -422,15 +422,16 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             }
             else if ( element_name.compare("id") == 0 )
             {}
-            else if ( element_name.starts_with("comment") == 0 )
+            else if ( element_name.starts_with("comment"))
             {}
-            else if ( element_name.starts_with("__disabled ") == 0 )
+            else if ( element_name.starts_with("__disabled "))
             {}
             else if ( element_name.compare("inherits from") == 0 )
             {}
             else
             {
-                cout << "Unknonw config parameter " << element_name << endl;
+                // stop on unknown configuration option
+                throw std::runtime_error( "Unknonw config parameter '" + element_name + "'");
             }
             return;
         };
