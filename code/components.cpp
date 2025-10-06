@@ -800,7 +800,7 @@ void ComponentHP::VacuumStaticVariables() {
 // ----------------------------- //
 
 ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_of_flats) :
-    installation_place(calling_control_unit)
+    installation_place(calling_control_unit), n_chargers(number_of_flats)
 {
     enabled = false;
     current_demand_kW = 0.0;

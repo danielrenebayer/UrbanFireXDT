@@ -91,23 +91,23 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_expansion_scenario_id( scenario_dict.get_value<unsigned long>() );
             }
-            else if ( element_name.compare("expansion BS P in kW")      == 0 )
+            else if ( element_name.compare("expansion bs p in kw")      == 0 )
             {
                 Global::set_exp_bess_kW( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion BS E in kWh")     == 0 )
+            else if ( element_name.compare("expansion bs e in kwh")     == 0 )
             {
                 Global::set_exp_bess_kWh( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion BS initial SOC")  == 0 )
+            else if ( element_name.compare("expansion bs initial soc")  == 0 )
             {
                 Global::set_exp_bess_start_soc( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS E:P ratio")     == 0)
+            else if (element_name.compare("expansion bs e:p ratio")     == 0)
             {
                 Global::set_exp_bess_E_P_ratio( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS capacity computation mode")     == 0)
+            else if (element_name.compare("expansion bs capacity computation mode")     == 0)
             {
                 string selection = scenario_dict.get_value<string>();
                 to_lowercase(selection);
@@ -126,47 +126,47 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     throw runtime_error("Parameter 'expansion BS capacity computation mode' as defined in config-json is unknown.");
                 }
             }
-            else if (element_name.compare("expansion BS max capacity") == 0)
+            else if (element_name.compare("expansion bs max capacity") == 0)
             {
                 Global::set_exp_bess_max_capacity( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS capacity sizing factor for PV") == 0)
+            else if (element_name.compare("expansion bs capacity sizing factor for pv") == 0)
             {
                 Global::set_exp_bess_sizingE_boPV( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS efficiency in")  == 0)
+            else if (element_name.compare("expansion bs efficiency in")  == 0)
             {
                 Global::set_exp_bess_effi_in( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS efficiency out") == 0)
+            else if (element_name.compare("expansion bs efficiency out") == 0)
             {
                 Global::set_exp_bess_effi_out( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS self-discharge per ts") == 0)
+            else if (element_name.compare("expansion bs self-discharge per ts") == 0)
             {
                 Global::set_exp_bess_self_ds_ts( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS power for SOC 0")             == 0)
+            else if (element_name.compare("expansion bs power for soc 0")             == 0)
             {
                 Global::set_exp_bess_P_for_SOC_0( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS power for SOC 1")             == 0)
+            else if (element_name.compare("expansion bs power for soc 1")             == 0)
             {
                 Global::set_exp_bess_P_for_SOC_1( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS max total E addition")        == 0)
+            else if (element_name.compare("expansion bs max total e addition")        == 0)
             {
                 Global::set_exp_bess_max_E_total( scenario_dict.get_value<float>() );
             }
-            else if (element_name.compare("expansion BS max total P addition")        == 0)
+            else if (element_name.compare("expansion bs max total p addition")        == 0)
             {
                 Global::set_exp_bess_max_P_total( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("open space PV kWp")         == 0 )
+            else if ( element_name.compare("open space pv kwp")         == 0 )
             {
                 Global::set_open_space_pv_kWp( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("open space wind kWp")       == 0 )
+            else if ( element_name.compare("open space wind kwp")       == 0 )
             {
                 Global::set_wind_kWp( scenario_dict.get_value<float>() );
             }
@@ -176,13 +176,13 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 to_lowercase( exp_profile_mode );
                 exp_profile_mode_set   = true;
             }
-            else if ( element_name.compare("CU selection mode for comp. add.")        == 0 )
+            else if ( element_name.compare("cu selection mode for comp. add.")        == 0 )
             {
                 sac_planning_mode      = scenario_dict.get_value<string>();
                 to_lowercase( sac_planning_mode );
                 sac_planning_mode_set  = true;
             }
-            else if ( element_name.compare("cu selection: list of unit IDs to expand")     == 0 )
+            else if ( element_name.compare("cu selection: list of unit ids to expand")     == 0 )
             {
                 std::set<unsigned long>* selected_cuIDs = new std::set<unsigned long>();
                 try {
@@ -195,23 +195,23 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     throw;
                 }
             }
-            else if ( element_name.compare("expansion PV kWp static")                 == 0 )
+            else if ( element_name.compare("expansion pv kwp static")                 == 0 )
             {
                 Global::set_exp_pv_kWp_static( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV min kWp for section usage")  == 0 )
+            else if ( element_name.compare("expansion pv min kwp for section usage")  == 0 )
             {
                 Global::set_exp_pv_min_kWp_roof_sec( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV max inst kWp per section")   == 0 )
+            else if ( element_name.compare("expansion pv max inst kwp per section")   == 0 )
             {
                 Global::set_exp_pv_max_kWp_roof_sec( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV kWp per roof area in m2")    == 0 )
+            else if ( element_name.compare("expansion pv kwp per roof area in m2")    == 0 )
             {
                 Global::set_exp_pv_kWp_per_m2( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV sizing mode")                == 0 )
+            else if ( element_name.compare("expansion pv sizing mode")                == 0 )
             {
                 string selection = scenario_dict.get_value<string>();
                 to_lowercase(selection);
@@ -226,15 +226,15 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     throw runtime_error("Parameter 'expansion PV sizing mode' as defined in config-json is unknown.");
                 }
             }
-            else if ( element_name.compare("tariff feed-in per kWh")                  == 0 )
+            else if ( element_name.compare("tariff feed-in per kwh")                  == 0 )
             {
                 Global::set_feed_in_tariff( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("tariff demand per kWh")                   == 0 )
+            else if ( element_name.compare("tariff demand per kwh")                   == 0 )
             {
                 Global::set_demand_tariff( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("emissions per kWh")                       == 0 )
+            else if ( element_name.compare("emissions per kwh")                       == 0 )
             {
                 Global::set_emissions_g_CO2eq_per_kWh( scenario_dict.get_value<float>() );
             }
@@ -246,69 +246,77 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_npv_time_horizon( scenario_dict.get_value<unsigned int>() );
             }
-            else if ( element_name.compare("installation cost PV per kWp")            == 0 )
+            else if ( element_name.compare("installation cost pv per kwp")            == 0 )
             {
                 Global::set_inst_cost_PV_per_kWp( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("installation cost BS per kWh")            == 0 )
+            else if ( element_name.compare("installation cost bs per kwh")            == 0 )
             {
                 Global::set_inst_cost_BS_per_kWh( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion BS power computation mode")     == 0 )
+            else if ( element_name.compare("installation cost hp per kw")             == 0 )
+            {
+                Global::set_inst_cost_HP_per_kW( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("installation cost cs per unit")           == 0 )
+            {
+                Global::set_inst_cost_CS_per_unit( scenario_dict.get_value<float>() );
+            }
+            else if ( element_name.compare("expansion bs power computation mode")     == 0 )
             {
                 exp_bs_P_comp_mode       = scenario_dict.get_value<string>();
                 exp_bs_P_comp_mode_set   = true;
             }
-            else if ( element_name.compare("expansion PV max inst kWp per unit")      == 0 )
+            else if ( element_name.compare("expansion pv max inst kwp per unit")      == 0 )
             {
                 Global::set_exp_pv_max_kWp_per_unit( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV max total kWp addition")     == 0 )
+            else if ( element_name.compare("expansion pv max total kwp addition")     == 0 )
             {
                 Global::set_exp_pv_max_kWp_total( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion PV static mode profile orientation") == 0 )
+            else if ( element_name.compare("expansion pv static mode profile orientation") == 0 )
             {
                 string value = scenario_dict.get_value<string>();
                 Global::set_exp_pv_static_profile_orientation( &value );
             }
-            else if ( element_name.compare("expansion PV static mode profile index") == 0 )
+            else if ( element_name.compare("expansion pv static mode profile index") == 0 )
             {
                 Global::set_exp_pv_static_profile_idx( scenario_dict.get_value<int>() );
             }
-            else if ( element_name.compare("HP flexibility in ts") == 0 )
+            else if ( element_name.compare("hp flexibility in ts") == 0 )
             {
                 Global::set_hp_flexibility_in_ts( scenario_dict.get_value<unsigned int>() );
             }
-            else if ( element_name.compare("th. E to HP el. E conversion factor") == 0 )
+            else if ( element_name.compare("th. e to hp el. e conversion factor") == 0 )
             {
                 Global::set_heat_demand_thermalE_to_hpE_conv_f( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("Heat consumption apo building V: slope") == 0 )
+            else if ( element_name.compare("heat consumption apo building v: slope") == 0 )
             {
                 Global::set_heat_cons_bobv_slope( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("Heat consumption apo building V: intercept") == 0 )
+            else if ( element_name.compare("heat consumption apo building v: intercept") == 0 )
             {
                 Global::set_heat_cons_bobv_intercept( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("EV plugin probability") == 0)
+            else if ( element_name.compare("ev plugin probability") == 0)
             {
                 Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("EV battery size kWh") == 0)
+            else if ( element_name.compare("ev battery size kwh") == 0)
             {
                 Global::set_ev_battery_size_kWh( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("EV consumption kWh per km") == 0)
+            else if ( element_name.compare("ev consumption kwh per km") == 0)
             {
                 Global::set_ev_consumption_kWh_km( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("EV max charging power") == 0)
+            else if ( element_name.compare("ev max charging power") == 0)
             {
                 Global::set_ev_max_charging_power_kW( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("EV charging efficiency") == 0)
+            else if ( element_name.compare("ev charging efficiency") == 0)
             {
                 Global::set_ev_charging_effi( scenario_dict.get_value<float>() );
             }
@@ -317,7 +325,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 string value = scenario_dict.get_value<string>();
                 Global::set_ev_data_path( &value );
             }
-            else if ( element_name.compare("CS max power kW")                         == 0 )
+            else if ( element_name.compare("cs max power kw")                         == 0 )
             {
                 Global::set_cs_max_charging_power_kW( scenario_dict.get_value<float>() );
             }
@@ -388,19 +396,19 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_annual_heat_demand_limit_fsac( scenario_dict.get_value<float>() );
             }
-            else if ( element_name.compare("expansion HP max total addition") == 0 )
+            else if ( element_name.compare("expansion hp max total addition") == 0 )
             {
                 Global::set_exp_hp_max_n_addition( scenario_dict.get_value<unsigned long>() );
             }
-            else if ( element_name.compare("expansion EV max total addition") == 0 )
+            else if ( element_name.compare("expansion ev max total addition") == 0 )
             {
                 Global::set_exp_ev_max_n_addition( scenario_dict.get_value<unsigned long>() );
             }
-            else if ( element_name.compare("expansion CS max EV per CU") == 0 )
+            else if ( element_name.compare("expansion cs max ev per cu") == 0 )
             {
                 Global::set_exp_cs_max_ev_per_cs( scenario_dict.get_value<unsigned long>() );
             }
-            else if ( element_name.compare("break SAC loop if limit reached") == 0 )
+            else if ( element_name.compare("break sac loop if limit reached") == 0 )
             {
                 Global::set_break_sac_loop_if_limit_reached( scenario_dict.get_value<bool>() );
             }
@@ -414,15 +422,16 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             }
             else if ( element_name.compare("id") == 0 )
             {}
-            else if ( element_name.starts_with("comment") == 0 )
+            else if ( element_name.starts_with("comment"))
             {}
-            else if ( element_name.starts_with("__disabled ") == 0 )
+            else if ( element_name.starts_with("__disabled "))
             {}
             else if ( element_name.compare("inherits from") == 0 )
             {}
             else
             {
-                cout << "Unknonw config parameter " << element_name << endl;
+                // stop on unknown configuration option
+                throw std::runtime_error( "Unknonw config parameter '" + element_name + "'");
             }
             return;
         };
@@ -431,6 +440,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
         // read default values
         for (auto& scenario_dict_all : tree_root.get_child("Default Scenario Values")) {
             string element_name = scenario_dict_all.first;
+            to_lowercase( element_name );
             parse_element(element_name, scenario_dict_all.second);
         }
 
@@ -447,6 +457,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                     // ... we read all variables
                     for (auto& s : scenario_dict) {
                         string element_name = s.first;
+                        to_lowercase( element_name );
                         parse_element(element_name, s.second);
                     }
                     //
@@ -1772,6 +1783,8 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_emissions_g_CO2eq_per_kWh());
     PRINT_VAR(Global::get_inst_cost_PV_per_kWp());
     PRINT_VAR(Global::get_inst_cost_BS_per_kWh());
+    PRINT_VAR(Global::get_inst_cost_HP_per_kW());
+    PRINT_VAR(Global::get_inst_cost_CS_per_unit());
     PRINT_VAR(Global::get_npv_discount_rate());
     PRINT_VAR(Global::get_npv_time_horizon());
     PRINT_VAR(Global::get_hp_flexibility_in_ts());

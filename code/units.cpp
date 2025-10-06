@@ -518,7 +518,7 @@ double ControlUnit::get_mean_annual_MU_el_demand_kWh() const {
     }
     // compute the complete time span length of the input data (in hours)
     double data_len_in_h = (double) (Global::get_n_timesteps()) * Global::get_time_step_size_in_h();
-    double data_len_in_years = data_len_in_h / ( 365 * 24 ); // TODO: Schaltjahre?
+    double data_len_in_years = data_len_in_h / ( 365 * 24 );
     return total_demand / data_len_in_years;
 }
 
@@ -584,7 +584,7 @@ double ControlUnit::get_SCR() {
     return SCR;
 }
 
-double ControlUnit::get_NPV() { // TODO: In future, integration of heat pump an EV ?
+double ControlUnit::get_NPV() {
     // 0. return 0 if no PV or battery is available
     if (!(has_sim_pv || has_sim_bs))
         return 0;
@@ -594,6 +594,10 @@ double ControlUnit::get_NPV() { // TODO: In future, integration of heat pump an 
         investemnt_costs += sim_comp_pv->get_kWp() * Global::get_inst_cost_PV_per_kWp();
     if (has_sim_bs)
         investemnt_costs += sim_comp_bs->get_maxE_kWh() * Global::get_inst_cost_BS_per_kWh();
+    if (has_sim_hp)
+        investemnt_costs += sim_comp_hp->get_rated_power_without_AUX() * Global::get_inst_cost_HP_per_kW();
+    if (has_sim_cs)
+        investemnt_costs += sim_comp_cs->get_n_chargers() * Global::get_inst_cost_CS_per_unit();
     // 2. compute savings per year
     //const double& saved_energy_kWh = sum_of_self_cons_kWh; // energy in kWh for which no grid demand was required
     double savings_per_year = sum_of_saved_pow_costs_EUR + sum_of_feedin_revenue_EUR;

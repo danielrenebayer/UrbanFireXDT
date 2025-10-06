@@ -155,6 +155,8 @@ float Global::demand_tariff         = 0.0;
 float Global::emissions_per_kWh     = 100.0;
 float Global::inst_cost_PV_per_kWp  = 0.0;
 float Global::inst_cost_BS_per_kWh  = 0.0;
+float Global::inst_cost_HP_per_kW   = 0.0;
+float Global::inst_cost_CS_per_unit = 0.0;
 float Global::npv_discount_rate     = 0.0;
 unsigned int Global::npv_time_horizon  = 0;
 double Global::npv_factor_if_const  = 0.0;
@@ -953,6 +955,20 @@ void Global::set_inst_cost_BS_per_kWh(float value) {
     } else {
         Global::inst_cost_BS_per_kWh = value;
         inst_cost_BS_per_kWh_set = true;
+    }
+}
+void Global::set_inst_cost_HP_per_kW(float value) {
+    if (is_locked) {
+        cerr << "Global variable inst_cost_HP_per_kW cannot be set at the moment!" << endl;
+    } else {
+        Global::inst_cost_HP_per_kW = value;
+    }
+}
+void Global::set_inst_cost_CS_per_unit(float value) {
+    if (is_locked) {
+        cerr << "Global variable inst_cost_CS_per_kW cannot be set at the moment!" << endl;
+    } else {
+        Global::inst_cost_CS_per_unit = value;
     }
 }
 void Global::set_hp_flexibility_in_ts(unsigned int value) {
