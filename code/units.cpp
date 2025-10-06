@@ -1062,6 +1062,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // Part B: Make decisions using an optimization if selected
     if (Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast &&
         ( has_sim_pv || has_sim_bs || has_sim_hp || has_sim_cs )
+
+#ifdef PYTHON_MODULE
+        // Jump optimization if control already given externally
+        && !py_control_commands_obtained
+#endif
+
        )
     {
         // Check number of time steps passed since last optimization run
@@ -1247,22 +1253,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
         }
 
-        if (error_happend_during_cntrl_cmd_appl) {
-            sum_of_errors_in_cntrl_cmd_appl++;
-            sum_of_cweek_errors_in_cntrl_cmd_appl++;
-        }
-
-    } else {
-        // If the rule-based strategy is selected, just use the current profile for the new demand
-        if (has_sim_hp)
-            sim_comp_hp->setDemandToProfileData(ts);
-        if (has_sim_cs)
-            sim_comp_cs->setDemandToProfileData(ts);
-    }
-
     // In case of presence of control commands obtained from the python module: apply those
 #ifdef PYTHON_MODULE
-    if (py_control_commands_obtained) {
+    } else if (py_control_commands_obtained) {
         if (has_sim_bs) {
             sim_comp_bs->set_chargeRequest( py_cmd_p_bs_kW );
         }
@@ -1274,12 +1267,23 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             bool ret_val = sim_comp_cs->setDemandToGivenValues( py_cmd_p_ev_kW );
             if (!ret_val) error_happend_during_cntrl_cmd_appl = true;
         }
-        if (error_happend_during_cntrl_cmd_appl) {
-            sum_of_errors_in_cntrl_cmd_appl++;
-            sum_of_cweek_errors_in_cntrl_cmd_appl++;
-        }
-    }
 #endif
+
+    } else {
+        // If the rule-based strategy is selected, just use the current profile for the new demand
+        // The rule-based strategy is also the fall back option
+        if (has_sim_hp)
+            sim_comp_hp->setDemandToProfileData(ts);
+        if (has_sim_cs)
+            sim_comp_cs->setDemandToProfileData(ts);
+    }
+
+    // Process information on errors during command application
+    if (error_happend_during_cntrl_cmd_appl) {
+        sum_of_errors_in_cntrl_cmd_appl++;
+        sum_of_cweek_errors_in_cntrl_cmd_appl++;
+    }
+
 
     // Part C: Compute the load at the virtual smart meter
 
@@ -1334,10 +1338,9 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // 5. send situation to battery storage and get its resulting action
     if (has_sim_bs) {
         if (
-#ifndef PYTHON_MODULE
             Global::get_controller_mode() == global::ControllerMode::RuleBased
-#else
-            !py_control_commands_obtained
+#ifdef PYTHON_MODULE
+            && !py_control_commands_obtained
 #endif
         ) {
             sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
@@ -1352,8 +1355,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // compute self-produced load, that is directly consumed
     if (
+#ifndef PYTHON_MODULE
           Global::get_controller_mode() == global::ControllerMode::RuleBased ||
           ( Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast && Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging )
+#else
+          false
+#endif
     ) {
         // in this case, load_pv - load_bs >= 0 always holds --> calculation is easy as BS can ouly be charged from the PV, and thus stores always 100% PV generated energy
         self_produced_load_kW = std::min(current_total_consumption_kW, load_pv - load_bs);
