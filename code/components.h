@@ -138,7 +138,7 @@ class ComponentPV : public BaseComponent {
         ComponentPV(float kWp_static, unsigned long locationID); ///< Constructor in the case of static kWp computation
         ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
         // getter methods
-        float get_kWp() const            { return total_kWp; } ///< Returns the total peak power, summed over all sections. See also ComponentPV::get_kWp_per_section().
+        double get_kWp() const           { return total_kWp; } ///< Returns the total peak power, summed over all sections. See also ComponentPV::get_kWp_per_section().
         float get_currentGeneration_kW() { return currentGeneration_kW; }
         double get_cweek_generation_kWh(){ return generation_cumsum_cweek_kWh; } ///< Returns the produced energy in kWh from the start of the current week until the current time step
         double get_total_generation_kWh(){ return generation_cumsum_total_kWh; } ///< Returns the total produced energy in kWh from the start of the simulation run until the current time step
@@ -340,7 +340,7 @@ class ComponentCS : public BaseComponent {
         ~ComponentCS();
         // getters
         bool is_enabled() const { return enabled; }
-        float  get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW (regardless if this is currently available, as some EVs might already be fully charged or not available)
+        double get_max_P_kW() const; ///< Returns the maximum available charging power for this station in kW (regardless if this is currently available, as some EVs might already be fully charged or not available)
         double get_currentDemand_kW() const { return current_demand_kW; } ///< Returns the current power in kW for the current time step. Only valid after the call of set_charging_value(). This value might differ from the request set using set_charging_value().
         double get_total_consumption_kWh() const { return total_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
         double get_cweek_consumption_kWh() const { return cweek_consumption_kWh;  } ///< Returns the total consumed energy in kWh after the current time step. Only valid after the call of set_charging_value()
@@ -385,12 +385,12 @@ class ComponentCS : public BaseComponent {
         // modifiers (in the course of simulation time)
         void setCarStatesForTimeStep(unsigned long ts); ///< Sets the car states for all attached EVs for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'.
         void setDemandToProfileData(unsigned long ts); ///< Sets the charging demand to the (immediate charging) profile value. If this method is called once during a simulation run, ComponentCS::setDemandToGivenValues() MUST NOT be called afterwards.
-        bool setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW); ///< Sets the charging demand (in kW) per EV as given by any contoller. If this method is called once during a simulation run, ComponentCS::setDemandToProfileData() MUST NOT be called afterwards. Returns true if no error occured for all connected EVs or false otherwise.
+        bool setDemandToGivenValues(std::vector<double>& charging_power_per_EV_kW); ///< Sets the charging demand (in kW) per EV as given by any contoller. If this method is called once during a simulation run, ComponentCS::setDemandToProfileData() MUST NOT be called afterwards. Returns true if no error occured for all connected EVs or false otherwise.
     private:
         // constant members
         const ControlUnit* installation_place;
         const unsigned long n_chargers; ///< The number of chargers available at this charging station
-        float max_charging_power; // Not const, as the value might not be known on pre-initialization
+        double max_charging_power; // Not const, as the value might not be known on pre-initialization
         // variable members, constant during one simulation run
         bool enabled;
         std::vector<EVFSM*> listOfEVs;
@@ -470,7 +470,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         std::vector<double> prec_vec_of_maxE; ///< Complete precomputed vector of maximum charged electricity up to the end of time step ts
         std::vector<double> prec_vec_of_driving_distance_km; ///< Complete precomputed vector of driven distance of the EV in km up to the end of time step ts
         std::vector<float>  prec_vec_of_maxP_kW; ///< Complete precomputed vector of maximum charging power per time step ts
-        std::vector<float>  prec_vec_of_curr_BS_E_cons_kWh; ///< Complete precomputed vector of electricity taken from the battery for driving (at time step ts, or 0, if the car is parked at home in any state)
+        std::vector<double> prec_vec_of_curr_BS_E_cons_kWh; ///< Complete precomputed vector of electricity taken from the battery for driving (at time step ts, or 0, if the car is parked at home in any state)
         // cached member variables
         std::vector<double> future_maxP_storage;  ///< Internal storage of maximum charging power over the future time steps
         // attached members

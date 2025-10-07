@@ -522,7 +522,7 @@ double ControlUnit::get_mean_annual_MU_el_demand_kWh() const {
     return total_demand / data_len_in_years;
 }
 
-float ControlUnit::get_sim_comp_pv_kWp() {
+double ControlUnit::get_sim_comp_pv_kWp() {
     if (has_sim_pv)
         return sim_comp_pv->get_kWp();
     return 0;
@@ -558,7 +558,7 @@ float ControlUnit::get_annual_hp_el_cons_kWh() {
     return get_annual_heat_demand_th_kWh() / Global::get_heat_demand_thermalE_to_hpE_conv_f();
 }
 
-float ControlUnit::get_sim_comp_cs_max_P_kW() const {
+double ControlUnit::get_sim_comp_cs_max_P_kW() const {
     return sim_comp_cs->get_max_P_kW();
 }
 
@@ -595,9 +595,9 @@ double ControlUnit::get_NPV() {
     if (has_sim_bs)
         investemnt_costs += sim_comp_bs->get_maxE_kWh() * Global::get_inst_cost_BS_per_kWh();
     if (has_sim_hp)
-        investemnt_costs += sim_comp_hp->get_rated_power_without_AUX() * Global::get_inst_cost_HP_per_kW();
+        investemnt_costs += (double) sim_comp_hp->get_rated_power_without_AUX() * Global::get_inst_cost_HP_per_kW();
     if (has_sim_cs)
-        investemnt_costs += sim_comp_cs->get_n_chargers() * Global::get_inst_cost_CS_per_unit();
+        investemnt_costs += (double) sim_comp_cs->get_n_chargers() * Global::get_inst_cost_CS_per_unit();
     // 2. compute savings per year
     //const double& saved_energy_kWh = sum_of_self_cons_kWh; // energy in kWh for which no grid demand was required
     double savings_per_year = sum_of_saved_pow_costs_EUR + sum_of_feedin_revenue_EUR;
@@ -630,14 +630,14 @@ string* ControlUnit::get_metrics_string_annual() {
         // computation of the array to load ratio (see Nyholm et al. 2016 in Applied Energy, https://doi.org/10.1016/j.apenergy.2016.08.172)
         double ALR = 0.0;
         if (has_sim_pv) {
-            ALR = sim_comp_pv->get_kWp() / ( sum_of_consumption_kWh / Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
+            ALR = sim_comp_pv->get_kWp() / ( sum_of_consumption_kWh / (double) Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
         }
         // compuation of the Battery-to-Demand ratio
         // and the Relative Battery Capacity (RBC)
         double BDR = 0.0;
         double RBC = 0.0;
         if (has_sim_bs) {
-            BDR = sim_comp_bs->get_maxE_kWh() / ( sum_of_consumption_kWh / Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
+            BDR = sim_comp_bs->get_maxE_kWh() / ( sum_of_consumption_kWh / (double) Global::get_n_timesteps() / Global::get_time_step_size_in_h() );
             if (has_sim_pv) {
                 RBC = 1000.0 * sim_comp_bs->get_maxE_kWh() / sim_comp_pv->get_total_generation_kWh();
             }
@@ -816,7 +816,7 @@ void ControlUnit::add_exp_bs() {
             // TODO: is this an good idea? What about eixisting PV?
             new_battery_capacity_kWh = Global::get_exp_bess_kWh();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnNominalPVPower) {
-            float pv_kWp = sim_comp_pv->get_kWp();
+            double pv_kWp = sim_comp_pv->get_kWp();
             // TODO: Wenn es keine PV anlage gibt, gaebe es hier ein Problem !
             new_battery_capacity_kWh = pv_kWp * Global::get_exp_bess_sizingE_boPV();
         } else if (Global::get_battery_capacity_computation_mode() == global::BatteryCapacityComputationMode::BasedOnAnnualConsumption) {
@@ -1250,7 +1250,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         }
         if (has_sim_cs) {
             const std::vector<std::vector<double>>& ev_power_kW = optimized_controller->get_future_ev_power_kW();
-            std::vector<float> ev_power_kW_this_ts;
+            std::vector<double> ev_power_kW_this_ts;
             for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++)
                 ev_power_kW_this_ts.push_back( ev_power_kW[evIdx][0] );
             bool ret_val = sim_comp_cs->setDemandToGivenValues( ev_power_kW_this_ts );
@@ -1529,7 +1529,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 }
 
 #ifdef PYTHON_MODULE
-void ControlUnit::send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<float>& p_ev_kW) {
+void ControlUnit::send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<double>& p_ev_kW) {
     py_control_commands_obtained = true;
     py_cmd_p_bs_kW = p_bs_kW;
     py_cmd_p_hp_kW = p_hp_kW;
