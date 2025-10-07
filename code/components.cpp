@@ -1037,7 +1037,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     EVFSM::list_of_cars.emplace(carID, this);
     //
     // Create battery (using the secondary constructor)
-    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
+    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0, 1.0, 1.0);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
     current_ts         = 0;
