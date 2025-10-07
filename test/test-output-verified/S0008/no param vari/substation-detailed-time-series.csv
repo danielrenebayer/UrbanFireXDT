@@ -22,4 +22,4 @@ Timestep,ST1_resident_load_kW,ST1_resident_demand_kW,ST1_demand_wo_BESS_or_selfc
 21,0,0,0,0,0
 22,0,0,0,0,0
 23,2,2,2,2,2
-24,0,0,2.98023e-08,0,0
+24,0,0,0,0,0

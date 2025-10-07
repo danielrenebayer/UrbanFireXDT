@@ -7,7 +7,7 @@ TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min
 10,6,ConnectedAtHome,0,0,0,0,30
 11,1,Driving,0,0,0,0,29.2667
 11,2,ConnectedAtHome,1.1,1.1,0,1.1,30
-11,3,ConnectedAtHome,8.9407e-08,6,0,6,30
+11,3,ConnectedAtHome,0,6,0,6,30
 11,4,Driving,0,0,0,0,21.1111
 11,5,Driving,0,0,0,0,23.3333
 11,6,ConnectedAtHome,0,0,0,0,30
@@ -29,7 +29,7 @@ TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min
 14,1,ConnectedAtHome,0,1.1,0,1.1,30
 14,2,ConnectedAtHome,0,1.1,0,1.1,30
 14,3,Driving,0,6,0,6,28
-14,4,ConnectedAtHome,1.49012e-07,10,0,10,30
+14,4,ConnectedAtHome,0,10,0,10,30
 14,5,ConnectedAtHome,9,10,0,10,30
 14,6,ConnectedAtHome,2,2,0,4,28
 1,4,ConnectedAtHome,0,0,0,0,30
@@ -37,7 +37,7 @@ TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min
 15,2,ConnectedAtHome,0,1.1,0,1.1,30
 15,3,Driving,0,6,0,6,26
 15,4,ConnectedAtHome,0,10,0,10,30
-15,5,ConnectedAtHome,1.49012e-07,10,0,10,30
+15,5,ConnectedAtHome,0,10,0,10,30
 15,6,ConnectedAtHome,2,4,0,4,30
 1,5,ConnectedAtHome,0,0,0,0,30
 16,1,ConnectedAtHome,0,1.1,0,1.1,30
@@ -45,11 +45,11 @@ TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min
 16,3,ConnectedAtHome,4,10,0,10,30
 16,4,ConnectedAtHome,0,10,0,10,30
 16,5,ConnectedAtHome,0,10,0,10,30
-16,6,ConnectedAtHome,5.96046e-08,4,0,4,30
+16,6,ConnectedAtHome,0,4,0,4,30
 1,6,ConnectedAtHome,0,0,0,0,30
 17,1,ConnectedAtHome,0,1.1,0,1.1,30
 17,2,ConnectedAtHome,0,1.1,0,1.1,30
-17,3,ConnectedAtHome,5.96046e-08,10,0,10,30
+17,3,ConnectedAtHome,0,10,0,10,30
 17,4,ConnectedAtHome,0,10,0,10,30
 17,5,ConnectedAtHome,0,10,0,10,30
 17,6,ConnectedAtHome,0,4,0,4,30
@@ -94,7 +94,7 @@ TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min
 2,3,ConnectedAtHome,0,0,0,0,30
 24,1,ConnectedAtHome,0,1.1,0,1.1,30
 24,2,ConnectedAtHome,0,1.1,0,1.1,30
-24,3,ConnectedAtHome,2.98023e-08,12,0,12,30
+24,3,ConnectedAtHome,0,12,0,12,30
 24,4,ConnectedAtHome,0,10,0,10,30
 24,5,ConnectedAtHome,0,10,0,10,30
 24,6,ConnectedAtHome,0,4,0,4,30
