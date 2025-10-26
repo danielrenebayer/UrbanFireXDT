@@ -349,7 +349,12 @@ class ComponentCS : public BaseComponent {
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
-        const std::vector<const EVFSM*>& get_listOfEVs() const; ///< Returns a reference to the internal list of EVs
+        std::vector<const EVFSM*> get_listOfEVs() const {
+            std::vector<const EVFSM*> const_list;
+            const_list.reserve(listOfEVs.size());
+            for (EVFSM* ev : listOfEVs) const_list.push_back(ev);
+            return const_list;
+        } ///< Returns a reference to the internal list of EVs
         unsigned long get_n_chargers() const { return n_chargers; } ///< Returns the number of chargers available at this charging station (typically the number of flats of the building)
         /**
          * Returns the maximum electricity consumption of this component for the next n time steps (given some flexibility).
