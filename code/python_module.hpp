@@ -25,7 +25,20 @@
 #include "units.h"
 
 namespace pyconn {
-
+    /**
+     * @struct SimulationEVState
+     * @brief Represents the state of a single EV during a simulation time step.
+     */
+    struct SimulationEVState {
+        EVState ev_state;
+        double ev_current_demand_kW;
+        double ev_soc;
+        double ev_soe;
+        std::vector<double> ev_future_max_power_kW;
+        std::vector<double> ev_future_max_consumption_kWh;
+        std::vector<double> ev_future_min_consumption_kWh;
+        // required energy until departure
+    };
     /**
      * @struct SimulationControlUnitState
      * @brief Represents the state of a single control unit during a simulation time step.
@@ -54,16 +67,6 @@ namespace pyconn {
         std::vector<double> hp_future_min_consumption_kWh;
         //double hp_cumulative_energy_kWh;
         // EVs
-        struct SimulationEVState {
-            EVState ev_state;
-            double ev_current_demand_kW;
-            double ev_soc;
-            double ev_soe;
-            std::vector<double> ev_future_max_power_kW;
-            std::vector<double> ev_future_max_consumption_kWh;
-            std::vector<double> ev_future_min_consumption_kWh;
-            // required energy until departure
-        };
         std::vector<SimulationEVState> ev_states;
         unsigned long n_EVs;
         // environmental data
@@ -404,7 +407,7 @@ namespace pyconn {
             const std::vector<const EVFSM*>& ev_list = cs->get_listOfEVs();
 
             for (size_t i = 0; i < 3; ++i) { // 3 EVs
-                SimulationControlUnitState::SimulationEVState ev_state_struct{};
+                SimulationEVState ev_state_struct{};
                 
                 if (i < ev_list.size()) {
                     const EVFSM* ev = ev_list[i];

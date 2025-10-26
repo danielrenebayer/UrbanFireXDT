@@ -367,21 +367,21 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(UrbanFireXDT, m) {
     m.doc() = "Python bindings for the UrbanFireDTX C++ simulation.";
 
-    pybind11::class_<pyconn::SimulationControlUnitState::SimulationEVState>(m, "SimulationEVState",
+    pybind11::class_<pyconn::SimulationEVState>(m, "SimulationEVState",
         "State of an electric vehicle (EV) during a simulation step.")
-        .def_readonly("ev_state", &pyconn::SimulationControlUnitState::SimulationEVState::ev_state,
+        .def_readonly("ev_state", &pyconn::SimulationEVState::ev_state,
                       "Current state of the EV. Possible values: 0=ConnectedAtHome, 1=DisconnectedAtHome, 2=Driving, 3=ChargingOnTheWay")
-        .def_readonly("ev_current_demand_kW", &pyconn::SimulationControlUnitState::SimulationEVState::ev_current_demand_kW,
+        .def_readonly("ev_current_demand_kW", &pyconn::SimulationEVState::ev_current_demand_kW,
                       "Current charging power in kW;")
-        .def_readonly("ev_soc", &pyconn::SimulationControlUnitState::SimulationEVState::ev_soc,
+        .def_readonly("ev_soc", &pyconn::SimulationEVState::ev_soc,
                       "State of charge of the EV battery.")
-        .def_readonly("ev_soe", &pyconn::SimulationControlUnitState::SimulationEVState::ev_soe,
+        .def_readonly("ev_soe", &pyconn::SimulationEVState::ev_soe,
                       "State of energy (in kWh) of the EV battery.")
-        .def_readonly("ev_future_max_power_kW", &pyconn::SimulationControlUnitState::SimulationEVState::ev_future_max_power_kW,
+        .def_readonly("ev_future_max_power_kW", &pyconn::SimulationEVState::ev_future_max_power_kW,
                       "List of maximum possible charging powers (in kW) for the next time steps in the controller horizon.")
-        .def_readonly("ev_future_max_consumption_kWh", &pyconn::SimulationControlUnitState::SimulationEVState::ev_future_max_consumption_kWh,
+        .def_readonly("ev_future_max_consumption_kWh", &pyconn::SimulationEVState::ev_future_max_consumption_kWh,
                       "List of maximum possible energy consumption (in kWh) for the next time steps in the controller horizon.")
-        .def_readonly("ev_future_min_consumption_kWh", &pyconn::SimulationControlUnitState::SimulationEVState::ev_future_min_consumption_kWh,
+        .def_readonly("ev_future_min_consumption_kWh", &pyconn::SimulationEVState::ev_future_min_consumption_kWh,
                       "List of minimum possible energy consumption (in kWh) for the next time steps in the controller horizon.");
 
     pybind11::class_<pyconn::SimulationControlUnitState>(m, "SimulationControlUnitState",
