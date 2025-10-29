@@ -34,6 +34,8 @@ namespace pyconn {
         double ev_current_demand_kW;
         double ev_soc;
         double ev_soe;
+        double ev_maxP_kW;
+        double ev_maxE_kWh;
         std::vector<double> ev_future_max_power_kW;
         std::vector<double> ev_future_max_consumption_kWh;
         std::vector<double> ev_future_min_consumption_kWh;
@@ -58,6 +60,7 @@ namespace pyconn {
         double bs_soc;
         double bs_soe;
         double bs_maxP_kW;
+        double bs_maxE_kWh;
         // HP
         float hp_rated_power_kW;
         double hp_current_demand_kW;
@@ -72,6 +75,7 @@ namespace pyconn {
         // environmental data
         float pv_currentGeneration_kW;
         float pv_kWp;
+        double household_demand;
         double electricity_price;
     };
 
@@ -389,12 +393,13 @@ namespace pyconn {
         s.has_cntrl_evchst = cu->has_cs();
         s.timestepID       = get_next_timestep_id();
         // BS
-        s.bs_soc           = cu->has_bs() ? cu->get_component_BS()->get_SOC() : -1.0; // State of Charge BS
-        s.bs_soe           = cu->has_bs() ? cu->get_component_BS()->get_SOE() : -1.0; // State of Energy BS
-        s.bs_maxP_kW       = cu->has_bs() ? cu->get_component_BS()->get_maxP_kW() : -1.0; // Max possible charging/discharging power
+        s.bs_soc           = cu->has_bs() ? cu->get_component_BS()->get_SOC() : 0.0; // State of Charge BS
+        s.bs_soe           = cu->has_bs() ? cu->get_component_BS()->get_SOE() : 0.0; // State of Energy BS
+        s.bs_maxP_kW       = cu->has_bs() ? cu->get_component_BS()->get_maxP_kW() : 0.0; // Max possible charging/discharging power
+        s.bs_maxE_kWh      = cu->has_bs() ? cu->get_component_BS()->get_maxE_kWh() : 0.0; // Max possible energy capacity
         // HP
-        s.hp_rated_power_kW = cu->has_hp() ? cu->get_component_HP()->get_rated_power_without_AUX() : -1.0; // Rated power of the heat pump in kW
-        s.hp_current_demand_kW = cu->has_hp() ? cu->get_component_HP()->get_currentDemand_kW() : -1.0; // Current demand of the heat pump in kW
+        s.hp_rated_power_kW = cu->has_hp() ? cu->get_component_HP()->get_rated_power_without_AUX() : 0.0; // Rated power of the heat pump in kW
+        s.hp_current_demand_kW = cu->has_hp() ? cu->get_component_HP()->get_currentDemand_kW() : 0.0; // Current demand of the heat pump in kW
         s.hp_future_max_power_kW = cu->has_hp() ? *cu->get_component_HP()->get_future_max_power_kW() : std::vector<double>{};
         s.hp_future_min_power_kW = cu->has_hp() ? *cu->get_component_HP()->get_future_min_power_kW() : std::vector<double>{};
         s.hp_future_max_consumption_kWh = cu->has_hp() ? *cu->get_component_HP()->get_future_max_consumption_kWh() : std::vector<double>{};
@@ -417,9 +422,10 @@ namespace pyconn {
 
                     // SOC / SOE
                     const ComponentBS* battery = ev->get_battery();
-                    ev_state_struct.ev_soc = battery ? battery->get_SOC() : -1.0;
-                    ev_state_struct.ev_soe = battery ? battery->get_SOE() : -1.0;
-
+                    ev_state_struct.ev_soc = battery ? battery->get_SOC() : 0.0;
+                    ev_state_struct.ev_soe = battery ? battery->get_SOE() : 0.0;
+                    ev_state_struct.ev_maxP_kW = battery ? battery->get_maxP_kW() : 0.0;
+                    ev_state_struct.ev_maxE_kWh = battery ? battery->get_maxE_kWh() : 0.0;
                     // Future power / energy
                     ev_state_struct.ev_future_max_power_kW = *ev->get_future_max_power_kW();
                     ev_state_struct.ev_future_max_consumption_kWh = *ev->get_future_max_consumption_kWh();
@@ -432,9 +438,9 @@ namespace pyconn {
         }
         s.n_EVs = cu->has_cs() ? cu->get_component_CS()->get_n_EVs() : 0;
         // environmental data
-        s.pv_currentGeneration_kW = cu->has_pv() ? cu->get_component_PV()->get_currentGeneration_kW() : -1.0;
-        s.pv_kWp           = cu->has_pv() ? cu->get_component_PV()->get_kWp() : -1.0;
-        //s.household_demand = cu->get_current_load_vSMeter_kW(); get_current_demand_wo_BS_or_gen_kW ??
+        s.pv_currentGeneration_kW = cu->has_pv() ? cu->get_component_PV()->get_currentGeneration_kW() : 0.0;
+        s.pv_kWp           = cu->has_pv() ? cu->get_component_PV()->get_kWp() : 0.0;
+        s.household_demand = cu->get_current_demand_wo_BS_or_gen_kW();
         s.electricity_price = global::eprices_local_ts[s.timestepID];
         return s;
     }
