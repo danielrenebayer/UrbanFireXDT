@@ -436,12 +436,15 @@ namespace pyconn {
                 s.ev_states.push_back(ev_state_struct);
             }
         }
-        s.n_EVs = cu->has_cs() ? cu->get_component_CS()->get_n_EVs() : 0;
         // environmental data
-        s.pv_currentGeneration_kW = cu->has_pv() ? cu->get_component_PV()->get_currentGeneration_kW() : 0.0;
-        s.pv_kWp           = cu->has_pv() ? cu->get_component_PV()->get_kWp() : 0.0;
+        s.pv_currentGeneration_kW = cu->get_component_PV() != NULL ? cu->get_component_PV()->get_currentGeneration_kW() : 0.0;
+        s.pv_kWp                  = cu->get_component_PV() != NULL ? cu->get_component_PV()->get_kWp() : 0.0;
         s.household_demand = cu->get_current_demand_wo_BS_or_gen_kW();
-        s.electricity_price = global::eprices_local_ts[s.timestepID];
+        if (global::eprices_local_ts != NULL && Global::get_use_prices_time_series_ia()) {
+            s.electricity_price = global::eprices_local_ts[g_atomic_next_tsID - 1];
+        } else {
+            s.electricity_price = Global::get_demand_tariff();
+        }
         return s;
     }
 
