@@ -1,8 +1,14 @@
 # UrbanFireXDT: the Urban Future Integrated Renewable Energy systems eXploration Digital Twin
 
+<!-- Project logo -->
 <p align="center">
     <img src="documentation/logos/UrbanFireXDT_Logo_v1.png" alt="UrbanFireXDT Logo" />
 </p>
+
+<!-- Badges -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17302743.svg)](https://doi.org/10.5281/zenodo.17302743)
+![C++23](https://img.shields.io/badge/C++-23-blue.svg?logo=c%2B%2B)
 
 <!-- About the repository -->
 ## About the repository
@@ -11,6 +17,10 @@ This repository contains the code for the simulation component that is part of t
 For details, please read the scientific publications linked below.
 This README contains all important information to compile the code and run the examples.
 Parts of this code were developed as part of the *DigiSWM* research project founded by the Bavarian State Ministry of Economic Affairs, Regional Development and Energy under grant number DIK-2103-0017 / DIK0298/02.
+
+<p align="center">
+    <img src="documentation/logos/DigiSWM_Logo_v3_768x413px.png" alt="Logo of the research project DigiSWM" style="max-width: 200px; width: 50%; height: auto;"/>
+</p>
 
 
 <!-- Structure of the repository -->

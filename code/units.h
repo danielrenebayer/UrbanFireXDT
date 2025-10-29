@@ -211,12 +211,12 @@ class ControlUnit : BaseUnit<ControlUnit> {
         size_t get_unitID()      const { return unitID; }        ///< returns the unit ID of this control unit as given in the system structure database
         size_t get_location_id() const { return locationID; }    ///< Returns the location ID of the control unit
         double get_mean_annual_MU_el_demand_kWh() const; ///< Returns the mean electricity demand in kWh of all connected MUs over all available years
-        float get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
+        double get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
         double get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         double get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
         float get_annual_heat_demand_th_kWh();  ///< Returns the annual heat demand in (thermal) kWh of all attachted buildings
         float get_annual_hp_el_cons_kWh();      ///< Returns the annual HP electricity consumption of a heat pump in kWh, if it would be added simulatively (regardless whether it is added or not)
-        float get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)
+        double get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)
         size_t get_sim_comp_cs_n_EVs() const;   ///< Returns the number of connected EVs if the charging station component is enabled, otherwise 0 is returned.
         size_t get_sim_comp_cs_possible_n_EVs() const; ///< Returns the number of EVs that would be connected to the charging station component, if it would be enablede
         double  get_SSR(); ///< Returns the SSR of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
@@ -251,7 +251,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         // for simulation runs
         bool compute_next_value(unsigned long ts); ///< Computes the value for the (next) time step. The parameter 'ts' defines the current time step (starting counting at 1). This method must be called with strictly consecutive values ​​of parameter 'ts'.
 #ifdef PYTHON_MODULE
-        void send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<float>& p_ev_kW); ///< Send the commands from the python interface for this control unit for the next step to the given control unit. The commands will be processed (i.e., forewarded to the components) in the next call of ControlUnit::compute_next_value(). The ordering of @param p_ev_kW must be the same as the EVs were added to the control unit.
+        void send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<double>& p_ev_kW); ///< Send the commands from the python interface for this control unit for the next step to the given control unit. The commands will be processed (i.e., forewarded to the components) in the next call of ControlUnit::compute_next_value(). The ordering of @param p_ev_kW must be the same as the EVs were added to the control unit.
 #endif
         //
         // static functions
@@ -303,7 +303,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         bool py_control_commands_obtained;
         double py_cmd_p_bs_kW;
         double py_cmd_p_hp_kW;
-        std::vector<float> py_cmd_p_ev_kW;
+        std::vector<double> py_cmd_p_ev_kW;
 #endif
         // summation variables from the beginning of the simulation run until the current time step
         double sum_of_consumption_kWh;    ///< The sum of consumed energy in kWh starting from the beginning of the current simulation run

@@ -474,7 +474,7 @@ namespace pyconn {
         // process the commands
         double p_bs_kW = 0.0;
         double p_hp_kW = 0.0;
-        std::vector<float> p_ev_kW;
+        std::vector<double> p_ev_kW;
         if (commands.contains("p_bs_kW")) {
             p_bs_kW = commands["p_bs_kW"].cast<double>();
         }
@@ -482,7 +482,7 @@ namespace pyconn {
             p_hp_kW = commands["p_hp_kW"].cast<double>();
         }
         if (commands.contains("p_ev_kW")) {
-            p_ev_kW = commands["p_ev_kW"].cast<std::vector<float>>();
+            p_ev_kW = commands["p_ev_kW"].cast<std::vector<double>>();
         }
 
         // send commands to the control unit

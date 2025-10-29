@@ -808,7 +808,7 @@ ComponentCS::ComponentCS(ControlUnit* calling_control_unit, unsigned int number_
     cweek_consumption_kWh  = 0.0;
 
     // Computation of maximum charging power
-    max_charging_power = 11.0f * number_of_flats;
+    max_charging_power = 11.0 * number_of_flats;
     if (Global::get_cs_max_charging_power_kW() > 0.0 &&
         Global::get_cs_max_charging_power_kW() < max_charging_power
     ) {
@@ -826,7 +826,7 @@ ComponentCS::~ComponentCS() {
         delete ev;
 }
 
-float ComponentCS::get_max_P_kW() const {
+double ComponentCS::get_max_P_kW() const {
     if (enabled)
         return max_charging_power;
     return 0.0;
@@ -943,19 +943,19 @@ void ComponentCS::setDemandToProfileData(unsigned long ts) {
             current_demand_kW += ev->get_currentDemand_kW();
         }
     } else {
-        float remaining_power_kW = Global::get_cs_max_charging_power_kW();
+        double remaining_power_kW = Global::get_cs_max_charging_power_kW();
         std::vector<double> new_power_per_EV_kW(listOfEVs.size(), 0.0);
         // Loop over all EVs and get min demand
         for (size_t ev_idx = 0; ev_idx < listOfEVs.size(); ev_idx++) {
             EVFSM* ev = listOfEVs[ev_idx];
-            float min_demand = ev->get_future_min_consumption_kWh()->at(0) / Global::get_time_step_size_in_h(); // value at ts 0 always exists, as Global::control_horizon_in_ts >= 1 always holds!
+            double min_demand = ev->get_future_min_consumption_kWh()->at(0) / Global::get_time_step_size_in_h(); // value at ts 0 always exists, as Global::control_horizon_in_ts >= 1 always holds!
             new_power_per_EV_kW[ev_idx] = min_demand;
             remaining_power_kW -= min_demand;
         }
         // Loop over all EVs again and assign max demand, if remaining power > 0
         for (size_t ev_idx = 0; ev_idx < listOfEVs.size(); ev_idx++) {
             EVFSM* ev = listOfEVs[ev_idx];
-            float max_demand = ev->get_future_max_consumption_kWh()->at(0) / Global::get_time_step_size_in_h();
+            double max_demand = ev->get_future_max_consumption_kWh()->at(0) / Global::get_time_step_size_in_h();
             if (remaining_power_kW > 0.0) {
                 if (remaining_power_kW > max_demand) {
                     new_power_per_EV_kW[ev_idx] = max_demand;
@@ -983,7 +983,7 @@ void ComponentCS::setDemandToProfileData(unsigned long ts) {
 
 }
 
-bool ComponentCS::setDemandToGivenValues(std::vector<float>& charging_power_per_EV_kW) {
+bool ComponentCS::setDemandToGivenValues(std::vector<double>& charging_power_per_EV_kW) {
 
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (is_callable_set_charging_value) {
@@ -1037,7 +1037,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     EVFSM::list_of_cars.emplace(carID, this);
     //
     // Create battery (using the secondary constructor)
-    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0f, Global::get_ev_charging_effi(), 1.0f);
+    battery = new ComponentBS(Global::get_ev_battery_size_kWh(), 0.0, 1.0, 1.0);
     // Initialize variables for the state
     current_state      = EVState::ConnectedAtHome;
     current_ts         = 0;
@@ -1276,7 +1276,7 @@ void EVFSM::preprocessTourInformation() {
             current_sTour = &(*next_sTour);
             current_state = EVState::Driving;
             // compute (mean) energy demand per tour time step
-            energy_demand_per_tour_ts = (float) (current_sTour->weekly_tour->tour_length_km * econs_kWh_per_km) / (float) (current_sTour->weekly_tour->ts_duration);
+            energy_demand_per_tour_ts = (current_sTour->weekly_tour->tour_length_km * econs_kWh_per_km) / (double) (current_sTour->weekly_tour->ts_duration);
             // Compute new last_minE_value
             const double PREV_last_minE_value = last_minE_value;
             if (ev_fully_charged_at_next_dep) {
