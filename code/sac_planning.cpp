@@ -348,14 +348,22 @@ bool add_expansion_to_units_random_or_data_order(
             std::queue<ControlUnit*> currExpandableSetOfCUs;
             for (ControlUnit* cu : setOfCUs) {
                 bool include_this_unit = true;
-                if (expPV && !cu->is_expandable_with_pv())
+                if (expPV && !cu->is_expandable_with_pv()) {
                     include_this_unit = false;
-                if (expHP && !cu->is_expandable_with_hp())
+                    //std::cout << "Removing unit ID " << cu->get_unitID() << " because PV is not addable.\n";
+                }
+                if (expHP && !cu->is_expandable_with_hp()) {
                     include_this_unit = false;
+                    //std::cout << "Removing unit ID " << cu->get_unitID() << " because a HP is not addable.\n";
+                }
                 if (expBS && !cu->is_expandable_with_pv() && !cu->has_pv()) // if we add a BS, the building MUST contain a PV already or be able to add a PV
                     include_this_unit = false;
-                if (expEV &&  cu->get_sim_comp_cs_possible_n_EVs() == 0)
+                if (expEV &&  cu->get_sim_comp_cs_possible_n_EVs() == 0) {
+                    if (include_this_unit) {
+                        std::cout << "Removing unit ID " << cu->get_unitID() << " due to n EVs == 0 for addition.\n";
+                    }
                     include_this_unit = false;
+                }
                 //
                 if (include_this_unit)
                     currExpandableSetOfCUs.push( cu );
@@ -1121,8 +1129,10 @@ void expansion::add_expansion_to_units(
         */
         // Select Control Unit only if the number of added EVs would not exceed the individual limit (if it is set)
         if (Global::get_exp_cs_max_ev_per_cs() > 0) {
-            if (current_unit->get_sim_comp_cs_possible_n_EVs() > Global::get_exp_cs_max_ev_per_cs())
+            if (current_unit->get_sim_comp_cs_possible_n_EVs() > Global::get_exp_cs_max_ev_per_cs()) {
+                std::cout << "Removing unit ID " << current_unit->get_unitID() << " due to n EVs >= MAX EVs for addition.\n";
                 continue;
+            }
         }
         // select only residential buildings if selected
         if (Global::get_select_only_residential_buildings()) {
