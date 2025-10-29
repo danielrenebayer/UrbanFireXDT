@@ -677,9 +677,9 @@ string* ControlUnit::get_metrics_string_annual() {
         *retstr += to_string(get_sim_comp_bs_E_kWh()) + ",";
         *retstr += to_string(get_sim_comp_cs_n_EVs()) + ",";
         *retstr += to_string(get_sim_comp_cs_max_P_kW()) + ",";
-        *retstr += to_string(has_sim_pv) + ",";
+        *retstr += to_string(has_sim_pv ? 1 : is_expandable_with_pv() ? 0 : -1) + ",";
         *retstr += to_string(has_sim_bs) + ",";
-        *retstr += to_string(has_sim_hp) + ",";
+        *retstr += to_string(has_sim_hp ? 1 : is_expandable_with_hp() ? 0 : -1) + ",";
         *retstr += to_string(has_sim_cs) + ",";
         *retstr += to_string(sum_of_errors_in_cntrl) + ",";
         *retstr += to_string(sum_of_errors_in_cntrl_cmd_appl);
