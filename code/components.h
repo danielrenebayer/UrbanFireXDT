@@ -139,7 +139,7 @@ class ComponentPV : public BaseComponent {
         ComponentPV(float kWp_per_m2, float min_kWp_sec, float max_kWp_sec, float max_kWp_unit, unsigned long locationID); ///< Constructor in the case of dynamic kWp computation. If max_kWp is set to a value <= 0, it will be ignored
         // getter methods
         double get_kWp() const           { return total_kWp; } ///< Returns the total peak power, summed over all sections. See also ComponentPV::get_kWp_per_section().
-        float get_currentGeneration_kW() { return currentGeneration_kW; }
+        float get_currentGeneration_kW() const { return currentGeneration_kW; }
         double get_cweek_generation_kWh(){ return generation_cumsum_cweek_kWh; } ///< Returns the produced energy in kWh from the start of the current week until the current time step
         double get_total_generation_kWh(){ return generation_cumsum_total_kWh; } ///< Returns the total produced energy in kWh from the start of the simulation run until the current time step
         float get_generation_at_ts_kW(unsigned long ts) const; ///< Returns the generation at a given time step in kW. If there is no data available for this time step, 0.0 is returned.
@@ -349,6 +349,12 @@ class ComponentCS : public BaseComponent {
         unsigned long get_n_EVs()     const; ///< Returns the number of connected EVs if the component is enabled, otherwise 0 is returned.
         unsigned long get_possible_n_EVs() const; ///< Returns the number of possible connected EVs if the component would be enabled
         unsigned long get_control_unit_id() const; ///< Returns the control unit ID of the installation place
+        std::vector<const EVFSM*> get_listOfEVs() const {
+            std::vector<const EVFSM*> const_list;
+            const_list.reserve(listOfEVs.size());
+            for (EVFSM* ev : listOfEVs) const_list.push_back(ev);
+            return const_list;
+        } ///< Returns a reference to the internal list of EVs
         unsigned long get_n_chargers() const { return n_chargers; } ///< Returns the number of chargers available at this charging station (typically the number of flats of the building)
         /**
          * Returns the maximum electricity consumption of this component for the next n time steps (given some flexibility).
@@ -436,6 +442,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         const std::vector<double>* get_future_max_power_kW() const { return &future_maxP_storage; } ///< Returns the maximum power of this EV per time step in the controller horizon. Attention: Returned object will be overwritten after calling EVFSM::setCarStateForTimeStep().
         double get_currentDemand_kW() const { return current_P_kW; } ///< Gets the current charging power in kW; Only valid after calling EVFSM::setDemandToProfileData() or EVFSM::setDemandToGivenValue()
         std::string* get_metrics_string_annual(); ///< Returns some metrics as string (useful for the output). Header see EVFSM::MetricsStringHeaderAnnual. Call this function only if simulation run is finished!
+        const ComponentBS* get_battery() const { return battery; } ///< Returns a reference to the battery component of the EV
         // modifiers (on structural level of the simulation)
         using BaseComponentSemiFlexible::set_horizon_in_ts;
         void set_horizon_in_ts(unsigned int new_horizon);

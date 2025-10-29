@@ -27,10 +27,11 @@ for episode_id in range(1, n_episodes+1):
         this_timestep_id = UrbanFireXDT.get_next_timestep_id()
         print(f"Simulation step {this_timestep_id} for episode {episode_id} ...", end="")
 
-        # 1. Query the state from C++
-        cuID = 1
-        current_state = UrbanFireXDT.get_state(controlUnitID=cuID)
-        #print(f"C++ state of control unit with ID {cuID} = {current_state}")
+        # 1. Query the state from C++ only for the exemplary time step 2
+        if this_timestep_id == 2:
+            for cuID in [1,2,3]:
+                current_state = UrbanFireXDT.get_state(controlUnitID=cuID)
+                print(f"C++ state of control unit with ID {cuID}: has_pv = {current_state.has_pv} has_cntrl_bs = {current_state.has_cntrl_bs} has_cntrl_hp = {current_state.has_cntrl_hp} has_cntrl_evchst = {current_state.has_cntrl_evchst}")
 
         # 2. Determine and send new commands
         for cuID in [1,2,3]:

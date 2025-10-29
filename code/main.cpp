@@ -367,6 +367,27 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(UrbanFireXDT, m) {
     m.doc() = "Python bindings for the UrbanFireDTX C++ simulation.";
 
+    pybind11::class_<pyconn::SimulationEVState>(m, "SimulationEVState",
+        "State of an electric vehicle (EV) during a simulation step.")
+        .def_readonly("ev_state", &pyconn::SimulationEVState::ev_state,
+                      "Current state of the EV. Possible values: 0=ConnectedAtHome, 1=DisconnectedAtHome, 2=Driving, 3=ChargingOnTheWay")
+        .def_readonly("ev_current_demand_kW", &pyconn::SimulationEVState::ev_current_demand_kW,
+                      "Current charging power in kW;")
+        .def_readonly("ev_soc", &pyconn::SimulationEVState::ev_soc,
+                      "State of charge of the EV battery.")
+        .def_readonly("ev_soe", &pyconn::SimulationEVState::ev_soe,
+                      "State of energy (in kWh) of the EV battery.")
+        .def_readonly("ev_maxP_kW", &pyconn::SimulationEVState::ev_maxP_kW,
+                      "Maximum charge/discharge power (in kW) of the EV battery.")
+        .def_readonly("ev_maxE_kWh", &pyconn::SimulationEVState::ev_maxE_kWh,
+                      "Maximum energy capacity (in kWh) of the EV battery.")
+        .def_readonly("ev_future_max_power_kW", &pyconn::SimulationEVState::ev_future_max_power_kW,
+                      "List of maximum possible charging powers (in kW) for the next time steps in the controller horizon.")
+        .def_readonly("ev_future_max_consumption_kWh", &pyconn::SimulationEVState::ev_future_max_consumption_kWh,
+                      "List of maximum possible energy consumption (in kWh) for the next time steps in the controller horizon.")
+        .def_readonly("ev_future_min_consumption_kWh", &pyconn::SimulationEVState::ev_future_min_consumption_kWh,
+                      "List of minimum possible energy consumption (in kWh) for the next time steps in the controller horizon.");
+
     pybind11::class_<pyconn::SimulationControlUnitState>(m, "SimulationControlUnitState",
         "State of a control unit during a simulation step.")
         .def_readonly("controlUnitID", &pyconn::SimulationControlUnitState::controlUnitID,
@@ -380,7 +401,45 @@ PYBIND11_MODULE(UrbanFireXDT, m) {
         .def_readonly("has_cntrl_hp", &pyconn::SimulationControlUnitState::has_cntrl_hp,
                       "True if a controllable (i.e., simulated) heat pump is present.")
         .def_readonly("has_cntrl_evchst", &pyconn::SimulationControlUnitState::has_cntrl_evchst,
-                      "True if a controllable (i.e., simulated) EV charging station is present.");
+                      "True if a controllable (i.e., simulated) EV charging station is present.")
+        .def_readonly("timestepID", &pyconn::SimulationControlUnitState::timestepID,
+                      "The timestep ID of the current time step.")
+        // BS
+        .def_readonly("bs_soc", &pyconn::SimulationControlUnitState::bs_soc,
+                      "State of charge of the battery storage, if present. 0.0 if no battery is present.")
+        .def_readonly("bs_soe", &pyconn::SimulationControlUnitState::bs_soe,
+                      "State of energy (in kWh) of the battery storage, if present. 0.0 if no battery is present.")
+        .def_readonly("bs_maxP_kW", &pyconn::SimulationControlUnitState::bs_maxP_kW,
+                      "Maximum charge/discharge power (in kW) of the battery storage, if present. 0.0 if no battery is present.")
+        .def_readonly("bs_maxE_kWh", &pyconn::SimulationControlUnitState::bs_maxE_kWh,
+                      "Maximum energy capacity (in kWh) of the battery storage, if present. 0.0 if no battery is present.")
+        // HP
+        .def_readonly("hp_rated_power_kW", &pyconn::SimulationControlUnitState::hp_rated_power_kW,
+                      "Rated power (in kW) of the heat pump, if present. 0.0 if no heat pump is present.")
+        .def_readonly("hp_current_demand_kW", &pyconn::SimulationControlUnitState::hp_current_demand_kW,
+                      "Current power consumption (in kW) of the heat pump, if present. 0.0 if no heat pump is present.")
+        .def_readonly("hp_future_max_power_kW", &pyconn::SimulationControlUnitState::hp_future_max_power_kW,
+                      "Maximum possible power (in kW) of the heat pump for the next time steps in the controller horizon.")
+        .def_readonly("hp_future_min_power_kW", &pyconn::SimulationControlUnitState::hp_future_min_power_kW,
+                      "Minimum possible power (in kW) of the heat pump for the next time steps in the controller horizon.")
+        .def_readonly("hp_future_max_consumption_kWh", &pyconn::SimulationControlUnitState::hp_future_max_consumption_kWh,
+                      "Maximum possible energy consumption (in kWh) of the heat pump for the next time steps in the controller horizon.")
+        .def_readonly("hp_future_min_consumption_kWh", &pyconn::SimulationControlUnitState::hp_future_min_consumption_kWh,
+                      "Minimum possible energy consumption (in kWh) of the heat pump for the next time steps in the controller horizon.")
+        // EV
+        .def_readonly("ev_states", &pyconn::SimulationControlUnitState::ev_states,
+                      "List of states of the EVs connected to the EV charging station, if present. Empty list if no EV charging station is present.")
+        .def_readonly("n_EVs", &pyconn::SimulationControlUnitState::n_EVs,
+                      "Number of EVs connected to the EV charging station, if present. 0 if no EV charging station is present.")
+        // environmental data
+        .def_readonly("pv_currentGeneration_kW", &pyconn::SimulationControlUnitState::pv_currentGeneration_kW,
+                      "Current PV generation in kW, if a PV system is present. 0.0 if no PV system is present.")
+        .def_readonly("pv_kWp", &pyconn::SimulationControlUnitState::pv_kWp,
+                      "Rated power (in kWp) of the PV system, if present. 0.0 if no PV system is present.")
+        .def_readonly("household_demand", &pyconn::SimulationControlUnitState::household_demand,
+                      "Current household demand (in kW) excluding battery storage and generation.")
+        .def_readonly("electricity_price", &pyconn::SimulationControlUnitState::electricity_price,
+                      "Current electricity price in EUR/kWh.");
 
     m.def("initialize", &pyconn::initialize_simulation,
           "Initialize the simulation with a Python dict of options.");
