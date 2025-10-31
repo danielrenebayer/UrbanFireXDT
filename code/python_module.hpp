@@ -436,6 +436,7 @@ namespace pyconn {
                 s.ev_states.push_back(ev_state_struct);
             }
         }
+        s.n_EVs = cu->has_cs() ? cu->get_component_CS()->get_n_EVs() : 0;
         // environmental data
         s.pv_currentGeneration_kW = cu->get_component_PV() != NULL ? cu->get_component_PV()->get_currentGeneration_kW() : 0.0;
         s.pv_kWp                  = cu->get_component_PV() != NULL ? cu->get_component_PV()->get_kWp() : 0.0;
