@@ -367,6 +367,12 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(UrbanFireXDT, m) {
     m.doc() = "Python bindings for the UrbanFireDTX C++ simulation.";
 
+    pybind11::enum_<EVState>(m, "EVState")
+        .value("ConnectedAtHome", EVState::ConnectedAtHome)
+        .value("DisconnectedAtHome", EVState::DisconnectedAtHome)
+        .value("Driving", EVState::Driving)
+        .value("ChargingOnTheWay", EVState::ChargingOnTheWay);
+
     pybind11::class_<pyconn::SimulationEVState>(m, "SimulationEVState",
         "State of an electric vehicle (EV) during a simulation step.")
         .def_readonly("ev_state", &pyconn::SimulationEVState::ev_state,
