@@ -278,8 +278,8 @@ int main(int argc, char* argv[]) {
     //
     // Set cache file path
     //
-    HPProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_HP_profiles.json");
-    PVProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_PV_profiles.json");
+    HPProfileIDCache::GetInstance().setCacheFilename(Global::get_cache_dir_path() + "cache_file_HP_profiles.json");
+    PVProfileIDCache::GetInstance().setCacheFilename(Global::get_cache_dir_path() + "cache_file_PV_profiles.json");
 
 	//
 	// Create the control units and load the data for the connected measurement units

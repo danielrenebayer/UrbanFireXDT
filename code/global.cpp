@@ -179,6 +179,7 @@ string Global::input_path         = "";
 string Global::output_path        = "";
 string Global::system_db_name     = "SystemStructure.db";
 string Global::ev_data_path       = "";
+string Global::cache_dir_path     = "";
 OutputModePerCU Global::output_mode_per_cu = OutputModePerCU::IndividualFile;
 ExpansionProfileAllocationMode Global::exp_profile_mode = ExpansionProfileAllocationMode::AsInData;
 global::CUSModeFCA Global::cu_selection_mode_fca        = global::CUSModeFCA::OrderAsInData;
@@ -237,6 +238,7 @@ bool Global::npv_time_horizon_set  = false;
 bool Global::heat_demand_thermalE_to_hpE_conv_f_set = false;
 bool Global::input_path_init       = false;
 bool Global::output_path_init      = false;
+bool Global::cache_dir_path_init        = false;
 bool Global::output_mode_per_cu_init    = false;
 bool Global::exp_profile_mode_init      = false;
 bool Global::cu_selection_mode_fca_init = false;
@@ -1136,6 +1138,18 @@ void Global::set_ev_data_path(string* path) {
         // check, if path ends with an "/", add it, if not
         if (Global::ev_data_path.back() != '/') {
             Global::ev_data_path += "/";
+        }
+    }
+}
+void Global::set_cache_dir_path(const std::string* path) {
+    if (is_locked) {
+        cerr << "EV data path is already set!" << endl;
+    } else {
+        Global::cache_dir_path = *path;
+        Global::cache_dir_path_init = true;
+        // check, if path ends with an "/", add it, if not
+        if (Global::cache_dir_path.back() != '/') {
+            Global::cache_dir_path += "/";
         }
     }
 }

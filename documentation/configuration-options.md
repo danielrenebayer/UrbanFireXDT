@@ -64,6 +64,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | ev data path          | string  | no       |                      |                 | Path (relative or absolute) to the EV driving profiles and other EV related data | no |
 | use emission time series ia | bool | no    | true                 |                 | Use the emission time series for electricity demand from the grid (if it is available in the data) if set to true (default) | no |
 | use prices time series ia   | bool | no    | true                 |                 | Use the electricity prices time series (if it is available in the data) if set to true (default) | no |
+| cache directory       | string  | no       | `data input path`    |                 | The path used for caching values, especially the allocation of profile IDs to simulated components (PV and HP) per control unit. If not set, this value equals the `data input path` | no |
 
 
 ## Group 3: Settings defining the simulatively added components

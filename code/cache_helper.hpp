@@ -90,7 +90,7 @@ class HPProfileIDCache {
                 return;
 
             if (cache_filename_.empty()) {
-                throw std::runtime_error("HP cache filename is not set. Call set_cache_filename() before saving.");
+                throw std::runtime_error("HP cache filename is not set. Call HPProfileIDCache::setCacheFilename() before saving.");
             }
 
             json::array jarray;
@@ -101,9 +101,10 @@ class HPProfileIDCache {
             std::ofstream ofs(cache_filename_);
             if (ofs) {
                 ofs << json::serialize(jarray);
+                std::cout << "Heat pump profile allocation written to cache file '" << cache_filename_ << "'\n";
+            } else {
+                std::cout << "Error: Heat pump cache file cound not be written! Cannot write to " << cache_filename_ << "'\n";
             }
-
-            std::cout << "Heat pump profile allocation written to cache file '" << cache_filename_ << "'\n";
         }
 
         void load_from_file() {
@@ -233,7 +234,7 @@ class PVProfileIDCache {
                 return;
 
             if (cache_filename_.empty()) {
-                throw std::runtime_error("PV cache filename is not set. Call set_cache_filename() before saving.");
+                throw std::runtime_error("PV cache filename is not set. Call PVProfileIDCache::setCacheFilename() before saving.");
             }
 
             json::array jarray;
@@ -246,9 +247,10 @@ class PVProfileIDCache {
             std::ofstream ofs(cache_filename_);
             if (ofs) {
                 ofs << json::serialize(jarray);
+                std::cout << "PV profile allocation written to cache file '" << cache_filename_ << "'\n";
+            } else {
+                std::cout << "Error: PV cache file cound not be written! Cannot write to " << cache_filename_ << "'\n";
             }
-
-            std::cout << "PV profile allocation written to cache file '" << cache_filename_ << "'\n";
         }
 
         void load_from_file() {

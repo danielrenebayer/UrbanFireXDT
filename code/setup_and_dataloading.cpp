@@ -416,6 +416,11 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 global::structure_db_column_name_energy_prices = scenario_dict.get_value<std::string>();
             }
+            else if ( element_name.compare("cache directory") == 0 )
+            {
+                string value = scenario_dict.get_value<string>();
+                Global::set_cache_dir_path( &value );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment"))
@@ -1728,6 +1733,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_use_emission_time_series_ia());
     PRINT_VAR(Global::get_use_prices_time_series_ia());
     PRINT_VAR(global::structure_db_column_name_energy_prices);
+    PRINT_VAR(Global::get_cache_dir_path());
     // Control strategy settings
     current_outstream << "  Control strategy settings:\n";
     PRINT_ENUM_VAR(Global::get_controller_mode(), [](auto var){switch(var){case global::ControllerMode::RuleBased: return "RuleBased"; case global::ControllerMode::OptimizedWithPerfectForecast: return "OptimizedWithPerfectForecast"; default: return "";}});

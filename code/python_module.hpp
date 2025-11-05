@@ -289,8 +289,8 @@ namespace pyconn {
             throw std::runtime_error("Invalid expansion matrix.");
         }
 
-        HPProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_HP_profiles.json");
-        PVProfileIDCache::GetInstance().setCacheFilename(Global::get_input_path() + "cache_file_PV_profiles.json");
+        HPProfileIDCache::GetInstance().setCacheFilename(Global::get_cache_dir_path() + "cache_file_HP_profiles.json");
+        PVProfileIDCache::GetInstance().setCacheFilename(Global::get_cache_dir_path() + "cache_file_PV_profiles.json");
 
         if (!configld::load_data_from_central_database((Global::get_input_path() + Global::get_structure_database_name()).c_str())) {
             throw std::runtime_error("Error loading database.");
