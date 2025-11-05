@@ -23,7 +23,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
       - name: Build documentation
-        run: doxygen Doxyfile
+        run: doxygen documentation/doxygen.conf
 
       - name: Upload built site to Pages artifact
         uses: actions/upload-pages-artifact@v3
