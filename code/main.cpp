@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
         ("work-stealing",                           "Enables work stealing between the worker threads if multiple threads are used.")
         ("max-parallel-opti-vars", bpopts::value<unsigned long>(), "The maximum number of optimization variables that will be called in parallel. Only effective if multiple threads are used. Due to algorithmic constraints, the maximum can be exceeded if there is a building with multiple EVs. See implementation for details.")
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
-        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely, 'single' creates a single output instead of one per unit, 'sl' on substation level (default)")
+        ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely (default), 'single' creates a single output instead of one per unit (not recommended if there are more than 100 units), 'sl' on substation level (recommended above 100 units)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
         ("ccmd-output", bpopts::value<string>(), "Modify output behavior for details of the Control Commands (inside each control unit): 'off' disables all output (default), 'on' or 'all' outputs detailed information about the control commands for all control units for every time step (that have an optimized controller).")
         ("ev-output",   bpopts::value<string>(), "Modify output behavior for EVs: 'off' disables all output (default), 'all' outputs information for all EVs for every time step.")
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
     } else {
-        Global::set_output_mode_per_cu(global::OutputModePerCU::IndividualFile);
+        Global::set_output_mode_per_cu(global::OutputModePerCU::NoOutput);
     }
     if (opts_vals.count("st-output") > 0) {
         string st_output = opts_vals["st-output"].as<string>();

@@ -20,41 +20,41 @@ output_error=0   # Outputs do not match the verified output
 
 # 1. run simulations
 echo -e "\n-- 1. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json 1
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json 1
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 2. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --n_threads 5 --work-stealing 2
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --n_threads 5 --work-stealing 2
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 3. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json 3
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json 3
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 4. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json 4
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json 4
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 5. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json 5
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json 5
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 6. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --pvar 1 7
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --pvar 1 7
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 7. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --seed 1234 --ev-output all 8
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --seed 1234 --ev-output all 8
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 8. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --seed 1234 --ev-output all 9
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --seed 1234 --ev-output all 9
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 9. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --seed 1234 --ev-output all 10
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --seed 1234 --ev-output all 10
 if (( $? != 0 )); then program_error=1; fi
 echo -e "\n-- 10. Simulation run --"
-../bin/simulation-opti --config test-config/test_config.json --seed 1234 --ev-output all 11
+../bin/simulation-opti --cu-output 'sl' --config test-config/test_config.json --seed 1234 --ev-output all 11
 if (( $? != 0 )); then program_error=1; fi
 
 
 # use valgrind for last run, but only, if there are no errors before
 if (( $program_error <= 0 )); then
     echo -e "\n-- 8. Simulation run (using valgrind) --"
-    valgrind --error-exitcode=1 ../bin/simulation-dbg --config test-config/test_config.json --seed 1234 6
+    valgrind --error-exitcode=1 ../bin/simulation-dbg --cu-output 'sl' --config test-config/test_config.json --seed 1234 6
     if (( $? != 0 )); then memory_error=1; else memory_error=0;  fi
 fi
 
