@@ -19,6 +19,7 @@
 #include "global.h"
 #include "output.h"
 #include "sac_planning.h"
+#include "surplus_controller.hpp"
 
 #include "optimization_unit_general.hpp"
 #ifdef USE_OR_TOOLS
@@ -1036,6 +1037,35 @@ void ControlUnit::reset_internal_state() {
     ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
 }
 
+
+float ControlUnit::get_rsm_load_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = 0.0;
+    for (MeasurementUnit* mu : *connected_units) {
+        total_load += mu->get_rsm_load_at_ts(ts);
+    }
+    return total_load;
+}
+
+float ControlUnit::get_rsm_demand_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = get_rsm_load_at_ts(ts);
+    if (total_load < 0.0)
+        return 0.0;
+    return total_load;
+}
+
+float ControlUnit::get_rsm_feedin_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = get_rsm_load_at_ts(ts);
+    if (total_load > 0.0)
+        return 0.0;
+    return -total_load;
+}
+
 bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // This function computes the next value
@@ -1243,7 +1273,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         //
         // 5. Propagate the results to the components
         if (has_sim_bs) {
-            sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly
+            sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
         }
         if (has_sim_hp) {
             bool ret_val = sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
@@ -1348,7 +1379,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             && !py_control_commands_obtained
 #endif
         ) {
-            sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+            sim_comp_bs->set_chargeRequest( -current_load_vSM_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
         } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();

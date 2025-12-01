@@ -308,6 +308,8 @@ class Global {
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
         static bool get_create_control_cmd_output() { return create_control_cmd_output; } ///< Returns wheather a output for detailed control commands per time step and CU should be created
         static bool get_create_ev_detailed_output() { return create_ev_detailed_output; } ///< Returns wheather a output for detailed EV states per time step and EV should be created
+        static bool get_surplus_controller_enabled() { return surplus_controller_enabled; } ///< Returns whether the surplus controller is enabled
+        static uint get_surplus_controller_frequency_ts() { return surplus_controller_frequency_ts; } ///< Returns the optimization frequency of the surplus controller in timesteps
         static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
         static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
         // special setter methods
@@ -402,6 +404,8 @@ class Global {
         static void set_create_substation_output(bool value);
         static void set_create_control_cmd_output(bool value);
         static void set_create_ev_detailed_output(bool value);
+        static void set_surplus_controller_enabled(bool value);
+        static void set_surplus_controller_frequency_ts(uint value);
         static void set_exp_pv_static_profile_orientation(std::string* value);
         static void set_exp_pv_static_profile_idx(int value);
     private:
@@ -500,6 +504,8 @@ class Global {
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
         static bool create_control_cmd_output;
         static bool create_ev_detailed_output;
+        static bool surplus_controller_enabled; ///< Whether the surplus controller is enabled
+        static uint surplus_controller_frequency_ts; ///< Optimization frequency of the surplus controller in timesteps
         static std::string exp_pv_static_profile_orientation; ///< fixed orientation for PV static selection mode (ignoring roof data)
         static int exp_pv_static_profile_idx;                 ///< fixed profile ID for PV static selection mode (-1 if not defined)
         // boolean values holding information if the correspoding 

@@ -421,6 +421,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 string value = scenario_dict.get_value<string>();
                 Global::set_cache_dir_path( &value );
             }
+            else if ( element_name.compare("surplus controller freq in ts")               == 0 )
+            {
+                Global::set_surplus_controller_frequency_ts( scenario_dict.get_value<unsigned int>() );
+            }
+            else if ( element_name.compare("surplus controller enabled")               == 0 )
+            {
+                Global::set_surplus_controller_enabled( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment"))

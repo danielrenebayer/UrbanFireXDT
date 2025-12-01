@@ -19,6 +19,7 @@ using namespace simulation;
 #include "sac_planning.h"
 #include "units.h"
 #include "worker_threads.hpp"
+#include "surplus_controller.hpp"
 
 #ifdef PYTHON_MODULE
 #include "python_module.hpp"
@@ -49,6 +50,12 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     struct tm* current_tm_l; // left-aligned time stamp as struct tm
     unsigned int last_step_weekday = 0; // required to identify new weeks
     unsigned long week_number = 1;
+
+    // initialize surplus controller
+    surplus::SurplusController::Initialize();
+    surplus::SurplusController& surplus_controller = surplus::SurplusController::GetInstance();
+    
+
     //
     // main loop
     for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
@@ -91,7 +98,18 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
             }
         }
 #endif
-        //
+        // Surplus controller
+        if (surplus_controller.ShouldRunOptimization(ts)) {
+            if (!surplus_controller.ExecuteOptimization(ts)) {
+                std::cerr << "Error: Surplus controller optimization failed at timestep " << ts << std::endl;
+                surplus::SurplusController::Cleanup();
+                return false;
+            }
+        } else {
+            // If the controller isn't required to run, shift the data structure values accordingly by one time step
+            surplus_controller.ShiftTimeSeriesData();
+        }
+
         // execute one step
         if (!oneStep(ts, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
@@ -104,6 +122,10 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
         std::cout << output_prefix << "... run finished." << "\n";
         std::cout << global::output_section_delimiter << std::endl;
     }
+
+    // Cleanup surplus controller
+    surplus::SurplusController::Cleanup();
+
     return true;
 
 }
@@ -235,6 +257,7 @@ bool simulation::oneStep(const unsigned long ts,
         *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
         *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
     }
+    // now total_load contains the total mismatch on grid level
 
     // Output current time step
     output_counter++;

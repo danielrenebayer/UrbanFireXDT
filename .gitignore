@@ -9,3 +9,5 @@ data/*
 *.swp
 .ipynb_checkpoints/
 *.code-workspace
+.venv/
+tools/
