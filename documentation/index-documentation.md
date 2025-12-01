@@ -36,6 +36,10 @@ For *developers* extending or modifying the simulation framework:
 - **Code Reference:**
   All namespaces, classes, and methods are documented under the *Classes* and *Files* tabs of this documentation.
 
+An overview of all major classes (but not all classes) of the code is given in the image below ([click here](./ClassDiagram.svg) for a SVG-version).
+
+![Class diagram](./ClassDiagram.png)
+
 ---
 
 ## Repository Structure
