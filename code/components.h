@@ -192,12 +192,12 @@ class ComponentBS : public BaseComponent {
         ComponentBS(double maxE_kWh, double discharge_rate_per_step, double efficiency_in, double initial_SoC); ///< Constructor to use if it is the battery of an EV
         // getter methods
         double get_SOC() const               { return SOC; }          ///< Returns the current state of charge of the battery
-        double get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery
-        double get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside)
-        double get_currentLoad_kW() const    { return currentP_kW;  } ///< Returns the load of the battery (from outside perspective)
+        double get_SOE() const               { return currentE_kWh; } ///< Returns the current amount of energy stored in the battery. Equivalent to ComponentBS::get_currentCharge_kWh().
+        double get_currentCharge_kWh() const { return currentE_kWh; } ///< Returns the charge of the battery (i.e. how much kWh are stored inside). Equivalent to ComponentBS::get_SOE().
+        double get_currentLoad_kW()    const { return currentP_kW;  } ///< Returns the current load of the battery (from outside perspective). Positive values denotes battery charging, while negative values denote discharging.
         double get_gridOnly_discharge_kW() const { return currentP_from_grid_kW; } ///< Returns the amount of energy that is currently discharged, see ComponentBS::get_currentLoad_kW() if smaller 0.0, in kW that has been stored in the BS from the grid and not from surplus PV. With values from 0.0 to maxP.
-        double get_maxE_kWh()       const    { return maxE_kWh;     }
-        double get_maxP_kW()        const    { return maxP_kW;      }
+        double get_maxE_kWh()       const    { return maxE_kWh;     } ///< Returns the *maximum* available capacity of the battery. For the current state of energy / charge, see ComponentBS::get_SOC() and ComponentBS::get_SOE().
+        double get_maxP_kW()        const    { return maxP_kW;      } ///< Returns the *maximum* available capacity of the battery. For the current power, see ComponentBS::get_currentLoad_kW().
         double get_current_EFC()   const    { return (maxE_kWh > 0) ? total_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC)
         double get_cweek_EFC()     const    { return (maxE_kWh > 0) ? cweek_E_withdrawn_kWh / maxE_kWh : 0.0; } ///< Returns the equivalent full cycles (EFC) for the current week only
         unsigned long get_n_ts_empty() const { return n_ts_SOC_empty; } ///< Returns the number of time steps where the battery is empty

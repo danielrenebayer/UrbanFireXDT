@@ -298,7 +298,7 @@ void ControlUnit::add_unit(MeasurementUnit* unit) {
 	connected_units->push_back(unit);
 }
 
-bool ControlUnit::has_electricity_demand() {
+bool ControlUnit::has_electricity_demand() const {
 	for (MeasurementUnit* mu : *connected_units) {
 		if (mu->has_demand())
 			return true;
@@ -306,7 +306,7 @@ bool ControlUnit::has_electricity_demand() {
 	return false;
 }
 
-bool ControlUnit::has_pv() {
+bool ControlUnit::has_pv() const {
 	if (has_sim_pv)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
@@ -316,7 +316,7 @@ bool ControlUnit::has_pv() {
 	return false;
 }
 
-bool ControlUnit::has_bs() {
+bool ControlUnit::has_bs() const {
 	if (has_sim_bs)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
@@ -326,7 +326,7 @@ bool ControlUnit::has_bs() {
 	return false;
 }
 
-bool ControlUnit::has_hp() {
+bool ControlUnit::has_hp() const {
 	if (has_sim_hp)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
@@ -336,7 +336,7 @@ bool ControlUnit::has_hp() {
 	return false;
 }
 
-bool ControlUnit::has_cs() {
+bool ControlUnit::has_cs() const {
 	if (has_sim_cs)
 		return true;
 	for (MeasurementUnit* mu : *connected_units) {
@@ -346,7 +346,7 @@ bool ControlUnit::has_cs() {
 	return false;
 }
 
-bool ControlUnit::has_chp() {
+bool ControlUnit::has_chp() const {
     for (MeasurementUnit* mu : *connected_units) {
         if (mu->has_chp())
             return true;
@@ -354,7 +354,7 @@ bool ControlUnit::has_chp() {
     return false;
 }
 
-bool ControlUnit::has_wind() {
+bool ControlUnit::has_wind() const {
     for (MeasurementUnit* mu : *connected_units) {
         if (mu->has_wind())
             return true;
@@ -362,7 +362,7 @@ bool ControlUnit::has_wind() {
     return false;
 }
 
-bool ControlUnit::has_bs_sim_added() {
+bool ControlUnit::has_bs_sim_added() const {
 	return has_sim_bs;
 }
 
@@ -418,15 +418,15 @@ bool ControlUnit::is_expandable_with_hp() {
     return is_expandable_with_hp_cache;
 }
 
-bool ControlUnit::heat_demand_given_in_data() {
+bool ControlUnit::heat_demand_given_in_data() const {
     return global::annual_heat_demand_kWh[locationID] > 0;
 }
 
-int ControlUnit::get_exp_combi_bit_repr() {
+int ControlUnit::get_exp_combi_bit_repr() const {
     return get_exp_combi_bit_repr_from_MUs() | get_exp_combi_bit_repr_sim_added();
 }
 
-int ControlUnit::get_exp_combi_bit_repr_from_MUs() {
+int ControlUnit::get_exp_combi_bit_repr_from_MUs() const {
     //
     // This function returns the expansion combination in bitwise representation
     // as given by the sum of the connected measurement units
@@ -438,7 +438,7 @@ int ControlUnit::get_exp_combi_bit_repr_from_MUs() {
     return combination;
 }
 
-int ControlUnit::get_exp_combi_bit_repr_sim_added() {
+int ControlUnit::get_exp_combi_bit_repr_sim_added() const {
     //
     // This function returns the expansion combination in bitwise representation
     // that is added by the simulation
@@ -522,19 +522,19 @@ double ControlUnit::get_mean_annual_MU_el_demand_kWh() const {
     return total_demand / data_len_in_years;
 }
 
-double ControlUnit::get_sim_comp_pv_kWp() {
+double ControlUnit::get_sim_comp_pv_kWp() const {
     if (has_sim_pv)
         return sim_comp_pv->get_kWp();
     return 0;
 }
 
-double ControlUnit::get_sim_comp_bs_P_kW() {
+double ControlUnit::get_sim_comp_bs_P_kW() const {
     if (has_sim_bs)
         return sim_comp_bs->get_maxP_kW();
     return 0;
 }
 
-double ControlUnit::get_sim_comp_bs_E_kWh() {
+double ControlUnit::get_sim_comp_bs_E_kWh() const {
     if (has_sim_bs)
         return sim_comp_bs->get_maxE_kWh();
     return 0;
