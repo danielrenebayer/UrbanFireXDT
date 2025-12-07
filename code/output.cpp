@@ -155,7 +155,7 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     for (Substation* s : subList) {
         *(substation_output) << "," << s->get_name()->c_str();
     }
-    *(substation_output) << ",pv_total_generation_kW,pv_feedin_expo_kW,bs_total_generation_kW,bs_feedin_expo_kW,chp_total_generation_kW,chp_feedin_expo_kW,wind_total_generation_kW,wind_feedin_expo_kW,unknown_total_generation_kW,unknown_feedin_expo_kW,total_demand_wo_BS_SC_kW,total_BS_charging_power_kW,OverallBatterySOC,total_load" << endl;
+    *(substation_output) << ",pv_total_generation_kW,pv_feedin_expo_kW,bs_total_generation_kW,bs_feedin_expo_kW,chp_total_generation_kW,chp_feedin_expo_kW,wind_total_generation_kW,wind_feedin_expo_kW,unknown_total_generation_kW,unknown_feedin_expo_kW,total_demand_wo_BS_SC_kW,total_BS_charging_power_kW,OverallBatterySOC,surplus_to_BS,total_load" << endl;
     //
     //
     // Part 2: The secondary file for additional information about the substations

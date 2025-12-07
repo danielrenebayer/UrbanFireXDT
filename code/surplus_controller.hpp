@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include "worker_threads.hpp"
 
 namespace surplus {
 
@@ -21,10 +22,15 @@ namespace surplus {
         static bool initialized; ///< Flag indicating if singleton has been initialized
         
         // Data storage
-        std::unordered_map<unsigned long, std::vector<float>> unit_charge_requests; ///< Charge requests per unit ID for all timesteps
+        std::unordered_map<unsigned long, std::vector<double>> unit_charge_requests; ///< Charge requests per unit ID for all timesteps
         unsigned long last_optimization_ts;     ///< Last timestep when optimization was executed
         unsigned int optimization_frequency_ts; ///< Frequency of optimization in timesteps 
+        unsigned int lookahead_horizon_ts;      ///< Lookahead horizon in timesteps for optimization
         bool enabled;                          ///< Whether surplus controller is enabled
+        
+        // Simulation parameters required for running the optimization
+        CUControllerThreadGroupManager* thread_manager; 
+        const char* output_prefix; 
         
         /**
          * @brief Private constructor for singleton
@@ -44,8 +50,10 @@ namespace surplus {
          * 
          * Creates and initializes the singleton instance if it doesn't exist.
          * This method should be called once at the beginning of the simulation.
+         * @param thread_manager Optional thread manager for parallel execution
+         * @param output_prefix Optional output prefix for simulation messages
          */
-        static void Initialize();
+        static void Initialize(CUControllerThreadGroupManager* thread_manager = nullptr, const char* output_prefix = "");
         
         /**
          * @brief Clean up and destroy the singleton instance
@@ -88,6 +96,12 @@ namespace surplus {
          * of surplus energy allocated to this unit at the time step the surplus controller knows as current one.
          */
         double GetChargeRequest(unsigned long unit_id) const;
+
+        /**
+         * @brief Get the total surplus energy allocated to batteries
+         * @return The total surplus energy allocated to batteries across all units in the current time step
+         */
+        static double GetSurplusToBESS();
         
         // Static convenience methods for ControlUnit access
         /**
@@ -111,15 +125,15 @@ namespace surplus {
         void ResetAllData();
         
         /**
-         * @brief Calculate future surplus energy at a specific timestep
-         * @param ts The timestep for which to calculate surplus
-         * @return The calculated surplus energy, positive or zero
+         * @brief Calculate future surplus energy starting from a given timestep over the optimization horizon
+         * @param ts_horizon_start The starting timestep for the surplus calculation horizon
+         * @param ts_horizon_end The ending timestep for the surplus calculation horizon
+         * @return The calculated surplus energy, positive or zero, for each timestep in the horizon
          * 
-         * Computes the expected surplus energy available at the specified timestep.
-         * Surplus is returned as a positive value, or zero if no surplus is available.
-         * This method is used internally by the optimization algorithm.
+         * Computes the expected surplus energy available at all timesteps in the horizon
+         * by pre-running the simulation for the horizon length.
          */
-        float calcFutureSurplus(unsigned long ts);
+        std::vector<double> calcFutureSurplus(unsigned long ts_horizon_start, unsigned long ts_horizon_end);
     };
 
 } // namespace surplus

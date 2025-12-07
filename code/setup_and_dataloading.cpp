@@ -425,6 +425,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_surplus_controller_frequency_ts( scenario_dict.get_value<unsigned int>() );
             }
+            else if ( element_name.compare("surplus controller lookahead horizon in ts")  == 0 )
+            {
+                Global::set_surplus_controller_lookahead_horizon_ts( scenario_dict.get_value<unsigned int>() );
+            }
             else if ( element_name.compare("surplus controller enabled")               == 0 )
             {
                 Global::set_surplus_controller_enabled( scenario_dict.get_value<bool>() );

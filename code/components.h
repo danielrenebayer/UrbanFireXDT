@@ -12,6 +12,96 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <variant>
+
+#include "vehicles.h"
+
+
+// State structures for component save/restore functionality
+/**
+ * @brief State structure for PhotoVoltaic (PV) component.
+ * 
+ * This structure stores all internal state variables of a PV component
+ * that need to be preserved during save/restore operations.
+ */
+struct PVComponentState {
+    float currentGeneration_kW;
+    double generation_cumsum_total_kWh;
+    double generation_cumsum_cweek_kWh;
+};
+/**
+ * @brief State structure for Battery Storage (BS) component.
+ * 
+ * This structure stores all internal state variables of a battery storage component
+ * that need to be preserved during save/restore operations.
+ */
+struct BSComponentState {
+    double SOC;
+    double currentE_kWh;
+    double currentP_kW;
+    double currentE_from_grid_kWh;
+    double currentP_from_grid_kW;
+    double cweek_E_withdrawn_kWh;
+    double total_E_withdrawn_kWh;
+    double cweek_E_withdrawn_from_grid_kWh;
+    double total_E_withdrawn_from_grid_kWh;
+    unsigned long n_ts_SOC_empty;
+    unsigned long n_ts_SOC_full;
+};
+/**
+ * @brief State structure for Heat Pump (HP) component.
+ * 
+ * This structure stores all internal state variables of a heat pump component
+ * that need to be preserved during save/restore operations.
+ */
+struct HPComponentState {
+    double currentDemand_kW;
+    double total_consumption_kWh;
+    double cweek_consumption_kWh;
+};
+/**
+ * @brief State structure for Electric Vehicle Finite State Machine (EVFSM) component.
+ * 
+ * This structure stores all internal state variables of an EV component
+ * that need to be preserved during save/restore operations.
+ */
+struct EVFSMComponentState {
+    EVState current_state;
+    unsigned long carID;
+    unsigned long current_ts;
+    double energy_demand_per_tour_ts;
+    double current_P_kW;
+    double sum_of_driving_distance_km;
+    double sum_of_E_used_for_driving_kWh;
+    double sum_of_E_charged_home_kWh;
+    double sum_of_E_discharged_home_kWh;
+    unsigned long sum_of_ts_EV_is_connected;
+    BSComponentState battery_state; // Nested battery state
+};
+/**
+ * @brief State structure for Charging Station (CS) component.
+ * 
+ * This structure stores all internal state variables of a charging station component
+ * that need to be preserved during save/restore operations.
+ */
+struct CSComponentState {
+    double current_demand_kW;
+    double total_consumption_kWh;
+    double cweek_consumption_kWh;
+    std::map<unsigned long, EVFSMComponentState> ev_states_by_id; ///< nested EV states mapped by carID
+};
+/**
+ * @brief Variant type for all possible component states.
+ * 
+ * This variant can hold the state of any component type.
+ */
+using ComponentStateVariant = std::variant<
+    PVComponentState,
+    BSComponentState,
+    HPComponentState,
+    CSComponentState,
+    EVFSMComponentState
+>;
 
 // The following classes are defined in this header file:
 class BaseComponent;
@@ -24,8 +114,6 @@ class ComponentCS;
 class EVFSM;
 
 #include "global.h"
-#include "vehicles.h"
-
 
 /*!
  * An abstract class acting as a super-class for all existing components.
@@ -37,6 +125,29 @@ class BaseComponent {
         virtual void resetInternalState() = 0; ///< Resets the internal simulation state (like counters), but retains the structural state like attached sub-components
         // modifiers (in the course of simulation time)
         virtual void resetWeeklyCounter() = 0; ///< Resets the internal, weekly counters
+        
+        // State save/restore functionality - each component implements its specific state type
+        
+        /**
+         * @brief Saves the current internal state of the component.
+         * 
+         * This pure virtual method is implemented by each component to save
+         * its current internal state variables into a component-specific state structure.
+         * The returned variant contains the appropriate state type for the component.
+         * 
+         * @return ComponentStateVariant containing the component's current state
+         */
+        virtual ComponentStateVariant saveInternalState() const = 0;
+        
+        /**
+         * @brief Restores the internal state of the component from a saved state.
+         * 
+         * This pure virtual method is implemented by each component to restore
+         * its internal state variables from a previously saved state structure.
+         * 
+         * @param state The state variant containing the component's saved state
+         */
+        virtual void restoreInternalState(const ComponentStateVariant& state) = 0;
 };
 
 /*!
@@ -167,6 +278,21 @@ class ComponentPV : public BaseComponent {
         // methods for simulation reset
         void resetWeeklyCounter();
         void resetInternalState();
+        // State save/restore implementation
+        using BaseComponent::saveInternalState;
+        /**
+         * @brief Saves the current internal state of the PV component.
+         * 
+         * @return ComponentStateVariant containing PVComponentState 
+         */
+        ComponentStateVariant saveInternalState() const override;
+        using BaseComponent::restoreInternalState;
+        /**
+         * @brief Restores the internal state of the PV component.
+         * 
+         * @param state ComponentStateVariant that must contain a PVComponentState
+         */
+        void restoreInternalState(const ComponentStateVariant& state) override;
         void set_horizon_in_ts(unsigned int new_horizon); ///< Sets another horizon for the number of time steps returned by ComponentPV::get_future_generation_kW()
         // modification methods for structural modifications
         /**
@@ -219,6 +345,21 @@ class ComponentBS : public BaseComponent {
         void calculateActions();
         void resetWeeklyCounter();
         void resetInternalState();
+        // State save/restore implementation
+        using BaseComponent::saveInternalState;
+        /**
+         * @brief Saves the current internal state of the battery storage component.
+         * 
+         * @return ComponentStateVariant containing BSComponentState 
+         */
+        ComponentStateVariant saveInternalState() const override;
+        using BaseComponent::restoreInternalState;
+        /**
+         * @brief Restores the internal state of the battery storage component.
+         * 
+         * @param state ComponentStateVariant that must contain a BSComponentState
+         */
+        void restoreInternalState(const ComponentStateVariant& state) override;
     private:
         // semi-constant member variables, i.e. they might change for parameter variations
         double maxE_kWh;
@@ -294,6 +435,21 @@ class ComponentHP : public BaseComponentSemiFlexible {
         bool setDemandToGivenValue(double new_demand_kW);
         void resetWeeklyCounter();
         void resetInternalState();
+        // State save/restore implementation
+        using BaseComponent::saveInternalState;
+        /**
+         * @brief Saves the current internal state of the heat pump component.
+         * 
+         * @return ComponentStateVariant containing HPComponentState 
+         */
+        ComponentStateVariant saveInternalState() const override;
+        using BaseComponent::restoreInternalState;
+        /**
+         * @brief Restores the internal state of the heat pump component.
+         * 
+         * @param state ComponentStateVariant that must contain a HPComponentState
+         */
+        void restoreInternalState(const ComponentStateVariant& state) override;
         //
         // static methods for initializing the random generators
         static void InitializeRandomGenerator();
@@ -385,6 +541,21 @@ class ComponentCS : public BaseComponent {
         void disable_station();
         void resetWeeklyCounter();
         void resetInternalState();
+        // State save/restore implementation
+        using BaseComponent::saveInternalState;
+        /**
+         * @brief Saves the current internal state of the charging station component.
+         * 
+         * @return ComponentStateVariant containing CSComponentState 
+         */
+        ComponentStateVariant saveInternalState() const override;
+        using BaseComponent::restoreInternalState;
+        /**
+         * @brief Restores the internal state of the charging station component.
+         * 
+         * @param state ComponentStateVariant that must contain a CSComponentState
+         */
+        void restoreInternalState(const ComponentStateVariant& state) override;
         void add_ev(unsigned long carID);
         void set_horizon_in_ts(unsigned int new_horizon); ///< Sets another horizon for the number of time steps returned by ComponentCS::get_future_min_consumption_kWh() and ComponentCS::get_future_max_consumption_kWh()
         void preprocess_ev_data(); ///< Preprocesses EV data, calls EVFSM::preprocessTourInformation() for all attached EVs. Call this method only once right before the first simulation run.
@@ -434,6 +605,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         EVFSM(unsigned long carID, ComponentCS* homeStation);
         ~EVFSM();
         // getters
+        unsigned long get_carID() const { return carID; }
         EVState get_current_state() const { return current_state; }
         // EVStateIfConnAtHome get_current_state_icah() const { return current_state_icah; } ///< Returns the current state of the EV iff it is connected at home
         using BaseComponentSemiFlexible::get_future_max_consumption_kWh;
@@ -449,6 +621,21 @@ class EVFSM : public BaseComponentSemiFlexible {
         void add_weekly_tour(short weekday, unsigned long departure_ts_of_day, unsigned long ts_duration, double tour_length_km, bool with_work); ///< This method adds a home-centered car tour to the current car. All parameters that represent a time must have the same alignment as the global time information.
         void preprocessTourInformation(); ///< Transforms the list of weekly tours into a list of tours for the complete simulation time span and computes upper and lower cumlulative energy required (i.e., fill variables BaseComponentSemiFlexible::future_maxE_storage and BaseComponentSemiFlexible::future_minE_storage from upper class). THis method MUST be called before the main simulation run starts, but it MUST be called after EVFSM::add_weekly_tour() is called for the last time, i.e., all tours have been added.
         void resetInternalState(); ///< Resets the internal state
+        // State save/restore implementation
+        using BaseComponentSemiFlexible::saveInternalState;
+        /**
+         * @brief Saves the current internal state of the EV finite state machine component.
+         * 
+         * @return ComponentStateVariant containing EVFSMComponentState 
+         */
+        ComponentStateVariant saveInternalState() const override;
+        using BaseComponentSemiFlexible::restoreInternalState;
+        /**
+         * @brief Restores the internal state of the EV finite state machine component.
+         * 
+         * @param state ComponentStateVariant that must contain an EVFSMComponentState
+         */
+        void restoreInternalState(const ComponentStateVariant& state) override;
         // modifiers (in the course of simulation time)
         void setCarStateForTimeStep(unsigned long ts); ///< Sets the car state for a new time step 'ts'. This method must be called with strictly consecutive values ​​of parameter 'ts'. It uses the precomputed vectors for internal processing.
         using BaseComponentSemiFlexible::setDemandToProfileData;

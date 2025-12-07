@@ -1650,6 +1650,186 @@ void ControlUnit::ResetAllInternalStates() {
     }
 }
 
+ControlUnitState ControlUnit::save_internal_state() const {
+    ControlUnitState state;
+    state.unitID = unitID;
+    
+    // Save component states
+    if (has_sim_pv) {
+        state.PVState = sim_comp_pv->saveInternalState();
+    }
+    if (has_sim_bs) {
+        state.BSState = sim_comp_bs->saveInternalState();
+    }
+    if (has_sim_hp) {
+        state.HPState = sim_comp_hp->saveInternalState();
+    }
+    if (has_sim_cs) {
+        state.CSState = sim_comp_cs->saveInternalState();
+    }
+    
+    // Save optimization state
+    if (optimized_controller != nullptr) {
+        state.optimizationState = optimized_controller->saveInternalState();
+    }
+    
+    // Save summation variables from beginning of simulation run
+    state.sum_of_consumption_kWh = sum_of_consumption_kWh;
+    state.sum_of_self_cons_kWh = sum_of_self_cons_kWh;
+    state.sum_of_mu_cons_kWh = sum_of_mu_cons_kWh;
+    state.sum_of_feed_into_grid_kWh = sum_of_feed_into_grid_kWh;
+    state.sum_of_grid_demand_kWh = sum_of_grid_demand_kWh;
+    state.sum_of_rem_pow_costs_EUR = sum_of_rem_pow_costs_EUR;
+    state.sum_of_saved_pow_costs_EUR = sum_of_saved_pow_costs_EUR;
+    state.sum_of_feedin_revenue_EUR = sum_of_feedin_revenue_EUR;
+    state.sum_of_emissions_cbgd_kg_CO2eq = sum_of_emissions_cbgd_kg_CO2eq;
+    state.sum_of_emissions_avoi_kg_CO2eq = sum_of_emissions_avoi_kg_CO2eq;
+    state.sum_of_errors_in_cntrl = sum_of_errors_in_cntrl;
+    state.sum_of_errors_in_cntrl_cmd_appl = sum_of_errors_in_cntrl_cmd_appl;
+    state.peak_grid_demand_kW = peak_grid_demand_kW;
+    
+    // Save weekly summation variables
+    state.sum_of_cweek_consumption_kWh = sum_of_cweek_consumption_kWh;
+    state.sum_of_cweek_self_cons_kWh = sum_of_cweek_self_cons_kWh;
+    state.sum_of_cweek_mu_cons_kWh = sum_of_cweek_mu_cons_kWh;
+    state.sum_of_cweek_feed_into_grid_kWh = sum_of_cweek_feed_into_grid_kWh;
+    state.sum_of_cweek_grid_demand_kWh = sum_of_cweek_grid_demand_kWh;
+    state.sum_of_cweek_rem_pow_costs_EUR = sum_of_cweek_rem_pow_costs_EUR;
+    state.sum_of_cweek_saved_pow_costs_EUR = sum_of_cweek_saved_pow_costs_EUR;
+    state.sum_of_cweek_feedin_revenue_EUR = sum_of_cweek_feedin_revenue_EUR;
+    state.sum_of_cweek_emissions_cbgd_kg_CO2eq = sum_of_cweek_emissions_cbgd_kg_CO2eq;
+    state.sum_of_cweek_emissions_avoi_kg_CO2eq = sum_of_cweek_emissions_avoi_kg_CO2eq;
+    state.sum_of_cweek_errors_in_cntrl = sum_of_cweek_errors_in_cntrl;
+    state.sum_of_cweek_errors_in_cntrl_cmd_appl = sum_of_cweek_errors_in_cntrl_cmd_appl;
+    state.cweek_peak_grid_demand_kW = cweek_peak_grid_demand_kW;
+    
+    // Save optimization cache
+    state.ts_since_last_opti_run = ts_since_last_opti_run;
+    
+    // Save current state variables
+    state.current_load_vSM_kW = current_load_vSM_kW;
+    state.self_produced_load_kW = self_produced_load_kW;
+    state.current_total_consumption_kW = current_total_consumption_kW;
+    state.current_PV_feedin_to_grid_kW = current_PV_feedin_to_grid_kW;
+    state.current_BS_feedin_to_grid_kW = current_BS_feedin_to_grid_kW;
+    state.current_CHP_feedin_to_grid_kW = current_CHP_feedin_to_grid_kW;
+    state.current_wind_feedin_to_grid_kW = current_wind_feedin_to_grid_kW;
+    state.current_unknown_feedin_to_grid_kW = current_unknown_feedin_to_grid_kW;
+    
+    return state;
+}
+
+void ControlUnit::restore_internal_state(const ControlUnitState& state) {
+    // Validate unitID
+    if (state.unitID != unitID) {
+        throw std::runtime_error("ControlUnit::restore_internal_state: unitID mismatch. Expected " + 
+                                 std::to_string(unitID) + " but got " + std::to_string(state.unitID));
+    }
+    
+    // Restore component states
+    if (has_sim_pv) {
+        if (!std::holds_alternative<PVComponentState>(state.PVState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: PV component exists but state does not contain PVComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_pv->restoreInternalState(state.PVState);
+    }
+    if (has_sim_bs) {
+        if (!std::holds_alternative<BSComponentState>(state.BSState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: BS component exists but state does not contain BSComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_bs->restoreInternalState(state.BSState);
+    }
+    if (has_sim_hp) {
+        if (!std::holds_alternative<HPComponentState>(state.HPState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: HP component exists but state does not contain HPComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_hp->restoreInternalState(state.HPState);
+    }
+    if (has_sim_cs) {
+        if (!std::holds_alternative<CSComponentState>(state.CSState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: CS component exists but state does not contain CSComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_cs->restoreInternalState(state.CSState);
+    }
+    
+    // Restore optimization state
+    if (optimized_controller != nullptr) {
+        optimized_controller->restoreInternalState(state.optimizationState);
+    }
+    
+    // Restore summation variables from beginning of simulation run
+    sum_of_consumption_kWh = state.sum_of_consumption_kWh;
+    sum_of_self_cons_kWh = state.sum_of_self_cons_kWh;
+    sum_of_mu_cons_kWh = state.sum_of_mu_cons_kWh;
+    sum_of_feed_into_grid_kWh = state.sum_of_feed_into_grid_kWh;
+    sum_of_grid_demand_kWh = state.sum_of_grid_demand_kWh;
+    sum_of_rem_pow_costs_EUR = state.sum_of_rem_pow_costs_EUR;
+    sum_of_saved_pow_costs_EUR = state.sum_of_saved_pow_costs_EUR;
+    sum_of_feedin_revenue_EUR = state.sum_of_feedin_revenue_EUR;
+    sum_of_emissions_cbgd_kg_CO2eq = state.sum_of_emissions_cbgd_kg_CO2eq;
+    sum_of_emissions_avoi_kg_CO2eq = state.sum_of_emissions_avoi_kg_CO2eq;
+    sum_of_errors_in_cntrl = state.sum_of_errors_in_cntrl;
+    sum_of_errors_in_cntrl_cmd_appl = state.sum_of_errors_in_cntrl_cmd_appl;
+    peak_grid_demand_kW = state.peak_grid_demand_kW;
+    
+    // Restore weekly summation variables
+    sum_of_cweek_consumption_kWh = state.sum_of_cweek_consumption_kWh;
+    sum_of_cweek_self_cons_kWh = state.sum_of_cweek_self_cons_kWh;
+    sum_of_cweek_mu_cons_kWh = state.sum_of_cweek_mu_cons_kWh;
+    sum_of_cweek_feed_into_grid_kWh = state.sum_of_cweek_feed_into_grid_kWh;
+    sum_of_cweek_grid_demand_kWh = state.sum_of_cweek_grid_demand_kWh;
+    sum_of_cweek_rem_pow_costs_EUR = state.sum_of_cweek_rem_pow_costs_EUR;
+    sum_of_cweek_saved_pow_costs_EUR = state.sum_of_cweek_saved_pow_costs_EUR;
+    sum_of_cweek_feedin_revenue_EUR = state.sum_of_cweek_feedin_revenue_EUR;
+    sum_of_cweek_emissions_cbgd_kg_CO2eq = state.sum_of_cweek_emissions_cbgd_kg_CO2eq;
+    sum_of_cweek_emissions_avoi_kg_CO2eq = state.sum_of_cweek_emissions_avoi_kg_CO2eq;
+    sum_of_cweek_errors_in_cntrl = state.sum_of_cweek_errors_in_cntrl;
+    sum_of_cweek_errors_in_cntrl_cmd_appl = state.sum_of_cweek_errors_in_cntrl_cmd_appl;
+    cweek_peak_grid_demand_kW = state.cweek_peak_grid_demand_kW;
+    
+    // Restore optimization cache
+    ts_since_last_opti_run = state.ts_since_last_opti_run;
+    
+    // Restore current state variables
+    current_load_vSM_kW = state.current_load_vSM_kW;
+    self_produced_load_kW = state.self_produced_load_kW;
+    current_total_consumption_kW = state.current_total_consumption_kW;
+    current_PV_feedin_to_grid_kW = state.current_PV_feedin_to_grid_kW;
+    current_BS_feedin_to_grid_kW = state.current_BS_feedin_to_grid_kW;
+    current_CHP_feedin_to_grid_kW = state.current_CHP_feedin_to_grid_kW;
+    current_wind_feedin_to_grid_kW = state.current_wind_feedin_to_grid_kW;
+    current_unknown_feedin_to_grid_kW = state.current_unknown_feedin_to_grid_kW;
+}
+
+std::map<unsigned long, ControlUnitState> ControlUnit::SaveAllInternalStates() {
+    std::map<unsigned long, ControlUnitState> states;
+    
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        ControlUnit* cu = st__cu_list[i];
+        ControlUnitState state = cu->save_internal_state();
+        states[cu->get_unitID()] = state;
+    }
+    
+    return states;
+}
+
+void ControlUnit::RestoreAllInternalStates(const std::map<unsigned long, ControlUnitState> &states) {
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        ControlUnit* cu = st__cu_list[i];
+        unsigned long unitID = cu->get_unitID();
+        auto it = states.find(unitID);
+        if (it == states.end()) {
+            throw std::runtime_error("ControlUnit::RestoreAllInternalStates: No state found for unitID " + 
+                                     std::to_string(unitID));
+        }
+        cu->restore_internal_state(it->second);
+    }
+}
+
 void ControlUnit::RemoveAllSimAddedComponents() {
     for (unsigned long i = 0; i < st__n_CUs; i++) {
         st__cu_list[i]->remove_sim_added_components();

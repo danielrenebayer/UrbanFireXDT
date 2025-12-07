@@ -3,6 +3,7 @@
 #include "global.h"
 #include <iostream>
 #include <algorithm>
+#include "simulation_logic.h"
 
 namespace surplus {
 
@@ -13,7 +14,10 @@ bool SurplusController::initialized = false;
 SurplusController::SurplusController() 
     : last_optimization_ts(0)
     , optimization_frequency_ts(Global::get_surplus_controller_frequency_ts())
-    , enabled(Global::get_surplus_controller_enabled()) {
+    , lookahead_horizon_ts(Global::get_surplus_controller_lookahead_horizon_ts())
+    , enabled(Global::get_surplus_controller_enabled())
+    , thread_manager(nullptr)
+    , output_prefix("") {
 }
 
 SurplusController& SurplusController::GetInstance() {
@@ -23,9 +27,12 @@ SurplusController& SurplusController::GetInstance() {
     return *instance;
 }
 
-void SurplusController::Initialize() {
+void SurplusController::Initialize(CUControllerThreadGroupManager* thread_manager, const char* output_prefix) {
     if (!initialized) {
-        GetInstance().ResetAllData();
+        auto& instance = GetInstance();
+        instance.thread_manager = thread_manager;
+        instance.output_prefix = output_prefix;
+        instance.ResetAllData();
         initialized = true;
     }
 }
@@ -55,7 +62,7 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
         return true; 
     }
 
-    unsigned long ts_horizon_end = ts_horizon_start + optimization_frequency_ts - 1;
+    unsigned long ts_horizon_end = ts_horizon_start + lookahead_horizon_ts - 1;
     if (ts_horizon_end > Global::get_last_timestep()) {
         ts_horizon_end = Global::get_last_timestep();
     }
@@ -65,15 +72,12 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
     const std::vector<ControlUnit*>& units = ControlUnit::GetArrayOfInstances();
 
     // A: Fetch nececarry data
-    std::vector<float> future_surplus(optimization_frequency_ts, 0.0);
-    for (auto ts = ts_horizon_start; ts <= ts_horizon_end; ++ts) {
-        future_surplus[ts - ts_horizon_start] = calcFutureSurplus(ts);
-    }
+    std::vector<double> future_surplus = calcFutureSurplus(ts_horizon_start, ts_horizon_end);
 
-    std::unordered_map<unsigned long, std::vector<float>> grid_demand_kWh; ///< Grid demand per unit ID for all timesteps in horizon
-    std::unordered_map<unsigned long, std::vector<float>> bs_stored_energy_kWh; ///< BESS stored energy per unit ID for all timesteps in horizon. Assume initial SoC 0%
-    std::unordered_map<unsigned long, float> bs_capacity_kWh; ///< BESS total capacity per unit ID
-    std::unordered_map<unsigned long, float> bs_max_charge_kWh; ///< BESS max charge energy in an hour per unit ID
+    std::unordered_map<unsigned long, std::vector<double>> grid_demand_kWh; ///< Grid demand per unit ID for all timesteps in horizon
+    std::unordered_map<unsigned long, std::vector<double>> bs_stored_energy_kWh; ///< BESS stored energy per unit ID for all timesteps in horizon. Assume initial SoC 0%
+    std::unordered_map<unsigned long, double> bs_capacity_kWh; ///< BESS total capacity per unit ID
+    std::unordered_map<unsigned long, double> bs_max_charge_kWh; ///< BESS max charge energy in an hour per unit ID
     std::vector<unsigned long> units_with_bs; ///< List of unit IDs that have a BESS
 
     for (ControlUnit* unit : units) {
@@ -87,24 +91,22 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
         units_with_bs.push_back(unit_id);
 
         // Collect grid demand forecast
-        std::vector<float> demand_forecast(optimization_frequency_ts, 0.0);
+        std::vector<double> demand_forecast(ts_horizon_end - ts_horizon_start + 1, 0.0);
         for (unsigned long ts = ts_horizon_start; ts <= ts_horizon_end; ++ts) {
             demand_forecast[ts - ts_horizon_start] = unit->get_rsm_demand_at_ts(ts);
         }
         grid_demand_kWh[unit_id] = demand_forecast;
         
         // Collect static BESS data
-        bs_stored_energy_kWh[unit_id] = std::vector<float>(optimization_frequency_ts, 0.0);
+        bs_stored_energy_kWh[unit_id] = std::vector<double>(ts_horizon_end - ts_horizon_start + 1, 0.0);
         if(unit->has_bs_sim_added()){
             bs_capacity_kWh[unit_id] = unit->get_sim_comp_bs_E_kWh();
-            bs_max_charge_kWh[unit_id] = unit->get_sim_comp_bs_P_kW();
+            bs_max_charge_kWh[unit_id] = unit->get_sim_comp_bs_P_kW() * Global::get_time_step_size_in_h();
         }
         
         // Reset charge requests
         unit_charge_requests[unit_id].assign(optimization_frequency_ts, 0.0);
     }
-
-    std::cout << "SurplusController: Found " << units_with_bs.size() << " units with BESS for optimization." << std::endl;
 
     // B: Calculate surplus allocation
     for (unsigned long ts = ts_horizon_start; ts <= ts_horizon_end; ++ts) {
@@ -118,15 +120,18 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
                 break; // Surplus fully allocated
             }
             auto current_left_capacity = bs_capacity_kWh[unit_id] - bs_stored_energy_kWh[unit_id][ts - ts_horizon_start]; 
-            float future_demand = 0.0;
+            double future_demand = 0.0;
             for (unsigned long future_ts = ts+1; future_ts <= ts_horizon_end; ++future_ts) {
                 future_demand += grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
             }
             // Determine how much can be charged this timestep
-            float charge_possible = std::min({future_demand, current_left_capacity, bs_max_charge_kWh[unit_id], future_surplus[ts - ts_horizon_start]});
+            double charge_possible = std::min({future_demand, current_left_capacity, bs_max_charge_kWh[unit_id], future_surplus[ts - ts_horizon_start]});
             // Update data structures
             if (charge_possible > 0.0) {
-                unit_charge_requests[unit_id][ts - ts_horizon_start] += charge_possible;
+                // Save charge request if in this control period
+                if (ts <= (ts_horizon_start + optimization_frequency_ts - 1)) {
+                    unit_charge_requests[unit_id][ts - ts_horizon_start] += charge_possible;
+                }
                 bs_stored_energy_kWh[unit_id][ts - ts_horizon_start] += charge_possible;
                 future_surplus[ts - ts_horizon_start] -= charge_possible;
                 // propagate to grid demand and storage in the following hours of the day
@@ -134,7 +139,7 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
                     if (charge_possible <= 0.0) {
                         break; // stop when all stored energy is allocated to later grid demand
                     }
-                    float discharge_possible = std::min(charge_possible, grid_demand_kWh[unit_id][future_ts - ts_horizon_start]);
+                    double discharge_possible = std::min(charge_possible, grid_demand_kWh[unit_id][future_ts - ts_horizon_start]);
                     grid_demand_kWh[unit_id][future_ts - ts_horizon_start] -= discharge_possible;
                     charge_possible -= discharge_possible;
                     bs_stored_energy_kWh[unit_id][future_ts - ts_horizon_start] += charge_possible;
@@ -175,27 +180,45 @@ void SurplusController::ResetAllData() {
     last_optimization_ts = 0;
 }
 
-float SurplusController::calcFutureSurplus(unsigned long ts) {
-    const std::vector<ControlUnit*>& units = ControlUnit::GetArrayOfInstances();
-    float load_all_rSMs_kW = 0.0;
-    // add residual gridload
-    load_all_rSMs_kW += global::residual_gridload_kW[ts-1];
-    // add load from all control units
-    for (const ControlUnit* unit : units) {
-        auto load = unit->get_rsm_load_at_ts(ts);
-        load_all_rSMs_kW += load;
+std::vector<double> SurplusController::calcFutureSurplus(unsigned long ts_horizon_start, unsigned long ts_horizon_end) {
+    // Save current state
+    auto state = ControlUnit::SaveAllInternalStates();    
+
+    // Pre-run the simulation for the length of the optimization horizon to get forecasted surplus
+    std::vector<double> future_surplus(ts_horizon_end - ts_horizon_start + 1, 0.0);
+    const double totalBatteryCapacity_kWh = ControlUnit::GetAllSimCompBatteriesCapacity_kWh();
+    
+    for (unsigned long ts = ts_horizon_start; ts <= ts_horizon_end; ++ts) {
+        double total_load_kW = 0.0;
+        simulation::oneStep(ts, totalBatteryCapacity_kWh, thread_manager, output_prefix, NULL, &total_load_kW, false);
+        
+        // Convert total_load to surplus (negative load means surplus/generation excess)
+        // Store as positive values only (or zero if no surplus)
+        double surplus_kW = (total_load_kW < 0.0) ? -total_load_kW : 0.0;
+        future_surplus[ts - ts_horizon_start] = surplus_kW;
     }
-    // only propage surplus (negative load, more generation than consumption)
-    if(load_all_rSMs_kW > 0.0) {
-        load_all_rSMs_kW = 0.0;
-    }
-    // return as positive values only (or zero if no surplus)
-    return -load_all_rSMs_kW;
+
+    // Restore state
+    ControlUnit::RestoreAllInternalStates(state);
+
+    // Return surplus forecast
+    return future_surplus;
 };
 
 // Static convenience methods for ControlUnit access
 double SurplusController::GetChargeRequestForUnit(unsigned long unit_id) {
     return GetInstance().GetChargeRequest(unit_id);
+}
+
+double SurplusController::GetSurplusToBESS() {
+    auto& instance = GetInstance();
+    double total_surplus = 0.0;
+    for (const auto& pair : instance.unit_charge_requests) {
+        if (!pair.second.empty()) {
+            total_surplus += pair.second[0];
+        }
+    }
+    return total_surplus;
 }
 
 } // namespace surplus

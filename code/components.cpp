@@ -329,6 +329,25 @@ void ComponentPV::resetInternalState() {
     currentGeneration_kW = 0.0;
 }
 
+ComponentStateVariant ComponentPV::saveInternalState() const {
+    PVComponentState state;
+    state.currentGeneration_kW = currentGeneration_kW;
+    state.generation_cumsum_total_kWh = generation_cumsum_total_kWh;
+    state.generation_cumsum_cweek_kWh = generation_cumsum_cweek_kWh;
+    return state;
+}
+
+void ComponentPV::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const PVComponentState& pv_state = std::get<PVComponentState>(state);
+        currentGeneration_kW = pv_state.currentGeneration_kW;
+        generation_cumsum_total_kWh = pv_state.generation_cumsum_total_kWh;
+        generation_cumsum_cweek_kWh = pv_state.generation_cumsum_cweek_kWh;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentPV::restoreInternalState(): Invalid state type provided");
+    }
+}
+
 void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
     future_generation_kW.clear();
     future_generation_kW.resize(new_horizon, 0.0);
@@ -545,6 +564,41 @@ void ComponentBS::resetInternalState() {
     total_E_withdrawn_from_grid_kWh = 0.0;
     n_ts_SOC_empty = 0;
     n_ts_SOC_full  = 0;
+}
+
+ComponentStateVariant ComponentBS::saveInternalState() const {
+    BSComponentState state;
+    state.SOC = SOC;
+    state.currentE_kWh = currentE_kWh;
+    state.currentP_kW = currentP_kW;
+    state.currentE_from_grid_kWh = currentE_from_grid_kWh;
+    state.currentP_from_grid_kW = currentP_from_grid_kW;
+    state.cweek_E_withdrawn_kWh = cweek_E_withdrawn_kWh;
+    state.total_E_withdrawn_kWh = total_E_withdrawn_kWh;
+    state.cweek_E_withdrawn_from_grid_kWh = cweek_E_withdrawn_from_grid_kWh;
+    state.total_E_withdrawn_from_grid_kWh = total_E_withdrawn_from_grid_kWh;
+    state.n_ts_SOC_empty = n_ts_SOC_empty;
+    state.n_ts_SOC_full = n_ts_SOC_full;
+    return state;
+}
+
+void ComponentBS::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const BSComponentState& bs_state = std::get<BSComponentState>(state);
+        SOC = bs_state.SOC;
+        currentE_kWh = bs_state.currentE_kWh;
+        currentP_kW = bs_state.currentP_kW;
+        currentE_from_grid_kWh = bs_state.currentE_from_grid_kWh;
+        currentP_from_grid_kW = bs_state.currentP_from_grid_kW;
+        cweek_E_withdrawn_kWh = bs_state.cweek_E_withdrawn_kWh;
+        total_E_withdrawn_kWh = bs_state.total_E_withdrawn_kWh;
+        cweek_E_withdrawn_from_grid_kWh = bs_state.cweek_E_withdrawn_from_grid_kWh;
+        total_E_withdrawn_from_grid_kWh = bs_state.total_E_withdrawn_from_grid_kWh;
+        n_ts_SOC_empty = bs_state.n_ts_SOC_empty;
+        n_ts_SOC_full = bs_state.n_ts_SOC_full;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentBS::restoreInternalState(): Invalid state type provided");
+    }
 }
 
 
@@ -770,6 +824,25 @@ void ComponentHP::resetInternalState() {
     cweek_consumption_kWh = 0.0;
 }
 
+ComponentStateVariant ComponentHP::saveInternalState() const {
+    HPComponentState state;
+    state.currentDemand_kW = currentDemand_kW;
+    state.total_consumption_kWh = total_consumption_kWh;
+    state.cweek_consumption_kWh = cweek_consumption_kWh;
+    return state;
+}
+
+void ComponentHP::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const HPComponentState& hp_state = std::get<HPComponentState>(state);
+        currentDemand_kW = hp_state.currentDemand_kW;
+        total_consumption_kWh = hp_state.total_consumption_kWh;
+        cweek_consumption_kWh = hp_state.cweek_consumption_kWh;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentHP::restoreInternalState(): Invalid state type provided");
+    }
+}
+
 void ComponentHP::InitializeRandomGenerator() {
     if (random_generator_init) {
         throw runtime_error("Error: Static variables of ComponentHP are already initialized.");
@@ -875,6 +948,49 @@ void ComponentCS::resetInternalState() {
     //
     for (EVFSM* ev : listOfEVs) {
         ev->resetInternalState();
+    }
+}
+
+ComponentStateVariant ComponentCS::saveInternalState() const {
+    CSComponentState state;
+    state.current_demand_kW = current_demand_kW;
+    state.total_consumption_kWh = total_consumption_kWh;
+    state.cweek_consumption_kWh = cweek_consumption_kWh;
+    
+    // Save states of all connected EVs
+    for (const EVFSM* ev : listOfEVs) {
+        ComponentStateVariant ev_state_variant = ev->saveInternalState();
+        EVFSMComponentState ev_state = std::get<EVFSMComponentState>(ev_state_variant);
+        // Use the carID from the EV state as the map key
+        unsigned long carID = ev_state.carID;
+        state.ev_states_by_id[carID] = ev_state;
+    }
+    
+    return state;
+}
+
+void ComponentCS::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const CSComponentState& cs_state = std::get<CSComponentState>(state);
+        current_demand_kW = cs_state.current_demand_kW;
+        total_consumption_kWh = cs_state.total_consumption_kWh;
+        cweek_consumption_kWh = cs_state.cweek_consumption_kWh;
+        
+        // Restore states of all connected EVs
+        for (EVFSM* ev : listOfEVs) {
+            unsigned long carID = ev->get_carID();
+            
+            auto it = cs_state.ev_states_by_id.find(carID);
+            if (it != cs_state.ev_states_by_id.end()) {
+                ComponentStateVariant ev_state_variant = it->second;
+                ev->restoreInternalState(ev_state_variant);
+            } else {
+                throw std::runtime_error("ComponentCS::restoreInternalState(): No saved state found for carID " + std::to_string(carID));
+            }
+        }
+        
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentCS::restoreInternalState(): Invalid state type provided");
     }
 }
 
@@ -1342,6 +1458,54 @@ void EVFSM::resetInternalState() {
     sum_of_E_charged_home_kWh     = 0.0;
     sum_of_E_discharged_home_kWh  = 0.0;
     sum_of_ts_EV_is_connected     = 0;
+}
+
+ComponentStateVariant EVFSM::saveInternalState() const {
+    EVFSMComponentState state;
+    state.carID = carID;
+    state.current_state = current_state;
+    state.current_ts = current_ts;
+    state.energy_demand_per_tour_ts = energy_demand_per_tour_ts;
+    state.current_P_kW = current_P_kW;
+    state.sum_of_driving_distance_km = sum_of_driving_distance_km;
+    state.sum_of_E_used_for_driving_kWh = sum_of_E_used_for_driving_kWh;
+    state.sum_of_E_charged_home_kWh = sum_of_E_charged_home_kWh;
+    state.sum_of_E_discharged_home_kWh = sum_of_E_discharged_home_kWh;
+    state.sum_of_ts_EV_is_connected = sum_of_ts_EV_is_connected;
+    
+    // Save the nested battery state
+    ComponentStateVariant battery_state_variant = battery->saveInternalState();
+    state.battery_state = std::get<BSComponentState>(battery_state_variant);
+    
+    return state;
+}
+
+void EVFSM::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const EVFSMComponentState& ev_state = std::get<EVFSMComponentState>(state);
+        
+        // Verify that the carID matches
+        if (ev_state.carID != carID) {
+            throw std::runtime_error("EVFSM::restoreInternalState(): CarID mismatch - expected " + std::to_string(carID) + ", got " + std::to_string(ev_state.carID));
+        }
+        
+        current_state = ev_state.current_state;
+        current_ts = ev_state.current_ts;
+        energy_demand_per_tour_ts = ev_state.energy_demand_per_tour_ts;
+        current_P_kW = ev_state.current_P_kW;
+        sum_of_driving_distance_km = ev_state.sum_of_driving_distance_km;
+        sum_of_E_used_for_driving_kWh = ev_state.sum_of_E_used_for_driving_kWh;
+        sum_of_E_charged_home_kWh = ev_state.sum_of_E_charged_home_kWh;
+        sum_of_E_discharged_home_kWh = ev_state.sum_of_E_discharged_home_kWh;
+        sum_of_ts_EV_is_connected = ev_state.sum_of_ts_EV_is_connected;
+        
+        // Restore the nested battery state
+        ComponentStateVariant battery_state_variant = ev_state.battery_state;
+        battery->restoreInternalState(battery_state_variant);
+        
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("EVFSM::restoreInternalState(): Invalid state type provided");
+    }
 }
 
 void EVFSM::setCarStateForTimeStep(unsigned long ts) {

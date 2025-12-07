@@ -11,6 +11,19 @@
 #include <vector>
 
 /**
+ * @brief State structure for Optimization Unit.
+ * 
+ * This structure stores all internal state variables of the optimization unit of a control unit
+ * that need to be preserved during save/restore operations.
+ */
+struct OptimizationUnitState {
+    std::vector<double> bs_power; 
+    std::vector<double> hp_power;
+    std::vector<std::vector<double>> ev_power;
+};
+
+
+/**
  * This class represents the base class for an optimized (i.e., not rule-based) controller.
  */
 class BaseOptimizedController {
@@ -66,30 +79,54 @@ class BaseOptimizedController {
          */
         double get_optimal_BS_size_kWh() { return optimal_bs_size_kWh; }
 
-            /**
-             * Resets the vectors with 0.0-initialized values with length of parameter (new) parameter time_horizon
-             */
-            void reset(unsigned int new_horizon) {
-                this->time_horizon = new_horizon;
-                bs_power.assign(new_horizon, 0.0);
-                hp_power.assign(new_horizon, 0.0);
-                ev_power.assign(this->n_cars, std::vector<double>(new_horizon, 0.0));
-            }
+        /**
+         * Resets the vectors with 0.0-initialized values with length of parameter (new) parameter time_horizon
+         */
+        void reset(unsigned int new_horizon) {
+            this->time_horizon = new_horizon;
+            bs_power.assign(new_horizon, 0.0);
+            hp_power.assign(new_horizon, 0.0);
+            ev_power.assign(this->n_cars, std::vector<double>(new_horizon, 0.0));
+        }
 
-            /**
-             * Removes the first element, shifts the second one to the first place and so on and
-             * adds a 0.0 at the last place.
-             */
-            void shiftVectorsByOnePlace() {
-                std::move(bs_power.begin() + 1, bs_power.end(), bs_power.begin());
-                bs_power.back() = 0.0;
-                std::move(hp_power.begin() + 1, hp_power.end(), hp_power.begin());
-                hp_power.back() = 0.0;
-                for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++) {
-                    std::move(ev_power[evIdx].begin() + 1, ev_power[evIdx].end(), ev_power[evIdx].begin());
-                    ev_power[evIdx].back() = 0.0;
-                }
+
+        /** 
+         * Saves the internal state of the optimization unit.
+         * @return: Returns an OptimizationUnitState struct containing all relevant internal state variables.
+         */
+        OptimizationUnitState saveInternalState() const {
+            OptimizationUnitState state;
+            state.bs_power = bs_power;
+            state.hp_power = hp_power;
+            state.ev_power = ev_power;
+            return state;
+        }
+
+        /**
+         * Restores the internal state of the optimization unit from a previously saved state.
+         * @param state: The OptimizationUnitState struct containing all relevant internal state variables.
+         */
+        void restoreInternalState(const OptimizationUnitState& state) {
+            bs_power = state.bs_power;
+            hp_power = state.hp_power;
+            ev_power = state.ev_power;
+        }
+
+
+        /**
+         * Removes the first element, shifts the second one to the first place and so on and
+         * adds a 0.0 at the last place.
+         */
+        void shiftVectorsByOnePlace() {
+            std::move(bs_power.begin() + 1, bs_power.end(), bs_power.begin());
+            bs_power.back() = 0.0;
+            std::move(hp_power.begin() + 1, hp_power.end(), hp_power.begin());
+            hp_power.back() = 0.0;
+            for (unsigned int evIdx = 0; evIdx < n_cars; evIdx++) {
+                std::move(ev_power[evIdx].begin() + 1, ev_power[evIdx].end(), ev_power[evIdx].begin());
+                ev_power[evIdx].back() = 0.0;
             }
+        }
 
         /**
          * @brief Executes the controller with all (future) states in the current horizon and stores the results the member variables BaseOptimizedController::bs_power, BaseOptimizedController::hp_power and BaseOptimizedController::ev_power.

@@ -28,12 +28,16 @@ namespace simulation {
      * @param thread_manager: If multi-threading is active, an existing thread manager can be passed.
      * @param output_prefix (optional, default "") A prefix that should be added to the output file names
      * @param subsection (optional, default NULL) Execut the simulation for the current step only for a given sub-set of all known control units
+     * @param out_total_load (optional, default NULL) If provided, the total grid load will be written to this pointer
+     * @param write_output (optional, default true) If false, output files will not be written (useful for lookahead forecasting)
      */
     bool oneStep(const unsigned long ts,
                  const double totalBatteryCapacity_kWh,
                  CUControllerThreadGroupManager* thread_manager = NULL,
                  const char* output_prefix = "",
-                 std::vector<ControlUnit*>* subsection = NULL);
+                 std::vector<ControlUnit*>* subsection = NULL,
+                 double* out_total_load = NULL,
+                 bool write_output = true);
 
     /**
      * Runs the simulation for the complete defined time span for one parameter

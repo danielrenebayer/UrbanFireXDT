@@ -52,7 +52,7 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     unsigned long week_number = 1;
 
     // initialize surplus controller
-    surplus::SurplusController::Initialize();
+    surplus::SurplusController::Initialize(thread_manager, output_prefix);
     surplus::SurplusController& surplus_controller = surplus::SurplusController::GetInstance();
     
 
@@ -134,7 +134,9 @@ bool simulation::oneStep(const unsigned long ts,
                         const double totalBatteryCapacity_kWh,
                         CUControllerThreadGroupManager* thread_manager /* = NULL */,
                         const char* output_prefix /* = "" */,
-                        std::vector<ControlUnit*>* subsection /* = NULL */) {
+                        std::vector<ControlUnit*>* subsection /* = NULL */,
+                        double* out_total_load /* = NULL */,
+                        bool write_output /* = true */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -223,8 +225,10 @@ bool simulation::oneStep(const unsigned long ts,
             totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
         //
         // generate output
-        *(output::substation_output) << ts << ","; // add timestep to output
-        *(output::substation_output_details) << ts << ",";
+        if(write_output){
+            *(output::substation_output) << ts << ","; // add timestep to output
+            *(output::substation_output_details) << ts << ",";
+        }
         for (Substation* s : substations_list) {
             double current_station_load = s->get_station_load();
             double current_station_resident_load   = s->get_residential_load();
@@ -235,44 +239,55 @@ bool simulation::oneStep(const unsigned long ts,
             total_residential_load   += current_station_resident_load;
             total_residential_demand += current_station_resident_demand;
             // stuff for output
-            *(output::substation_output) << round_float_5( current_station_load ) << ",";
-            *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
-            *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
-            *(output::substation_output_details) << s->get_current_demand_no_BESS() << ",";
+            if(write_output){
+                *(output::substation_output) << round_float_5( current_station_load ) << ",";
+                *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
+                *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
+                *(output::substation_output_details) << s->get_current_demand_no_BESS() << ",";
+            }
         }
-        *(output::substation_output) << pv_gen_total_kW      << ",";
-        *(output::substation_output) << pv_gen_expo_kW       << ",";
-        *(output::substation_output) << bs_gen_total_kW      << ",";
-        *(output::substation_output) << bs_gen_expo_kW       << ",";
-        *(output::substation_output) << chp_gen_total_kW     << ",";
-        *(output::substation_output) << chp_gen_expo_kW      << ",";
-        *(output::substation_output) << wind_gen_total_kW    << ",";
-        *(output::substation_output) << wind_gen_expo_kW     << ",";
-        *(output::substation_output) << unknown_gen_total_kW << ",";
-        *(output::substation_output) << unknown_gen_expo_kW  << ",";
-        *(output::substation_output) << total_demand_wo_BESS << ",";
-        *(output::substation_output) << total_demand_only_BESS << ",";
-        *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
-        *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
-        *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
-        *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
+        if(write_output){
+            *(output::substation_output) << pv_gen_total_kW      << ",";
+            *(output::substation_output) << pv_gen_expo_kW       << ",";
+            *(output::substation_output) << bs_gen_total_kW      << ",";
+            *(output::substation_output) << bs_gen_expo_kW       << ",";
+            *(output::substation_output) << chp_gen_total_kW     << ",";
+            *(output::substation_output) << chp_gen_expo_kW      << ",";
+            *(output::substation_output) << wind_gen_total_kW    << ",";
+            *(output::substation_output) << wind_gen_expo_kW     << ",";
+            *(output::substation_output) << unknown_gen_total_kW << ",";
+            *(output::substation_output) << unknown_gen_expo_kW  << ",";
+            *(output::substation_output) << total_demand_wo_BESS << ",";
+            *(output::substation_output) << total_demand_only_BESS << ",";
+            *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetSurplusToBESS() ) << ","; // surplus to BESS
+            *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
+            *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
+            *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
+        }
     }
-    // now total_load contains the total mismatch on grid level
+
+    // Write total_load to output parameter if provided
+    if (out_total_load != NULL) {
+        *out_total_load = total_load;
+    }
 
     // Output current time step
-    output_counter++;
-    if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
-        output_counter = 0;
-        if (output_prefix[0] != '\0')
-            std::cout << "\r" << output_prefix;
-        std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed.";
-        if (output_prefix[0] != '\0')
-            std::cout << std::flush;
-        else
-            std::cout << std::endl;
-    } /*else {
-        std::cout << ".";
-    }*/
+    if(write_output){
+        output_counter++;
+        if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
+            output_counter = 0;
+            if (output_prefix[0] != '\0')
+                std::cout << "\r" << output_prefix;
+            std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed.";
+            if (output_prefix[0] != '\0')
+                std::cout << std::flush;
+            else
+                std::cout << std::endl;
+        } /*else {
+            std::cout << ".";
+        }*/
+    }
 
     return true;
 
