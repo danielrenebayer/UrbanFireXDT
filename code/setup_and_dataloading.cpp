@@ -433,6 +433,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_surplus_controller_enabled( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("surplus controller soc knowledge")          == 0 )
+            {
+                Global::set_surplus_controller_SoC_knowledge( scenario_dict.get_value<bool>() );
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment"))

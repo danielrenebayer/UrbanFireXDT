@@ -10,6 +10,15 @@
 namespace surplus {
 
     /**
+     * @brief Result structure for lookahead simulation
+     */
+    struct LookaheadResult {
+        std::vector<double> future_surplus;  ///< Surplus energy vector for each timestep in the horizon
+        std::unordered_map<unsigned long, std::vector<double>> grid_demand_kWh;  ///< Grid demand per unit ID for all timesteps in horizon
+        std::unordered_map<unsigned long, std::vector<double>> bs_stored_energy_kWh; ///< BESS stored energy per unit ID for all timesteps in horizon
+    };
+
+    /**
      * @brief Singleton controller for global surplus optimization across all control units
      * 
      * The SurplusController manages energy surplus optimization across all control units.
@@ -27,6 +36,7 @@ namespace surplus {
         unsigned int optimization_frequency_ts; ///< Frequency of optimization in timesteps 
         unsigned int lookahead_horizon_ts;      ///< Lookahead horizon in timesteps for optimization
         bool enabled;                          ///< Whether surplus controller is enabled
+        bool soc_knowledge;                    ///< Whether the surplus controller has knowledge of the state of charge for all control units for all timesteps in the horizon
         
         // Simulation parameters required for running the optimization
         CUControllerThreadGroupManager* thread_manager; 
@@ -124,16 +134,18 @@ namespace surplus {
         void ShiftTimeSeriesData();
         void ResetAllData();
         
+    private:
         /**
-         * @brief Calculate future surplus energy starting from a given timestep over the optimization horizon
+         * @brief Run the simulation lookahead over the optimization horizon and return required data
          * @param ts_horizon_start The starting timestep for the surplus calculation horizon
          * @param ts_horizon_end The ending timestep for the surplus calculation horizon
-         * @return The calculated surplus energy, positive or zero, for each timestep in the horizon
+         * @return LookaheadResult (see struct definition)
          * 
          * Computes the expected surplus energy available at all timesteps in the horizon
-         * by pre-running the simulation for the horizon length.
+         * by pre-running the simulation for the horizon length. Also returns the grid demand
+         * for each control unit and the BESS stored energy for every timestep in the horizon.
          */
-        std::vector<double> calcFutureSurplus(unsigned long ts_horizon_start, unsigned long ts_horizon_end);
+        LookaheadResult LookaheadSimulation(unsigned long ts_horizon_start, unsigned long ts_horizon_end);
     };
 
 } // namespace surplus

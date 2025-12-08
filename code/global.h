@@ -311,6 +311,7 @@ class Global {
         static bool get_surplus_controller_enabled() { return surplus_controller_enabled; } ///< Returns whether the surplus controller is enabled
         static uint get_surplus_controller_frequency_ts() { return surplus_controller_frequency_ts; } ///< Returns the optimization frequency of the surplus controller in timesteps
         static uint get_surplus_controller_lookahead_horizon_ts() { return surplus_controller_lookahead_horizon_ts; } ///< Returns the lookahead horizon of the surplus controller in timesteps
+        static bool get_surplus_controller_SoC_knowledge() { return surplus_controller_SoC_knowledge; } ///< Returns whether the surplus controller has knowledge of the state of charge for all control units  
         static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
         static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
         // special setter methods
@@ -408,6 +409,7 @@ class Global {
         static void set_surplus_controller_enabled(bool value);
         static void set_surplus_controller_frequency_ts(uint value);
         static void set_surplus_controller_lookahead_horizon_ts(uint value);
+        static void set_surplus_controller_SoC_knowledge(bool value);
         static void set_exp_pv_static_profile_orientation(std::string* value);
         static void set_exp_pv_static_profile_idx(int value);
     private:
@@ -509,6 +511,7 @@ class Global {
         static bool surplus_controller_enabled; ///< Whether the surplus controller is enabled
         static uint surplus_controller_frequency_ts; ///< Optimization frequency of the surplus controller in timesteps
         static uint surplus_controller_lookahead_horizon_ts; ///< Lookahead horizon of the surplus controller in timesteps
+        static bool surplus_controller_SoC_knowledge; ///< Whether the surplus controller has knowledge of the state of charge for all control units
         static std::string exp_pv_static_profile_orientation; ///< fixed orientation for PV static selection mode (ignoring roof data)
         static int exp_pv_static_profile_idx;                 ///< fixed profile ID for PV static selection mode (-1 if not defined)
         // boolean values holding information if the correspoding 
