@@ -1379,7 +1379,11 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             && !py_control_commands_obtained
 #endif
         ) {
-            sim_comp_bs->set_chargeRequest( -current_load_vSM_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            if (Global::get_surplus_controller_enabled()) {
+                sim_comp_bs->set_chargeRequest( -current_load_vSM_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            } else {
+                sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+            }
         } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();
@@ -1392,8 +1396,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // compute self-produced load, that is directly consumed
     if (
 #ifndef PYTHON_MODULE
+         (
           Global::get_controller_mode() == global::ControllerMode::RuleBased ||
           ( Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast && Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging )
+         ) && !Global::get_surplus_controller_enabled()
 #else
           false
 #endif
