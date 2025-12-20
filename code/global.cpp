@@ -198,7 +198,7 @@ bool Global::create_ev_detailed_output       = false;
 bool Global::surplus_controller_enabled      = false;
 uint Global::surplus_controller_frequency_ts = 24;
 uint Global::surplus_controller_lookahead_horizon_ts = 24;
-bool Global::surplus_controller_SoC_knowledge = true;
+bool Global::surplus_controller_BESS_knowledge = true;
 string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
 //
@@ -349,7 +349,10 @@ bool Global::AllVariablesInitialized() {
                     std::cerr << "Error: Configuration parameter 'expansion BS capacity computation mode' == 'Optimized' can only be used in conjunction with 'expansion BS power computation mode' == 'Use E:P-ratio'!" << std::endl;
                     return false;
                 }
-
+                if (surplus_controller_enabled == true && controller_bs_grid_charging_mode != global::ControllerBSGridChargingMode::NoGridCharging) {
+                    std::cerr << "Error: Surplus controller cannot be enabled when the controller BS grid charging mode is set to something different as 'No Grid Charging'!" << std::endl;
+                    return false;
+                }
             return true;
         } else {
             return false;
@@ -1291,11 +1294,11 @@ void Global::set_surplus_controller_lookahead_horizon_ts(uint value) {
         Global::surplus_controller_lookahead_horizon_ts = value;
     }
 }
-void Global::set_surplus_controller_SoC_knowledge(bool value) {
+void Global::set_surplus_controller_BESS_knowledge(bool value) {
     if (is_locked) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
-        Global::surplus_controller_SoC_knowledge = value;
+        Global::surplus_controller_BESS_knowledge = value;
     }
 }
 void Global::set_exp_pv_static_profile_orientation(std::string* value) {

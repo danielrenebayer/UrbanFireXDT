@@ -1274,7 +1274,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         // 5. Propagate the results to the components
         if (has_sim_bs) {
             // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly
-            sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            // TODO: New scheduling ideas from rule_based not implemented here yet!
+            if (Global::get_surplus_controller_enabled()) {
+                sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            } else {
+                sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            }
+            
         }
         if (has_sim_hp) {
             bool ret_val = sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
@@ -1372,6 +1378,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // if load_evchst > 0: current_total_consumption_kW += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
     // 5. send situation to battery storage and get its resulting action
+    double charge_request_kW = 0.0;
     if (has_sim_bs) {
         if (
             Global::get_controller_mode() == global::ControllerMode::RuleBased
@@ -1380,16 +1387,21 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 #endif
         ) {
             if (Global::get_surplus_controller_enabled()) {
-                sim_comp_bs->set_chargeRequest( -current_load_vSM_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+                // Checking non-linear behavior where battery cannot discharge full requested power
+                initial_charge_request_kW = sim_comp_bs->validateChargeRequest(-current_load_vSM_kW);
+                charge_request_kW = initial_charge_request_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID());
             } else {
-                sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+                initial_charge_request_kW = -current_load_vSM_kW;
+                charge_request_kW = -current_load_vSM_kW;
             }
+            sim_comp_bs->set_chargeRequest( charge_request_kW );
         } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();
         current_load_vSM_kW += load_bs;
 
         bs_SOC = sim_comp_bs->get_SOC();
+
     }
 
     //

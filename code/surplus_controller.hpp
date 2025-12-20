@@ -16,6 +16,7 @@ namespace surplus {
         std::vector<double> future_surplus;  ///< Surplus energy vector for each timestep in the horizon
         std::unordered_map<unsigned long, std::vector<double>> grid_demand_kWh;  ///< Grid demand per unit ID for all timesteps in horizon
         std::unordered_map<unsigned long, std::vector<double>> bs_stored_energy_kWh; ///< BESS stored energy per unit ID for all timesteps in horizon
+        std::unordered_map<unsigned long, std::vector<double>> bs_power_kW; ///< BESS power per unit ID for all timesteps in horizon
     };
 
     /**
@@ -36,7 +37,9 @@ namespace surplus {
         unsigned int optimization_frequency_ts; ///< Frequency of optimization in timesteps 
         unsigned int lookahead_horizon_ts;      ///< Lookahead horizon in timesteps for optimization
         bool enabled;                          ///< Whether surplus controller is enabled
-        bool soc_knowledge;                    ///< Whether the surplus controller has knowledge of the state of charge for all control units for all timesteps in the horizon
+        bool bess_knowledge;                    ///< Whether the surplus controller has knowledge of the state of charge and current power for all control units for all timesteps in the horizon
+
+        std::vector<double> future_surplus_log; ///< Log of future surplus for analysis, TODO: remove later
         
         // Simulation parameters required for running the optimization
         CUControllerThreadGroupManager* thread_manager; 
@@ -54,6 +57,8 @@ namespace surplus {
          * @return Reference to the singleton SurplusController instance. If no instance exists, it is created.
          */
         static SurplusController& GetInstance();
+
+        static double GetFutureSurplusLog(unsigned long ts); ///< Get logged future surplus for a specific timestep in the horizon, just for analysis, TODO: remove later
         
         /**
          * @brief Initialize the singleton instance
@@ -107,13 +112,23 @@ namespace surplus {
          */
         double GetChargeRequest(unsigned long unit_id) const;
 
+        // Static convenience methods 
         /**
-         * @brief Get the total surplus energy allocated to batteries
+         * @brief Get the total surplus energy scheduled to batteries
+         * @return The total surplus energy scheduled to batteries across all units in the current time step
+         */
+        static double GetScheduledSurplusToBESS();
+
+        /**
+         * @brief Get the total surplus energy actually allocated to batteries
          * @return The total surplus energy allocated to batteries across all units in the current time step
          */
-        static double GetSurplusToBESS();
+        static double GetActualSurplusToBESS();
+
+        // TODO: just for analysis, very inefficient, remove later
+        static double GetBESSChargeRequest();
+        static double GetBESSLoad();
         
-        // Static convenience methods for ControlUnit access
         /**
          * @brief Static convenience method to get charge request for a unit
          * @param unit_id The unitID of the control unit

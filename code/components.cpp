@@ -490,6 +490,38 @@ void ComponentBS::set_maxP_by_EPRatio(double EP_ratio) {
     }
 }
 
+double const ComponentBS::validateChargeRequest(double charge_request_kW) {
+    double timestep_size_in_h = Global::get_time_step_size_in_h();
+
+    double currentE_after_self_discharge_kWh = currentE_kWh - discharge_rate_per_step * currentE_kWh;
+
+    if (charge_request_kW > 0) {
+        // Charging: limit to maxP_kW
+        if (charge_request_kW > maxP_kW)
+            charge_request_kW = maxP_kW;
+        
+        // Check if charging would exceed battery capacity
+        double new_charge_kWh = currentE_after_self_discharge_kWh + timestep_size_in_h * charge_request_kW * efficiency_in;
+        if (new_charge_kWh > maxE_kWh) {
+            // Adjust charge request to exactly fill the battery
+            charge_request_kW = (maxE_kWh - currentE_after_self_discharge_kWh) / timestep_size_in_h / efficiency_in;
+        }
+    } else if (charge_request_kW < 0) {
+        // Discharging: limit to maxP_kW
+        if (-charge_request_kW > maxP_kW)
+            charge_request_kW = -maxP_kW;
+        
+        // Check if discharging would deplete battery below zero
+        double new_charge_kWh = currentE_after_self_discharge_kWh + timestep_size_in_h * charge_request_kW / efficiency_out;
+        if (new_charge_kWh < 0) {
+            // Adjust discharge request to exactly empty the battery
+            charge_request_kW = -currentE_after_self_discharge_kWh / timestep_size_in_h * efficiency_out;
+        }
+    }
+
+    return charge_request_kW;
+}
+
 void ComponentBS::calculateActions() {
     double timestep_size_in_h = Global::get_time_step_size_in_h();
     double new_charge_kWh;

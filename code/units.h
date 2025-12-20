@@ -278,6 +278,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         string* get_metrics_string_annual(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
         string* get_metrics_string_weekly_wr(unsigned long week_number); // This function outputs the weekly metrics AND resets the internal weekly counters!
+        double get_initial_charge_request_kW() const { return initial_charge_request_kW; }; ///< Returns the initial charge request that was set before surplus controller modification, while taking into account the battery storage constraints. Just for analysis, TODO: remove later
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
         const ComponentBS* get_component_BS() const { if (has_sim_bs) return sim_comp_bs; else return nullptr; } ///< Returns a pointer to battery storage component, or nullptr if no such component is added.
         const ComponentHP* get_component_HP() const { if (has_sim_hp) return sim_comp_hp; else return nullptr; } ///< Returns a pointer to heat pump component, or nullptr if no such component is added.
@@ -404,6 +405,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         BaseOptimizedController* optimized_controller; ///< Reference to the controller (except of rule-based control)
+        double initial_charge_request_kW; ///< The initial charge request that was set before surplus controller modification, while taking into account the battery storage constraints. Just for analysis, TODO: remove later
 #ifdef PYTHON_MODULE
         bool py_control_commands_obtained;
         double py_cmd_p_bs_kW;

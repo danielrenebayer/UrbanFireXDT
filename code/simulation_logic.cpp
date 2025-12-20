@@ -260,7 +260,11 @@ bool simulation::oneStep(const unsigned long ts,
             *(output::substation_output) << total_demand_wo_BESS << ",";
             *(output::substation_output) << total_demand_only_BESS << ",";
             *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetSurplusToBESS() ) << ","; // surplus to BESS
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToBESS() ) << ","; // scheduled surplus to BESS
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetActualSurplusToBESS() ) << ","; // actual surplus to BESS
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetBESSChargeRequest() ) << ",";
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetBESSLoad() ) << ",";
+            *(output::substation_output) << round_float_5( surplus::SurplusController::GetFutureSurplusLog(ts) ) << ",";
             *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
             *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
             *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";

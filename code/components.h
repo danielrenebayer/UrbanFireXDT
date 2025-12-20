@@ -332,6 +332,7 @@ class ComponentBS : public BaseComponent {
         double get_total_withdrawn_E_kWh() const { return total_E_withdrawn_kWh; } ///< Returns the total energy that is taken from the battery from the beginning of the simulation run until now
         double get_cweek_withdrawn_E_gridOnly_kWh() const { return cweek_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the current week until now
         double get_total_withdrawn_E_gridOnly_kWh() const { return total_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the simulation run until now
+        double get_chargeRequest() const { return charge_request_kW; } ///< Returns the current charge request in kW
         // setter methods
         void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
@@ -345,6 +346,7 @@ class ComponentBS : public BaseComponent {
         void calculateActions();
         void resetWeeklyCounter();
         void resetInternalState();
+        double const validateChargeRequest(double charge_request_kW); ///< Validates and constrains a charge request to be within battery charge/discharge capabilities
         // State save/restore implementation
         using BaseComponent::saveInternalState;
         /**
