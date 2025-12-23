@@ -247,6 +247,9 @@ double SurplusController::GetChargeRequestForUnit(unsigned long unit_id) {
 
 double SurplusController::GetScheduledSurplusToBESS() {
     auto& instance = GetInstance();
+    if (!instance.enabled) {
+        return 0.0;
+    }
     double total_surplus = 0.0;
     for (const auto& pair : instance.unit_charge_requests) {
         if (!pair.second.empty()) {
@@ -257,6 +260,10 @@ double SurplusController::GetScheduledSurplusToBESS() {
 }
 
 double SurplusController::GetActualSurplusToBESS() {
+    auto& instance = GetInstance();
+    if (!instance.enabled) {
+        return 0.0;
+    }
     double total_actual_surplus = 0.0;
     const std::vector<ControlUnit*>& units = ControlUnit::GetArrayOfInstances();
     for (ControlUnit* unit : units) {
@@ -264,7 +271,6 @@ double SurplusController::GetActualSurplusToBESS() {
             continue;
         }
         auto bs = unit->get_component_BS();
-        double scheduled_surplus_charge = GetChargeRequestForUnit(unit->get_unitID());
         double actual_surplus_charge = bs->get_currentLoad_kW() - unit->get_initial_charge_request_kW();
         total_actual_surplus += actual_surplus_charge;
     }
@@ -299,6 +305,9 @@ double SurplusController::GetBESSLoad() {
 
 double SurplusController::GetFutureSurplusLog(unsigned long ts){
     auto& instance = GetInstance();
+    if (!instance.enabled) {
+        return 0.0;
+    }
     return instance.future_surplus_log[ts-instance.last_optimization_ts];
 }
 
