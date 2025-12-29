@@ -13,7 +13,7 @@ namespace surplus {
      * @brief Result structure for lookahead simulation
      */
     struct LookaheadResult {
-        std::vector<double> future_surplus;  ///< Surplus energy vector for each timestep in the horizon
+        std::vector<double> total_load;  ///< Total load vector for each timestep in the horizon (in kWh)
         std::unordered_map<unsigned long, std::vector<double>> grid_demand_kWh;  ///< Grid demand per unit ID for all timesteps in horizon
         std::unordered_map<unsigned long, std::vector<double>> bs_stored_energy_kWh; ///< BESS stored energy per unit ID for all timesteps in horizon
         std::unordered_map<unsigned long, std::vector<double>> bs_power_kW; ///< BESS power per unit ID for all timesteps in horizon
