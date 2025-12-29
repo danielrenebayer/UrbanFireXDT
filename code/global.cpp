@@ -353,6 +353,10 @@ bool Global::AllVariablesInitialized() {
                     std::cerr << "Error: Surplus controller cannot be enabled when the controller BS grid charging mode is set to something different as 'No Grid Charging'!" << std::endl;
                     return false;
                 }
+                if (surplus_controller_enabled == true && controller_mode != global::ControllerMode::RuleBased) {
+                    std::cerr << "Error: Surplus controller can only be enabled when the controller mode is set to 'RuleBased'!" << std::endl;
+                    return false;
+                }
             return true;
         } else {
             return false;

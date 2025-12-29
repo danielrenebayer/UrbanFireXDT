@@ -1275,11 +1275,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         if (has_sim_bs) {
             // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly
             // TODO: New scheduling ideas from rule_based not implemented here yet!
-            if (Global::get_surplus_controller_enabled()) {
-                sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
-            } else {
+            // TODO: Implement optimization with surplus controller here at all!
+            // if (Global::get_surplus_controller_enabled()) {
+            //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            // } else {
+            //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            // }
                 sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
-            }
             
         }
         if (has_sim_hp) {
