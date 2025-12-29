@@ -530,6 +530,7 @@ void ComponentBS::calculateActions() {
 
     // Calculate Self-discharge
     currentE_kWh -= discharge_rate_per_step * currentE_kWh;
+    currentE_from_grid_kWh -= discharge_rate_per_step * currentE_from_grid_kWh;
 
     // Charging and discharging
     if (charge_request_kW > 0) {
