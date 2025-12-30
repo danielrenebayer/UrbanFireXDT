@@ -360,7 +360,7 @@ bool add_expansion_to_units_random_or_data_order(
                     include_this_unit = false;
                 if (expEV &&  cu->get_sim_comp_cs_possible_n_EVs() == 0) {
                     if (include_this_unit) {
-                        std::cout << "Removing unit ID " << cu->get_unitID() << " due to n EVs == 0 for addition.\n";
+                        // std::cout << "Removing unit ID " << cu->get_unitID() << " due to n EVs == 0 for addition.\n";
                     }
                     include_this_unit = false;
                 }
