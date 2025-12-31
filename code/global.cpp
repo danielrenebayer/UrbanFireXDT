@@ -193,6 +193,7 @@ const std::set<unsigned long>* Global::cu_list_for_sac_planning = NULL;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
+bool Global::create_surplus_output      = false;
 bool Global::create_control_cmd_output       = false;
 bool Global::create_ev_detailed_output       = false;
 bool Global::surplus_controller_enabled      = false;
@@ -1261,6 +1262,13 @@ void Global::set_create_substation_output(bool value) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
         Global::create_substation_output = value;
+    }
+}
+void Global::set_create_surplus_output(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::create_surplus_output = value;
     }
 }
 void Global::set_create_control_cmd_output(bool value) {

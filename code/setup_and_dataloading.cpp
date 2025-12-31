@@ -1820,6 +1820,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});
     PRINT_VAR(global::n_ts_between_flushs);
     PRINT_VAR(Global::get_create_substation_output());
+    PRINT_VAR(Global::get_create_surplus_output());
     current_outstream << global::output_section_delimiter << "\n";
 }
 

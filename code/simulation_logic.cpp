@@ -212,17 +212,18 @@ bool simulation::oneStep(const unsigned long ts,
     double total_residential_demand = 0.0;
     total_load += global::residual_gridload_kW[ts-1];
     //
+
+    // compute SOC over all batteries
+    // TODO: inlcude batteries that are directly attached to an substation
+    double totalBatteryCharge_kWh = ControlUnit::GetAllSimCompBatteriesCharge_kWh();
+    double totalBatterySOC = 0.0;
+    if (totalBatteryCapacity_kWh > 0)
+        totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
+
     // loop over all substations: compute new load values
     // and calculate total grid load
 
     if (output::substation_output != NULL && output::substation_output_details != NULL) {
-        //
-        // compute SOC over all batteries
-        // TODO: inlcude batteries that are directly attached to an substation
-        double totalBatteryCharge_kWh = ControlUnit::GetAllSimCompBatteriesCharge_kWh();
-        double totalBatterySOC = 0.0;
-        if (totalBatteryCapacity_kWh > 0)
-            totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
         //
         // generate output
         if(write_output){
@@ -260,15 +261,24 @@ bool simulation::oneStep(const unsigned long ts,
             *(output::substation_output) << total_demand_wo_BESS << ",";
             *(output::substation_output) << total_demand_only_BESS << ",";
             *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToBESS() ) << ","; // scheduled surplus to BESS
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetActualSurplusToBESS() ) << ","; // actual surplus to BESS
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetBESSChargeRequest() ) << ",";
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetBESSLoad() ) << ",";
-            *(output::substation_output) << round_float_5( surplus::SurplusController::GetFutureSurplusLog(ts) ) << ",";
             *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
             *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
             *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
+
+
         }
+    }
+    if(output::surplus_output != NULL && write_output){
+            *(output::surplus_output) << ts << ",";
+            *(output::surplus_output) << round_float_5( totalBatterySOC ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToUnit() ) << ","; // scheduled surplus to units (discharge)
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToBESS() ) << ","; // scheduled surplus to BESS
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetActualSurplusToBESS() ) << ","; // actual surplus to BESS
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSChargeRequest() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSLoad() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSSurplusEnergy() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetFutureSurplusLog(ts) ) << ",";
+            *(output::surplus_output) << round_float_5( total_load ) << "\n";
     }
 
     // Write total_load to output parameter if provided
@@ -408,6 +418,7 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
             // 2. open output files
             output::initializeDirectoriesPerPVar();
             output::initializeSubstationOutput(scenario_id);
+            output::initializeSurplusOutput(scenario_id);
             output::initializeCUOutput(scenario_id);
             // 2.b output the current parameter variation combination
             output::outputCurrentParamVariCombi(cParamVals);
@@ -432,6 +443,7 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
         // 1. open output files
         output::initializeDirectoriesPerPVar();
         output::initializeSubstationOutput(scenario_id);
+        output::initializeSurplusOutput(scenario_id);
         output::initializeCUOutput(scenario_id);
         // 1.b output the current parameter variation combination
         output::CurrentParamValues cParamVals;

@@ -30,6 +30,7 @@ using namespace std;
 namespace output {
 
     inline std::ofstream* substation_output         = NULL; ///< The main file for the substation load time series
+    inline std::ofstream* surplus_output         = NULL; ///< The main file for the substation load time series
     inline std::ofstream* substation_output_details = NULL; ///< The secondary file for additional information about the substations
     inline std::ofstream* cu_details_ccmd_output    = NULL; ///< Output file for command details per time step and control unit (if selected by --ccmd-output option)
     inline std::ofstream* cu_details_ev_output      = NULL; ///< Output file for ev      details per time step and control unit (if selected by --ev-output option)
@@ -63,6 +64,11 @@ namespace output {
      * @param scenario_id The current scenario ID
      */
     void initializeSubstationOutput(unsigned long scenario_id);
+    /**
+     * This method initializes the surplus output file.
+     * @param scenario_id The current scenario ID
+     */
+    void initializeSurplusOutput(unsigned long scenario_id);
     /**
      * This method initializes the individual output files for the control
      * units. Depending on the globally selected mode, one file per CU is

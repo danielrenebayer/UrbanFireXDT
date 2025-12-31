@@ -155,7 +155,7 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     for (Substation* s : subList) {
         *(substation_output) << "," << s->get_name()->c_str();
     }
-    *(substation_output) << ",pv_total_generation_kW,pv_feedin_expo_kW,bs_total_generation_kW,bs_feedin_expo_kW,chp_total_generation_kW,chp_feedin_expo_kW,wind_total_generation_kW,wind_feedin_expo_kW,unknown_total_generation_kW,unknown_feedin_expo_kW,total_demand_wo_BS_SC_kW,total_BS_charging_power_kW,OverallBatterySOC,scheduled_surplus_to_BS,actual_surplus_to_BS,charge_request_BESS,load_BESS,surplus_calc,total_load" << endl;
+    *(substation_output) << ",pv_total_generation_kW,pv_feedin_expo_kW,bs_total_generation_kW,bs_feedin_expo_kW,chp_total_generation_kW,chp_feedin_expo_kW,wind_total_generation_kW,wind_feedin_expo_kW,unknown_total_generation_kW,unknown_feedin_expo_kW,total_demand_wo_BS_SC_kW,total_BS_charging_power_kW,OverallBatterySOC,total_load" << endl;
     //
     //
     // Part 2: The secondary file for additional information about the substations
@@ -176,6 +176,27 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     }
     *(substation_output_details) << ",total_residential_load,total_residential_demand" << endl;
 }
+
+
+
+void output::initializeSurplusOutput(unsigned long scenario_id) {
+    // initial check: should a output be created?
+    if (!Global::get_create_surplus_output())
+        return;
+    //
+    // initialize the output file
+    stringstream output_path_subst;
+    output_path_subst << setw(4) << setfill('0') << scenario_id;
+    output_path_subst << "-surplus-time-series.csv";
+    filesystem::path output_path = *(global::current_output_dir);
+    output_path /= output_path_subst.str();
+    surplus_output = new ofstream(output_path, std::ofstream::out);
+    //
+    // add header to output file
+    *(surplus_output) << "Timestep";
+    *(surplus_output) << ",OverallBatterySOC,scheduled_surplus_discharge,scheduled_surplus_charge,actual_surplus_action,charge_request_BESS,load_BESS,BESS_surplus_energy,initial_total_load,total_load" << endl;
+}
+
 
 void output::initializeCUOutput(unsigned long scenario_id) {
     //
@@ -255,6 +276,12 @@ void output::closeOutputs() {
         delete substation_output_details;
         substation_output_details = NULL;
     }
+    // close surplus output file
+    if (surplus_output != NULL) {
+        surplus_output->close();
+        delete surplus_output;
+        surplus_output = NULL;
+    }
     //
     // close outputs for CUs if existing
     if (cu_single_output != NULL) {
@@ -298,6 +325,9 @@ void output::flushBuffers() {
     }
     if (substation_output_details != NULL) {
         substation_output_details->flush();
+    }
+    if (surplus_output != NULL) {
+        surplus_output->flush();
     }
     //
     // flush outputs of CUs if existing

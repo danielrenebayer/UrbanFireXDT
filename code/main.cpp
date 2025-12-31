@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
         ("suof",     bpopts::value<unsigned long>()->default_value(1000), "Steps until output will be flushed, i.e. written to disk. Defaults to 1000.")
         ("cu-output,c", bpopts::value<string>(), "Modify output behavior for individual control units:  'off' or 'no' switches off output completely (default), 'single' creates a single output instead of one per unit (not recommended if there are more than 100 units), 'sl' on substation level (recommended above 100 units)")
         ("st-output,t", bpopts::value<string>(), "Modify output behavior for substations: 'off' or 'no' switches off substation output completely, 'on' substation output (default)")
+        ("surplus-output", bpopts::value<string>(), "Modify output behavior for surplus controller: 'off' or 'no' switches off surplus output completely (default), 'on' outputs system-wide debug information about global surplus controller energy management.")
         ("ccmd-output", bpopts::value<string>(), "Modify output behavior for details of the Control Commands (inside each control unit): 'off' disables all output (default), 'on' or 'all' outputs detailed information about the control commands for all control units for every time step (that have an optimized controller).")
         ("ev-output",   bpopts::value<string>(), "Modify output behavior for EVs: 'off' disables all output (default), 'all' outputs information for all EVs for every time step.")
         ("seed,s",bpopts::value<unsigned int>(), "Sets the seed for the simulation run. By default, no seed is used. If the simulation is repeated more than once, the seed gets incremented by one per repetition.")
@@ -167,6 +168,20 @@ int main(int argc, char* argv[]) {
         }
     } else {
         Global::set_create_substation_output(true);
+    }
+    if (opts_vals.count("surplus-output") > 0) {
+        string su_output = opts_vals["surplus-output"].as<string>();
+        if (su_output == "no" || su_output == "off") {
+            Global::set_create_surplus_output(false);
+        } else if (su_output == "on") {
+            Global::set_create_surplus_output(true);
+        } else {
+            // invalid argument
+            cerr << "Error when parsing command line arguments: invalid option for --surplus-output given!" << endl;
+            return 1;
+        }
+    } else {
+        Global::set_create_surplus_output(false);
     }
     if (opts_vals.count("ccmd-output") > 0) {
         string st_output = opts_vals["ccmd-output"].as<string>();

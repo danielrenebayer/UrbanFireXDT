@@ -306,6 +306,7 @@ class Global {
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
+        static bool get_create_surplus_output()      { return create_surplus_output;      } ///< Returns whether a output for the surplus controller should be created or not
         static bool get_create_control_cmd_output() { return create_control_cmd_output; } ///< Returns wheather a output for detailed control commands per time step and CU should be created
         static bool get_create_ev_detailed_output() { return create_ev_detailed_output; } ///< Returns wheather a output for detailed EV states per time step and EV should be created
         static bool get_surplus_controller_enabled() { return surplus_controller_enabled; } ///< Returns whether the surplus controller is enabled
@@ -404,6 +405,7 @@ class Global {
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
+        static void set_create_surplus_output(bool value);
         static void set_create_control_cmd_output(bool value);
         static void set_create_ev_detailed_output(bool value);
         static void set_surplus_controller_enabled(bool value);
@@ -506,6 +508,7 @@ class Global {
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
+        static bool create_surplus_output;      ///< Should an output be created for outputting the surplus controller time series?
         static bool create_control_cmd_output;
         static bool create_ev_detailed_output;
         static bool surplus_controller_enabled; ///< Whether the surplus controller is enabled
