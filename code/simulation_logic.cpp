@@ -400,10 +400,14 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     cParamVals.control_update_freq_in_ts_set = true;
 
                 } else if (var_name_and_val.first.compare("surplus controller freq in ts") == 0) {
+                    uint val = (var_name_and_val.second);
+                    if ( val == 0 ) {
+                        val = 1;
+                    }
                     Global::UnlockAllVariables();
-                    Global::set_surplus_controller_frequency_ts( (uint) (var_name_and_val.second) );
+                    Global::set_surplus_controller_frequency_ts( (uint) (val) );
                     Global::LockAllVariables();
-                    cParamVals.surplus_controller_freq_in_ts     = (uint) (var_name_and_val.second);
+                    cParamVals.surplus_controller_freq_in_ts     = (uint) (val);
                     cParamVals.surplus_controller_freq_in_ts_set = true;
 
                 } else if (var_name_and_val.first.compare("surplus controller lookahead horizon in ts") == 0) {

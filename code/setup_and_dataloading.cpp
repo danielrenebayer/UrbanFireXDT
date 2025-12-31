@@ -435,8 +435,12 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 Global::set_cache_dir_path( &value );
             }
             else if ( element_name.compare("surplus controller freq in ts")               == 0 )
-            {
-                Global::set_surplus_controller_frequency_ts( scenario_dict.get_value<unsigned int>() );
+            {   
+                unsigned int freq = scenario_dict.get_value<unsigned int>();
+                if (freq == 0) {
+                    freq = 1;
+                }
+                Global::set_surplus_controller_frequency_ts( freq );
             }
             else if ( element_name.compare("surplus controller lookahead horizon in ts")  == 0 )
             {
