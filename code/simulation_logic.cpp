@@ -268,7 +268,7 @@ bool simulation::oneStep(const unsigned long ts,
 
         }
     }
-    if(output::surplus_output != NULL && write_output){
+    if(output::surplus_output != NULL && write_output && Global::get_surplus_controller_enabled()) {
             *(output::surplus_output) << ts << ",";
             *(output::surplus_output) << round_float_5( totalBatterySOC ) << ",";
             *(output::surplus_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToUnit() ) << ","; // scheduled surplus to units (discharge)
