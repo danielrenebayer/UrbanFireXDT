@@ -397,6 +397,7 @@ ComponentBS::ComponentBS(
     currentE_kWh      = 0;
     currentP_kW       = 0;
     currentE_from_grid_kWh = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
@@ -436,6 +437,7 @@ ComponentBS::ComponentBS(
     currentE_kWh      = 0;
     currentP_kW       = 0;
     currentE_from_grid_kWh = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
@@ -466,6 +468,18 @@ void ComponentBS::set_grid_charged_amount(double grid_charged_kW) {
     }
 }
 
+void ComponentBS::set_surplus_charged_amount(double surplus_charged_kW) {
+    currentE_from_surplus_kWh += surplus_charged_kW * Global::get_time_step_size_in_h() * efficiency_in;
+    if (currentE_from_surplus_kWh > currentE_kWh) {
+        currentE_from_surplus_kWh = currentE_kWh;
+    }
+}
+
+
+void ComponentBS::reset_surplus_charged_amount() {
+    currentE_from_surplus_kWh = 0.0;
+}
+
 void ComponentBS::set_SOE_without_computations(double new_SOE_kWh) {
     currentE_kWh = new_SOE_kWh;
 }
@@ -490,10 +504,11 @@ void ComponentBS::set_maxP_by_EPRatio(double EP_ratio) {
     }
 }
 
-double const ComponentBS::validateChargeRequest(double charge_request_kW) {
+double const ComponentBS::validateNoSurplusChargeRequest(double charge_request_kW) {
     double timestep_size_in_h = Global::get_time_step_size_in_h();
 
     double currentE_after_self_discharge_kWh = currentE_kWh - discharge_rate_per_step * currentE_kWh;
+    double currentE_from_surplus_after_self_discharge_kWh = currentE_from_surplus_kWh - discharge_rate_per_step * currentE_from_surplus_kWh;
 
     if (charge_request_kW > 0) {
         // Charging: limit to maxP_kW
@@ -511,11 +526,14 @@ double const ComponentBS::validateChargeRequest(double charge_request_kW) {
         if (-charge_request_kW > maxP_kW)
             charge_request_kW = -maxP_kW;
         
-        // Check if discharging would deplete battery below zero
+        // Calculate available non-surplus energy (only return charged energy from non-surplus sources)
+        double available_non_surplus_energy_kWh = currentE_after_self_discharge_kWh - currentE_from_surplus_after_self_discharge_kWh;
+        
+        // Check if discharging would deplete non-surplus energy below zero
         double new_charge_kWh = currentE_after_self_discharge_kWh + timestep_size_in_h * charge_request_kW / efficiency_out;
-        if (new_charge_kWh < 0) {
-            // Adjust discharge request to exactly empty the battery
-            charge_request_kW = -currentE_after_self_discharge_kWh / timestep_size_in_h * efficiency_out;
+        if (new_charge_kWh < currentE_from_surplus_after_self_discharge_kWh) {
+            // Adjust discharge request to only use available non-surplus energy
+            charge_request_kW = -available_non_surplus_energy_kWh / timestep_size_in_h * efficiency_out;
         }
     }
 
@@ -531,6 +549,7 @@ void ComponentBS::calculateActions() {
     // Calculate Self-discharge
     currentE_kWh -= discharge_rate_per_step * currentE_kWh;
     currentE_from_grid_kWh -= discharge_rate_per_step * currentE_from_grid_kWh;
+    currentE_from_surplus_kWh -= discharge_rate_per_step * currentE_from_surplus_kWh;
 
     // Charging and discharging
     if (charge_request_kW > 0) {
@@ -555,7 +574,7 @@ void ComponentBS::calculateActions() {
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
         total_E_withdrawn_kWh -= energy_taken_kWh;
         cweek_E_withdrawn_kWh -= energy_taken_kWh;
-        // update currentE_from_BS_kWh as well ...
+        // update currentE_from_grid_kWh as well ...
         currentP_from_grid_kW = 0.0;
         if (currentE_kWh < currentE_from_grid_kWh) {
             double removed_amount_from_grid_kWh = currentE_from_grid_kWh - currentE_kWh;
@@ -564,6 +583,10 @@ void ComponentBS::calculateActions() {
             // add to summation variables
             cweek_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
             total_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
+        }
+        // ... and surplus energy as well
+        if (currentE_kWh < currentE_from_surplus_kWh) {
+            currentE_from_surplus_kWh = currentE_kWh; // set to current SOE
         }
     }
 
@@ -605,6 +628,7 @@ ComponentStateVariant ComponentBS::saveInternalState() const {
     state.currentE_kWh = currentE_kWh;
     state.currentP_kW = currentP_kW;
     state.currentE_from_grid_kWh = currentE_from_grid_kWh;
+    state.currentE_from_surplus_kWh = currentE_from_surplus_kWh;
     state.currentP_from_grid_kW = currentP_from_grid_kW;
     state.cweek_E_withdrawn_kWh = cweek_E_withdrawn_kWh;
     state.total_E_withdrawn_kWh = total_E_withdrawn_kWh;
@@ -622,6 +646,7 @@ void ComponentBS::restoreInternalState(const ComponentStateVariant& state) {
         currentE_kWh = bs_state.currentE_kWh;
         currentP_kW = bs_state.currentP_kW;
         currentE_from_grid_kWh = bs_state.currentE_from_grid_kWh;
+        currentE_from_surplus_kWh = bs_state.currentE_from_surplus_kWh;
         currentP_from_grid_kW = bs_state.currentP_from_grid_kW;
         cweek_E_withdrawn_kWh = bs_state.cweek_E_withdrawn_kWh;
         total_E_withdrawn_kWh = bs_state.total_E_withdrawn_kWh;

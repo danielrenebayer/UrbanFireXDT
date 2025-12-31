@@ -41,6 +41,7 @@ struct BSComponentState {
     double currentP_kW;
     double currentE_from_grid_kWh;
     double currentP_from_grid_kW;
+    double currentE_from_surplus_kWh;
     double cweek_E_withdrawn_kWh;
     double total_E_withdrawn_kWh;
     double cweek_E_withdrawn_from_grid_kWh;
@@ -333,9 +334,12 @@ class ComponentBS : public BaseComponent {
         double get_cweek_withdrawn_E_gridOnly_kWh() const { return cweek_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the current week until now
         double get_total_withdrawn_E_gridOnly_kWh() const { return total_E_withdrawn_from_grid_kWh; } ///< Returns the total energy that is taken from the battery and that was initially charged from the grid (not PV!) from the beginning of the simulation run until now
         double get_chargeRequest() const { return charge_request_kW; } ///< Returns the current charge request in kW
+        double get_currentE_from_surplus() const { return currentE_from_surplus_kWh; } ///< Returns the amount of energy that was charged from surplus PV in kWh
         // setter methods
         void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; }
         void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
+        void set_surplus_charged_amount(double surplus_charged_kW); ///< Sets the amount that has been charged from global surplus controller for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again! This also consideres energy that was "discharged" by the surplus controller to directly cover load.
+        void reset_surplus_charged_amount(); ///< Resets the amount of energy that was charged from global surplus controller to zero. This can be called from time to time fo prevent the amount drifting too much due to numerical inaccuracies, when the surplus controller does not knkow BESS states.
     protected:
         void  set_SOE_without_computations(double new_SOE_kWh); ///< Changes the current SOE without updating other internal variables! Should only be used by class EVFSM for the pre-computation!
     public:
@@ -346,7 +350,7 @@ class ComponentBS : public BaseComponent {
         void calculateActions();
         void resetWeeklyCounter();
         void resetInternalState();
-        double const validateChargeRequest(double charge_request_kW); ///< Validates and constrains a charge request to be within battery charge/discharge capabilities
+        double const validateNoSurplusChargeRequest(double charge_request_kW); ///< Validates and constrains a charge request to be within battery charge/discharge capabilities and only allows discharging from non-surplus-charged energy
         // State save/restore implementation
         using BaseComponent::saveInternalState;
         /**
@@ -377,6 +381,7 @@ class ComponentBS : public BaseComponent {
         double currentE_kWh; ///< current energy inside the battery
         double currentP_kW;  ///< current power from the perspective of outside (internally efficiency has to be added)
         double currentE_from_grid_kWh;  ///< current energy stored inside the battery that was feed-in by the grid, not by the PV surplus - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh
+        double currentE_from_surplus_kWh; ///< current energy stored inside the battery that was feed-in by global surplus controller - this value is always greater or equal 0.0, and smaller or equal to currentE_kWh, and larger or equal to currentE_from_grid_kWh
         double currentP_from_grid_kW;   ///< current power that was sourced not by surplus PV, but by grid charging
         double charge_request_kW;
         double cweek_E_withdrawn_kWh; ///< summation variable for EFC computation for this current week
