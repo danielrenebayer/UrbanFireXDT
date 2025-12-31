@@ -94,8 +94,9 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | expansion BS capacity computation mode | string | no | `const` | `const`<br>- `use PV power`<br>- `use mean annual consumption`<br>- `use mean annual consumption with heat pump`<br>- `optimized` | Defines the rule for the calculation of the battery capacity.<br>If set to `const`, the value of `expansion BS E in kWh` will be used.<br>If set to `use PV power`, the capacity of the added storage is the kWp of the PV installation multiplied with the parameter `use PV power` if a simulated PV installation is present. Else it uses the same parameter as `const`.<br>If set to `use mean annual consumption`, it uses the mean annual consumption of the measurement units as defined in the data given.<br>If set to `optimized`, the optimal size is computed base on a optimization. Important: Check option `expansion PV sizing mode` for details. | no |
 | expansion BS max capacity | float | no | -1 | 0.0 (excl.) to inf. or -1 | Maxium capacity of an added battery storage (very important for sizing with other modes than constant, but always applied). Defaults to -1.0, meaning there is no limit set. | no |
 | expansion BS capacity sizing factor for PV | float | no | 1 | 0.0 (exclusive) to inf. | The sizing parameter of the battery storage if the computation mode is ‘use PV power’ | no |
-| expansion BS efficiency in | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for charging in percent | 
-| expansion BS efficiency out | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for discharging in percent | 
+| expansion BS efficiency in | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for charging in percent. Cannot be used together with `expansion BS efficiency in and out`. | no |
+| expansion BS efficiency out | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for discharging in percent. Cannot be used together with `expansion BS efficiency in and out`. | no |
+| expansion BS efficiency in and out | float | no | 1 | 0.0 to 1.0 | Sets both charging and discharging efficiency to the same value. Useful for parameter variations where both efficiencies should vary together. Cannot be used together with individual `expansion BS efficiency in` or `expansion BS efficiency out` parameters. | yes |
 | expansion BS self-discharge per ts | float | no | 0 | 0.0 to 1.0 | Self-discharging rate in percent per time step | 
 | expansion BS power for SOC 0 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 0 in kW |  
 | expansion BS power for SOC 1 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 1 in kW | 
@@ -173,3 +174,17 @@ Notice the difference between individual EVs and the EV charging station (CS): T
 | control update freq in ts | unsigned int | no | 1                 | 1 to infinity   | If a optimization is used a control strategy, if defines after how many time steps the optimization is executed again inside the control units (the default value of 1 means, that the optimization is executed every time step) | yes |
 | controller allow bs charging from grid | string | no | `no grid charging`        | - `no grid charging`<br>- `only grid charging`<br>- `grid charging and discharging` | Controls whether the battery can be charged from the grid and if the battery can also be discharged into the grid. This option is considered only if a `controller mode` is selected other than 'rule-based'. | no |
 | controller optimization target | string | no | `electricity costs` | - `electricity costs`<br>- `peak load`<br>- `emissions` | The target of the optimization, if `controller mode` is set to a value other than 'rule-based'.<br>Use `electricity costs` to minimize the costs for electricity consumption (minus revenue for feedin) per control unit.<br>Use `peak load` to minimize the peak load per control unit.<br>Use `emissions` to minimize the CO2 emissions caused by grid demand.<br>If `expansion PV sizing mode` or `expansion BS capacity computation mode` is set to `Optimized`, this parameter must be set to `electricity costs`, and in this case, it also considers (discounted) installation costs for PV and/or BESS respecting the global parameters `net present value time horizon in years` and `net present value discount rate` for discounting. | no |
+
+
+## Group 6: Surplus controller settings
+
+TODO: Unsure about how parameter variation works
+
+| Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
+| ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
+| surplus controller enabled | bool | no | false |  | Enables or disables the global surplus controller functionality | no |
+| surplus controller freq in ts | unsigned int | no | 24 | 1 to infinity | Defines the frequency in time steps at which the surplus controller is executed | yes |
+| surplus controller lookahead horizon in ts | unsigned int | no | 24 | 1 to infinity | Defines the number of time steps the surplus controller looks into the future for its planning horizon | yes |
+| surplus controller bess knowledge | bool | no | false |  | Controls whether the surplus controller has knowledge about the SoE and charging/discharging power of all BESS in the controller horizon | no |
+
+
