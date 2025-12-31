@@ -384,6 +384,13 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     cParamVals.exp_bs_effi_in_and_out = var_name_and_val.second;
                     cParamVals.exp_bs_effi_in_and_out_set = true;
 
+                } else if (var_name_and_val.first.compare("expansion BS self-discharge per ts") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_exp_bess_self_ds_ts(var_name_and_val.second);
+                    Global::LockAllVariables();
+                    cParamVals.exp_bs_self_ds_ts = var_name_and_val.second;
+                    cParamVals.exp_bs_self_ds_ts_set = true;
+
                 } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
                     std::cerr << "This is not implemented!" << std::endl;
 

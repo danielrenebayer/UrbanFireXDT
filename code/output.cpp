@@ -381,6 +381,12 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
+    ofs << "expansion BS efficiency in and out,";
+    if (cParamVals.exp_bs_effi_in_and_out_set) ofs << cParamVals.exp_bs_effi_in_and_out; else ofs << Global::get_exp_bess_effi_in();
+    ofs << "\n";
+    ofs << "expansion BS self-discharge per ts,";
+    if (cParamVals.exp_bs_self_ds_ts_set) ofs << cParamVals.exp_bs_self_ds_ts; else ofs << Global::get_exp_bess_self_ds_ts();
+    ofs << "\n";
     ofs << "control horizont in ts,";
     if (cParamVals.control_horizon_in_ts_set) ofs << cParamVals.control_horizon_in_ts; else ofs << Global::get_control_horizon_in_ts();
     ofs << "\n";
