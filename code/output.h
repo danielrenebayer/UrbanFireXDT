@@ -106,8 +106,11 @@ namespace output {
         float exp_bs_maxE_kWh = 0.0;  bool exp_bs_maxE_kWh_set = false;
         float exp_bs_init_SOC = 0.0;  bool exp_bs_init_SOC_set = false;
         float exp_bs_EP_ratio = 0.0;  bool exp_bs_EP_ratio_set = false;
+        float exp_bs_effi_in_and_out = 1.0; bool exp_bs_effi_in_and_out_set = false;
         uint  control_horizon_in_ts     = 24; bool control_horizon_in_ts_set     = false;
         uint  control_update_freq_in_ts =  1; bool control_update_freq_in_ts_set = false;
+        uint  surplus_controller_freq_in_ts = 24; bool surplus_controller_freq_in_ts_set = false;
+        uint  surplus_controller_lookahead_horizon_in_ts = 24; bool surplus_controller_lookahead_horizon_in_ts_set = false;
     };
     void outputCurrentParamVariCombi(CurrentParamValues&);
 

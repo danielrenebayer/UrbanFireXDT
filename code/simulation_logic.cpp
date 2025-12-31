@@ -376,6 +376,14 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     cParamVals.exp_bs_EP_ratio = var_name_and_val.second;
                     cParamVals.exp_bs_EP_ratio_set = true;
 
+                } else if (var_name_and_val.first.compare("expansion BS efficiency in and out") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_exp_bess_effi_in(var_name_and_val.second);
+                    Global::set_exp_bess_effi_out(var_name_and_val.second);
+                    Global::LockAllVariables();
+                    cParamVals.exp_bs_effi_in_and_out = var_name_and_val.second;
+                    cParamVals.exp_bs_effi_in_and_out_set = true;
+
                 } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
                     std::cerr << "This is not implemented!" << std::endl;
 
@@ -390,6 +398,20 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     Global::LockAllVariables();
                     cParamVals.control_update_freq_in_ts     = (uint) (var_name_and_val.second);
                     cParamVals.control_update_freq_in_ts_set = true;
+
+                } else if (var_name_and_val.first.compare("surplus controller freq in ts") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_surplus_controller_frequency_ts( (uint) (var_name_and_val.second) );
+                    Global::LockAllVariables();
+                    cParamVals.surplus_controller_freq_in_ts     = (uint) (var_name_and_val.second);
+                    cParamVals.surplus_controller_freq_in_ts_set = true;
+
+                } else if (var_name_and_val.first.compare("surplus controller lookahead horizon in ts") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_surplus_controller_lookahead_horizon_ts( (uint) (var_name_and_val.second) );
+                    Global::LockAllVariables();
+                    cParamVals.surplus_controller_lookahead_horizon_in_ts     = (uint) (var_name_and_val.second);
+                    cParamVals.surplus_controller_lookahead_horizon_in_ts_set = true;
 
                 } else {
                     std::cerr << "Unknown parameter variable to vary: " << var_name_and_val.first << std::endl;

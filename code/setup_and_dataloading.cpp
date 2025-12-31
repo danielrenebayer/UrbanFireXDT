@@ -54,6 +54,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
         string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         string sac_planning_mode   = ""; bool sac_planning_mode_set   = false;
         string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
+        // track battery efficiency parameter usage
+        bool exp_bs_effi_in_set    = false;
+        bool exp_bs_effi_out_set   = false;
+        bool exp_bs_effi_both_set  = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -137,10 +141,19 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if (element_name.compare("expansion bs efficiency in")  == 0)
             {
                 Global::set_exp_bess_effi_in( scenario_dict.get_value<float>() );
+                exp_bs_effi_in_set = true;
             }
             else if (element_name.compare("expansion bs efficiency out") == 0)
             {
                 Global::set_exp_bess_effi_out( scenario_dict.get_value<float>() );
+                exp_bs_effi_out_set = true;
+            }
+            else if (element_name.compare("expansion bs efficiency in and out") == 0)
+            {
+                float effi_value = scenario_dict.get_value<float>();
+                Global::set_exp_bess_effi_in( effi_value );
+                Global::set_exp_bess_effi_out( effi_value );
+                exp_bs_effi_both_set = true;
             }
             else if (element_name.compare("expansion bs self-discharge per ts") == 0)
             {
@@ -631,6 +644,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             }
             // test end
             #endif
+        }
+
+        //
+        // Validate battery efficiency parameter usage
+        if (exp_bs_effi_both_set && (exp_bs_effi_in_set || exp_bs_effi_out_set)) {
+            cerr << "Error: Cannot use 'expansion BS efficiency in and out' together with 'expansion BS efficiency in' or 'expansion BS efficiency out'!" << endl;
+            cerr << "Please use either the combined parameter OR the individual parameters, not both." << endl;
+            throw runtime_error("Conflicting battery efficiency parameters in config-json.");
         }
 
         //

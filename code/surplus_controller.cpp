@@ -110,12 +110,12 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
             bs_max_charge_kWh[unit_id] = unit->get_sim_comp_bs_P_kW() * Global::get_time_step_size_in_h();
         }
         
-        // Initialize request vectors if not yet done
-        if (unit_charge_requests_kW[unit_id].empty()) {
+        // Initialize request vectors if not yet done, or resize if length changed (e.g., due to parameter variation)
+        if (unit_charge_requests_kW[unit_id].empty() || unit_charge_requests_kW[unit_id].size() != optimization_frequency_ts) {
             unit_charge_requests_kW[unit_id].resize(optimization_frequency_ts, 0.0);
         }
         // Discharge requests need full horizon length (to keep future discharge plans from previous optimizations)
-        if (unit_discharge_requests_kW[unit_id].empty()) {
+        if (unit_discharge_requests_kW[unit_id].empty() || unit_discharge_requests_kW[unit_id].size() != lookahead_horizon_ts) {
             unit_discharge_requests_kW[unit_id].resize(lookahead_horizon_ts, 0.0);
         }
     }
