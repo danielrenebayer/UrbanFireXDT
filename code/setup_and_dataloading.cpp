@@ -1782,6 +1782,12 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_control_update_freq_in_ts());
     PRINT_ENUM_VAR(Global::get_controller_bs_grid_charging_mode(), [](auto var){switch(var){case global::ControllerBSGridChargingMode::NoGridCharging: return "NoGridCharging"; case global::ControllerBSGridChargingMode::OnlyGridCharging: return "OnlyGridCharging"; case global::ControllerBSGridChargingMode::GridChargingAndDischarging: return "GridChargingAndDischarging"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_controller_optimization_target(), [](auto var){switch(var){case global::ControllerOptimizationTarget::ElectricityCosts: return "ElectricityCosts"; case global::ControllerOptimizationTarget::PeakLoad: return "PeakLoad"; case global::ControllerOptimizationTarget::Emissions: return "Emissions"; default: return "";}});
+    // Surplus controller settings
+    current_outstream << "  Surplus controller settings:\n";
+    PRINT_VAR(Global::get_surplus_controller_enabled());
+    PRINT_VAR(Global::get_surplus_controller_frequency_ts());
+    PRINT_VAR(Global::get_surplus_controller_lookahead_horizon_ts());
+    PRINT_VAR(Global::get_surplus_controller_BESS_knowledge());
     // Selection settings
     current_outstream << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});

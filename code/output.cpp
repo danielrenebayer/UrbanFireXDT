@@ -381,8 +381,11 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
-    ofs << "expansion BS efficiency in and out,";
+    ofs << "expansion BS efficiency in,";
     if (cParamVals.exp_bs_effi_in_and_out_set) ofs << cParamVals.exp_bs_effi_in_and_out; else ofs << Global::get_exp_bess_effi_in();
+    ofs << "\n";
+    ofs << "expansion BS efficiency out,";
+    if (cParamVals.exp_bs_effi_in_and_out_set) ofs << cParamVals.exp_bs_effi_in_and_out; else ofs << Global::get_exp_bess_effi_out();
     ofs << "\n";
     ofs << "expansion BS self-discharge per ts,";
     if (cParamVals.exp_bs_self_ds_ts_set) ofs << cParamVals.exp_bs_self_ds_ts; else ofs << Global::get_exp_bess_self_ds_ts();
@@ -392,6 +395,12 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "\n";
     ofs << "control update freq in ts,";
     if (cParamVals.control_update_freq_in_ts_set) ofs << cParamVals.control_update_freq_in_ts; else ofs << Global::get_control_update_freq_in_ts();
+    ofs << "\n";
+    ofs << "surplus controller freq in ts,";
+    if (cParamVals.surplus_controller_freq_in_ts_set) ofs << cParamVals.surplus_controller_freq_in_ts; else ofs << Global::get_surplus_controller_frequency_ts();
+    ofs << "\n";
+    ofs << "surplus controller lookahead horizon in ts,";
+    if (cParamVals.surplus_controller_lookahead_horizon_in_ts_set) ofs << cParamVals.surplus_controller_lookahead_horizon_in_ts; else ofs << Global::get_surplus_controller_lookahead_horizon_ts();
     ofs << "\n";
     ofs << "seed_set," << Global::is_seed_set() << "\n";
     ofs << "seed," << Global::get_seed() << "\n";
