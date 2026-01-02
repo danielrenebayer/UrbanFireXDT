@@ -169,6 +169,7 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
                     // auto debug_bs_power = bs_power_kW[unit_id][future_ts - ts_horizon_start];
                     // auto debug_grid_demand = grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
                     std::cerr << "SurplusController Optimization Error: Unit " << unit_id << " has grid demand and charging BESS at ts " << future_ts << std::endl;
+                    return false;
                 }
                 double max_demand_from_discharge_power = bs_max_charge_kWh[unit_id] + bs_power_kW[unit_id][future_ts - ts_horizon_start] * Global::get_time_step_size_in_h();
                 demand_this_ts = std::min(demand_this_ts, max_demand_from_discharge_power);
@@ -324,9 +325,16 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
                 has_discharge = true;
             }
         }
+        // Allow simultaneous charge and discharge only if no BESS knowledge and we are beyond optimization horizon 
+        // Otherwise in non-BESS-knowledge mode we might have a charge/discharge request from previous optimization run, but have to rule against it in the current optimization because the Units didn't behave as expected
         if (has_charge && has_discharge) {
-            std::cerr << "SurplusController Optimization Error: Both charge and discharge request at timestep " << ts << std::endl;
-            return false;
+            if(bess_knowledge || ts > ts_optimization_end){
+                std::cerr << "SurplusController Optimization Error: Both charge and discharge request at timestep " << ts << std::endl;
+                return false;
+            }
+            else{
+                std::cout << "SurplusController Warning: Both charge and discharge request at timestep " << ts << " in no-BESS-knowledge mode." << std::endl;
+            }
         }
     }
 
