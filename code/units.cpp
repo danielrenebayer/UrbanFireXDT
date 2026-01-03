@@ -927,6 +927,18 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
         sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
+void ControlUnit::set_exp_bs_efficiency(float value) {
+    if (has_sim_bs) {
+        sim_comp_bs->set_efficiency_in(value);
+        sim_comp_bs->set_efficiency_out(value);
+    }
+}
+
+void ControlUnit::set_exp_bs_self_discharge(float value) {
+    if (has_sim_bs)
+        sim_comp_bs->set_self_discharge_rate(value);
+}
+
 void ControlUnit::change_control_horizon_in_ts(unsigned int new_horizon) {
     if (optimized_controller != NULL)
         optimized_controller->reset(new_horizon);

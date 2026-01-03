@@ -391,6 +391,12 @@ void SurplusController::ResetAllData() {
     unit_charge_requests_kW.clear();
     unit_discharge_requests_kW.clear();
     last_optimization_ts = 0;
+    
+    // Refresh configuration parameters from Global (important for parameter variations)
+    optimization_frequency_ts = Global::get_surplus_controller_frequency_ts();
+    lookahead_horizon_ts = Global::get_surplus_controller_lookahead_horizon_ts();
+    enabled = Global::get_surplus_controller_enabled();
+    bess_knowledge = Global::get_surplus_controller_BESS_knowledge();
 }
 
 LookaheadResult SurplusController::LookaheadSimulation(unsigned long ts_horizon_start, unsigned long ts_horizon_end) {

@@ -329,6 +329,8 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
             output::CurrentParamValues cParamVals;
             // 0.2. reset internal variables for control units
             ControlUnit::ResetAllInternalStates();
+            // 0.3. cleanup surplus controller from previous run (if any)
+            surplus::SurplusController::Cleanup();
             //
             // 1. set current variable values
             //    i.e. iterate over all variable-name / value combinations and
@@ -381,6 +383,8 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     Global::set_exp_bess_effi_in(var_name_and_val.second);
                     Global::set_exp_bess_effi_out(var_name_and_val.second);
                     Global::LockAllVariables();
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_efficiency(var_name_and_val.second);
                     cParamVals.exp_bs_effi_in_and_out = var_name_and_val.second;
                     cParamVals.exp_bs_effi_in_and_out_set = true;
 
@@ -388,6 +392,8 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     Global::UnlockAllVariables();
                     Global::set_exp_bess_self_ds_ts(var_name_and_val.second);
                     Global::LockAllVariables();
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_self_discharge(var_name_and_val.second);
                     cParamVals.exp_bs_self_ds_ts = var_name_and_val.second;
                     cParamVals.exp_bs_self_ds_ts_set = true;
 

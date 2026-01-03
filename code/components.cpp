@@ -504,6 +504,18 @@ void ComponentBS::set_maxP_by_EPRatio(double EP_ratio) {
     }
 }
 
+void ComponentBS::set_efficiency_in(double value) {
+    efficiency_in = value;
+}
+
+void ComponentBS::set_efficiency_out(double value) {
+    efficiency_out = value;
+}
+
+void ComponentBS::set_self_discharge_rate(double value) {
+    discharge_rate_per_step = value;
+}
+
 double const ComponentBS::validateNoSurplusChargeRequest(double charge_request_kW) {
     double timestep_size_in_h = Global::get_time_step_size_in_h();
 
@@ -613,6 +625,7 @@ void ComponentBS::resetInternalState() {
     currentE_kWh = maxE_kWh * initial_SoC;
     currentE_from_grid_kWh  = 0.0;
     currentP_kW           = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW   = 0.0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;

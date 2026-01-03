@@ -346,6 +346,9 @@ class ComponentBS : public BaseComponent {
         void  set_maxE_kWh(double value);
         void  set_maxP_kW (double value);
         void  set_maxP_by_EPRatio(double EP_ratio);
+        void  set_efficiency_in(double value);
+        void  set_efficiency_out(double value);
+        void  set_self_discharge_rate(double value);
         // update / action methods
         void calculateActions();
         void resetWeeklyCounter();
@@ -371,10 +374,9 @@ class ComponentBS : public BaseComponent {
         double maxE_kWh;
         double maxP_kW;
         double E_over_P_ratio;
-        // constant member variables (other languages might call this 'final')
-        const double discharge_rate_per_step;
-        const double efficiency_in;
-        const double efficiency_out;
+        double discharge_rate_per_step;
+        double efficiency_in;
+        double efficiency_out;
         const double initial_SoC;
         // member variables that can change over time
         double SOC;
