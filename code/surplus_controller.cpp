@@ -135,28 +135,41 @@ bool SurplusController::ExecuteOptimization(unsigned long ts_horizon_start) {
         if (total_load_kWh[ts - ts_horizon_start] >= 0.0) {
             continue; // No surplus to allocate in this timestep, continue with next timestep
         }
-        // Randomize units_with_bs order for fairness
-        static std::mt19937 rng(Global::is_seed_set() ? Global::get_seed() : std::random_device{}());
-        std::shuffle(units_with_bs.begin(), units_with_bs.end(), rng);
-        for (auto unit_id : units_with_bs) {
         
-            // Iteratively allocate surplus energy to battery for replacing future demand 
-            for (unsigned long future_ts = ts+1; future_ts <= ts_horizon_end; ++future_ts) {
+        // Iteratively allocate surplus energy to battery for replacing future demand 
+        // Iterate future timesteps first to prioritize closer demands
+        for (unsigned long future_ts = ts+1; future_ts <= ts_horizon_end; ++future_ts) {
+            
+            // Break if all surplus has been consumed
+            if (total_load_kWh[ts - ts_horizon_start] >= 0.0) {
+                break; // No more surplus to allocate in this timestep
+            }
+            
+            // Skip if this future timestep is already in surplus
+            if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0) {
+                continue; // this future timestep is already in surplus
+            }
+            
+            // Randomize units_with_bs order for fairness at each future timestep
+            static std::mt19937 rng(Global::is_seed_set() ? Global::get_seed() : std::random_device{}());
+            std::shuffle(units_with_bs.begin(), units_with_bs.end(), rng);
+            
+            for (auto unit_id : units_with_bs) {
 
-                // Breaking conditions for allocation loop (End this UnitID)
+                // Breaking conditions for allocation loop (End this timestep - no more surplus)
                 if (total_load_kWh[ts - ts_horizon_start] >= 0.0) {
                     break; // No more surplus to allocate in this timestep
                 }
-                if (bs_power_kW[unit_id][ts - ts_horizon_start] >= bs_max_charge_kWh[unit_id] / Global::get_time_step_size_in_h()) {
-                    break; // No more power capacity left to charge in this timestep
+                if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0) {
+                    break; // this future timestep is already in surplus
                 }
 
-                // Continue conditions (Skip this future_ts)
+                // Continue conditions (Skip this unit for this future_ts)
+                if (bs_power_kW[unit_id][ts - ts_horizon_start] >= bs_max_charge_kWh[unit_id] / Global::get_time_step_size_in_h()) {
+                    continue; // No more power capacity left to charge in this timestep
+                }
                 if (grid_demand_kWh[unit_id][future_ts - ts_horizon_start] == 0.0) {
                     continue; // no demand to prevent at this future timestep
-                }
-                if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0) {
-                    continue; // this future timestep is already in surplus
                 }
 
                 // Grid demand this future timestep (what should be replaced by charging now)
