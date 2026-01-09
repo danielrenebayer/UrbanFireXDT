@@ -120,8 +120,9 @@ The columns of this output follows the following nomenclature:
 | &nbsp;&nbsp; YYYY_resident_load_kW   | Sum of residential load in kW of all residential buildings connected to substation YYYY |
 | &nbsp;&nbsp; YYYY_resident_demand_kW | Sum of residential demand in kW of all residential buildings connected to substation YYYY |
 | &nbsp;&nbsp; YYYY_demand_wo_BESS_or_selfcons_kW  | Sum of total demand (without BESS) or the consideration of the self-consumption of PV or wind or CHP generation in kW of all buildings (not only the residential ones) connected to substation YYYY |
-| total_residential_load   | Total residential load in kW   |
-| total_residential_demand | Total residential demand in kW |
+| total_residential_load   | Total residential load (i.e., the sum of all virtual smart meter readings) in kW |
+| total_residential_demand | Total residential demand (i.e., only the sum of positive virtual smart meter readings) in kW |
+| total_other_demand_kW    | Total non-residential demand (i.e., only the sum of positive virtual smart meter readings) in kW |
 
 
 ## XXXX-CU-time-series.csv or YYYY-AllCUs-ts.csv

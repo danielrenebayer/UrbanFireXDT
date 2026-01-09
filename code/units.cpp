@@ -68,6 +68,7 @@ Substation::Substation(unsigned long internal_id, unsigned long public_id, std::
     station_load    = 0.0;
     resident_load   = 0.0;
     resident_demand = 0.0;
+    other_demand    = 0.0;
     total_demand    = 0.0;
     total_BESS_demand = 0.0;
     pv_gen_total_kW       = 0.0;
@@ -95,6 +96,7 @@ void Substation::calc_load() {
     station_load    = 0.0;
     resident_load   = 0.0; // Load only of residential buildings
     resident_demand = 0.0; // Residential load, only demand
+    other_demand    = 0.0;
     total_demand    = 0.0;
     total_BESS_demand = 0.0;
     pv_gen_total_kW       = 0.0;
@@ -120,6 +122,10 @@ void Substation::calc_load() {
             resident_load += cu->get_current_load_vSMeter_kW();
             if (cu->get_current_load_vSMeter_kW() > 0) {
                 resident_demand += cu->get_current_load_vSMeter_kW();
+            }
+        } else {
+            if (cu->get_current_load_vSMeter_kW() > 0) {
+                other_demand += cu->get_current_load_vSMeter_kW();
             }
         }
         // In case of a feed-in, detect the source of the feed-in

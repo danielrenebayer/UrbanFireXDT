@@ -186,6 +186,7 @@ bool simulation::oneStep(const unsigned long ts,
     double total_demand_only_BESS = 0.0;
     double total_residential_load   = 0.0;
     double total_residential_demand = 0.0;
+    double total_other_demand       = 0.0; // demand (not load) from non-residential buildings
     total_load += global::residual_gridload_kW[ts-1];
     //
     // loop over all substations: compute new load values
@@ -212,6 +213,7 @@ bool simulation::oneStep(const unsigned long ts,
             total_demand_only_BESS += s->get_current_BESS_demand();
             total_residential_load   += current_station_resident_load;
             total_residential_demand += current_station_resident_demand;
+            total_other_demand       += s->get_other_demand();
             // stuff for output
             *(output::substation_output) << round_float_5( current_station_load ) << ",";
             *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
@@ -233,7 +235,8 @@ bool simulation::oneStep(const unsigned long ts,
         *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
         *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
         *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
-        *(output::substation_output_details) << round_float_5( total_residential_demand ) << "\n";
+        *(output::substation_output_details) << round_float_5( total_residential_demand ) << ",";
+        *(output::substation_output_details) << round_float_5( total_other_demand ) << "\n";
     }
 
     // Output current time step

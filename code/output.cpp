@@ -174,7 +174,7 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
         *(substation_output_details) << "," << s->get_name()->c_str() << "_resident_demand_kW";
         *(substation_output_details) << "," << s->get_name()->c_str() << "_demand_wo_BESS_or_selfcons_kW";
     }
-    *(substation_output_details) << ",total_residential_load,total_residential_demand" << endl;
+    *(substation_output_details) << ",total_residential_load,total_residential_demand,total_other_demand_kW" << endl;
 }
 
 void output::initializeCUOutput(unsigned long scenario_id) {
