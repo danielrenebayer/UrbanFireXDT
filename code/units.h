@@ -232,21 +232,21 @@ class ControlUnit : BaseUnit<ControlUnit> {
     public:
         ~ControlUnit();
         void add_unit(MeasurementUnit* unit);
-        bool has_electricity_demand();
-        bool has_pv();
-        bool has_bs();
-        bool has_hp();
-        bool has_cs(); ///< Checks, if the unit has an EV charging station connected (in data or simulated)
-        bool has_chp();
-        bool has_wind();
-        bool has_bs_sim_added();
+        bool has_electricity_demand() const; ///< Returns true if there is at least one connected measurement unit (MeasurementUnit) that shows a demand (positive consumption) in at least one time step.
+        bool has_pv()   const; ///< Returns true, if the control unit has a PV attachted (in data or simulated).
+        bool has_bs()   const; ///< Returns true, if the control unit has a battery storage system attachted (in data or simulated).
+        bool has_hp()   const; ///< Returns true, if the control unit has a heat pump attachted (in data or simulated).
+        bool has_cs()   const; ///< Returns true, if the unit has an EV charging station connected (in data or simulated)
+        bool has_chp()  const; ///< Returns true, if the control unit has a combined heat and power (CHP) plant attachted (in data or simulated).
+        bool has_wind() const; ///< Returns true, if the control unit has a wind turbine (or many) attachted (in data or simulated).
+        bool has_bs_sim_added() const; ///< Returns true, if the control unit has a **simulated** battery storage system attachted.
         bool is_expandable_with_pv(); ///< Is a simulated PV installation addable (yes, if geodata is available). This function uses caching.
         bool is_expandable_with_hp(); ///< Is a simulated heat pump addable (yes, if geodata or gas consumption data is available). This function uses caching.
-        bool is_residential() { return residential; } ///< Is this unit a residential unit?
-        bool heat_demand_given_in_data(); ///< Returns true, if the heat demand for this location is given in the input data
-        int  get_exp_combi_bit_repr();
-        int  get_exp_combi_bit_repr_from_MUs();
-        int  get_exp_combi_bit_repr_sim_added();
+        bool is_residential() const { return residential; } ///< Is this unit a residential unit?
+        bool heat_demand_given_in_data() const; ///< Returns true, if the heat demand for this location is given in the input data
+        int  get_exp_combi_bit_repr()    const; ///< Returns the bit representation of the current expansion (simulated added components) state (as in data **plus** simulated state). See also namespace expansion.
+        int  get_exp_combi_bit_repr_from_MUs()  const; ///< Returns the bit representation of the expansion of this unit as defined in the data. See also namespace expansion.
+        int  get_exp_combi_bit_repr_sim_added() const; ///< Returns the bit representation of the expansion that has been simulatively added. See also namespace expansion.
         double get_current_load_vSMeter_kW() { return current_load_vSM_kW; }
         double get_current_demand_wo_BS_or_gen_kW()    const { return current_total_consumption_kW; } ///< Returns the current local demand of all components **excluding the BESS** and also not considering the local generation from PV, wind, the BESS itselfe or the CHP
         double get_current_BS_demand_kW()              const; ///< Returns the current BESS (charging) demand in kW
@@ -265,9 +265,9 @@ class ControlUnit : BaseUnit<ControlUnit> {
         size_t get_unitID()      const { return unitID; }        ///< returns the unit ID of this control unit as given in the system structure database
         size_t get_location_id() const { return locationID; }    ///< Returns the location ID of the control unit
         double get_mean_annual_MU_el_demand_kWh() const; ///< Returns the mean electricity demand in kWh of all connected MUs over all available years
-        double get_sim_comp_pv_kWp(); // returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
-        double get_sim_comp_bs_P_kW(); // returns the power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery
-        double get_sim_comp_bs_E_kWh(); // returns the capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery
+        double get_sim_comp_pv_kWp()   const; ///< Returns the kWp of the PV-component that is added for the simulation, returns 0 if there is no added PV component
+        double get_sim_comp_bs_P_kW()  const; ///< Returns the *maximum* power in kW of the battery storage component that is added for the simulation, returns 0 if there is no added battery. See also ComponentBS::get_maxP_kW().
+        double get_sim_comp_bs_E_kWh() const; ///< Returns the *maximum* capacity in kWh of the battery storage component that is added for the simulation, returns 0 if there is no added battery. See also ComponentBS::get_maxE_kWh().
         float get_annual_heat_demand_th_kWh();  ///< Returns the annual heat demand in (thermal) kWh of all attachted buildings
         float get_annual_hp_el_cons_kWh();      ///< Returns the annual HP electricity consumption of a heat pump in kWh, if it would be added simulatively (regardless whether it is added or not)
         double get_sim_comp_cs_max_P_kW() const; ///< Returns the maximum available charging power of the simulatively added charging station (if the station is enabled; otherwise it returns 0)

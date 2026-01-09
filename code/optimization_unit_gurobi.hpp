@@ -8,6 +8,10 @@
 #ifndef OPTIMIZATION_UNIT_GUROBI_HPP
 #define OPTIMIZATION_UNIT_GUROBI_HPP
 
+#ifndef USE_GUROBI
+#error "This header requires USE_GUROBI to be defined. Please compile with -D USE_GUROBI when including header file " __FILE__
+#endif
+
 #include "global.h"
 #include "optimization_unit_general.hpp"
 

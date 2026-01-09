@@ -8,6 +8,10 @@
 #ifndef OPTIMIZATION_UNIT_OR_TOOLS_HPP
 #define OPTIMIZATION_UNIT_OR_TOOLS_HPP
 
+#ifndef USE_OR_TOOLS
+#error "This header requires USE_OR_TOOLS to be defined. Please compile with -D USE_OR_TOOLS when including header file " __FILE__
+#endif
+
 #include "global.h"
 #include "optimization_unit_general.hpp"
 
