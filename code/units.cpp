@@ -1273,15 +1273,13 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         //
         // 5. Propagate the results to the components
         if (has_sim_bs) {
-            // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly
-            // TODO: New scheduling ideas from rule_based not implemented here yet!
-            // TODO: Implement optimization with surplus controller here at all!
+            // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly. Surplus controller right now not compatible with the optimized controller at all.
             // if (Global::get_surplus_controller_enabled()) {
             //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
             // } else {
             //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
             // }
-                sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
             
         }
         if (has_sim_hp) {
@@ -1381,6 +1379,7 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     //
     // 5. send situation to battery storage and get its resulting action
     double charge_request_kW = 0.0;
+    double bess_energy_surplus_prevented_kWh = 0.0; // amount of energy that the surplus controller wanted to charge into the BESS, but was actually used to cover consumption directly and thus prevented battery discharge
     if (has_sim_bs) {
         if (
             Global::get_controller_mode() == global::ControllerMode::RuleBased
@@ -1389,9 +1388,28 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
 #endif
         ) {
             if (Global::get_surplus_controller_enabled()) {
+                // If new month started, reset currentE from surplus before first control execution in this month to prevent drift between surplus controller and battery storage knowledge (only if we assume non-perfect knowledge)
+                if(Global::get_surplus_controller_BESS_knowledge() == false){
+                    uint frequency = Global::get_surplus_controller_frequency_ts();
+                    uint month_length_ts = static_cast<uint>(24 * 30 / Global::get_time_step_size_in_h());
+                    if ((ts - 1) % frequency == 0 && ts > frequency) {
+                        // Check if we're in a different month than the previous controller execution
+                        uint current_month = (ts - 1) / month_length_ts;
+                        uint prev_controller_month = (ts - 1 - frequency) / month_length_ts;
+                        if (current_month > prev_controller_month) {
+                            sim_comp_bs->reset_surplus_charged_amount();
+                        }
+                    }
+                }
                 // Checking non-linear behavior where battery cannot discharge full requested power
-                initial_charge_request_kW = sim_comp_bs->validateChargeRequest(-current_load_vSM_kW);
-                charge_request_kW = initial_charge_request_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID());
+                initial_charge_request_kW = sim_comp_bs->validateNoSurplusChargeRequest(-current_load_vSM_kW);
+                // Prevent discharge more than the surplus energy in the BESS due to discharge request (maybe some charge command was not possible due to constraints etc.)
+                auto surplus_discharge = std::min(surplus::SurplusController::GetDischargeRequestForUnit(this->get_unitID()), sim_comp_bs->get_currentE_from_surplus() / Global::get_time_step_size_in_h() * Global::get_exp_bess_effi_out() );
+                charge_request_kW = initial_charge_request_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) - surplus_discharge;
+                // Compute the amount of surplus command that was not charged, but instead directly used by the units consumption. As we therefore save discharge, we need to add this as grid charged amount in the internal calculations- even if there was no actual grid charging!
+                if (initial_charge_request_kW < 0.0){
+                    bess_energy_surplus_prevented_kWh = (std::min(-initial_charge_request_kW, surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()))) * Global::get_time_step_size_in_h() / Global::get_exp_bess_effi_in() / Global::get_exp_bess_effi_out();
+                }
             } else {
                 initial_charge_request_kW = -current_load_vSM_kW;
                 charge_request_kW = -current_load_vSM_kW;
@@ -1424,11 +1442,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         // separate two cases: BS charging or discharging
         if (load_bs > 0) {
             // - case: BS charging
-            self_produced_load_kW = std::min( load_pv, current_total_consumption_kW);
+            self_produced_load_kW = std::min( load_pv, current_total_consumption_kW); // consumption that is directly covered by PV generation
             // analyze the source of the charged energy and send this information to the BS
             if (has_sim_bs) {
-                double bs_charging_from_pv = std::min( load_bs, load_pv - self_produced_load_kW);
-                sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage
+                double bs_charging_from_pv = std::min( load_bs, load_pv - self_produced_load_kW); // PV load that is not diretly consumed is used to charge the BS (or less, if that exceeds the BESS limitations)
+                sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage (assume everything that is not from PV is from the grid)
+                sim_comp_bs->set_surplus_charged_amount(bess_energy_surplus_prevented_kWh + load_bs - bs_charging_from_pv); // also account for the surplus controller prevented energy as grid charged energy
             }
         } else {
             // - case: BS discharging
@@ -1439,6 +1458,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             }
             // calculate self-produced amount of locally consumed energy
             self_produced_load_kW = std::min(load_pv + bs_generation_from_pv, current_total_consumption_kW);
+            // Still, we may have swapped some battery discharge to grid consumption with the surplus controller command, that now needs to be accounted as grid charged energy
+            if (has_sim_bs) {
+                sim_comp_bs->set_surplus_charged_amount(bess_energy_surplus_prevented_kWh);
+            }
         }
     }
 

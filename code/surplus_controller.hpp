@@ -32,14 +32,15 @@ namespace surplus {
         static bool initialized; ///< Flag indicating if singleton has been initialized
         
         // Data storage
-        std::unordered_map<unsigned long, std::vector<double>> unit_charge_requests; ///< Charge requests per unit ID for all timesteps
+        std::unordered_map<unsigned long, std::vector<double>> unit_charge_requests_kW; ///< Charge requests per unit ID for all timesteps in frequency
+        std::unordered_map<unsigned long, std::vector<double>> unit_discharge_requests_kW; ///< Discharge requests per unit ID for all timesteps in horizon
         unsigned long last_optimization_ts;     ///< Last timestep when optimization was executed
         unsigned int optimization_frequency_ts; ///< Frequency of optimization in timesteps 
         unsigned int lookahead_horizon_ts;      ///< Lookahead horizon in timesteps for optimization
         bool enabled;                          ///< Whether surplus controller is enabled
         bool bess_knowledge;                    ///< Whether the surplus controller has knowledge of the state of charge and current power for all control units for all timesteps in the horizon
 
-        std::vector<double> future_surplus_log; ///< Log of future surplus for analysis, TODO: remove later
+        std::vector<double> future_surplus_log; ///< Log of future surplus for analysis, inefficient, only for debugging
         
         // Simulation parameters required for running the optimization
         CUControllerThreadGroupManager* thread_manager; 
@@ -58,7 +59,7 @@ namespace surplus {
          */
         static SurplusController& GetInstance();
 
-        static double GetFutureSurplusLog(unsigned long ts); ///< Get logged future surplus for a specific timestep in the horizon, just for analysis, TODO: remove later
+        static double GetFutureSurplusLog(unsigned long ts); ///< Get logged future surplus for a specific timestep in the horizon, just for analysis and debugging
         
         /**
          * @brief Initialize the singleton instance
@@ -111,23 +112,37 @@ namespace surplus {
          * of surplus energy allocated to this unit at the time step the surplus controller knows as current one.
          */
         double GetChargeRequest(unsigned long unit_id) const;
+        /**
+         * @brief Get the optimized discharge request for a specific control unit
+         * @param unit_id The unitID of the control unit
+         * @return The discharge request value for the unit, or 0.0 if not found
+         * 
+         * Retrieves the current optimized discharge request for the specified control unit.
+         */
+        double GetDischargeRequest(unsigned long unit_id) const;
 
         // Static convenience methods 
         /**
-         * @brief Get the total surplus energy scheduled to batteries
+         * @brief Get the total surplus energy scheduled to charge batteries
          * @return The total surplus energy scheduled to batteries across all units in the current time step
          */
         static double GetScheduledSurplusToBESS();
+        /**
+         * @brief Get the total surplus energy scheduled to discharge batteries to use for units consumption and prevent grid demand.
+         * @return The total discharge energy scheduled across all units in the current time step
+         */
+        static double GetScheduledSurplusToUnit();
 
         /**
          * @brief Get the total surplus energy actually allocated to batteries
-         * @return The total surplus energy allocated to batteries across all units in the current time step
+         * @return The total surplus energy allocated to batteries across all units in the current time step. Includes both charge and discharge.
          */
         static double GetActualSurplusToBESS();
 
         // TODO: just for analysis, very inefficient, remove later
         static double GetBESSChargeRequest();
         static double GetBESSLoad();
+        static double GetBESSSurplusEnergy();
         
         /**
          * @brief Static convenience method to get charge request for a unit
@@ -138,6 +153,16 @@ namespace surplus {
          * singleton instance. Provides convenient access for ControlUnit objects.
          */
         static double GetChargeRequestForUnit(unsigned long unit_id);
+
+        /**
+         * @brief Static convenience method to get discharge request for a unit
+         * @param unit_id The unitID of the control unit
+         * @return The discharge request value for the unit, or 0.0 if not found
+         * 
+         * Static wrapper around GetDischargeRequest() that automatically uses the
+         * singleton instance. Provides convenient access for ControlUnit objects.
+         */
+        static double GetDischargeRequestForUnit(unsigned long unit_id);
         
         // Internal methods
         /**

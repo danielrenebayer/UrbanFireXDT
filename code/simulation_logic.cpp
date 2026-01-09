@@ -98,16 +98,16 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
             }
         }
 #endif
-        // Surplus controller
+        // Surplus controller: Shift data every timestep
+        surplus_controller.ShiftTimeSeriesData();
+        
+        // Surplus controller: Run optimization if needed
         if (surplus_controller.ShouldRunOptimization(ts)) {
             if (!surplus_controller.ExecuteOptimization(ts)) {
                 std::cerr << "Error: Surplus controller optimization failed at timestep " << ts << std::endl;
                 surplus::SurplusController::Cleanup();
                 return false;
             }
-        } else {
-            // If the controller isn't required to run, shift the data structure values accordingly by one time step
-            surplus_controller.ShiftTimeSeriesData();
         }
 
         // execute one step
@@ -279,7 +279,7 @@ bool simulation::oneStep(const unsigned long ts,
             *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSSurplusEnergy() ) << ",";
             *(output::surplus_output) << round_float_5( surplus::SurplusController::GetFutureSurplusLog(ts) ) << ",";
             *(output::surplus_output) << round_float_5( total_load ) << "\n";
-    }
+        }
 
     // Write total_load to output parameter if provided
     if (out_total_load != NULL) {
