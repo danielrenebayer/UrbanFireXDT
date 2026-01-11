@@ -200,6 +200,7 @@ bool Global::surplus_controller_enabled      = false;
 uint Global::surplus_controller_frequency_ts = 24;
 uint Global::surplus_controller_lookahead_horizon_ts = 24;
 bool Global::surplus_controller_BESS_knowledge = true;
+global::SurplusControllerAllocationStrategy Global::surplus_controller_allocation_strategy = global::SurplusControllerAllocationStrategy::sequential;
 string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
 //
@@ -1311,6 +1312,13 @@ void Global::set_surplus_controller_BESS_knowledge(bool value) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
         Global::surplus_controller_BESS_knowledge = value;
+    }
+}
+void Global::set_surplus_controller_allocation_strategy(global::SurplusControllerAllocationStrategy strategy) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_allocation_strategy = strategy;
     }
 }
 void Global::set_exp_pv_static_profile_orientation(std::string* value) {

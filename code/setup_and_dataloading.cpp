@@ -454,6 +454,19 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_surplus_controller_BESS_knowledge( scenario_dict.get_value<bool>() );
             }
+            else if ( element_name.compare("surplus controller allocation strategy")          == 0 )
+            {
+                string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
+                if (selection == "sequential") {
+                    Global::set_surplus_controller_allocation_strategy( global::SurplusControllerAllocationStrategy::sequential );
+                } else if (selection == "peak") {
+                    Global::set_surplus_controller_allocation_strategy( global::SurplusControllerAllocationStrategy::peak );
+                } else {
+                    cerr << "Parameter 'surplus controller allocation strategy' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'surplus controller allocation strategy' as defined in config-json is unknown.");
+                }
+            }
             else if ( element_name.compare("id") == 0 )
             {}
             else if ( element_name.starts_with("comment"))

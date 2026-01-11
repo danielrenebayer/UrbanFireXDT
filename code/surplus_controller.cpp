@@ -14,7 +14,7 @@ namespace surplus
     bool SurplusController::initialized = false;
 
     SurplusController::SurplusController()
-        : last_optimization_ts(0), optimization_frequency_ts(Global::get_surplus_controller_frequency_ts()), lookahead_horizon_ts(Global::get_surplus_controller_lookahead_horizon_ts()), enabled(Global::get_surplus_controller_enabled()), bess_knowledge(Global::get_surplus_controller_BESS_knowledge()), thread_manager(nullptr), output_prefix("")
+        : last_optimization_ts(0), optimization_frequency_ts(Global::get_surplus_controller_frequency_ts()), lookahead_horizon_ts(Global::get_surplus_controller_lookahead_horizon_ts()), enabled(Global::get_surplus_controller_enabled()), bess_knowledge(Global::get_surplus_controller_BESS_knowledge()), allocation_strategy(Global::get_surplus_controller_allocation_strategy()), thread_manager(nullptr), output_prefix("")
     {
     }
 
@@ -147,192 +147,351 @@ namespace surplus
         grid_demand_kWh = lookahead_result.grid_demand_kWh;
 
         // B: Calculate surplus allocation
-        for (unsigned long ts = ts_horizon_start; ts <= ts_optimization_end; ++ts)
+
+        // Two strategies available:
+        // 1) Sequential: Go through all charging timesteps in order, throgh all discharging timesteps in order, through all units randomly. Therefore three nested for loops
+        // 2) Peak: Sort charging timesteps by highest surplus first, sort discharging timesteps by highest demand first, try allocation for as many random units as one suceeds.
+        //          Repeat processing this triples in a loop until any surplus got allocated, then re-sort everything
+
+        // Following vars only needed for greedy but tracking allocation loop in peak strategy
+        // Track which units tried for each (surplus_ts, future_ts) pair. If all units have benn tried for a pair, it is exhausted and won't be selected again
+        // This is necessary as we don't nececarry process a pair in one go
+        std::map<unsigned long, std::map<unsigned long, std::set<unsigned long>>> tried_units_per_pair;
+        // If on allocation was successful, this is switched to true and used as break-condition to re-sort everything in peak strategy
+        bool succesfulAllocation = false;
+
+        // This while loop is only for peak strategy re-evaluation, it is executed just once in sequential strategy
+        while (true)
         {
-            if (total_load_kWh[ts - ts_horizon_start] >= 0.0)
+
+            // Determine surplus timestep order based on strategy (re-evaluated each iteration for peak strategy)
+            std::vector<unsigned long> surplus_ts_order;
+            if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak)
             {
-                continue; // No surplus to allocate in this timestep, continue with next timestep
+                // Peak strategy: Sort surplus timesteps by surplus amount (highest surplus = most negative total_load first)
+                for (unsigned long ts = ts_horizon_start; ts <= ts_optimization_end; ++ts)
+                {
+                    // Skip if no surplus
+                    if (total_load_kWh[ts - ts_horizon_start] >= 0.0)
+                        continue;
+
+                    // Check if this charging timestep is exhausted (all future_ts pairs have all units tried)
+                    for (unsigned long future_ts = ts + 1; future_ts <= ts_horizon_end; ++future_ts)
+                    {
+                        // If this pair hasn't tried all units yet, surplus is not exhausted. Add to list.
+                        if (tried_units_per_pair[ts][future_ts].size() < units_with_bs.size())
+                        {
+                            surplus_ts_order.push_back(ts);
+                            break;
+                        }
+                    }
+                }
+
+                // End loop if all allocation possibilities have been tried
+                if (surplus_ts_order.empty())
+                {
+                    break;
+                }
+
+                // Sort by total_load_kWh ascending (most negative = highest surplus first)
+                std::sort(surplus_ts_order.begin(), surplus_ts_order.end(),
+                          [&total_load_kWh, ts_horizon_start](unsigned long a, unsigned long b)
+                          {
+                              return total_load_kWh[a - ts_horizon_start] < total_load_kWh[b - ts_horizon_start];
+                          });
+
+                // only sort again if one allocation was successfull
+                succesfulAllocation = false;
+            }
+            else
+            {
+                // Sequential strategy: Iterate in temporal order (single pass, all timesteps)
+                for (unsigned long ts = ts_horizon_start; ts <= ts_optimization_end; ++ts)
+                {
+                    if (total_load_kWh[ts - ts_horizon_start] < 0.0)
+                    {
+                        surplus_ts_order.push_back(ts);
+                    }
+                }
             }
 
-            // Iteratively allocate surplus energy to battery for replacing future demand
-            // Iterate future timesteps first to prioritize closer demands
-            for (unsigned long future_ts = ts + 1; future_ts <= ts_horizon_end; ++future_ts)
+            // Iterates through all surplus timesteps in order determined above
+            for (unsigned long ts : surplus_ts_order)
             {
 
-                // Break if all surplus has been consumed
+                // Check if this timestep still has surplus (only needed in sequential strategy)
                 if (total_load_kWh[ts - ts_horizon_start] >= 0.0)
                 {
-                    break; // No more surplus to allocate in this timestep
+                    continue;
                 }
 
-                // Skip if this future timestep is already in surplus
-                if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0)
+                // Determine allocation order for future timesteps based on strategy
+                std::vector<unsigned long> future_ts_order;
+                if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak)
                 {
-                    continue; // this future timestep is already in surplus
+                    // Peak strategy: Sort future timesteps by demand (highest first), excluding exhausted pairs
+                    for (unsigned long future_ts = ts + 1; future_ts <= ts_horizon_end; ++future_ts)
+                    {
+                        // Skip if this (ts, future_ts) pair is exhausted (all units tried)
+                        if (tried_units_per_pair[ts][future_ts].size() == units_with_bs.size())
+                        {
+                            continue;
+                        }
+                        // Skip if already in surplus
+                        if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0)
+                        {
+                            // Mark so that this charging-timestep won't be selected again if all future_ts are in surplus
+                            tried_units_per_pair[ts][future_ts] = std::set<unsigned long>(units_with_bs.begin(), units_with_bs.end());
+                            continue;
+                        }
+                        // Else add to list
+                        future_ts_order.push_back(future_ts);
+                    }
+                    // Sort by total_load_kWh descending (highest demand = most positive value)
+                    std::sort(future_ts_order.begin(), future_ts_order.end(),
+                              [&total_load_kWh, ts_horizon_start](unsigned long a, unsigned long b)
+                              {
+                                  return total_load_kWh[a - ts_horizon_start] > total_load_kWh[b - ts_horizon_start];
+                              });
+                }
+                else
+                {
+                    // Sequential strategy: Iterate in temporal order
+                    for (unsigned long future_ts = ts + 1; future_ts <= ts_horizon_end; ++future_ts)
+                    {
+                        future_ts_order.push_back(future_ts);
+                    }
                 }
 
-                // Randomize units_with_bs order for fairness at each future timestep
-                static std::mt19937 rng(Global::is_seed_set() ? Global::get_seed() : std::random_device{}());
-                std::shuffle(units_with_bs.begin(), units_with_bs.end(), rng);
-
-                for (auto unit_id : units_with_bs)
+                // Iteratively allocate surplus energy to battery for replacing future demand
+                for (unsigned long future_ts : future_ts_order)
                 {
-
-                    // Breaking conditions for allocation loop (End this timestep - no more surplus)
+                    // Break if all surplus has been consumed (only needed in sequential strategy)
                     if (total_load_kWh[ts - ts_horizon_start] >= 0.0)
                     {
                         break; // No more surplus to allocate in this timestep
                     }
+
+                    // Skip if this future timestep is already in surplus (only needed in sequential strategy)
                     if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0)
                     {
-                        break; // this future timestep is already in surplus
+                        continue; // this future timestep is already in surplus
                     }
 
-                    // Continue conditions (Skip this unit for this future_ts)
-                    if (bs_power_kW[unit_id][ts - ts_horizon_start] >= bs_max_charge_kWh[unit_id] / Global::get_time_step_size_in_h())
+                    // Prepare unit list based on strategy
+                    std::vector<unsigned long> units_to_try;
+                    static std::mt19937 rng(Global::is_seed_set() ? Global::get_seed() : std::random_device{}());
+                    if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak)
                     {
-                        continue; // No more power capacity left to charge in this timestep
-                    }
-                    if (grid_demand_kWh[unit_id][future_ts - ts_horizon_start] == 0.0)
-                    {
-                        continue; // no demand to prevent at this future timestep
-                    }
-
-                    // Grid demand this future timestep (what should be replaced by charging now)
-                    // This var is further limited to all constraints. It always represents energy in kWh on grid side!
-                    double demand_this_ts = grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
-
-                    // Limit demand to available BESS power at discharging timestep
-                    // The unit should not be both drawing from grid and charging BESS at the same time (would be grid charging, which is not allowed)
-                    if (bs_power_kW[unit_id][future_ts - ts_horizon_start] > 0.0)
-                    {
-                        // auto debug_bs_power = bs_power_kW[unit_id][future_ts - ts_horizon_start];
-                        // auto debug_grid_demand = grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
-                        std::cerr << "SurplusController Optimization Error: Unit " << unit_id << " has grid demand and charging BESS at ts " << future_ts << std::endl;
-                        return false;
-                    }
-                    double max_demand_from_discharge_power = bs_max_charge_kWh[unit_id] + bs_power_kW[unit_id][future_ts - ts_horizon_start] * Global::get_time_step_size_in_h();
-                    demand_this_ts = std::min(demand_this_ts, max_demand_from_discharge_power);
-
-                    // Consider self-discharge: battery must store more to compensate for self-discharge over time
-                    demand_this_ts = demand_this_ts / pow(1 - self_discharge_rate, future_ts - ts);
-
-                    // This accounts for losses during charging (efficiency_in) and discharging (efficiency_out)
-                    // Efficiency losses are only considered for what is charged from grid into the battery. If the battery initially discharges, no efficiency loss is considered for the part that just prevents this discharge.
-                    // demand_this_ts is now slittet into the two parts demand_prevent_discharge_kWh and demand_stored_kWh seperately, both in grid energy terms.
-                    // Both energy levels are from now on stored into this BESS (either charged or prevented discharge), but only demand_stored_kWh causes efficiency losses.
-                    double demand_prevent_discharge_kWh = 0.0;
-                    double demand_stored_kWh = 0.0;
-                    if (bs_power_kW[unit_id][ts - ts_horizon_start] < 0.0)
-                    {
-                        demand_prevent_discharge_kWh = std::min((-bs_power_kW[unit_id][ts - ts_horizon_start] * Global::get_time_step_size_in_h()), demand_this_ts);
-                        demand_stored_kWh = demand_this_ts - demand_prevent_discharge_kWh;
+                        // Peak strategy: Find all untried units for this (ts, future_ts) pair
+                        for (auto unit_id : units_with_bs)
+                        {
+                            if (tried_units_per_pair[ts][future_ts].count(unit_id) == 0)
+                            {
+                                units_to_try.push_back(unit_id);
+                            }
+                        }
                     }
                     else
                     {
-                        demand_stored_kWh = demand_this_ts;
+                        // Sequential strategy: Try all units 
+                        units_to_try = units_with_bs;
                     }
-                    // Efficiency losses only apply to the part that is actually charged from grid
-                    demand_stored_kWh = demand_stored_kWh / (efficiency_in * efficiency_out);
-
-                    // Limit demand to available BESS power at charging timestep, subtract if currently discharging
-                    demand_stored_kWh = std::min({demand_stored_kWh, bs_max_charge_kWh[unit_id], bs_max_charge_kWh[unit_id] - bs_power_kW[unit_id][ts - ts_horizon_start] * Global::get_time_step_size_in_h()});
-
-                    // Limit demand to current surplus
-                    demand_prevent_discharge_kWh = std::min(demand_prevent_discharge_kWh, -total_load_kWh[ts - ts_horizon_start]);
-                    demand_stored_kWh = std::min(demand_stored_kWh, -total_load_kWh[ts - ts_horizon_start] - demand_prevent_discharge_kWh);
-
-                    // Limit demand, so that no surplus is created / increased at future timestep
-                    double future_total_load_if_full_demand = total_load_kWh[future_ts - ts_horizon_start] - (demand_prevent_discharge_kWh + demand_stored_kWh * efficiency_in * efficiency_out) * pow(1 - self_discharge_rate, future_ts - ts);
-                    if (future_total_load_if_full_demand < 0.0)
+                    // Shuffle for fairness
+                    if (!units_to_try.empty())
                     {
-                        double excess_energy_kWh = -future_total_load_if_full_demand;
-                        // Reduce demand_stored first
-                        double stored_energy_at_grid_kWh = demand_stored_kWh * efficiency_in * efficiency_out * pow(1 - self_discharge_rate, future_ts - ts);
-                        if (stored_energy_at_grid_kWh >= excess_energy_kWh)
+                        std::shuffle(units_to_try.begin(), units_to_try.end(), rng);
+                    }
+
+                    // Iterate over these units
+                    for (auto unit_id : units_to_try)
+                    {
+                        // Mark this unit as tried for this pair immediately (peak strategy tracking)
+                        if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak)
                         {
-                            // Can handle by reducing stored only
-                            double reduced_stored_energy_at_grid_kWh = stored_energy_at_grid_kWh - excess_energy_kWh;
-                            demand_stored_kWh = reduced_stored_energy_at_grid_kWh / (efficiency_in * efficiency_out * pow(1 - self_discharge_rate, future_ts - ts));
+                            tried_units_per_pair[ts][future_ts].insert(unit_id);
+                        }
+
+                        // Breaking conditions for allocation loop (End this timestep - no more surplus) (only needed in sequential strategy)
+                        if (total_load_kWh[ts - ts_horizon_start] >= 0.0)
+                        {
+                            break; // No more surplus to allocate in this timestep
+                        }
+                        if (total_load_kWh[future_ts - ts_horizon_start] <= 0.0)
+                        {
+                            break; // this future timestep is already in surplus
+                        }
+
+                        // Continue conditions (Skip this unit for this future_ts)
+                        if (bs_power_kW[unit_id][ts - ts_horizon_start] >= bs_max_charge_kWh[unit_id] / Global::get_time_step_size_in_h())
+                        {
+                            continue; // No more power capacity left to charge in this timestep
+                        }
+                        if (grid_demand_kWh[unit_id][future_ts - ts_horizon_start] == 0.0)
+                        {
+                            continue; // no demand to prevent at this future timestep
+                        }
+
+                        // Grid demand this future timestep (what should be replaced by charging now)
+                        // This var is further limited to all constraints. It always represents energy in kWh on grid side!
+                        double demand_this_ts = grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
+
+                        // Limit demand to available BESS power at discharging timestep
+                        // The unit should not be both drawing from grid and charging BESS at the same time (would be grid charging, which is not allowed)
+                        if (bs_power_kW[unit_id][future_ts - ts_horizon_start] > 0.0)
+                        {
+                            // auto debug_bs_power = bs_power_kW[unit_id][future_ts - ts_horizon_start];
+                            // auto debug_grid_demand = grid_demand_kWh[unit_id][future_ts - ts_horizon_start];
+                            std::cerr << "SurplusController Optimization Error: Unit " << unit_id << " has grid demand and charging BESS at ts " << future_ts << std::endl;
+                            return false;
+                        }
+                        double max_demand_from_discharge_power = bs_max_charge_kWh[unit_id] + bs_power_kW[unit_id][future_ts - ts_horizon_start] * Global::get_time_step_size_in_h();
+                        demand_this_ts = std::min(demand_this_ts, max_demand_from_discharge_power);
+
+                        // Consider self-discharge: battery must store more to compensate for self-discharge over time
+                        demand_this_ts = demand_this_ts / pow(1 - self_discharge_rate, future_ts - ts);
+
+                        // This accounts for losses during charging (efficiency_in) and discharging (efficiency_out)
+                        // Efficiency losses are only considered for what is charged from grid into the battery. If the battery initially discharges, no efficiency loss is considered for the part that just prevents this discharge.
+                        // demand_this_ts is now slittet into the two parts demand_prevent_discharge_kWh and demand_stored_kWh seperately, both in grid energy terms.
+                        // Both energy levels are from now on stored into this BESS (either charged or prevented discharge), but only demand_stored_kWh causes efficiency losses.
+                        double demand_prevent_discharge_kWh = 0.0;
+                        double demand_stored_kWh = 0.0;
+                        if (bs_power_kW[unit_id][ts - ts_horizon_start] < 0.0)
+                        {
+                            demand_prevent_discharge_kWh = std::min((-bs_power_kW[unit_id][ts - ts_horizon_start] * Global::get_time_step_size_in_h()), demand_this_ts);
+                            demand_stored_kWh = demand_this_ts - demand_prevent_discharge_kWh;
                         }
                         else
                         {
-                            // Need to reduce both: stored to zero, and reduce prevent_discharge
-                            demand_stored_kWh = 0.0;
-                            double remaining_excess_kWh = excess_energy_kWh - stored_energy_at_grid_kWh;
-                            demand_prevent_discharge_kWh = std::max(0.0, demand_prevent_discharge_kWh - remaining_excess_kWh / pow(1 - self_discharge_rate, future_ts - ts));
+                            demand_stored_kWh = demand_this_ts;
                         }
-                    }
+                        // Efficiency losses only apply to the part that is actually charged from grid
+                        demand_stored_kWh = demand_stored_kWh / (efficiency_in * efficiency_out);
 
-                    // Limit demand to available capacity in BESS at all timesteps between charging and discharging
-                    for (unsigned long intermediate_ts = ts; intermediate_ts < future_ts; ++intermediate_ts)
-                    {
-                        double intermediate_left_capacity_kWh = bs_capacity_kWh[unit_id] - bs_stored_energy_kWh[unit_id][intermediate_ts - ts_horizon_start];
-                        // Calculate battery energy from both parts: prevent needs /eff_out (stays in battery), stored needs *eff_in (charged from grid)
-                        double battery_energy_at_ts = demand_prevent_discharge_kWh / efficiency_out + demand_stored_kWh * efficiency_in;
-                        double energy_at_intermediate = battery_energy_at_ts * pow(1 - self_discharge_rate, intermediate_ts - ts);
+                        // Limit demand to available BESS power at charging timestep, subtract if currently discharging
+                        demand_stored_kWh = std::min({demand_stored_kWh, bs_max_charge_kWh[unit_id], bs_max_charge_kWh[unit_id] - bs_power_kW[unit_id][ts - ts_horizon_start] * Global::get_time_step_size_in_h()});
 
-                        if (energy_at_intermediate > intermediate_left_capacity_kWh)
+                        // Limit demand to current surplus
+                        demand_prevent_discharge_kWh = std::min(demand_prevent_discharge_kWh, -total_load_kWh[ts - ts_horizon_start]);
+                        demand_stored_kWh = std::min(demand_stored_kWh, -total_load_kWh[ts - ts_horizon_start] - demand_prevent_discharge_kWh);
+
+                        // Limit demand, so that no surplus is created / increased at future timestep
+                        double future_total_load_if_full_demand = total_load_kWh[future_ts - ts_horizon_start] - (demand_prevent_discharge_kWh + demand_stored_kWh * efficiency_in * efficiency_out) * pow(1 - self_discharge_rate, future_ts - ts);
+                        if (future_total_load_if_full_demand < 0.0)
                         {
-                            // Reduce demand to fit capacity - prioritize reducing newely stored energy
-                            double max_battery_energy_at_ts = intermediate_left_capacity_kWh / pow(1 - self_discharge_rate, intermediate_ts - ts);
-                            double excess_energy = battery_energy_at_ts - max_battery_energy_at_ts;
-
-                            // First reduce demand_stored
-                            double stored_battery_energy = demand_stored_kWh * efficiency_in;
-                            if (stored_battery_energy >= excess_energy)
+                            double excess_energy_kWh = -future_total_load_if_full_demand;
+                            // Reduce demand_stored first
+                            double stored_energy_at_grid_kWh = demand_stored_kWh * efficiency_in * efficiency_out * pow(1 - self_discharge_rate, future_ts - ts);
+                            if (stored_energy_at_grid_kWh >= excess_energy_kWh)
                             {
                                 // Can handle by reducing stored only
-                                demand_stored_kWh = (stored_battery_energy - excess_energy) / efficiency_in;
+                                double reduced_stored_energy_at_grid_kWh = stored_energy_at_grid_kWh - excess_energy_kWh;
+                                demand_stored_kWh = reduced_stored_energy_at_grid_kWh / (efficiency_in * efficiency_out * pow(1 - self_discharge_rate, future_ts - ts));
                             }
                             else
                             {
                                 // Need to reduce both: stored to zero, and reduce prevent_discharge
                                 demand_stored_kWh = 0.0;
-                                demand_prevent_discharge_kWh = max_battery_energy_at_ts * efficiency_out;
+                                double remaining_excess_kWh = excess_energy_kWh - stored_energy_at_grid_kWh;
+                                demand_prevent_discharge_kWh = std::max(0.0, demand_prevent_discharge_kWh - remaining_excess_kWh / pow(1 - self_discharge_rate, future_ts - ts));
                             }
-                            demand_this_ts = demand_prevent_discharge_kWh + demand_stored_kWh;
                         }
-                    }
 
-                    // Sum back to total demand of this future timestep
-                    demand_this_ts = demand_prevent_discharge_kWh + demand_stored_kWh;
-
-                    // Update data structures to propagate changes
-                    if (demand_this_ts > 0.0)
-                    {
-                        // Save charge request if in this control period (convert from kWh to kW)
-                        if (ts <= ts_optimization_end)
-                        {
-                            unit_charge_requests_kW[unit_id][ts - ts_horizon_start] += demand_this_ts / Global::get_time_step_size_in_h();
-                        }
-                        // Storage energy update: compute battery energy from both parts
-                        double battery_energy_charged_kWh = demand_prevent_discharge_kWh / efficiency_out + demand_stored_kWh * efficiency_in;
+                        // Limit demand to available capacity in BESS at all timesteps between charging and discharging
                         for (unsigned long intermediate_ts = ts; intermediate_ts < future_ts; ++intermediate_ts)
                         {
-                            // Apply self-discharge to battery energy
-                            double energy_at_intermediate_ts = battery_energy_charged_kWh * pow(1 - self_discharge_rate, intermediate_ts - ts);
-                            bs_stored_energy_kWh[unit_id][intermediate_ts - ts_horizon_start] += energy_at_intermediate_ts;
+                            double intermediate_left_capacity_kWh = bs_capacity_kWh[unit_id] - bs_stored_energy_kWh[unit_id][intermediate_ts - ts_horizon_start];
+                            // Calculate battery energy from both parts: prevent needs /eff_out (stays in battery), stored needs *eff_in (charged from grid)
+                            double battery_energy_at_ts = demand_prevent_discharge_kWh / efficiency_out + demand_stored_kWh * efficiency_in;
+                            double energy_at_intermediate = battery_energy_at_ts * pow(1 - self_discharge_rate, intermediate_ts - ts);
+
+                            if (energy_at_intermediate > intermediate_left_capacity_kWh)
+                            {
+                                // Reduce demand to fit capacity - prioritize reducing newely stored energy
+                                double max_battery_energy_at_ts = intermediate_left_capacity_kWh / pow(1 - self_discharge_rate, intermediate_ts - ts);
+                                double excess_energy = battery_energy_at_ts - max_battery_energy_at_ts;
+
+                                // First reduce demand_stored
+                                double stored_battery_energy = demand_stored_kWh * efficiency_in;
+                                if (stored_battery_energy >= excess_energy)
+                                {
+                                    // Can handle by reducing stored only
+                                    demand_stored_kWh = (stored_battery_energy - excess_energy) / efficiency_in;
+                                }
+                                else
+                                {
+                                    // Need to reduce both: stored to zero, and reduce prevent_discharge
+                                    demand_stored_kWh = 0.0;
+                                    demand_prevent_discharge_kWh = max_battery_energy_at_ts * efficiency_out;
+                                }
+                                demand_this_ts = demand_prevent_discharge_kWh + demand_stored_kWh;
+                            }
                         }
 
-                        // Calculate what comes out of battery at discharge timestep (with self-discharge and discharge efficiency)
-                        double energy_discharged_to_grid_kWh = battery_energy_charged_kWh * pow(1 - self_discharge_rate, future_ts - ts) * efficiency_out;
+                        // Sum back to total demand of this future timestep
+                        demand_this_ts = demand_prevent_discharge_kWh + demand_stored_kWh;
 
-                        // Save discharge request for the full horizon (convert from kWh to kW)
-                        unit_discharge_requests_kW[unit_id][future_ts - ts_horizon_start] += energy_discharged_to_grid_kWh / Global::get_time_step_size_in_h();
+                        // Update data structures to propagate changes if any demand allocated
+                        if (demand_this_ts > 0.0)
+                        {
+                            // Save charge request if in this control period (convert from kWh to kW)
+                            if (ts <= ts_optimization_end)
+                            {
+                                unit_charge_requests_kW[unit_id][ts - ts_horizon_start] += demand_this_ts / Global::get_time_step_size_in_h();
+                            }
+                            // Storage energy update: compute battery energy from both parts
+                            double battery_energy_charged_kWh = demand_prevent_discharge_kWh / efficiency_out + demand_stored_kWh * efficiency_in;
+                            for (unsigned long intermediate_ts = ts; intermediate_ts < future_ts; ++intermediate_ts)
+                            {
+                                // Apply self-discharge to battery energy
+                                double energy_at_intermediate_ts = battery_energy_charged_kWh * pow(1 - self_discharge_rate, intermediate_ts - ts);
+                                bs_stored_energy_kWh[unit_id][intermediate_ts - ts_horizon_start] += energy_at_intermediate_ts;
+                            }
 
-                        // Storage power update at charging timestep (grid side)
-                        bs_power_kW[unit_id][ts - ts_horizon_start] += demand_this_ts / Global::get_time_step_size_in_h();
-                        // Storage power update at discharging timestep (grid side)
-                        bs_power_kW[unit_id][future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh / Global::get_time_step_size_in_h();
-                        // Update total load at charging timestep
-                        total_load_kWh[ts - ts_horizon_start] += demand_this_ts;
-                        // Update total load at discharging timestep
-                        total_load_kWh[future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh;
-                        // Update grid demand at discharging timestep
-                        grid_demand_kWh[unit_id][future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh;
+                            // Calculate what comes out of battery at discharge timestep (with self-discharge and discharge efficiency)
+                            double energy_discharged_to_grid_kWh = battery_energy_charged_kWh * pow(1 - self_discharge_rate, future_ts - ts) * efficiency_out;
+
+                            // Save discharge request for the full horizon (convert from kWh to kW)
+                            unit_discharge_requests_kW[unit_id][future_ts - ts_horizon_start] += energy_discharged_to_grid_kWh / Global::get_time_step_size_in_h();
+
+                            // Storage power update at charging timestep (grid side)
+                            bs_power_kW[unit_id][ts - ts_horizon_start] += demand_this_ts / Global::get_time_step_size_in_h();
+                            // Storage power update at discharging timestep (grid side)
+                            bs_power_kW[unit_id][future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh / Global::get_time_step_size_in_h();
+                            // Update total load at charging timestep
+                            total_load_kWh[ts - ts_horizon_start] += demand_this_ts;
+                            // Update total load at discharging timestep
+                            total_load_kWh[future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh;
+                            // Update grid demand at discharging timestep
+                            grid_demand_kWh[unit_id][future_ts - ts_horizon_start] -= energy_discharged_to_grid_kWh;
+
+                            // Peak strategy: After one successful allocation, break to re-sort and pick new peaks. Therefore we mark the succesfull allocation here.
+                            succesfulAllocation = true;
+                        }
+                        // In peak mode, loop until one allocation was successful (then re-sort) - Unit level
+                        if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak && succesfulAllocation)
+                        {
+                            break;
+                        }
+                    }
+                    // In peak mode, loop until one allocation was successful (then re-sort) - Future (Discharging) TS level
+                    if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak && succesfulAllocation)
+                    {
+                        break;
                     }
                 }
+                // In peak mode, loop until one allocation was successful (then re-sort) - Current (Charging) TS level
+                if (allocation_strategy == global::SurplusControllerAllocationStrategy::peak && succesfulAllocation)
+                {
+                    break;
+                }
+            }
+
+            // For sequential strategy, process only once (no re-sorting)
+            if (allocation_strategy != global::SurplusControllerAllocationStrategy::peak)
+            {
+                break;
             }
         }
 
@@ -474,6 +633,7 @@ namespace surplus
         lookahead_horizon_ts = Global::get_surplus_controller_lookahead_horizon_ts();
         enabled = Global::get_surplus_controller_enabled();
         bess_knowledge = Global::get_surplus_controller_BESS_knowledge();
+        allocation_strategy = Global::get_surplus_controller_allocation_strategy();
     }
 
     LookaheadResult SurplusController::LookaheadSimulation(unsigned long ts_horizon_start, unsigned long ts_horizon_end)

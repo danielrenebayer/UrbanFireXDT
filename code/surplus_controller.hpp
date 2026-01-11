@@ -39,6 +39,7 @@ namespace surplus {
         unsigned int lookahead_horizon_ts;      ///< Lookahead horizon in timesteps for optimization
         bool enabled;                          ///< Whether surplus controller is enabled
         bool bess_knowledge;                    ///< Whether the surplus controller has knowledge of the state of charge and current power for all control units for all timesteps in the horizon
+        global::SurplusControllerAllocationStrategy allocation_strategy; ///< The allocation strategy used by the surplus controller
 
         std::vector<double> future_surplus_log; ///< Log of future surplus for analysis, inefficient, only for debugging
         
