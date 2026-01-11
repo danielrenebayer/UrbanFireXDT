@@ -10,4 +10,5 @@ data/*
 .ipynb_checkpoints/
 *.code-workspace
 .venv/
-tools/
+tools/*
+tools
