@@ -232,9 +232,9 @@ class Global {
         static bool get_stop_on_cc_err()       { return stop_on_cc_err; } ///< Stores the value of command line option 'stop_on_cc_err'. True, if the simulation execution should be stopped on if an computation error occurs inside an optimization-based controller in any control unit.
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
-        static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
+        static unsigned int  get_tsteps_per_hour()       { return tsteps_per_hour;       }
+        static float         get_time_step_size_in_h()   { return time_step_size_in_h;   }
         static unsigned long get_expansion_scenario_id() { return expansion_scenario_id; }
-        static float get_time_step_size_in_h() { return time_step_size_in_h; }
         static bool  get_break_sac_loop_if_limit_reached() { return break_sac_loop_if_limit_reached; } //!< Returns true if the SAC loop should be stopped for an individual combination (like PV + HP) if one of the limits is reached (either PV or HP) (even though HP components should still be added)
         static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
         static float get_exp_pv_kWp_per_m2()    { return exp_pv_kWp_per_m2;      }
@@ -427,7 +427,7 @@ class Global {
         static bool stop_on_cc_err;
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
-        static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
+        static unsigned int  tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
         static unsigned long expansion_scenario_id;  ///< ID of the expansion scenario
         static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
         static bool  break_sac_loop_if_limit_reached; ///< true, if the SAC loop should be stopped for an individual combination (like PV+HP) if one of the limits is reached (either PV or HP)

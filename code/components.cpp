@@ -1230,7 +1230,7 @@ void EVFSM::preprocessTourInformation() {
             current_sTour = NULL;
             current_state = EVState::ConnectedAtHome;
         }
-        if (next_sTour != complete_tour_plan.end() && next_sTour->ts_start >= ts) {
+        if (current_sTour == NULL && next_sTour != complete_tour_plan.end() && next_sTour->ts_start <= ts) {
             current_sTour = &(*next_sTour);
             current_state = EVState::Driving;
             next_sTour++;
