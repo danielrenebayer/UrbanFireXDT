@@ -23,6 +23,14 @@ The installation procedure is described below on this page.
 ## About the repository
 
 This repository contains the code for the simulation component that is part of the digital twin for the analysis of future integrated renewable energy systems, as presented for example in [1].
+This repository implements the performance-oriented simulation including the control strategies of the presented digital twin.
+It includes:
+
+- Runtime loading of preprocessed and unified input data
+- The complete simulation engine for the units and the components
+- Optimization-based and rule-based control strategies on the ControlUnit level
+- Scenario-specific metric computation and structured output generation
+
 For details, please read the scientific publications linked below.
 This README contains all important information to compile the code and run the examples.
 Parts of this code were developed as part of the *DigiSWM* research project founded by the Bavarian State Ministry of Economic Affairs, Regional Development and Energy under grant number DIK-2103-0017 / DIK0298/02.
