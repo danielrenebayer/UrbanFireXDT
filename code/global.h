@@ -237,9 +237,9 @@ class Global {
         static bool get_stop_on_cc_err()       { return stop_on_cc_err; } ///< Stores the value of command line option 'stop_on_cc_err'. True, if the simulation execution should be stopped on if an computation error occurs inside an optimization-based controller in any control unit.
         static struct tm* get_ts_start_tm()    { return ts_start_tm;    }
         static struct tm* get_ts_end_tm()      { return ts_end_tm;    }
-        static int get_tsteps_per_hour()       { return tsteps_per_hour;    }
+        static unsigned int  get_tsteps_per_hour()       { return tsteps_per_hour;       }
+        static float         get_time_step_size_in_h()   { return time_step_size_in_h;   }
         static unsigned long get_expansion_scenario_id() { return expansion_scenario_id; }
-        static float get_time_step_size_in_h() { return time_step_size_in_h; }
         static bool  get_break_sac_loop_if_limit_reached() { return break_sac_loop_if_limit_reached; } //!< Returns true if the SAC loop should be stopped for an individual combination (like PV + HP) if one of the limits is reached (either PV or HP) (even though HP components should still be added)
         static float get_exp_pv_kWp_static()    { return exp_pv_kWp_static;      }
         static float get_exp_pv_kWp_per_m2()    { return exp_pv_kWp_per_m2;      }
@@ -282,6 +282,7 @@ class Global {
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_heat_cons_bobv_slope()               { return heat_cons_bobv_slope;        } ///< Parameter of linear regression (slope) for estimating annual heat consumption based on the building volume (bobv)
         static float get_heat_cons_bobv_intercept()           { return heat_cons_bobv_intercept;    } ///< Parameter of linear regression (intercept) for estimating annual heat consumption based on the building volume (bobv)
+        static float get_general_HP_profile_limit()           { return general_HP_profile_limit;    } ///< Returns the upper limit of the heat pump profiles -- values above this limit are just clipped. The value is defined in kW normalized to 1000 kWh (of electricity consumption) per year. Values below zero indicate that this variable is intended to have no effect..
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
         static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
@@ -383,6 +384,7 @@ class Global {
         static void set_heat_demand_thermalE_to_hpE_conv_f(float value);
         static void set_heat_cons_bobv_slope(float value);
         static void set_heat_cons_bobv_intercept(float value);
+        static void set_general_HP_profile_limit(float value);
         static void set_ev_plugin_probability(float value);
         static void set_ev_battery_size_kWh(float value);
         static void set_ev_consumption_kWh_km(float value);
@@ -444,7 +446,7 @@ class Global {
         static bool stop_on_cc_err;
         static struct tm* ts_start_tm;     ///< struct tm of the start date
         static struct tm* ts_end_tm;       ///< struct tm of the end date
-        static int tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
+        static unsigned int  tsteps_per_hour;        ///< Time steps per hour in the simulation (and the data!)
         static unsigned long expansion_scenario_id;  ///< ID of the expansion scenario
         static float time_step_size_in_h;  ///< time step size in hours, defines how long a simulation time step is in reality - attention, this global variable is set automatically by set_tsteps_per_hour, it has no own setter
         static bool  break_sac_loop_if_limit_reached; ///< true, if the SAC loop should be stopped for an individual combination (like PV+HP) if one of the limits is reached (either PV or HP)
@@ -487,6 +489,7 @@ class Global {
         static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
         static float heat_cons_bobv_slope;    ///< Parameter of linear regression (coefficient) for estimating annual heat consumption of a building based on its volume
         static float heat_cons_bobv_intercept;///< Parameter of linear regression (intercept) for estimating annual heat consumption of a building based on its volume
+        static float general_HP_profile_limit;
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
         static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
