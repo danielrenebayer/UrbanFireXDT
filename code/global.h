@@ -277,6 +277,7 @@ class Global {
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_heat_cons_bobv_slope()               { return heat_cons_bobv_slope;        } ///< Parameter of linear regression (slope) for estimating annual heat consumption based on the building volume (bobv)
         static float get_heat_cons_bobv_intercept()           { return heat_cons_bobv_intercept;    } ///< Parameter of linear regression (intercept) for estimating annual heat consumption based on the building volume (bobv)
+        static float get_general_HP_profile_limit()           { return general_HP_profile_limit;    } ///< Returns the upper limit of the heat pump profiles -- values above this limit are just clipped. The value is defined in kW normalized to 1000 kWh (of electricity consumption) per year. Values below zero indicate that this variable is intended to have no effect..
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
         static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
@@ -372,6 +373,7 @@ class Global {
         static void set_heat_demand_thermalE_to_hpE_conv_f(float value);
         static void set_heat_cons_bobv_slope(float value);
         static void set_heat_cons_bobv_intercept(float value);
+        static void set_general_HP_profile_limit(float value);
         static void set_ev_plugin_probability(float value);
         static void set_ev_battery_size_kWh(float value);
         static void set_ev_consumption_kWh_km(float value);
@@ -470,6 +472,7 @@ class Global {
         static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
         static float heat_cons_bobv_slope;    ///< Parameter of linear regression (coefficient) for estimating annual heat consumption of a building based on its volume
         static float heat_cons_bobv_intercept;///< Parameter of linear regression (intercept) for estimating annual heat consumption of a building based on its volume
+        static float general_HP_profile_limit;
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
         static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km

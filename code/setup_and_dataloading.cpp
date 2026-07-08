@@ -300,6 +300,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_heat_cons_bobv_intercept( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("general normalized heat pump profile upper clip value") == 0 )
+            {
+                Global::set_general_HP_profile_limit( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev plugin probability") == 0)
             {
                 Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
@@ -1001,7 +1005,7 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
 unsigned long callcounter_callback_HP = 0;
 int load_data_from_central_database_callback_HP(void* data, int argc, char** argv, char** colName) {
     /*
-     * This is the callback function for geeting the global heat pump profiles.
+     * This is the callback function for getting the global heat pump profiles.
      *
      * The first argument (data) holds the reference to the target array, where
      * data should be written into.
@@ -1038,7 +1042,16 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
             return 1;
         }
         size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
-        ((float**) data)[callcounter_callback_HP][pos] = stof(argv[1]);
+        // get the actual value
+        float profile_value_at_ts = stof(argv[1]);
+        // add limit for heat pump profile
+        if (Global::get_general_HP_profile_limit() > 0.0 &&
+            profile_value_at_ts > Global::get_general_HP_profile_limit()
+        ) {
+            profile_value_at_ts = Global::get_general_HP_profile_limit();
+        }
+        // set the value
+        ((float**) data)[callcounter_callback_HP][pos] = profile_value_at_ts;
     } catch (exception& e) {
         cerr << "An error happened during the parsing of the heat pump profiles.\n";
         cerr << " - More details: At time step " << callcounter_timestepID << " for time series " << callcounter_callback_HP << endl;
@@ -1793,6 +1806,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
     PRINT_VAR(Global::get_heat_cons_bobv_slope());
     PRINT_VAR(Global::get_heat_cons_bobv_intercept());
+    PRINT_VAR(Global::get_general_HP_profile_limit());
     PRINT_VAR(Global::get_ev_plugin_probability());
     PRINT_VAR(Global::get_ev_battery_size_kWh());
     PRINT_VAR(Global::get_ev_consumption_kWh_km());

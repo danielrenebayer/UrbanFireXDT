@@ -605,10 +605,9 @@ ComponentHP::ComponentHP(const ControlUnit* connected_unit, float annual_econs_k
     cweek_consumption_kWh = 0.0;
     // computation of rated power (without AUX heating mode)
     // = max of shiftable demand time series
-    // TODO: Update computation: Detect AUX heating mode
     rated_power_kW = 0.0;
     for (unsigned long tsID = 0; tsID < Global::get_n_timesteps(); tsID++) {
-        float np = profile_data[tsID] * scaling_factor;
+        float np = profile_data[tsID] * scaling_factor; // max value of profile given by Global::get_general_HP_profile_limit()
         if (np > rated_power_kW)
             rated_power_kW = np;
     }
@@ -640,7 +639,6 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
     double last_known_minE_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
         // power
-        // TODO: detect AUX heating and increase hp min and max power in these steps
         future_maxP_storage[tOffset] = rated_power_kW;
         future_minP_storage[tOffset] = 0.0;
         // energy
@@ -707,6 +705,16 @@ bool ComponentHP::setDemandToGivenValue(double new_demand_kW) {
     }
 #endif
     bool no_error = true;
+
+    // check limits
+    if (new_demand_kW > rated_power_kW) {
+        if (new_demand_kW > rated_power_kW + epsilon_hp) {
+            no_error = false;
+            std::cerr << "Warning in Component HP: requested demand of " << std::fixed << std::setprecision(3) << new_demand_kW << " kW exceeds rated power of " << std::fixed << std::setprecision(3) << rated_power_kW << " kW.\n" ;
+        }
+        new_demand_kW = rated_power_kW;
+    }
+
     double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
     //double new_total_e = total_consumption_kWh + e;
     // check, if power is within the min/max power bands

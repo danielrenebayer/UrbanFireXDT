@@ -164,6 +164,7 @@ unsigned int Global::hp_flexibility_in_ts = 1;
 float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::heat_cons_bobv_slope     = 0.0;
 float Global::heat_cons_bobv_intercept = 0.0;
+float Global::general_HP_profile_limit =-1.0;
 float Global::ev_plugin_probability   = 0.25;
 float Global::ev_battery_size_kWh    = 30.0;
 float Global::ev_consumption_kWh_km   = 0.2f;
@@ -999,6 +1000,17 @@ void Global::set_heat_cons_bobv_intercept(float value) {
         cerr << "Global variable heat_cons_bobv_intercept cannot be set at the moment!" << endl;
     } else {
         Global::heat_cons_bobv_intercept = value;
+    }
+}
+void Global::set_general_HP_profile_limit(float value) {
+    if (is_locked) {
+        cerr << "Global variable general_HP_profile_limit cannot be set at the moment!" << endl;
+    } else {
+        if (value <= 0.0 && value != 1.0) {
+            cerr << "Global variable general_HP_profile_limit cannot be set to value " << value << " (allowed range: (0.0,inf) or -1.0)" << endl;
+            return;
+        }
+        Global::general_HP_profile_limit = value;
     }
 }
 void Global::set_ev_plugin_probability(float value) {
