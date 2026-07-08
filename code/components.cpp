@@ -1440,6 +1440,12 @@ bool EVFSM::setDemandToGivenValue(double new_demand_kW) {
         }
         return true; // ignore small deviations below epsilon_ev
     }
+    if (new_demand_kW > Global::get_ev_max_charging_power_kW()) {
+        if (new_demand_kW > Global::get_ev_max_charging_power_kW() + epsilon_ev) {
+            std::cerr << "Warning: requested power for EV charging (" << std::fixed << std::setprecision(1) << new_demand_kW << " kW) exceeds the limit for car with ID " << carID << std::endl;
+        }
+        new_demand_kW = Global::get_ev_max_charging_power_kW();
+    }
     double e = new_demand_kW * Global::get_time_step_size_in_h();
     double new_total_e = sum_of_E_charged_home_kWh + e;
     // check, if the new demand is within the min/max bands
