@@ -108,6 +108,7 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | th. E to HP el. E conversion factor | float | yes  |              |                 | Factor for converting a thermal energy per building into a heat pump electricity consumption | no |
 | Heat consumption apo building V: slope     | float   | no | 0.0   | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: coef. of the linear regression) | no |
 | Heat consumption apo building V: intercept | float   | no | 0.0   | 0.0-inf         | Parameter for estimating the building heat consumption (in kWh thermal) if no data is given for a building in the data (param: intercept of the linear regression) | no |
+| general normalized heat pump profile upper clip value | float   | no | -1.0   | 0.0-inf or -1 | If set (i.e., value > 0.0), this value denotes the upper value for the clipping of the normalized heat pump profiles as read from the input database. Normalized values above this level are clipped to this level. | no |
 
 ### Group 3, Part D: Individual EV and EV charging station configuration
 
