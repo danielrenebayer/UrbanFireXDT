@@ -54,6 +54,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
         string exp_profile_mode    = ""; bool exp_profile_mode_set    = false;
         string sac_planning_mode   = ""; bool sac_planning_mode_set   = false;
         string exp_bs_P_comp_mode  = ""; bool exp_bs_P_comp_mode_set  = false;
+        // track battery efficiency parameter usage
+        bool exp_bs_effi_in_set    = false;
+        bool exp_bs_effi_out_set   = false;
+        bool exp_bs_effi_both_set  = false;
 
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
@@ -137,10 +141,19 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             else if (element_name.compare("expansion bs efficiency in")  == 0)
             {
                 Global::set_exp_bess_effi_in( scenario_dict.get_value<float>() );
+                exp_bs_effi_in_set = true;
             }
             else if (element_name.compare("expansion bs efficiency out") == 0)
             {
                 Global::set_exp_bess_effi_out( scenario_dict.get_value<float>() );
+                exp_bs_effi_out_set = true;
+            }
+            else if (element_name.compare("expansion bs efficiency in and out") == 0)
+            {
+                float effi_value = scenario_dict.get_value<float>();
+                Global::set_exp_bess_effi_in( effi_value );
+                Global::set_exp_bess_effi_out( effi_value );
+                exp_bs_effi_both_set = true;
             }
             else if (element_name.compare("expansion bs self-discharge per ts") == 0)
             {
@@ -300,6 +313,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_heat_cons_bobv_intercept( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("general normalized heat pump profile upper clip value") == 0 )
+            {
+                Global::set_general_HP_profile_limit( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev plugin probability") == 0)
             {
                 Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
@@ -420,6 +437,39 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 string value = scenario_dict.get_value<string>();
                 Global::set_cache_dir_path( &value );
+            }
+            else if ( element_name.compare("surplus controller freq in ts")               == 0 )
+            {   
+                unsigned int freq = scenario_dict.get_value<unsigned int>();
+                if (freq == 0) {
+                    freq = 1;
+                }
+                Global::set_surplus_controller_frequency_ts( freq );
+            }
+            else if ( element_name.compare("surplus controller lookahead horizon in ts")  == 0 )
+            {
+                Global::set_surplus_controller_lookahead_horizon_ts( scenario_dict.get_value<unsigned int>() );
+            }
+            else if ( element_name.compare("surplus controller enabled")               == 0 )
+            {
+                Global::set_surplus_controller_enabled( scenario_dict.get_value<bool>() );
+            }
+            else if ( element_name.compare("surplus controller bess knowledge")          == 0 )
+            {
+                Global::set_surplus_controller_BESS_knowledge( scenario_dict.get_value<bool>() );
+            }
+            else if ( element_name.compare("surplus controller allocation strategy")          == 0 )
+            {
+                string selection = scenario_dict.get_value<string>();
+                to_lowercase(selection);
+                if (selection == "sequential") {
+                    Global::set_surplus_controller_allocation_strategy( global::SurplusControllerAllocationStrategy::sequential );
+                } else if (selection == "peak") {
+                    Global::set_surplus_controller_allocation_strategy( global::SurplusControllerAllocationStrategy::peak );
+                } else {
+                    cerr << "Parameter 'surplus controller allocation strategy' is defined as '" << selection << "' in config-json, but this value is unknown." << endl;
+                    throw runtime_error("Parameter 'surplus controller allocation strategy' as defined in config-json is unknown.");
+                }
             }
             else if ( element_name.compare("id") == 0 )
             {}
@@ -615,6 +665,14 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             }
             // test end
             #endif
+        }
+
+        //
+        // Validate battery efficiency parameter usage
+        if (exp_bs_effi_both_set && (exp_bs_effi_in_set || exp_bs_effi_out_set)) {
+            cerr << "Error: Cannot use 'expansion BS efficiency in and out' together with 'expansion BS efficiency in' or 'expansion BS efficiency out'!" << endl;
+            cerr << "Please use either the combined parameter OR the individual parameters, not both." << endl;
+            throw runtime_error("Conflicting battery efficiency parameters in config-json.");
         }
 
         //
@@ -1001,7 +1059,7 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
 unsigned long callcounter_callback_HP = 0;
 int load_data_from_central_database_callback_HP(void* data, int argc, char** argv, char** colName) {
     /*
-     * This is the callback function for geeting the global heat pump profiles.
+     * This is the callback function for getting the global heat pump profiles.
      *
      * The first argument (data) holds the reference to the target array, where
      * data should be written into.
@@ -1038,7 +1096,16 @@ int load_data_from_central_database_callback_HP(void* data, int argc, char** arg
             return 1;
         }
         size_t pos = callcounter_timestepID - 1; // the current position is one behind the callcounter
-        ((float**) data)[callcounter_callback_HP][pos] = stof(argv[1]);
+        // get the actual value
+        float profile_value_at_ts = stof(argv[1]);
+        // add limit for heat pump profile
+        if (Global::get_general_HP_profile_limit() > 0.0 &&
+            profile_value_at_ts > Global::get_general_HP_profile_limit()
+        ) {
+            profile_value_at_ts = Global::get_general_HP_profile_limit();
+        }
+        // set the value
+        ((float**) data)[callcounter_callback_HP][pos] = profile_value_at_ts;
     } catch (exception& e) {
         cerr << "An error happened during the parsing of the heat pump profiles.\n";
         cerr << " - More details: At time step " << callcounter_timestepID << " for time series " << callcounter_callback_HP << endl;
@@ -1741,6 +1808,12 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_control_update_freq_in_ts());
     PRINT_ENUM_VAR(Global::get_controller_bs_grid_charging_mode(), [](auto var){switch(var){case global::ControllerBSGridChargingMode::NoGridCharging: return "NoGridCharging"; case global::ControllerBSGridChargingMode::OnlyGridCharging: return "OnlyGridCharging"; case global::ControllerBSGridChargingMode::GridChargingAndDischarging: return "GridChargingAndDischarging"; default: return "";}});
     PRINT_ENUM_VAR(Global::get_controller_optimization_target(), [](auto var){switch(var){case global::ControllerOptimizationTarget::ElectricityCosts: return "ElectricityCosts"; case global::ControllerOptimizationTarget::PeakLoad: return "PeakLoad"; case global::ControllerOptimizationTarget::Emissions: return "Emissions"; default: return "";}});
+    // Surplus controller settings
+    current_outstream << "  Surplus controller settings:\n";
+    PRINT_VAR(Global::get_surplus_controller_enabled());
+    PRINT_VAR(Global::get_surplus_controller_frequency_ts());
+    PRINT_VAR(Global::get_surplus_controller_lookahead_horizon_ts());
+    PRINT_VAR(Global::get_surplus_controller_BESS_knowledge());
     // Selection settings
     current_outstream << "  Selection settings:\n";
     PRINT_ENUM_VAR(Global::get_exp_profile_mode(),  [](auto var){switch(var){case global::ExpansionProfileAllocationMode::Uninitialized: return "Uninitialized"; case global::ExpansionProfileAllocationMode::AsInData: return "AsInData"; case global::ExpansionProfileAllocationMode::Random: return "Random"; default: return "";}});
@@ -1793,6 +1866,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_heat_demand_thermalE_to_hpE_conv_f());
     PRINT_VAR(Global::get_heat_cons_bobv_slope());
     PRINT_VAR(Global::get_heat_cons_bobv_intercept());
+    PRINT_VAR(Global::get_general_HP_profile_limit());
     PRINT_VAR(Global::get_ev_plugin_probability());
     PRINT_VAR(Global::get_ev_battery_size_kWh());
     PRINT_VAR(Global::get_ev_consumption_kWh_km());
@@ -1804,6 +1878,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_ENUM_VAR(Global::get_output_mode_per_cu(), [](auto var){switch(var){case global::OutputModePerCU::IndividualFile: return "IndividualFile"; case global::OutputModePerCU::SingleFile: return "SingleFile"; case global::OutputModePerCU::NoOutput: return "NoOutput"; default: return "";}});
     PRINT_VAR(global::n_ts_between_flushs);
     PRINT_VAR(Global::get_create_substation_output());
+    PRINT_VAR(Global::get_create_surplus_output());
     current_outstream << global::output_section_delimiter << "\n";
 }
 

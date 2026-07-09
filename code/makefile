@@ -2,7 +2,7 @@ CC = g++
 FLAGS = -std=c++23 -pedantic -Wall
 FLAGS_EXTRA = -Wconversion -Wextra
 LIBS  = -pthread -l sqlite3 -l boost_program_options -l boost_json -l ncurses
-FILES = main.cpp components.cpp units.cpp global.cpp sac_planning.cpp setup_and_dataloading.cpp simulation_logic.cpp status_output.cpp output.cpp helper.cpp worker_threads.cpp
+FILES = main.cpp components.cpp units.cpp global.cpp sac_planning.cpp setup_and_dataloading.cpp simulation_logic.cpp status_output.cpp output.cpp helper.cpp worker_threads.cpp surplus_controller.cpp
 OUTPUT_DIR = ../bin
 
 # Optimizataion configuration: Select the requested optimization backend
@@ -37,7 +37,7 @@ endif
 	OR_TOOLS_INCLUDE_PATH = $(OR_TOOLS_PATH)/include
 	OR_TOOLS_LIB_PATH = $(OR_TOOLS_PATH)/lib
 	OR_TOOLS_LIBS = -lortools -labsl_base -labsl_raw_logging_internal -labsl_spinlock_wait -lprotobuf
-	OPTIMIZATION_OPTIONS = -I$(OR_TOOLS_INCLUDE_PATH) -L$(OR_TOOLS_LIB_PATH) $(OR_TOOLS_LIBS)
+	OPTIMIZATION_OPTIONS = -isystem $(OR_TOOLS_INCLUDE_PATH) -L$(OR_TOOLS_LIB_PATH) $(OR_TOOLS_LIBS)
 endif
 
 

@@ -164,6 +164,7 @@ unsigned int Global::hp_flexibility_in_ts = 1;
 float Global::heat_demand_thermalE_to_hpE_conv_f = 0.0;
 float Global::heat_cons_bobv_slope     = 0.0;
 float Global::heat_cons_bobv_intercept = 0.0;
+float Global::general_HP_profile_limit =-1.0;
 float Global::ev_plugin_probability   = 0.25;
 float Global::ev_battery_size_kWh    = 30.0;
 float Global::ev_consumption_kWh_km   = 0.2f;
@@ -193,8 +194,14 @@ const std::set<unsigned long>* Global::cu_list_for_sac_planning = NULL;
 float Global::annual_heat_demand_limit_fsac  = -1;
 bool Global::select_buildings_wg_heatd_only  = false;
 bool Global::create_substation_output = true;
+bool Global::create_surplus_output      = false;
 bool Global::create_control_cmd_output       = false;
 bool Global::create_ev_detailed_output       = false;
+bool Global::surplus_controller_enabled      = false;
+uint Global::surplus_controller_frequency_ts = 24;
+uint Global::surplus_controller_lookahead_horizon_ts = 24;
+bool Global::surplus_controller_BESS_knowledge = true;
+global::SurplusControllerAllocationStrategy Global::surplus_controller_allocation_strategy = global::SurplusControllerAllocationStrategy::sequential;
 string Global::exp_pv_static_profile_orientation = "";
 int Global::exp_pv_static_profile_idx            = -1;
 //
@@ -264,6 +271,10 @@ bool Global::AllVariablesInitialized() {
     }
     if (control_horizon_in_ts < control_update_freq_in_ts) {
         std::cerr << "Error: Control horizon < control update frequency!" << std::endl;
+        return false;
+    }
+    if(surplus_controller_lookahead_horizon_ts < surplus_controller_frequency_ts) {
+        std::cerr << "Error: Surplus controller lookahead horizon < surplus controller optimization frequency!" << std::endl;
         return false;
     }
     if ((
@@ -341,7 +352,14 @@ bool Global::AllVariablesInitialized() {
                     std::cerr << "Error: Configuration parameter 'expansion BS capacity computation mode' == 'Optimized' can only be used in conjunction with 'expansion BS power computation mode' == 'Use E:P-ratio'!" << std::endl;
                     return false;
                 }
-
+                if (surplus_controller_enabled == true && controller_bs_grid_charging_mode != global::ControllerBSGridChargingMode::NoGridCharging) {
+                    std::cerr << "Error: Surplus controller cannot be enabled when the controller BS grid charging mode is set to something different as 'No Grid Charging'!" << std::endl;
+                    return false;
+                }
+                if (surplus_controller_enabled == true && controller_mode != global::ControllerMode::RuleBased) {
+                    std::cerr << "Error: Surplus controller can only be enabled when the controller mode is set to 'RuleBased'!" << std::endl;
+                    return false;
+                }
             return true;
         } else {
             return false;
@@ -1001,6 +1019,17 @@ void Global::set_heat_cons_bobv_intercept(float value) {
         Global::heat_cons_bobv_intercept = value;
     }
 }
+void Global::set_general_HP_profile_limit(float value) {
+    if (is_locked) {
+        cerr << "Global variable general_HP_profile_limit cannot be set at the moment!" << endl;
+    } else {
+        if (value <= 0.0 && value != 1.0) {
+            cerr << "Global variable general_HP_profile_limit cannot be set to value " << value << " (allowed range: (0.0,inf) or -1.0)" << endl;
+            return;
+        }
+        Global::general_HP_profile_limit = value;
+    }
+}
 void Global::set_ev_plugin_probability(float value) {
     if (is_locked) {
         cerr << "Global variable ev_plugin_probability cannot be set!" << endl;
@@ -1248,6 +1277,13 @@ void Global::set_create_substation_output(bool value) {
         Global::create_substation_output = value;
     }
 }
+void Global::set_create_surplus_output(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::create_surplus_output = value;
+    }
+}
 void Global::set_create_control_cmd_output(bool value) {
     if (is_locked) {
         cerr << "Variables cannot be set currently!" << endl;
@@ -1260,6 +1296,41 @@ void Global::set_create_ev_detailed_output(bool value) {
         cerr << "Variables cannot be set currently!" << endl;
     } else {
         Global::create_ev_detailed_output = value;
+    }
+}
+void Global::set_surplus_controller_enabled(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_enabled = value;
+    }
+}
+void Global::set_surplus_controller_frequency_ts(uint value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_frequency_ts = value;
+    }
+}
+void Global::set_surplus_controller_lookahead_horizon_ts(uint value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_lookahead_horizon_ts = value;
+    }
+}
+void Global::set_surplus_controller_BESS_knowledge(bool value) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_BESS_knowledge = value;
+    }
+}
+void Global::set_surplus_controller_allocation_strategy(global::SurplusControllerAllocationStrategy strategy) {
+    if (is_locked) {
+        cerr << "Variables cannot be set currently!" << endl;
+    } else {
+        Global::surplus_controller_allocation_strategy = strategy;
     }
 }
 void Global::set_exp_pv_static_profile_orientation(std::string* value) {

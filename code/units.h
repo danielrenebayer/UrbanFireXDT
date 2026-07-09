@@ -17,6 +17,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <variant>
 
 // The following classes are defined in this header file:
 class Substation;
@@ -29,6 +30,59 @@ class OpenSpacePVOrWind;
 #include "optimization_unit_general.hpp"
 #include "output.h"
 #include "worker_threads.hpp"
+
+
+/**
+ * State holding all time-dependent information for a control unit, to be used for save and restore operations.
+ */
+struct ControlUnitState{
+    unsigned long unitID;
+    // nested components 
+    ComponentStateVariant PVState;
+    ComponentStateVariant BSState;
+    ComponentStateVariant HPState;
+    ComponentStateVariant CSState;
+    // optimization controller of this unit
+    OptimizationUnitState optimizationState;
+    // variables of the Control Unit itself
+    double sum_of_consumption_kWh;
+    double sum_of_self_cons_kWh;
+    double sum_of_mu_cons_kWh;
+    double sum_of_feed_into_grid_kWh;
+    double sum_of_grid_demand_kWh;
+    double sum_of_rem_pow_costs_EUR; 
+    double sum_of_saved_pow_costs_EUR;
+    double sum_of_feedin_revenue_EUR; 
+    double sum_of_emissions_cbgd_kg_CO2eq;
+    double sum_of_emissions_avoi_kg_CO2eq;
+    unsigned long sum_of_errors_in_cntrl;
+    unsigned long sum_of_errors_in_cntrl_cmd_appl;
+    double peak_grid_demand_kW; 
+    double sum_of_cweek_consumption_kWh;    
+    double sum_of_cweek_self_cons_kWh;   
+    double sum_of_cweek_mu_cons_kWh;       
+    double sum_of_cweek_feed_into_grid_kWh; 
+    double sum_of_cweek_grid_demand_kWh;
+    double sum_of_cweek_rem_pow_costs_EUR; 
+    double sum_of_cweek_saved_pow_costs_EUR;
+    double sum_of_cweek_feedin_revenue_EUR; 
+    double sum_of_cweek_emissions_cbgd_kg_CO2eq;
+    double sum_of_cweek_emissions_avoi_kg_CO2eq;
+    unsigned long sum_of_cweek_errors_in_cntrl;
+    unsigned long sum_of_cweek_errors_in_cntrl_cmd_appl; 
+    double cweek_peak_grid_demand_kW;    
+    unsigned long ts_since_last_opti_run; 
+    // Vars describing current state (should work without, but for completeness)
+    double current_load_vSM_kW; 
+    double self_produced_load_kW;
+    double current_total_consumption_kW;
+    double current_PV_feedin_to_grid_kW;
+    double current_BS_feedin_to_grid_kW; 
+    double current_CHP_feedin_to_grid_kW;
+    double current_wind_feedin_to_grid_kW; 
+    double current_unknown_feedin_to_grid_kW; 
+};
+
 
 
 /*!
@@ -226,6 +280,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         double  get_NPV(); ///< Returns the net present value (NPV) of the CU from the start of the simulation run until the time of function call; most usefull at the end of a simulation run
         string* get_metrics_string_annual(); // call this function only if simulation run is finished! It will the compute sums of flows,SSC,SSR and output this as a string
         string* get_metrics_string_weekly_wr(unsigned long week_number); // This function outputs the weekly metrics AND resets the internal weekly counters!
+        double get_initial_charge_request_kW() const { return initial_charge_request_kW; }; ///< Returns the initial charge request that was set before surplus controller modification, while taking into account the battery storage constraints. Just for analysis, TODO: remove later
         string* get_pv_section_string(); // This function returns a string containing information about the sections of the sim. added PV component. If no PV component is added, it returns an empty string.
         const ComponentBS* get_component_BS() const { if (has_sim_bs) return sim_comp_bs; else return nullptr; } ///< Returns a pointer to battery storage component, or nullptr if no such component is added.
         const ComponentHP* get_component_HP() const { if (has_sim_hp) return sim_comp_hp; else return nullptr; } ///< Returns a pointer to heat pump component, or nullptr if no such component is added.
@@ -246,12 +301,63 @@ class ControlUnit : BaseUnit<ControlUnit> {
         void set_exp_bs_maxE_kWh(float value);
         void set_exp_bs_maxP_kW (float value);
         void set_exp_bs_E_P_ratio(float value); //< Set the E:P-ratio for simulatively added BS components to @param value
+        void set_exp_bs_efficiency(float value); //< Set efficiency (in and out) and recreate BESS components
+        void set_exp_bs_self_discharge(float value); //< Set self-discharge rate and recreate BESS components
         void remove_sim_added_pv(); ///< Removes a simulatively added PV installation
         void remove_sim_added_bs(); ///< Removes a simulatively added battery storage
         void remove_sim_added_components(); ///< Remove all components that are added simulatively
         void reset_internal_state(); ///< Resets the internal state of the object, without removing added components
         // for simulation runs
         bool compute_next_value(unsigned long ts); ///< Computes the value for the (next) time step. The parameter 'ts' defines the current time step (starting counting at 1). This method must be called with strictly consecutive values ​​of parameter 'ts'.
+        /**
+         * Returns the summarized load at all connected smart meters at a given time step in kW.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * The results equals to get_rsm_demand_at_ts(ts) - get_rsm_feedin_at_ts(ts)
+         * @param ts: The time step for which the load should be computed
+         * @see get_rsm_demand_at_ts(), get_rsm_feedin_at_ts()
+         */
+        float get_rsm_load_at_ts(unsigned long ts) const;
+         /**
+         * Returns the summarized demand at all connected smart meters at a given time step in kW.
+         * In contrast to ControlUnit::get_rsm_load_at_ts(), it ignores feed-in.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_feedin_at_ts()
+         */
+        float get_rsm_demand_at_ts(unsigned long ts) const;
+        /**
+         * Returns the summarized feed-in at all connected smart meters at a given time step in kW.
+         * In contrast to ControlUnit::get_rsm_load_at_ts(), it ignores the demand.
+         * If there is no data available, it returns 0.0.
+         * This method does not change the object.
+         * @return only positive numbers (for a feedin - in contrast to get_rsm_load_at_ts()), or 0.0
+         * @param ts: The time step for which the load should be computed
+         * @see get_current_ts_rsm_value(), get_rsm_demand_at_ts()
+         */
+        float get_rsm_feedin_at_ts(unsigned long ts) const;
+        // State save/restore functionality 
+        /**
+         * @brief Saves the current internal state of the control unit.
+         * 
+         * Includes the control unit's components (HP, BS, CS, PV), its optimization state and its unitID.
+         * The EVs are recursively included in the CS State.
+         * 
+         * @return ControlUnitState containing the control unit's current state
+         */
+        ControlUnitState save_internal_state() const;
+        
+        /**
+         * @brief Restores the internal state of the control unit from a saved state.
+         * 
+         * The state needed for restore can be obtained from a previous call to saveInternalState().
+         * The UnitID is used to valid the state before restoring.
+         * 
+         * @param state The control unit state.
+         */
+       void restore_internal_state(const ControlUnitState& state);
+
 #ifdef PYTHON_MODULE
         void send_control_commands_from_py_interface(double p_bs_kW, double p_hp_kW, const std::vector<double>& p_ev_kW); ///< Send the commands from the python interface for this control unit for the next step to the given control unit. The commands will be processed (i.e., forewarded to the components) in the next call of ControlUnit::compute_next_value(). The ordering of @param p_ev_kW must be the same as the EVs were added to the control unit.
 #endif
@@ -277,6 +383,8 @@ class ControlUnit : BaseUnit<ControlUnit> {
         // 3. modifiers for all created objects
         static void PreprocessEVData(); ///< Preprocesses EV data (min/max consumption until a given ts, states, ...) for all EVs
         static void ResetAllInternalStates();
+        static std::map<unsigned long, ControlUnitState> SaveAllInternalStates(); ///< Save the internal states of all control units and return as a map from unitID to ControlUnitState
+        static void RestoreAllInternalStates(const std::map<unsigned long, ControlUnitState> &states); ///< Restore the internal states of all control units from a map from unitID to ControlUnitState
         static void RemoveAllSimAddedComponents(); ///< Removes all simulatively added components from all control units
         static void ChangeControlHorizonInTS(unsigned int new_horizon); ///< Sets the optimization horizon (if another value is whished than given by Global::get_control_horizon_in_ts()). See also `ControlUnit::change_control_horizon_in_ts()`.
     protected:
@@ -301,6 +409,7 @@ class ControlUnit : BaseUnit<ControlUnit> {
         ComponentCS* sim_comp_cs; ///< Reference to the simulated EV charging station Component (if it exists)
         CUOutput*    output_obj;
         BaseOptimizedController* optimized_controller; ///< Reference to the controller (except of rule-based control)
+        double initial_charge_request_kW; ///< The initial charge request that was set before surplus controller modification, while taking into account the battery storage constraints. Just for analysis, TODO: remove later
 #ifdef PYTHON_MODULE
         bool py_control_commands_obtained;
         double py_cmd_p_bs_kW;

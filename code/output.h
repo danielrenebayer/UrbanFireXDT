@@ -30,6 +30,7 @@ using namespace std;
 namespace output {
 
     inline std::ofstream* substation_output         = NULL; ///< The main file for the substation load time series
+    inline std::ofstream* surplus_output         = NULL; ///< The main file for the substation load time series
     inline std::ofstream* substation_output_details = NULL; ///< The secondary file for additional information about the substations
     inline std::ofstream* cu_details_ccmd_output    = NULL; ///< Output file for command details per time step and control unit (if selected by --ccmd-output option)
     inline std::ofstream* cu_details_ev_output      = NULL; ///< Output file for ev      details per time step and control unit (if selected by --ev-output option)
@@ -63,6 +64,11 @@ namespace output {
      * @param scenario_id The current scenario ID
      */
     void initializeSubstationOutput(unsigned long scenario_id);
+    /**
+     * This method initializes the surplus output file.
+     * @param scenario_id The current scenario ID
+     */
+    void initializeSurplusOutput(unsigned long scenario_id);
     /**
      * This method initializes the individual output files for the control
      * units. Depending on the globally selected mode, one file per CU is
@@ -100,8 +106,12 @@ namespace output {
         float exp_bs_maxE_kWh = 0.0;  bool exp_bs_maxE_kWh_set = false;
         float exp_bs_init_SOC = 0.0;  bool exp_bs_init_SOC_set = false;
         float exp_bs_EP_ratio = 0.0;  bool exp_bs_EP_ratio_set = false;
+        float exp_bs_effi_in_and_out = 1.0; bool exp_bs_effi_in_and_out_set = false;
+        float exp_bs_self_ds_ts = 0.0; bool exp_bs_self_ds_ts_set = false;
         uint  control_horizon_in_ts     = 24; bool control_horizon_in_ts_set     = false;
         uint  control_update_freq_in_ts =  1; bool control_update_freq_in_ts_set = false;
+        uint  surplus_controller_freq_in_ts = 24; bool surplus_controller_freq_in_ts_set = false;
+        uint  surplus_controller_lookahead_horizon_in_ts = 24; bool surplus_controller_lookahead_horizon_in_ts_set = false;
     };
     void outputCurrentParamVariCombi(CurrentParamValues&);
 

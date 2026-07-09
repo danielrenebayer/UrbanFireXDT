@@ -177,6 +177,27 @@ void output::initializeSubstationOutput(unsigned long scenario_id) {
     *(substation_output_details) << ",total_residential_load,total_residential_demand,total_other_demand_kW" << endl;
 }
 
+
+
+void output::initializeSurplusOutput(unsigned long scenario_id) {
+    // initial check: should a output be created?
+    if (!Global::get_create_surplus_output())
+        return;
+    //
+    // initialize the output file
+    stringstream output_path_subst;
+    output_path_subst << setw(4) << setfill('0') << scenario_id;
+    output_path_subst << "-surplus-time-series.csv";
+    filesystem::path output_path = *(global::current_output_dir);
+    output_path /= output_path_subst.str();
+    surplus_output = new ofstream(output_path, std::ofstream::out);
+    //
+    // add header to output file
+    *(surplus_output) << "Timestep";
+    *(surplus_output) << ",OverallBatterySOC,scheduled_surplus_discharge,scheduled_surplus_charge,actual_surplus_action,charge_request_BESS,load_BESS,BESS_surplus_energy,initial_total_load,total_load" << endl;
+}
+
+
 void output::initializeCUOutput(unsigned long scenario_id) {
     //
     // initializes the CU output, depending on the global setting
@@ -255,6 +276,12 @@ void output::closeOutputs() {
         delete substation_output_details;
         substation_output_details = NULL;
     }
+    // close surplus output file
+    if (surplus_output != NULL) {
+        surplus_output->close();
+        delete surplus_output;
+        surplus_output = NULL;
+    }
     //
     // close outputs for CUs if existing
     if (cu_single_output != NULL) {
@@ -298,6 +325,9 @@ void output::flushBuffers() {
     }
     if (substation_output_details != NULL) {
         substation_output_details->flush();
+    }
+    if (surplus_output != NULL) {
+        surplus_output->flush();
     }
     //
     // flush outputs of CUs if existing
@@ -351,11 +381,26 @@ void output::outputCurrentParamVariCombi(CurrentParamValues& cParamVals) {
     ofs << "expansion BS initial SOC,";
     if (cParamVals.exp_bs_init_SOC_set) ofs << cParamVals.exp_bs_init_SOC; else ofs << Global::get_exp_bess_start_soc();
     ofs << "\n";
+    ofs << "expansion BS efficiency in,";
+    if (cParamVals.exp_bs_effi_in_and_out_set) ofs << cParamVals.exp_bs_effi_in_and_out; else ofs << Global::get_exp_bess_effi_in();
+    ofs << "\n";
+    ofs << "expansion BS efficiency out,";
+    if (cParamVals.exp_bs_effi_in_and_out_set) ofs << cParamVals.exp_bs_effi_in_and_out; else ofs << Global::get_exp_bess_effi_out();
+    ofs << "\n";
+    ofs << "expansion BS self-discharge per ts,";
+    if (cParamVals.exp_bs_self_ds_ts_set) ofs << cParamVals.exp_bs_self_ds_ts; else ofs << Global::get_exp_bess_self_ds_ts();
+    ofs << "\n";
     ofs << "control horizont in ts,";
     if (cParamVals.control_horizon_in_ts_set) ofs << cParamVals.control_horizon_in_ts; else ofs << Global::get_control_horizon_in_ts();
     ofs << "\n";
     ofs << "control update freq in ts,";
     if (cParamVals.control_update_freq_in_ts_set) ofs << cParamVals.control_update_freq_in_ts; else ofs << Global::get_control_update_freq_in_ts();
+    ofs << "\n";
+    ofs << "surplus controller freq in ts,";
+    if (cParamVals.surplus_controller_freq_in_ts_set) ofs << cParamVals.surplus_controller_freq_in_ts; else ofs << Global::get_surplus_controller_frequency_ts();
+    ofs << "\n";
+    ofs << "surplus controller lookahead horizon in ts,";
+    if (cParamVals.surplus_controller_lookahead_horizon_in_ts_set) ofs << cParamVals.surplus_controller_lookahead_horizon_in_ts; else ofs << Global::get_surplus_controller_lookahead_horizon_ts();
     ofs << "\n";
     ofs << "seed_set," << Global::is_seed_set() << "\n";
     ofs << "seed," << Global::get_seed() << "\n";

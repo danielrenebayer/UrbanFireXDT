@@ -329,6 +329,25 @@ void ComponentPV::resetInternalState() {
     currentGeneration_kW = 0.0;
 }
 
+ComponentStateVariant ComponentPV::saveInternalState() const {
+    PVComponentState state;
+    state.currentGeneration_kW = currentGeneration_kW;
+    state.generation_cumsum_total_kWh = generation_cumsum_total_kWh;
+    state.generation_cumsum_cweek_kWh = generation_cumsum_cweek_kWh;
+    return state;
+}
+
+void ComponentPV::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const PVComponentState& pv_state = std::get<PVComponentState>(state);
+        currentGeneration_kW = pv_state.currentGeneration_kW;
+        generation_cumsum_total_kWh = pv_state.generation_cumsum_total_kWh;
+        generation_cumsum_cweek_kWh = pv_state.generation_cumsum_cweek_kWh;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentPV::restoreInternalState(): Invalid state type provided");
+    }
+}
+
 void ComponentPV::set_horizon_in_ts(unsigned int new_horizon) {
     future_generation_kW.clear();
     future_generation_kW.resize(new_horizon, 0.0);
@@ -378,6 +397,7 @@ ComponentBS::ComponentBS(
     currentE_kWh      = 0;
     currentP_kW       = 0;
     currentE_from_grid_kWh = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
@@ -417,6 +437,7 @@ ComponentBS::ComponentBS(
     currentE_kWh      = 0;
     currentP_kW       = 0;
     currentE_from_grid_kWh = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW  = 0.0;
     charge_request_kW = 0;
     cweek_E_withdrawn_kWh = 0.0;
@@ -447,6 +468,18 @@ void ComponentBS::set_grid_charged_amount(double grid_charged_kW) {
     }
 }
 
+void ComponentBS::set_surplus_charged_amount(double surplus_charged_kW) {
+    currentE_from_surplus_kWh += surplus_charged_kW * Global::get_time_step_size_in_h() * efficiency_in;
+    if (currentE_from_surplus_kWh > currentE_kWh) {
+        currentE_from_surplus_kWh = currentE_kWh;
+    }
+}
+
+
+void ComponentBS::reset_surplus_charged_amount() {
+    currentE_from_surplus_kWh = 0.0;
+}
+
 void ComponentBS::set_SOE_without_computations(double new_SOE_kWh) {
     currentE_kWh = new_SOE_kWh;
 }
@@ -471,6 +504,54 @@ void ComponentBS::set_maxP_by_EPRatio(double EP_ratio) {
     }
 }
 
+void ComponentBS::set_efficiency_in(double value) {
+    efficiency_in = value;
+}
+
+void ComponentBS::set_efficiency_out(double value) {
+    efficiency_out = value;
+}
+
+void ComponentBS::set_self_discharge_rate(double value) {
+    discharge_rate_per_step = value;
+}
+
+double const ComponentBS::validateNoSurplusChargeRequest(double charge_request_kW) {
+    double timestep_size_in_h = Global::get_time_step_size_in_h();
+
+    double currentE_after_self_discharge_kWh = currentE_kWh - discharge_rate_per_step * currentE_kWh;
+    double currentE_from_surplus_after_self_discharge_kWh = currentE_from_surplus_kWh - discharge_rate_per_step * currentE_from_surplus_kWh;
+
+    if (charge_request_kW > 0) {
+        // Charging: limit to maxP_kW
+        if (charge_request_kW > maxP_kW)
+            charge_request_kW = maxP_kW;
+        
+        // Check if charging would exceed battery capacity
+        double new_charge_kWh = currentE_after_self_discharge_kWh + timestep_size_in_h * charge_request_kW * efficiency_in;
+        if (new_charge_kWh > maxE_kWh) {
+            // Adjust charge request to exactly fill the battery
+            charge_request_kW = (maxE_kWh - currentE_after_self_discharge_kWh) / timestep_size_in_h / efficiency_in;
+        }
+    } else if (charge_request_kW < 0) {
+        // Discharging: limit to maxP_kW
+        if (-charge_request_kW > maxP_kW)
+            charge_request_kW = -maxP_kW;
+        
+        // Calculate available non-surplus energy (only return charged energy from non-surplus sources)
+        double available_non_surplus_energy_kWh = currentE_after_self_discharge_kWh - currentE_from_surplus_after_self_discharge_kWh;
+        
+        // Check if discharging would deplete non-surplus energy below zero
+        double new_charge_kWh = currentE_after_self_discharge_kWh + timestep_size_in_h * charge_request_kW / efficiency_out;
+        if (new_charge_kWh < currentE_from_surplus_after_self_discharge_kWh) {
+            // Adjust discharge request to only use available non-surplus energy
+            charge_request_kW = -available_non_surplus_energy_kWh / timestep_size_in_h * efficiency_out;
+        }
+    }
+
+    return charge_request_kW;
+}
+
 void ComponentBS::calculateActions() {
     double timestep_size_in_h = Global::get_time_step_size_in_h();
     double new_charge_kWh;
@@ -479,6 +560,8 @@ void ComponentBS::calculateActions() {
 
     // Calculate Self-discharge
     currentE_kWh -= discharge_rate_per_step * currentE_kWh;
+    currentE_from_grid_kWh -= discharge_rate_per_step * currentE_from_grid_kWh;
+    currentE_from_surplus_kWh -= discharge_rate_per_step * currentE_from_surplus_kWh;
 
     // Charging and discharging
     if (charge_request_kW > 0) {
@@ -503,7 +586,7 @@ void ComponentBS::calculateActions() {
         // add withrawn energy to summation variable (mind energy_taken_kWh < 0)
         total_E_withdrawn_kWh -= energy_taken_kWh;
         cweek_E_withdrawn_kWh -= energy_taken_kWh;
-        // update currentE_from_BS_kWh as well ...
+        // update currentE_from_grid_kWh as well ...
         currentP_from_grid_kW = 0.0;
         if (currentE_kWh < currentE_from_grid_kWh) {
             double removed_amount_from_grid_kWh = currentE_from_grid_kWh - currentE_kWh;
@@ -512,6 +595,10 @@ void ComponentBS::calculateActions() {
             // add to summation variables
             cweek_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
             total_E_withdrawn_from_grid_kWh += removed_amount_from_grid_kWh;
+        }
+        // ... and surplus energy as well
+        if (currentE_kWh < currentE_from_surplus_kWh) {
+            currentE_from_surplus_kWh = currentE_kWh; // set to current SOE
         }
     }
 
@@ -538,6 +625,7 @@ void ComponentBS::resetInternalState() {
     currentE_kWh = maxE_kWh * initial_SoC;
     currentE_from_grid_kWh  = 0.0;
     currentP_kW           = 0.0;
+    currentE_from_surplus_kWh = 0.0;
     currentP_from_grid_kW   = 0.0;
     cweek_E_withdrawn_kWh = 0.0;
     total_E_withdrawn_kWh = 0.0;
@@ -545,6 +633,43 @@ void ComponentBS::resetInternalState() {
     total_E_withdrawn_from_grid_kWh = 0.0;
     n_ts_SOC_empty = 0;
     n_ts_SOC_full  = 0;
+}
+
+ComponentStateVariant ComponentBS::saveInternalState() const {
+    BSComponentState state;
+    state.SOC = SOC;
+    state.currentE_kWh = currentE_kWh;
+    state.currentP_kW = currentP_kW;
+    state.currentE_from_grid_kWh = currentE_from_grid_kWh;
+    state.currentE_from_surplus_kWh = currentE_from_surplus_kWh;
+    state.currentP_from_grid_kW = currentP_from_grid_kW;
+    state.cweek_E_withdrawn_kWh = cweek_E_withdrawn_kWh;
+    state.total_E_withdrawn_kWh = total_E_withdrawn_kWh;
+    state.cweek_E_withdrawn_from_grid_kWh = cweek_E_withdrawn_from_grid_kWh;
+    state.total_E_withdrawn_from_grid_kWh = total_E_withdrawn_from_grid_kWh;
+    state.n_ts_SOC_empty = n_ts_SOC_empty;
+    state.n_ts_SOC_full = n_ts_SOC_full;
+    return state;
+}
+
+void ComponentBS::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const BSComponentState& bs_state = std::get<BSComponentState>(state);
+        SOC = bs_state.SOC;
+        currentE_kWh = bs_state.currentE_kWh;
+        currentP_kW = bs_state.currentP_kW;
+        currentE_from_grid_kWh = bs_state.currentE_from_grid_kWh;
+        currentE_from_surplus_kWh = bs_state.currentE_from_surplus_kWh;
+        currentP_from_grid_kW = bs_state.currentP_from_grid_kW;
+        cweek_E_withdrawn_kWh = bs_state.cweek_E_withdrawn_kWh;
+        total_E_withdrawn_kWh = bs_state.total_E_withdrawn_kWh;
+        cweek_E_withdrawn_from_grid_kWh = bs_state.cweek_E_withdrawn_from_grid_kWh;
+        total_E_withdrawn_from_grid_kWh = bs_state.total_E_withdrawn_from_grid_kWh;
+        n_ts_SOC_empty = bs_state.n_ts_SOC_empty;
+        n_ts_SOC_full = bs_state.n_ts_SOC_full;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentBS::restoreInternalState(): Invalid state type provided");
+    }
 }
 
 
@@ -605,10 +730,9 @@ ComponentHP::ComponentHP(const ControlUnit* connected_unit, float annual_econs_k
     cweek_consumption_kWh = 0.0;
     // computation of rated power (without AUX heating mode)
     // = max of shiftable demand time series
-    // TODO: Update computation: Detect AUX heating mode
     rated_power_kW = 0.0;
     for (unsigned long tsID = 0; tsID < Global::get_n_timesteps(); tsID++) {
-        float np = profile_data[tsID] * scaling_factor;
+        float np = profile_data[tsID] * scaling_factor; // max value of profile given by Global::get_general_HP_profile_limit()
         if (np > rated_power_kW)
             rated_power_kW = np;
     }
@@ -640,7 +764,6 @@ void ComponentHP::computeNextInternalState(unsigned long ts) {
     double last_known_minE_val = 0.0;
     for (size_t tOffset = 0; tOffset < Global::get_control_horizon_in_ts(); tOffset++) {
         // power
-        // TODO: detect AUX heating and increase hp min and max power in these steps
         future_maxP_storage[tOffset] = rated_power_kW;
         future_minP_storage[tOffset] = 0.0;
         // energy
@@ -707,6 +830,16 @@ bool ComponentHP::setDemandToGivenValue(double new_demand_kW) {
     }
 #endif
     bool no_error = true;
+
+    // check limits
+    if (new_demand_kW > rated_power_kW) {
+        if (new_demand_kW > rated_power_kW + epsilon_hp) {
+            no_error = false;
+            std::cerr << "Warning in Component HP: requested demand of " << std::fixed << std::setprecision(3) << new_demand_kW << " kW exceeds rated power of " << std::fixed << std::setprecision(3) << rated_power_kW << " kW.\n" ;
+        }
+        new_demand_kW = rated_power_kW;
+    }
+
     double e = new_demand_kW * Global::get_time_step_size_in_h(); // amount of energy consumed in this time step
     //double new_total_e = total_consumption_kWh + e;
     // check, if power is within the min/max power bands
@@ -768,6 +901,25 @@ void ComponentHP::resetInternalState() {
     currentDemand_kW = 0.0;
     total_consumption_kWh = 0.0;
     cweek_consumption_kWh = 0.0;
+}
+
+ComponentStateVariant ComponentHP::saveInternalState() const {
+    HPComponentState state;
+    state.currentDemand_kW = currentDemand_kW;
+    state.total_consumption_kWh = total_consumption_kWh;
+    state.cweek_consumption_kWh = cweek_consumption_kWh;
+    return state;
+}
+
+void ComponentHP::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const HPComponentState& hp_state = std::get<HPComponentState>(state);
+        currentDemand_kW = hp_state.currentDemand_kW;
+        total_consumption_kWh = hp_state.total_consumption_kWh;
+        cweek_consumption_kWh = hp_state.cweek_consumption_kWh;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentHP::restoreInternalState(): Invalid state type provided");
+    }
 }
 
 void ComponentHP::InitializeRandomGenerator() {
@@ -875,6 +1027,49 @@ void ComponentCS::resetInternalState() {
     //
     for (EVFSM* ev : listOfEVs) {
         ev->resetInternalState();
+    }
+}
+
+ComponentStateVariant ComponentCS::saveInternalState() const {
+    CSComponentState state;
+    state.current_demand_kW = current_demand_kW;
+    state.total_consumption_kWh = total_consumption_kWh;
+    state.cweek_consumption_kWh = cweek_consumption_kWh;
+    
+    // Save states of all connected EVs
+    for (const EVFSM* ev : listOfEVs) {
+        ComponentStateVariant ev_state_variant = ev->saveInternalState();
+        EVFSMComponentState ev_state = std::get<EVFSMComponentState>(ev_state_variant);
+        // Use the carID from the EV state as the map key
+        unsigned long carID = ev_state.carID;
+        state.ev_states_by_id[carID] = ev_state;
+    }
+    
+    return state;
+}
+
+void ComponentCS::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const CSComponentState& cs_state = std::get<CSComponentState>(state);
+        current_demand_kW = cs_state.current_demand_kW;
+        total_consumption_kWh = cs_state.total_consumption_kWh;
+        cweek_consumption_kWh = cs_state.cweek_consumption_kWh;
+        
+        // Restore states of all connected EVs
+        for (EVFSM* ev : listOfEVs) {
+            unsigned long carID = ev->get_carID();
+            
+            auto it = cs_state.ev_states_by_id.find(carID);
+            if (it != cs_state.ev_states_by_id.end()) {
+                ComponentStateVariant ev_state_variant = it->second;
+                ev->restoreInternalState(ev_state_variant);
+            } else {
+                throw std::runtime_error("ComponentCS::restoreInternalState(): No saved state found for carID " + std::to_string(carID));
+            }
+        }
+        
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("ComponentCS::restoreInternalState(): Invalid state type provided");
     }
 }
 
@@ -1344,6 +1539,54 @@ void EVFSM::resetInternalState() {
     sum_of_ts_EV_is_connected     = 0;
 }
 
+ComponentStateVariant EVFSM::saveInternalState() const {
+    EVFSMComponentState state;
+    state.carID = carID;
+    state.current_state = current_state;
+    state.current_ts = current_ts;
+    state.energy_demand_per_tour_ts = energy_demand_per_tour_ts;
+    state.current_P_kW = current_P_kW;
+    state.sum_of_driving_distance_km = sum_of_driving_distance_km;
+    state.sum_of_E_used_for_driving_kWh = sum_of_E_used_for_driving_kWh;
+    state.sum_of_E_charged_home_kWh = sum_of_E_charged_home_kWh;
+    state.sum_of_E_discharged_home_kWh = sum_of_E_discharged_home_kWh;
+    state.sum_of_ts_EV_is_connected = sum_of_ts_EV_is_connected;
+    
+    // Save the nested battery state
+    ComponentStateVariant battery_state_variant = battery->saveInternalState();
+    state.battery_state = std::get<BSComponentState>(battery_state_variant);
+    
+    return state;
+}
+
+void EVFSM::restoreInternalState(const ComponentStateVariant& state) {
+    try {
+        const EVFSMComponentState& ev_state = std::get<EVFSMComponentState>(state);
+        
+        // Verify that the carID matches
+        if (ev_state.carID != carID) {
+            throw std::runtime_error("EVFSM::restoreInternalState(): CarID mismatch - expected " + std::to_string(carID) + ", got " + std::to_string(ev_state.carID));
+        }
+        
+        current_state = ev_state.current_state;
+        current_ts = ev_state.current_ts;
+        energy_demand_per_tour_ts = ev_state.energy_demand_per_tour_ts;
+        current_P_kW = ev_state.current_P_kW;
+        sum_of_driving_distance_km = ev_state.sum_of_driving_distance_km;
+        sum_of_E_used_for_driving_kWh = ev_state.sum_of_E_used_for_driving_kWh;
+        sum_of_E_charged_home_kWh = ev_state.sum_of_E_charged_home_kWh;
+        sum_of_E_discharged_home_kWh = ev_state.sum_of_E_discharged_home_kWh;
+        sum_of_ts_EV_is_connected = ev_state.sum_of_ts_EV_is_connected;
+        
+        // Restore the nested battery state
+        ComponentStateVariant battery_state_variant = ev_state.battery_state;
+        battery->restoreInternalState(battery_state_variant);
+        
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("EVFSM::restoreInternalState(): Invalid state type provided");
+    }
+}
+
 void EVFSM::setCarStateForTimeStep(unsigned long ts) {
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
     if (!state_s2) {
@@ -1439,6 +1682,12 @@ bool EVFSM::setDemandToGivenValue(double new_demand_kW) {
             return false;
         }
         return true; // ignore small deviations below epsilon_ev
+    }
+    if (new_demand_kW > Global::get_ev_max_charging_power_kW()) {
+        if (new_demand_kW > Global::get_ev_max_charging_power_kW() + epsilon_ev) {
+            std::cerr << "Warning: requested power for EV charging (" << std::fixed << std::setprecision(1) << new_demand_kW << " kW) exceeds the limit for car with ID " << carID << std::endl;
+        }
+        new_demand_kW = Global::get_ev_max_charging_power_kW();
     }
     double e = new_demand_kW * Global::get_time_step_size_in_h();
     double new_total_e = sum_of_E_charged_home_kWh + e;

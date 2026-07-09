@@ -19,6 +19,7 @@
 #include "global.h"
 #include "output.h"
 #include "sac_planning.h"
+#include "surplus_controller.hpp"
 
 #include "optimization_unit_general.hpp"
 #ifdef USE_OR_TOOLS
@@ -932,6 +933,18 @@ void ControlUnit::set_exp_bs_E_P_ratio(float value) {
         sim_comp_bs->set_maxP_by_EPRatio(value);
 }
 
+void ControlUnit::set_exp_bs_efficiency(float value) {
+    if (has_sim_bs) {
+        sim_comp_bs->set_efficiency_in(value);
+        sim_comp_bs->set_efficiency_out(value);
+    }
+}
+
+void ControlUnit::set_exp_bs_self_discharge(float value) {
+    if (has_sim_bs)
+        sim_comp_bs->set_self_discharge_rate(value);
+}
+
 void ControlUnit::change_control_horizon_in_ts(unsigned int new_horizon) {
     if (optimized_controller != NULL)
         optimized_controller->reset(new_horizon);
@@ -1040,6 +1053,35 @@ void ControlUnit::reset_internal_state() {
     sim_comp_cs->resetInternalState();
     //
     ts_since_last_opti_run = Global::get_control_update_freq_in_ts();
+}
+
+
+float ControlUnit::get_rsm_load_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = 0.0;
+    for (MeasurementUnit* mu : *connected_units) {
+        total_load += mu->get_rsm_load_at_ts(ts);
+    }
+    return total_load;
+}
+
+float ControlUnit::get_rsm_demand_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = get_rsm_load_at_ts(ts);
+    if (total_load < 0.0)
+        return 0.0;
+    return total_load;
+}
+
+float ControlUnit::get_rsm_feedin_at_ts(unsigned long ts) const{
+    if (ts <= 0 || ts > Global::get_n_timesteps())
+        return 0.0;
+    float total_load = get_rsm_load_at_ts(ts);
+    if (total_load > 0.0)
+        return 0.0;
+    return -total_load;
 }
 
 bool ControlUnit::compute_next_value(unsigned long ts) {
@@ -1249,7 +1291,14 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         //
         // 5. Propagate the results to the components
         if (has_sim_bs) {
+            // TODO: Instead of this, implement minimum charge_from_grid_into_BS rule into the optimization model directly. Surplus controller right now not compatible with the optimized controller at all.
+            // if (Global::get_surplus_controller_enabled()) {
+            //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) );
+            // } else {
+            //     sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            // }
             sim_comp_bs->set_chargeRequest( optimized_controller->get_future_bs_power_kW()[0] );
+            
         }
         if (has_sim_hp) {
             bool ret_val = sim_comp_hp->setDemandToGivenValue( optimized_controller->get_future_hp_power_kW()[0] );
@@ -1347,6 +1396,8 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
     // if load_evchst > 0: current_total_consumption_kW += load_evchst; // ... only problem: EV can potentially feed-in energy taken from somewhere else
     //
     // 5. send situation to battery storage and get its resulting action
+    double charge_request_kW = 0.0;
+    double bess_energy_surplus_prevented_kWh = 0.0; // amount of energy that the surplus controller wanted to charge into the BESS, but was actually used to cover consumption directly and thus prevented battery discharge
     if (has_sim_bs) {
         if (
             Global::get_controller_mode() == global::ControllerMode::RuleBased
@@ -1354,21 +1405,51 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             && !py_control_commands_obtained
 #endif
         ) {
-            sim_comp_bs->set_chargeRequest( -current_load_vSM_kW );
+            if (Global::get_surplus_controller_enabled()) {
+                // If new month started, reset currentE from surplus before first control execution in this month to prevent drift between surplus controller and battery storage knowledge (only if we assume non-perfect knowledge)
+                if(Global::get_surplus_controller_BESS_knowledge() == false){
+                    uint frequency = Global::get_surplus_controller_frequency_ts();
+                    uint month_length_ts = static_cast<uint>(24 * 30 / Global::get_time_step_size_in_h());
+                    if ((ts - 1) % frequency == 0 && ts > frequency) {
+                        // Check if we're in a different month than the previous controller execution
+                        uint current_month = (ts - 1) / month_length_ts;
+                        uint prev_controller_month = (ts - 1 - frequency) / month_length_ts;
+                        if (current_month > prev_controller_month) {
+                            sim_comp_bs->reset_surplus_charged_amount();
+                        }
+                    }
+                }
+                // Checking non-linear behavior where battery cannot discharge full requested power
+                initial_charge_request_kW = sim_comp_bs->validateNoSurplusChargeRequest(-current_load_vSM_kW);
+                // Prevent discharge more than the surplus energy in the BESS due to discharge request (maybe some charge command was not possible due to constraints etc.)
+                auto surplus_discharge = std::min(surplus::SurplusController::GetDischargeRequestForUnit(this->get_unitID()), sim_comp_bs->get_currentE_from_surplus() / Global::get_time_step_size_in_h() * Global::get_exp_bess_effi_out() );
+                charge_request_kW = initial_charge_request_kW + surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()) - surplus_discharge;
+                // Compute the amount of surplus command that was not charged, but instead directly used by the units consumption. As we therefore save discharge, we need to add this as grid charged amount in the internal calculations- even if there was no actual grid charging!
+                if (initial_charge_request_kW < 0.0){
+                    bess_energy_surplus_prevented_kWh = (std::min(-initial_charge_request_kW, surplus::SurplusController::GetChargeRequestForUnit(this->get_unitID()))) * Global::get_time_step_size_in_h() / Global::get_exp_bess_effi_in() / Global::get_exp_bess_effi_out();
+                }
+            } else {
+                initial_charge_request_kW = -current_load_vSM_kW;
+                charge_request_kW = -current_load_vSM_kW;
+            }
+            sim_comp_bs->set_chargeRequest( charge_request_kW );
         } // no else case here ... in the case of an optimized controller the action has been set before
         sim_comp_bs->calculateActions();
         load_bs = sim_comp_bs->get_currentLoad_kW();
         current_load_vSM_kW += load_bs;
 
         bs_SOC = sim_comp_bs->get_SOC();
+
     }
 
     //
     // compute self-produced load, that is directly consumed
     if (
 #ifndef PYTHON_MODULE
+         (
           Global::get_controller_mode() == global::ControllerMode::RuleBased ||
           ( Global::get_controller_mode() == global::ControllerMode::OptimizedWithPerfectForecast && Global::get_controller_bs_grid_charging_mode() == global::ControllerBSGridChargingMode::NoGridCharging )
+         ) && !Global::get_surplus_controller_enabled()
 #else
           false
 #endif
@@ -1379,11 +1460,12 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
         // separate two cases: BS charging or discharging
         if (load_bs > 0) {
             // - case: BS charging
-            self_produced_load_kW = std::min( load_pv, current_total_consumption_kW);
+            self_produced_load_kW = std::min( load_pv, current_total_consumption_kW); // consumption that is directly covered by PV generation
             // analyze the source of the charged energy and send this information to the BS
             if (has_sim_bs) {
-                double bs_charging_from_pv = std::min( load_bs, load_pv - self_produced_load_kW);
-                sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage
+                double bs_charging_from_pv = std::min( load_bs, load_pv - self_produced_load_kW); // PV load that is not diretly consumed is used to charge the BS (or less, if that exceeds the BESS limitations)
+                sim_comp_bs->set_grid_charged_amount(load_bs - bs_charging_from_pv); // send this information to the battery storage (assume everything that is not from PV is from the grid)
+                sim_comp_bs->set_surplus_charged_amount(bess_energy_surplus_prevented_kWh + load_bs - bs_charging_from_pv); // also account for the surplus controller prevented energy as grid charged energy
             }
         } else {
             // - case: BS discharging
@@ -1394,6 +1476,10 @@ bool ControlUnit::compute_next_value(unsigned long ts) {
             }
             // calculate self-produced amount of locally consumed energy
             self_produced_load_kW = std::min(load_pv + bs_generation_from_pv, current_total_consumption_kW);
+            // Still, we may have swapped some battery discharge to grid consumption with the surplus controller command, that now needs to be accounted as grid charged energy
+            if (has_sim_bs) {
+                sim_comp_bs->set_surplus_charged_amount(bess_energy_surplus_prevented_kWh);
+            }
         }
     }
 
@@ -1622,6 +1708,186 @@ void ControlUnit::ResetAllInternalStates() {
     //
     for (unsigned long i = 0; i < st__n_CUs; i++) {
         st__cu_list[i]->reset_internal_state();
+    }
+}
+
+ControlUnitState ControlUnit::save_internal_state() const {
+    ControlUnitState state;
+    state.unitID = unitID;
+    
+    // Save component states
+    if (has_sim_pv) {
+        state.PVState = sim_comp_pv->saveInternalState();
+    }
+    if (has_sim_bs) {
+        state.BSState = sim_comp_bs->saveInternalState();
+    }
+    if (has_sim_hp) {
+        state.HPState = sim_comp_hp->saveInternalState();
+    }
+    if (has_sim_cs) {
+        state.CSState = sim_comp_cs->saveInternalState();
+    }
+    
+    // Save optimization state
+    if (optimized_controller != nullptr) {
+        state.optimizationState = optimized_controller->saveInternalState();
+    }
+    
+    // Save summation variables from beginning of simulation run
+    state.sum_of_consumption_kWh = sum_of_consumption_kWh;
+    state.sum_of_self_cons_kWh = sum_of_self_cons_kWh;
+    state.sum_of_mu_cons_kWh = sum_of_mu_cons_kWh;
+    state.sum_of_feed_into_grid_kWh = sum_of_feed_into_grid_kWh;
+    state.sum_of_grid_demand_kWh = sum_of_grid_demand_kWh;
+    state.sum_of_rem_pow_costs_EUR = sum_of_rem_pow_costs_EUR;
+    state.sum_of_saved_pow_costs_EUR = sum_of_saved_pow_costs_EUR;
+    state.sum_of_feedin_revenue_EUR = sum_of_feedin_revenue_EUR;
+    state.sum_of_emissions_cbgd_kg_CO2eq = sum_of_emissions_cbgd_kg_CO2eq;
+    state.sum_of_emissions_avoi_kg_CO2eq = sum_of_emissions_avoi_kg_CO2eq;
+    state.sum_of_errors_in_cntrl = sum_of_errors_in_cntrl;
+    state.sum_of_errors_in_cntrl_cmd_appl = sum_of_errors_in_cntrl_cmd_appl;
+    state.peak_grid_demand_kW = peak_grid_demand_kW;
+    
+    // Save weekly summation variables
+    state.sum_of_cweek_consumption_kWh = sum_of_cweek_consumption_kWh;
+    state.sum_of_cweek_self_cons_kWh = sum_of_cweek_self_cons_kWh;
+    state.sum_of_cweek_mu_cons_kWh = sum_of_cweek_mu_cons_kWh;
+    state.sum_of_cweek_feed_into_grid_kWh = sum_of_cweek_feed_into_grid_kWh;
+    state.sum_of_cweek_grid_demand_kWh = sum_of_cweek_grid_demand_kWh;
+    state.sum_of_cweek_rem_pow_costs_EUR = sum_of_cweek_rem_pow_costs_EUR;
+    state.sum_of_cweek_saved_pow_costs_EUR = sum_of_cweek_saved_pow_costs_EUR;
+    state.sum_of_cweek_feedin_revenue_EUR = sum_of_cweek_feedin_revenue_EUR;
+    state.sum_of_cweek_emissions_cbgd_kg_CO2eq = sum_of_cweek_emissions_cbgd_kg_CO2eq;
+    state.sum_of_cweek_emissions_avoi_kg_CO2eq = sum_of_cweek_emissions_avoi_kg_CO2eq;
+    state.sum_of_cweek_errors_in_cntrl = sum_of_cweek_errors_in_cntrl;
+    state.sum_of_cweek_errors_in_cntrl_cmd_appl = sum_of_cweek_errors_in_cntrl_cmd_appl;
+    state.cweek_peak_grid_demand_kW = cweek_peak_grid_demand_kW;
+    
+    // Save optimization cache
+    state.ts_since_last_opti_run = ts_since_last_opti_run;
+    
+    // Save current state variables
+    state.current_load_vSM_kW = current_load_vSM_kW;
+    state.self_produced_load_kW = self_produced_load_kW;
+    state.current_total_consumption_kW = current_total_consumption_kW;
+    state.current_PV_feedin_to_grid_kW = current_PV_feedin_to_grid_kW;
+    state.current_BS_feedin_to_grid_kW = current_BS_feedin_to_grid_kW;
+    state.current_CHP_feedin_to_grid_kW = current_CHP_feedin_to_grid_kW;
+    state.current_wind_feedin_to_grid_kW = current_wind_feedin_to_grid_kW;
+    state.current_unknown_feedin_to_grid_kW = current_unknown_feedin_to_grid_kW;
+    
+    return state;
+}
+
+void ControlUnit::restore_internal_state(const ControlUnitState& state) {
+    // Validate unitID
+    if (state.unitID != unitID) {
+        throw std::runtime_error("ControlUnit::restore_internal_state: unitID mismatch. Expected " + 
+                                 std::to_string(unitID) + " but got " + std::to_string(state.unitID));
+    }
+    
+    // Restore component states
+    if (has_sim_pv) {
+        if (!std::holds_alternative<PVComponentState>(state.PVState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: PV component exists but state does not contain PVComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_pv->restoreInternalState(state.PVState);
+    }
+    if (has_sim_bs) {
+        if (!std::holds_alternative<BSComponentState>(state.BSState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: BS component exists but state does not contain BSComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_bs->restoreInternalState(state.BSState);
+    }
+    if (has_sim_hp) {
+        if (!std::holds_alternative<HPComponentState>(state.HPState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: HP component exists but state does not contain HPComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_hp->restoreInternalState(state.HPState);
+    }
+    if (has_sim_cs) {
+        if (!std::holds_alternative<CSComponentState>(state.CSState)) {
+            throw std::runtime_error("ControlUnit::restore_internal_state: CS component exists but state does not contain CSComponentState for unitID " + 
+                                     std::to_string(unitID));
+        }
+        sim_comp_cs->restoreInternalState(state.CSState);
+    }
+    
+    // Restore optimization state
+    if (optimized_controller != nullptr) {
+        optimized_controller->restoreInternalState(state.optimizationState);
+    }
+    
+    // Restore summation variables from beginning of simulation run
+    sum_of_consumption_kWh = state.sum_of_consumption_kWh;
+    sum_of_self_cons_kWh = state.sum_of_self_cons_kWh;
+    sum_of_mu_cons_kWh = state.sum_of_mu_cons_kWh;
+    sum_of_feed_into_grid_kWh = state.sum_of_feed_into_grid_kWh;
+    sum_of_grid_demand_kWh = state.sum_of_grid_demand_kWh;
+    sum_of_rem_pow_costs_EUR = state.sum_of_rem_pow_costs_EUR;
+    sum_of_saved_pow_costs_EUR = state.sum_of_saved_pow_costs_EUR;
+    sum_of_feedin_revenue_EUR = state.sum_of_feedin_revenue_EUR;
+    sum_of_emissions_cbgd_kg_CO2eq = state.sum_of_emissions_cbgd_kg_CO2eq;
+    sum_of_emissions_avoi_kg_CO2eq = state.sum_of_emissions_avoi_kg_CO2eq;
+    sum_of_errors_in_cntrl = state.sum_of_errors_in_cntrl;
+    sum_of_errors_in_cntrl_cmd_appl = state.sum_of_errors_in_cntrl_cmd_appl;
+    peak_grid_demand_kW = state.peak_grid_demand_kW;
+    
+    // Restore weekly summation variables
+    sum_of_cweek_consumption_kWh = state.sum_of_cweek_consumption_kWh;
+    sum_of_cweek_self_cons_kWh = state.sum_of_cweek_self_cons_kWh;
+    sum_of_cweek_mu_cons_kWh = state.sum_of_cweek_mu_cons_kWh;
+    sum_of_cweek_feed_into_grid_kWh = state.sum_of_cweek_feed_into_grid_kWh;
+    sum_of_cweek_grid_demand_kWh = state.sum_of_cweek_grid_demand_kWh;
+    sum_of_cweek_rem_pow_costs_EUR = state.sum_of_cweek_rem_pow_costs_EUR;
+    sum_of_cweek_saved_pow_costs_EUR = state.sum_of_cweek_saved_pow_costs_EUR;
+    sum_of_cweek_feedin_revenue_EUR = state.sum_of_cweek_feedin_revenue_EUR;
+    sum_of_cweek_emissions_cbgd_kg_CO2eq = state.sum_of_cweek_emissions_cbgd_kg_CO2eq;
+    sum_of_cweek_emissions_avoi_kg_CO2eq = state.sum_of_cweek_emissions_avoi_kg_CO2eq;
+    sum_of_cweek_errors_in_cntrl = state.sum_of_cweek_errors_in_cntrl;
+    sum_of_cweek_errors_in_cntrl_cmd_appl = state.sum_of_cweek_errors_in_cntrl_cmd_appl;
+    cweek_peak_grid_demand_kW = state.cweek_peak_grid_demand_kW;
+    
+    // Restore optimization cache
+    ts_since_last_opti_run = state.ts_since_last_opti_run;
+    
+    // Restore current state variables
+    current_load_vSM_kW = state.current_load_vSM_kW;
+    self_produced_load_kW = state.self_produced_load_kW;
+    current_total_consumption_kW = state.current_total_consumption_kW;
+    current_PV_feedin_to_grid_kW = state.current_PV_feedin_to_grid_kW;
+    current_BS_feedin_to_grid_kW = state.current_BS_feedin_to_grid_kW;
+    current_CHP_feedin_to_grid_kW = state.current_CHP_feedin_to_grid_kW;
+    current_wind_feedin_to_grid_kW = state.current_wind_feedin_to_grid_kW;
+    current_unknown_feedin_to_grid_kW = state.current_unknown_feedin_to_grid_kW;
+}
+
+std::map<unsigned long, ControlUnitState> ControlUnit::SaveAllInternalStates() {
+    std::map<unsigned long, ControlUnitState> states;
+    
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        ControlUnit* cu = st__cu_list[i];
+        ControlUnitState state = cu->save_internal_state();
+        states[cu->get_unitID()] = state;
+    }
+    
+    return states;
+}
+
+void ControlUnit::RestoreAllInternalStates(const std::map<unsigned long, ControlUnitState> &states) {
+    for (unsigned long i = 0; i < st__n_CUs; i++) {
+        ControlUnit* cu = st__cu_list[i];
+        unsigned long unitID = cu->get_unitID();
+        auto it = states.find(unitID);
+        if (it == states.end()) {
+            throw std::runtime_error("ControlUnit::RestoreAllInternalStates: No state found for unitID " + 
+                                     std::to_string(unitID));
+        }
+        cu->restore_internal_state(it->second);
     }
 }
 

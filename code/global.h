@@ -183,6 +183,11 @@ namespace global {
         Emissions, ///< minimize the CO2 emissions caused by grid demand
     };
 
+    enum struct SurplusControllerAllocationStrategy {
+        sequential,    ///< Allocate surplus energy with sequential ordering of timesteps and future timesteps within the lookahead horizon
+        peak,  ///< Allocate surplus energy prioritizing future timesteps with highest demand first and current timesteps with highest surplus first
+    };
+
     /*!
      * The string to delmitit output sections
      */
@@ -277,6 +282,7 @@ class Global {
         static float get_heat_demand_thermalE_to_hpE_conv_f() { return heat_demand_thermalE_to_hpE_conv_f; }
         static float get_heat_cons_bobv_slope()               { return heat_cons_bobv_slope;        } ///< Parameter of linear regression (slope) for estimating annual heat consumption based on the building volume (bobv)
         static float get_heat_cons_bobv_intercept()           { return heat_cons_bobv_intercept;    } ///< Parameter of linear regression (intercept) for estimating annual heat consumption based on the building volume (bobv)
+        static float get_general_HP_profile_limit()           { return general_HP_profile_limit;    } ///< Returns the upper limit of the heat pump profiles -- values above this limit are just clipped. The value is defined in kW normalized to 1000 kWh (of electricity consumption) per year. Values below zero indicate that this variable is intended to have no effect..
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
         static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
@@ -306,8 +312,14 @@ class Global {
         static float get_annual_heat_demand_limit_fsac()        { return annual_heat_demand_limit_fsac;  } ///< Returns the upper limit for selection of a control unit for simulative addition based on the annual heat demand in kWh; -1 if this value is not set (thus no limit is given; default)
         static bool get_select_buildings_wg_heatd_only()        { return select_buildings_wg_heatd_only; } ///< True, if only buildings are to be selected for the simulated addition for which an exact specified heat demand is given in the input data - Defaults to false
         static bool get_create_substation_output() { return create_substation_output; } ///< Returns whether a output for the substation time series should be created or not
+        static bool get_create_surplus_output()      { return create_surplus_output;      } ///< Returns whether a output for the surplus controller should be created or not
         static bool get_create_control_cmd_output() { return create_control_cmd_output; } ///< Returns wheather a output for detailed control commands per time step and CU should be created
         static bool get_create_ev_detailed_output() { return create_ev_detailed_output; } ///< Returns wheather a output for detailed EV states per time step and EV should be created
+        static bool get_surplus_controller_enabled() { return surplus_controller_enabled; } ///< Returns whether the surplus controller is enabled
+        static uint get_surplus_controller_frequency_ts() { return surplus_controller_frequency_ts; } ///< Returns the optimization frequency of the surplus controller in timesteps
+        static uint get_surplus_controller_lookahead_horizon_ts() { return surplus_controller_lookahead_horizon_ts; } ///< Returns the lookahead horizon of the surplus controller in timesteps
+        static bool get_surplus_controller_BESS_knowledge() { return surplus_controller_BESS_knowledge; } ///< Returns whether the surplus controller has knowledge of the state of charge for all control units  
+        static global::SurplusControllerAllocationStrategy get_surplus_controller_allocation_strategy() { return surplus_controller_allocation_strategy; } ///< Returns the allocation strategy of the surplus controller
         static const std::string& get_exp_pv_static_profile_orientation() { return exp_pv_static_profile_orientation; }
         static int                get_exp_pv_static_profile_idx()         { return exp_pv_static_profile_idx;         }
         // special setter methods
@@ -372,6 +384,7 @@ class Global {
         static void set_heat_demand_thermalE_to_hpE_conv_f(float value);
         static void set_heat_cons_bobv_slope(float value);
         static void set_heat_cons_bobv_intercept(float value);
+        static void set_general_HP_profile_limit(float value);
         static void set_ev_plugin_probability(float value);
         static void set_ev_battery_size_kWh(float value);
         static void set_ev_consumption_kWh_km(float value);
@@ -400,8 +413,14 @@ class Global {
         static void set_annual_heat_demand_limit_fsac(float value);
         static void set_select_buildings_wg_heatd_only(bool value);
         static void set_create_substation_output(bool value);
+        static void set_create_surplus_output(bool value);
         static void set_create_control_cmd_output(bool value);
         static void set_create_ev_detailed_output(bool value);
+        static void set_surplus_controller_enabled(bool value);
+        static void set_surplus_controller_frequency_ts(uint value);
+        static void set_surplus_controller_lookahead_horizon_ts(uint value);
+        static void set_surplus_controller_BESS_knowledge(bool value);
+        static void set_surplus_controller_allocation_strategy(global::SurplusControllerAllocationStrategy strategy);
         static void set_exp_pv_static_profile_orientation(std::string* value);
         static void set_exp_pv_static_profile_idx(int value);
     private:
@@ -470,6 +489,7 @@ class Global {
         static float heat_demand_thermalE_to_hpE_conv_f; ///< Factor for converting thermal energy to heat pump el. energy
         static float heat_cons_bobv_slope;    ///< Parameter of linear regression (coefficient) for estimating annual heat consumption of a building based on its volume
         static float heat_cons_bobv_intercept;///< Parameter of linear regression (intercept) for estimating annual heat consumption of a building based on its volume
+        static float general_HP_profile_limit;
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
         static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
@@ -498,8 +518,14 @@ class Global {
         static float annual_heat_demand_limit_fsac; ///< Select only buildings where the heat demand is lower or equal than the given limit; set to -1 (default) if no limit should be choosen
         static bool select_buildings_wg_heatd_only; ///< Only select buildings with heat demand given in the input data
         static bool create_substation_output; ///< Should an output be created for outputting the substation time series?
+        static bool create_surplus_output;      ///< Should an output be created for outputting the surplus controller time series?
         static bool create_control_cmd_output;
         static bool create_ev_detailed_output;
+        static bool surplus_controller_enabled; ///< Whether the surplus controller is enabled
+        static uint surplus_controller_frequency_ts; ///< Optimization frequency of the surplus controller in timesteps
+        static uint surplus_controller_lookahead_horizon_ts; ///< Lookahead horizon of the surplus controller in timesteps
+        static bool surplus_controller_BESS_knowledge; ///< Whether the surplus controller has knowledge of the state of charge for all control units
+        static global::SurplusControllerAllocationStrategy surplus_controller_allocation_strategy; ///< The allocation strategy used by the surplus controller
         static std::string exp_pv_static_profile_orientation; ///< fixed orientation for PV static selection mode (ignoring roof data)
         static int exp_pv_static_profile_idx;                 ///< fixed profile ID for PV static selection mode (-1 if not defined)
         // boolean values holding information if the correspoding 

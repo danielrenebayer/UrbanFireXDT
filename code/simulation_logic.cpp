@@ -19,6 +19,7 @@ using namespace simulation;
 #include "sac_planning.h"
 #include "units.h"
 #include "worker_threads.hpp"
+#include "surplus_controller.hpp"
 
 #ifdef PYTHON_MODULE
 #include "python_module.hpp"
@@ -49,6 +50,12 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
     struct tm* current_tm_l; // left-aligned time stamp as struct tm
     unsigned int last_step_weekday = 0; // required to identify new weeks
     unsigned long week_number = 1;
+
+    // initialize surplus controller
+    surplus::SurplusController::Initialize(thread_manager, output_prefix);
+    surplus::SurplusController& surplus_controller = surplus::SurplusController::GetInstance();
+    
+
     //
     // main loop
     for (unsigned long ts = ts_start; ts <= ts_end; ts++) {
@@ -91,7 +98,18 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
             }
         }
 #endif
-        //
+        // Surplus controller: Shift data every timestep
+        surplus_controller.ShiftTimeSeriesData();
+        
+        // Surplus controller: Run optimization if needed
+        if (surplus_controller.ShouldRunOptimization(ts)) {
+            if (!surplus_controller.ExecuteOptimization(ts)) {
+                std::cerr << "Error: Surplus controller optimization failed at timestep " << ts << std::endl;
+                surplus::SurplusController::Cleanup();
+                return false;
+            }
+        }
+
         // execute one step
         if (!oneStep(ts, totalBatteryCapacity_kWh, thread_manager, output_prefix, subsection)) return false;
         // flush output buffers every configurable step, so that RAM consumption does not increase too much
@@ -104,6 +122,10 @@ bool simulation::runSimulationForOneParamSetting(CUControllerThreadGroupManager*
         std::cout << output_prefix << "... run finished." << "\n";
         std::cout << global::output_section_delimiter << std::endl;
     }
+
+    // Cleanup surplus controller
+    surplus::SurplusController::Cleanup();
+
     return true;
 
 }
@@ -112,7 +134,9 @@ bool simulation::oneStep(const unsigned long ts,
                         const double totalBatteryCapacity_kWh,
                         CUControllerThreadGroupManager* thread_manager /* = NULL */,
                         const char* output_prefix /* = "" */,
-                        std::vector<ControlUnit*>* subsection /* = NULL */) {
+                        std::vector<ControlUnit*>* subsection /* = NULL */,
+                        double* out_total_load /* = NULL */,
+                        bool write_output /* = true */) {
     //
     // Run one time step of the simulation
     // Return false if an error occurs during execution.
@@ -189,21 +213,24 @@ bool simulation::oneStep(const unsigned long ts,
     double total_other_demand       = 0.0; // demand (not load) from non-residential buildings
     total_load += global::residual_gridload_kW[ts-1];
     //
+
+    // compute SOC over all batteries
+    // TODO: inlcude batteries that are directly attached to an substation
+    double totalBatteryCharge_kWh = ControlUnit::GetAllSimCompBatteriesCharge_kWh();
+    double totalBatterySOC = 0.0;
+    if (totalBatteryCapacity_kWh > 0)
+        totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
+
     // loop over all substations: compute new load values
     // and calculate total grid load
 
     if (output::substation_output != NULL && output::substation_output_details != NULL) {
         //
-        // compute SOC over all batteries
-        // TODO: inlcude batteries that are directly attached to an substation
-        double totalBatteryCharge_kWh = ControlUnit::GetAllSimCompBatteriesCharge_kWh();
-        double totalBatterySOC = 0.0;
-        if (totalBatteryCapacity_kWh > 0)
-            totalBatterySOC = totalBatteryCharge_kWh / totalBatteryCapacity_kWh;
-        //
         // generate output
-        *(output::substation_output) << ts << ","; // add timestep to output
-        *(output::substation_output_details) << ts << ",";
+        if(write_output){
+            *(output::substation_output) << ts << ","; // add timestep to output
+            *(output::substation_output_details) << ts << ",";
+        }
         for (Substation* s : substations_list) {
             double current_station_load = s->get_station_load();
             double current_station_resident_load   = s->get_residential_load();
@@ -215,44 +242,70 @@ bool simulation::oneStep(const unsigned long ts,
             total_residential_demand += current_station_resident_demand;
             total_other_demand       += s->get_other_demand();
             // stuff for output
-            *(output::substation_output) << round_float_5( current_station_load ) << ",";
-            *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
-            *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
-            *(output::substation_output_details) << s->get_current_demand_no_BESS() << ",";
+            if(write_output){
+                *(output::substation_output) << round_float_5( current_station_load ) << ",";
+                *(output::substation_output_details) << round_float_5( current_station_resident_load )  << ",";
+                *(output::substation_output_details) << round_float_5( current_station_resident_demand ) << ",";
+                *(output::substation_output_details) << s->get_current_demand_no_BESS() << ",";
+            }
         }
-        *(output::substation_output) << pv_gen_total_kW      << ",";
-        *(output::substation_output) << pv_gen_expo_kW       << ",";
-        *(output::substation_output) << bs_gen_total_kW      << ",";
-        *(output::substation_output) << bs_gen_expo_kW       << ",";
-        *(output::substation_output) << chp_gen_total_kW     << ",";
-        *(output::substation_output) << chp_gen_expo_kW      << ",";
-        *(output::substation_output) << wind_gen_total_kW    << ",";
-        *(output::substation_output) << wind_gen_expo_kW     << ",";
-        *(output::substation_output) << unknown_gen_total_kW << ",";
-        *(output::substation_output) << unknown_gen_expo_kW  << ",";
-        *(output::substation_output) << total_demand_wo_BESS << ",";
-        *(output::substation_output) << total_demand_only_BESS << ",";
-        *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
-        *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
-        *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
-        *(output::substation_output_details) << round_float_5( total_residential_demand ) << ",";
-        *(output::substation_output_details) << round_float_5( total_other_demand ) << "\n";
+
+        if(write_output){
+            *(output::substation_output) << pv_gen_total_kW      << ",";
+            *(output::substation_output) << pv_gen_expo_kW       << ",";
+            *(output::substation_output) << bs_gen_total_kW      << ",";
+            *(output::substation_output) << bs_gen_expo_kW       << ",";
+            *(output::substation_output) << chp_gen_total_kW     << ",";
+            *(output::substation_output) << chp_gen_expo_kW      << ",";
+            *(output::substation_output) << wind_gen_total_kW    << ",";
+            *(output::substation_output) << wind_gen_expo_kW     << ",";
+            *(output::substation_output) << unknown_gen_total_kW << ",";
+            *(output::substation_output) << unknown_gen_expo_kW  << ",";
+            *(output::substation_output) << total_demand_wo_BESS << ",";
+            *(output::substation_output) << total_demand_only_BESS << ",";
+            *(output::substation_output) << round_float_5( totalBatterySOC ) << ",";
+            *(output::substation_output) << round_float_5( total_load ) << "\n"; // add total load to output
+            *(output::substation_output_details) << round_float_5( total_residential_load ) << ",";
+            *(output::substation_output_details) << round_float_5( total_residential_demand ) << ",";
+            *(output::substation_output_details) << round_float_5( total_other_demand ) << "\n";
+
+
+        }
+    }
+    if(output::surplus_output != NULL && write_output && Global::get_surplus_controller_enabled()) {
+            *(output::surplus_output) << ts << ",";
+            *(output::surplus_output) << round_float_5( totalBatterySOC ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToUnit() ) << ","; // scheduled surplus to units (discharge)
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetScheduledSurplusToBESS() ) << ","; // scheduled surplus to BESS
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetActualSurplusToBESS() ) << ","; // actual surplus to BESS
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSChargeRequest() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSLoad() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetBESSSurplusEnergy() ) << ",";
+            *(output::surplus_output) << round_float_5( surplus::SurplusController::GetFutureSurplusLog(ts) ) << ",";
+            *(output::surplus_output) << round_float_5( total_load ) << "\n";
+        }
+
+    // Write total_load to output parameter if provided
+    if (out_total_load != NULL) {
+        *out_total_load = total_load;
     }
 
     // Output current time step
-    output_counter++;
-    if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
-        output_counter = 0;
-        if (output_prefix[0] != '\0')
-            std::cout << "\r" << output_prefix;
-        std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed.";
-        if (output_prefix[0] != '\0')
-            std::cout << std::flush;
-        else
-            std::cout << std::endl;
-    } /*else {
-        std::cout << ".";
-    }*/
+    if(write_output){
+        output_counter++;
+        if (output_counter >= OUTPUT_STATUS_OUTPUT_FREQ) {
+            output_counter = 0;
+            if (output_prefix[0] != '\0')
+                std::cout << "\r" << output_prefix;
+            std::cout << "    Step " << ts << " of " << Global::get_n_timesteps() << " has been computed.";
+            if (output_prefix[0] != '\0')
+                std::cout << std::flush;
+            else
+                std::cout << std::endl;
+        } /*else {
+            std::cout << ".";
+        }*/
+    }
 
     return true;
 
@@ -280,6 +333,8 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
             output::CurrentParamValues cParamVals;
             // 0.2. reset internal variables for control units
             ControlUnit::ResetAllInternalStates();
+            // 0.3. cleanup surplus controller from previous run (if any)
+            surplus::SurplusController::Cleanup();
             //
             // 1. set current variable values
             //    i.e. iterate over all variable-name / value combinations and
@@ -327,6 +382,25 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     cParamVals.exp_bs_EP_ratio = var_name_and_val.second;
                     cParamVals.exp_bs_EP_ratio_set = true;
 
+                } else if (var_name_and_val.first.compare("expansion BS efficiency in and out") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_exp_bess_effi_in(var_name_and_val.second);
+                    Global::set_exp_bess_effi_out(var_name_and_val.second);
+                    Global::LockAllVariables();
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_efficiency(var_name_and_val.second);
+                    cParamVals.exp_bs_effi_in_and_out = var_name_and_val.second;
+                    cParamVals.exp_bs_effi_in_and_out_set = true;
+
+                } else if (var_name_and_val.first.compare("expansion BS self-discharge per ts") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_exp_bess_self_ds_ts(var_name_and_val.second);
+                    Global::LockAllVariables();
+                    for (ControlUnit* current_unit : units_list)
+                        current_unit->set_exp_bs_self_discharge(var_name_and_val.second);
+                    cParamVals.exp_bs_self_ds_ts = var_name_and_val.second;
+                    cParamVals.exp_bs_self_ds_ts_set = true;
+
                 } else if (var_name_and_val.first.compare("expansion BS initial SOC") == 0) {
                     std::cerr << "This is not implemented!" << std::endl;
 
@@ -341,6 +415,24 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
                     Global::LockAllVariables();
                     cParamVals.control_update_freq_in_ts     = (uint) (var_name_and_val.second);
                     cParamVals.control_update_freq_in_ts_set = true;
+
+                } else if (var_name_and_val.first.compare("surplus controller freq in ts") == 0) {
+                    uint val = (var_name_and_val.second);
+                    if ( val == 0 ) {
+                        val = 1;
+                    }
+                    Global::UnlockAllVariables();
+                    Global::set_surplus_controller_frequency_ts( (uint) (val) );
+                    Global::LockAllVariables();
+                    cParamVals.surplus_controller_freq_in_ts     = (uint) (val);
+                    cParamVals.surplus_controller_freq_in_ts_set = true;
+
+                } else if (var_name_and_val.first.compare("surplus controller lookahead horizon in ts") == 0) {
+                    Global::UnlockAllVariables();
+                    Global::set_surplus_controller_lookahead_horizon_ts( (uint) (var_name_and_val.second) );
+                    Global::LockAllVariables();
+                    cParamVals.surplus_controller_lookahead_horizon_in_ts     = (uint) (var_name_and_val.second);
+                    cParamVals.surplus_controller_lookahead_horizon_in_ts_set = true;
 
                 } else {
                     std::cerr << "Unknown parameter variable to vary: " << var_name_and_val.first << std::endl;
@@ -369,6 +461,7 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
             // 2. open output files
             output::initializeDirectoriesPerPVar();
             output::initializeSubstationOutput(scenario_id);
+            output::initializeSurplusOutput(scenario_id);
             output::initializeCUOutput(scenario_id);
             // 2.b output the current parameter variation combination
             output::outputCurrentParamVariCombi(cParamVals);
@@ -393,6 +486,7 @@ bool simulation::runSimulationForAllVariations(const unsigned long scenario_id, 
         // 1. open output files
         output::initializeDirectoriesPerPVar();
         output::initializeSubstationOutput(scenario_id);
+        output::initializeSurplusOutput(scenario_id);
         output::initializeCUOutput(scenario_id);
         // 1.b output the current parameter variation combination
         output::CurrentParamValues cParamVals;

@@ -33,6 +33,8 @@ Folders are marked in **bold**.
 |                                                     |                            |
 | _Further optional output_:                          | _Files only generated if selected by specified command line arguments. See command line parameter `--cu-output` for details_ |
 | ev-details.csv                                      | Detailed time series for every simulated EV |
+| `XXXX-surplus-time-series.csv`                      | Detailed time series for surplus controller debugging. See command line parameter `--surplus-output` for details|
+
 
 
 
