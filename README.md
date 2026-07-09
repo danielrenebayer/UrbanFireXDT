@@ -2,7 +2,7 @@
 
 <!-- Project logo -->
 <p align="center">
-    <img src="documentation/logos/UrbanFireXDT_Logo_v1.png" alt="UrbanFireXDT Logo" />
+    <img src="documentation/logos/UrbanFireXDT_Logo_v4.0.png" alt="UrbanFireXDT Logo" />
 </p>
 
 <!-- Badges -->
@@ -22,8 +22,9 @@ The installation procedure is described below on this page.
 <!-- About the repository -->
 ## About the repository
 
-This repository contains the code for the simulation component that is part of the digital twin for the analysis of future integrated renewable energy systems, as presented for example in [1].
-This repository implements the performance-oriented simulation including the control strategies of the presented digital twin.
+This repository contains the code for the simulation component that is part of the digital twin for the analysis of future integrated renewable energy systems, as initially presented in [1].
+An extended and updated version of the presentation can be found in [2].
+In detail, it implements the performance-oriented simulation including the control strategies of the presented digital twin.
 It includes:
 
 - Runtime loading of preprocessed and unified input data
@@ -31,7 +32,9 @@ It includes:
 - Optimization-based and rule-based control strategies on the ControlUnit level
 - Scenario-specific metric computation and structured output generation
 
-For details, please read the scientific publications linked below.
+For concrete methodological details, please read the scientific publications linked below.
+Especially, for information on possible input modeling of the heating and mobility sector, please have a look to [3,4] for heating and [5] for mobility.
+
 This README contains all important information to compile the code and run the examples.
 Parts of this code were developed as part of the *DigiSWM* research project founded by the Bavarian State Ministry of Economic Affairs, Regional Development and Energy under grant number DIK-2103-0017 / DIK0298/02.
 
@@ -133,6 +136,10 @@ If using a local makefile, the local paths and settings will be ignored by git, 
 <!-- Scientific References -->
 ## Scientific References
 [1] D. Bayer and M. Pruckner, "A digital twin of a local energy system based on real smart meter data," *Energy Informatics*, vol. 6, no. 1, Mar. 2023. doi: [10.1186/s42162-023-00263-6](https://dx.doi.org/10.1186/s42162-023-00263-6).
+[2] D. R. Bayer and M. Pruckner, "Optimizing heat pump and electric vehicle flexibility through predictive home energy management systems within urban energy digital twins," *Energy and Buildings*, p. 117674, 2026. doi: [10.1016/j.enbuild.2026.117674](https://dx.doi.org/10.1016/j.enbuild.2026.117674)
+[3] D. Bayer and M. Pruckner, "Modeling of Annual and Daily Electricity Demand of Retrofitted Heat Pumps based on Gas Smart Meter Data," *Proceedings of the 10th ACM International Conference on Systems for Energy-Efficient Buildings, Cities, and Transportation*, 2023. doi: [10.1145/3600100.3623745](https://dx.doi.org/10.1145/3600100.3623745)
+[4] D. R. Bayer and M. Pruckner, "Estimating the seasonal performance and electricity consumption of retrofitted heat pumps," *Data-Centric Engineering*, vol. 5, 2024. doi: [10.1017/dce.2024.44](https://dx.doi.org/10.1017/dce.2024.44)
+[5] D. R. Bayer and M. Pruckner, "Analyzing the Impact of Electric Vehicles on Local Energy Systems using Digital Twins," *2024 Winter Simulation Conference (WSC)*, 2024. doi: [10.1109/wsc63780.2024.10838852](https://dx.doi.org/10.1109/wsc63780.2024.10838852)
 
 
 <!-- LICENSE -->
