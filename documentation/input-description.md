@@ -125,7 +125,7 @@ Documentation of the configuration database in detail
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | The time step for which the dataset is valid [Foreign key] |
-| wind_profile_value |REAL  | The normalized feed-in value at the given timestep |
+| PowerFeedin\_kW |REAL  | The normalized feed-in value at the given timestep |
 
 
 ## Table global_profiles_heatpumps
@@ -136,8 +136,8 @@ The normalization takes place on an annual level, so that every time series resu
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | TimestepID    | INTEGER   | The time step for which the dataset is valid [Foreign key] |
-| ShiftableDemand_kW   | REAL | The normalized demand value of the heat pump demand at this time step that can be shifted in theory |
-| UnshiftableDemand_kW | REAL | The normalized demand value of the heat pump demand that cannot be shifted |
+| ShiftableDemand\_kW   | REAL | The normalized demand value of the heat pump demand at this time step that can be shifted in theory |
+| UnshiftableDemand\_kW | REAL | The normalized demand value of the heat pump demand that cannot be shifted |
 | TimeSeriesIndex | INTEGER | The index of the heat pump time series (important, if there is more than one time series) |
 
 
@@ -146,9 +146,9 @@ The normalization takes place on an annual level, so that every time series resu
 | Column name   | Type      | Description       |
 | ---           | ---       | -------           |
 | LocID         | INTEGER   | ID of the location (starting with 0) |
-| n_buildings   | INTEGER   | Number of buildings (for which geodata is available) |
-| has_residential_buildings | INTEGER | Holds the value 1, iff the location holds a residential building, and can thus be regarded as residential location |
-| max_volume    | REAL      | The volume of the (biggest) building on the given location - used for aproximating the heat demand if no heat demand is given in table heat_demand_per_location |
+| n\_buildings                | INTEGER | Number of buildings (for which geodata is available) |
+| has\_residential\_buildings | INTEGER | Holds the value 1, iff the location holds a residential building, and can thus be regarded as residential location |
+| max\_b\_volume\_m3          | REAL    | The volume of the (biggest) building on the given location - used for aproximating the heat demand if no heat demand is given in table `heat_demand_per_location` |
 
 
 ## Table heat_demand_per_location

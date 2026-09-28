@@ -836,13 +836,16 @@ int load_data_from_central_database_callbackD(void* data, int argc, char** argv,
         unsigned long conn_to_subst_id = stoul(argv[1]);
         unsigned long location_id      = stoul(argv[2]);
         unsigned int  n_flats          =  stoi(argv[4]);
-        bool residential = (location_id > 0) && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
+        bool residential = (location_id > 0) && argv[3] != NULL && (strlen(argv[3]) > 0) && (stoi(argv[3]) > 0);
         if (!ControlUnit::InstantiateNewControlUnit(current_cu_id, conn_to_subst_id, location_id, residential, n_flats)) {
             cerr << "Error when creating control unit with id " << current_cu_id << endl;
             cerr << "Is the ID of the control unit unique?" << endl;
             return 1;
         }
         last_valid_cu_id = current_cu_id;
+        if (argv[3] == NULL && location_id > 0) {
+            std::cerr << "Warning: Control unit with ID " << current_cu_id << " at known location with ID " << location_id << " has no entry in 'address_data' table!" << std::endl;
+        }
     } catch (std::invalid_argument const& e) {
         cerr << "Non-parsable integer or unsigned long detected in list_of_control_units. Last valid ID = " << last_valid_cu_id << std::endl;
         return 1;
@@ -1028,7 +1031,7 @@ int load_data_from_central_database_callback_Wind(void* data, int argc, char** a
      *
      * Columns:
      * 0           1
-     * TimestepID  wind_profile_value
+     * TimestepID  PowerFeedin_kW
      */
     static size_t callcounter = 1;
     size_t pos = callcounter - 1; // the current position is one behind the callcounter
@@ -1162,8 +1165,8 @@ int load_data_from_central_database_callback_address_data_A(void* data, int argc
      * This is the callback function for geeting the yearly heat pump electricity demand in kWh per Location ID.
      *
      * Columns:
-     * 0      1            2           3
-     * LocID  n_buildings  max_volume  Heat Demand in kWh per year
+     * 0      1            2                3
+     * LocID  n_buildings  max_b_volume_m3  Heat Demand in kWh per year
      */
     if (argc != 4) {
         cerr << "Number of arguments not equal to 4 for one row!" << endl;
@@ -1442,7 +1445,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgC;
         int ret_valC = sqlite3_exec(dbcon, sql_queryC.c_str(), load_data_from_central_database_callbackC, NULL, &sqlErrorMsgC);
         if (ret_valC != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgC << endl;
+            cerr << "Error when reading the SQL-Table 'list_of_substations': " << sqlErrorMsgC << endl;
             sqlite3_free(sqlErrorMsgC);
             return false;
         }
@@ -1451,7 +1454,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgD;
         int ret_valD = sqlite3_exec(dbcon, sql_queryD.c_str(), load_data_from_central_database_callbackD, NULL, &sqlErrorMsgD);
         if (ret_valD != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgD << endl;
+            cerr << "Error when reading the SQL-Table 'list_of_control_units': " << sqlErrorMsgD << endl;
             sqlite3_free(sqlErrorMsgD);
             return false;
         }
@@ -1460,7 +1463,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         char* sqlErrorMsgE;
         int ret_valE = sqlite3_exec(dbcon, sql_queryE.c_str(), load_data_from_central_database_callbackE, NULL, &sqlErrorMsgE);
         if (ret_valE != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgE << endl;
+            cerr << "Error when reading the SQL-Table 'list_of_measurement_units': " << sqlErrorMsgE << endl;
             sqlite3_free(sqlErrorMsgE);
             return false;
         }
@@ -1498,7 +1501,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT TimestepID,PowerFeedin_kW,Orientation,SameOrientationTimeSeriesIndex FROM global_profiles_pv ORDER BY Orientation,SameOrientationTimeSeriesIndex,TimestepID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_PV, new_pv_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'global_profiles_pv': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -1515,10 +1518,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
         for (unsigned long l = 0; l < Global::get_n_timesteps(); l++)
             new_wind_array[l] = 0;
         // run query
-        sql_query = "SELECT TimestepID,wind_profile_value FROM global_profile_wind;";
+        sql_query = "SELECT TimestepID,PowerFeedin_kW FROM global_profile_wind;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_Wind, new_wind_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'global_profile_wind': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -1545,7 +1548,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT TimestepID,PowerDemand_kW,TimeSeriesIndex FROM global_profiles_heatpumps ORDER BY TimeSeriesIndex,TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_HP, new_hp_profile_s_array  /*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'global_profiles_heatpumps': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -1577,7 +1580,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT TimestepID,P_residual_gridload FROM residual_grid_load ORDER BY TimestepID;";
         ret_valF  = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_ResGridload, new_res_gridload_array/*Reference to the new array*/, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'residual_grid_load': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -1587,10 +1590,10 @@ bool configld::load_data_from_central_database(const char* filepath) {
         // Load address data
         //
         // 1. annual heat demand for heat pumps AND buildings with available geo data?
-        sql_query = "SELECT A.LocID, A.n_buildings, A.max_volume, B.MeanHeatEnergy_kWh FROM address_data as A LEFT JOIN heat_demand_per_location as B ON A.LocID = B.LocID WHERE n_buildings >= 1 ORDER BY A.LocID;";
+        sql_query = "SELECT A.LocID, A.n_buildings, A.max_b_volume_m3, B.MeanHeatEnergy_kWh FROM address_data as A LEFT JOIN heat_demand_per_location as B ON A.LocID = B.LocID WHERE n_buildings >= 1 ORDER BY A.LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_A, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'heat_demand_per_location' and 'address_data': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
@@ -1598,7 +1601,7 @@ bool configld::load_data_from_central_database(const char* filepath) {
         sql_query = "SELECT LocID, Area_in_m2, Orientation FROM address_roof_data ORDER BY LocID;";
         ret_valF = sqlite3_exec(dbcon, sql_query.c_str(), load_data_from_central_database_callback_address_data_B, NULL, &sqlErrorMsgF);
         if (ret_valF != 0) {
-            cerr << "Error when reading the SQL-Table: " << sqlErrorMsgF << endl;
+            cerr << "Error when reading the SQL-Table 'address_roof_data': " << sqlErrorMsgF << endl;
             sqlite3_free(sqlErrorMsgF);
             return false;
         }
