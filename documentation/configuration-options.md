@@ -97,9 +97,9 @@ The JSON file holds a dictionary with three keys / sections on the top level:
 | expansion BS efficiency in | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for charging in percent. Cannot be used together with `expansion BS efficiency in and out`. | no |
 | expansion BS efficiency out | float | no | 1 | 0.0 to 1.0 | Efficiency of the battery for discharging in percent. Cannot be used together with `expansion BS efficiency in and out`. | no |
 | expansion BS efficiency in and out | float | no | 1 | 0.0 to 1.0 | Sets both charging and discharging efficiency to the same value. Useful for parameter variations where both efficiencies should vary together. Cannot be used together with individual `expansion BS efficiency in` or `expansion BS efficiency out` parameters. | yes |
-| expansion BS self-discharge per ts | float | no | 0 | 0.0 to 1.0 | Self-discharging rate in percent per time step | 
-| expansion BS power for SOC 0 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 0 in kW |  
-| expansion BS power for SOC 1 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 1 in kW | 
+| expansion BS self-discharge per ts | float | no | 0 | 0.0 to 1.0 | Self-discharging rate in percent per time step | no |
+| expansion BS power for SOC 0 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 0 in kW | no |
+| expansion BS power for SOC 1 | float | no | 0 | 0.0 to inf | Power consumption of the battery controller if SOC is 1 in kW | no |
 
 ### Group 3, Part C: Heat pump configuration
 
@@ -178,8 +178,6 @@ Notice the difference between individual EVs and the EV charging station (CS): T
 
 
 ## Group 6: Surplus controller settings
-
-TODO: Unsure about how parameter variation works
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
