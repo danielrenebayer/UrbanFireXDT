@@ -29,11 +29,11 @@ namespace expansion {
     //
     // There are two different ways in which a expansion is defined
     //  1. as the index it appears in the 
-    const int MaskNothing = 0b0000;
-    const int MaskPV      = 0b0001;
-    const int MaskBS      = 0b0010;
-    const int MaskHP      = 0b0100;
-    const int MaskWB      = 0b1000;
+    const int MaskNothing = 0b0000; ///< Extracts if no component (PV, BS, HP, CS) is existing or added
+    const int MaskPV      = 0b0001; ///< Extracts if a PV installation is  existing or added
+    const int MaskBS      = 0b0010; ///< Extracts if a battery energy storage system (BS) is  existing or added
+    const int MaskHP      = 0b0100; ///< Extracts if a heat pump (HP) is  existing or added
+    const int MaskCS      = 0b1000; ///< Extracts if a charging station (CS) is  existing or added
 
     inline double final_cumsum_of_added_pv_kWp; ///< The cummulative sum of added roof-top PV power in kWp after the SAC planning
     inline double final_cumsum_of_added_bs_kWh; ///< The cummulative sum of added battery capacity in kWh after the SAC planning

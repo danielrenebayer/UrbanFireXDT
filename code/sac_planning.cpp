@@ -41,18 +41,18 @@ int expansion::expCombiMatrixOrderToBitRepr(int indexMatO) {
         case  1: return MaskPV;
         case  2: return        MaskBS;
         case  3: return               MaskHP;
-        case  4: return                      MaskWB;
+        case  4: return                      MaskCS;
         case  5: return MaskPV|MaskBS;
         case  6: return MaskPV|       MaskHP;
-        case  7: return MaskPV|              MaskWB;
+        case  7: return MaskPV|              MaskCS;
         case  8: return        MaskBS|MaskHP;
-        case  9: return        MaskBS|       MaskWB;
-        case 10: return               MaskHP|MaskWB;
+        case  9: return        MaskBS|       MaskCS;
+        case 10: return               MaskHP|MaskCS;
         case 11: return MaskPV|MaskBS|MaskHP;
-        case 12: return MaskPV|MaskBS|       MaskWB;
-        case 13: return MaskPV|       MaskHP|MaskWB;
-        case 14: return        MaskBS|MaskHP|MaskWB;
-        case 15: return MaskPV|MaskBS|MaskHP|MaskWB;
+        case 12: return MaskPV|MaskBS|       MaskCS;
+        case 13: return MaskPV|       MaskHP|MaskCS;
+        case 14: return        MaskBS|MaskHP|MaskCS;
+        case 15: return MaskPV|MaskBS|MaskHP|MaskCS;
     }
     throw logic_error("Impossible index passed to function!");
     return 0;
@@ -72,29 +72,29 @@ int expansion::expCombiBitReprToMatrixOrder(int bitRepr) {
         return  2;
     else if (bitRepr ==                MaskHP)
         return  3;
-    else if (bitRepr ==                       MaskWB)
+    else if (bitRepr ==                       MaskCS)
         return  4;
     else if (bitRepr == (MaskPV|MaskBS)               )
         return  5;
     else if (bitRepr == (MaskPV|       MaskHP)        )
         return  6;
-    else if (bitRepr == (MaskPV|              MaskWB) )
+    else if (bitRepr == (MaskPV|              MaskCS) )
         return  7;
     else if (bitRepr == (       MaskBS|MaskHP)        )
         return  8;
-    else if (bitRepr == (       MaskBS|       MaskWB) )
+    else if (bitRepr == (       MaskBS|       MaskCS) )
         return  9;
-    else if (bitRepr == (              MaskHP|MaskWB) )
+    else if (bitRepr == (              MaskHP|MaskCS) )
         return 10;
     else if (bitRepr == (MaskPV|MaskBS|MaskHP)        )
         return 11;
-    else if (bitRepr == (MaskPV|MaskBS|       MaskWB) )
+    else if (bitRepr == (MaskPV|MaskBS|       MaskCS) )
         return 12;
-    else if (bitRepr == (MaskPV|       MaskHP|MaskWB) )
+    else if (bitRepr == (MaskPV|       MaskHP|MaskCS) )
         return 13;
-    else if (bitRepr == (       MaskBS|MaskHP|MaskWB) )
+    else if (bitRepr == (       MaskBS|MaskHP|MaskCS) )
         return 14;
-    else if (bitRepr == (MaskPV|MaskBS|MaskHP|MaskWB) )
+    else if (bitRepr == (MaskPV|MaskBS|MaskHP|MaskCS) )
         return 15;
 
     throw logic_error("Invalid bit representation!");
@@ -112,7 +112,7 @@ int expansion::genExpCombiAsBitRepr(bool has_pv, bool has_bs, bool has_hp, bool 
     if (has_hp)
         retval = retval | MaskHP;
     if (has_wb)
-        retval = retval | MaskWB;
+        retval = retval | MaskCS;
     return retval;
 }
 
@@ -342,7 +342,7 @@ bool add_expansion_to_units_random_or_data_order(
             if (ijXOR & MaskPV) expPV = true;
             if (ijXOR & MaskBS) expBS = true;
             if (ijXOR & MaskHP) expHP = true;
-            if (ijXOR & MaskWB) expEV = true;
+            if (ijXOR & MaskCS) expEV = true;
             // filter all elements from the list of control units with the current combination
             // that can be expanded to the current selected target combination
             std::queue<ControlUnit*> currExpandableSetOfCUs;
@@ -543,7 +543,7 @@ bool add_expansion_to_units_orderd_by_metric(
             if (ijXOR & MaskPV) expPV = true;
             if (ijXOR & MaskBS) expBS = true;
             if (ijXOR & MaskHP) expHP = true;
-            if (ijXOR & MaskWB) expCS = true;
+            if (ijXOR & MaskCS) expCS = true;
             string jStrO = expansion::expCombiMatrixOrderToString(jExpTargetMatO);
             // filter listOfCUs -> Only select those units where an addition of the selected components is possible
             auto filterLambda = [expPV,expBS,expHP,expCS](ControlUnit* cu){ 
@@ -649,7 +649,7 @@ bool add_expansion_to_units_orderd_by_metric(
                 if (ijXOR & MaskPV) expPV = true;
                 if (ijXOR & MaskBS) expBS = true;
                 if (ijXOR & MaskHP) expHP = true;
-                if (ijXOR & MaskWB) expCS = true;
+                if (ijXOR & MaskCS) expCS = true;
                 // are already enough elements added?
                 if ( n_already_expanded_CUs[jExpTargetMatO] >= expansion_matrix_abs_freq[iMatO][jExpTargetMatO] ) {
                     // empty this 'column'
@@ -795,7 +795,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
             //if (ijXOR & MaskPV) expPV = true;
             //if (ijXOR & MaskBS) expBS = true;
             if (ijXOR & MaskHP) expHP = true;
-            if (ijXOR & MaskWB) expEV = true;
+            if (ijXOR & MaskCS) expEV = true;
             //
             // jump loop, if no HP or EVCh St has to be added
             if (numThisCombi_i_j == 0 || !(expHP || expEV)) {
@@ -850,8 +850,8 @@ double add_expansion_to_units_orderd_by_metric_OLD(
         int combination_bitrepr[4] = { // same order as for 'combinations' defined above
             0,
             MaskHP,
-            MaskWB,
-            MaskHP | MaskWB
+            MaskCS,
+            MaskHP | MaskCS
         };
         // initialize all values with (0,0)
         for ( auto m : combinations ) {
@@ -1246,8 +1246,8 @@ void expansion::add_expansion_to_units(
     filesystem::path info_path_A (*(global::current_global_output_dir)); // for the expansion matrix it is acceptable to use the static output path (that does not change over time for different parameter variations, as expansion cannot change)
     info_path_A /= "expansion-matrix-abs-values.csv";
     ofstream output_exp_mat(info_path_A, std::ofstream::out);
-    output_exp_mat << ",0. Nothing,1. PV,2. BS,3. HP,4. WB,5. PV+BS,6. PV+HP,7. PV+WB,8. BS+HP,9. BS+WB,10. HP+WB,11. PV+BS+HP,12. PV+BS+WB,13. PV+HP+WB,14. BS+HP+WB,15. PV+BS+HP+WB,Sum as in data" << endl;
-    const char * first_column[16] = {"0. Nothing","1. PV","2. BS","3. HP","4. WB","5. PV+BS","6. PV+HP","7. PV+WB","8. BS+HP","9. BS+WB","10. HP+WB","11. PV+BS+HP","12. PV+BS+WB","13. PV+HP+WB","14. BS+HP+WB","15. PV+BS+HP+WB"};
+    output_exp_mat << "Current state,0. Nothing,1. PV,2. BS,3. HP,4. CS,5. PV+BS,6. PV+HP,7. PV+CS,8. BS+HP,9. BS+CS,10. HP+CS,11. PV+BS+HP,12. PV+BS+CS,13. PV+HP+CS,14. BS+HP+CS,15. PV+BS+HP+CS,Sum as in data" << endl;
+    const char * first_column[16] = {"0. Nothing","1. PV","2. BS","3. HP","4. CS","5. PV+BS","6. PV+HP","7. PV+CS","8. BS+HP","9. BS+CS","10. HP+CS","11. PV+BS+HP","12. PV+BS+CS","13. PV+HP+CS","14. BS+HP+CS","15. PV+BS+HP+CS"};
     for (int i = 0; i < 16; i++) {
         output_exp_mat << first_column[i];
         for (int j = 0; j < 16; j++) {
@@ -1281,8 +1281,8 @@ void expansion::add_expansion_to_units(
         output_per_cu << "," << (0 < (expansion::MaskBS & expCombiAsSimulated));
         output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsInData));
         output_per_cu << "," << (0 < (expansion::MaskHP & expCombiAsSimulated));
-        output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsInData));
-        output_per_cu << "," << (0 < (expansion::MaskWB & expCombiAsSimulated));
+        output_per_cu << "," << (0 < (expansion::MaskCS & expCombiAsInData));
+        output_per_cu << "," << (0 < (expansion::MaskCS & expCombiAsSimulated));
         output_per_cu << "," << current_unit->get_sim_comp_pv_kWp();
         output_per_cu << "," << current_unit->get_sim_comp_bs_E_kWh();
         output_per_cu << "," << current_unit->get_sim_comp_bs_P_kW();

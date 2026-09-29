@@ -458,7 +458,7 @@ int ControlUnit::get_exp_combi_bit_repr_sim_added() const {
     if (has_sim_hp)
         combination = combination | expansion::MaskHP;
     if (has_sim_cs)
-        combination = combination | expansion::MaskWB;
+        combination = combination | expansion::MaskCS;
     return combination;
 }
 
