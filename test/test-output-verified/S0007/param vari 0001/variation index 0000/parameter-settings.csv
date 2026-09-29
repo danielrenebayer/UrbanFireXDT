@@ -7,7 +7,12 @@ expansion PV kWp static,10
 expansion BS E in kWh,20
 expansion BS E:P ratio,0
 expansion BS initial SOC,0
+expansion BS efficiency in,1
+expansion BS efficiency out,1
+expansion BS self-discharge per ts,0
 control horizont in ts,24
 control update freq in ts,1
+surplus controller freq in ts,24
+surplus controller lookahead horizon in ts,24
 seed_set,0
 seed,0
