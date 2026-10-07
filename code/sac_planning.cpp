@@ -371,7 +371,7 @@ bool add_expansion_to_units_random_or_data_order(
             // loop over this number
             for (long n = 0; n < numThisCombi_i_j; n++) {
                 if (currExpandableSetOfCUs.size() <= 0) {
-                    cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
+                    std::cerr << "Warning: end of list of control units for the simulated addition of components (SAC, aka expansion) reached before all expansion targets were fulfilled." << std::endl;
                     goto outer_loop_end;
                 }
                 // 0. check, if max global kWp addition is reached
@@ -805,7 +805,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
             // loop over this number
             for (long n = 0; n < numThisCombi_i_j; n++) {
                 if (iter == listOfCUs->end()) {
-                    cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled." << endl;
+                    std::cerr << "Warning: end of list of control units for the simulated addition of components (SAC, aka expansion) reached before all expansion targets were fulfilled." << std::endl;
                     goto outer_loop_end;
                 }
                 // 0b. if heat pump is added, check, if annual HP consumption is not exceeding addition clip level
@@ -813,7 +813,7 @@ double add_expansion_to_units_orderd_by_metric_OLD(
                     while ((*iter)->get_annual_hp_el_cons_kWh() <= 0) {
                         iter++;
                         if (iter == listOfCUs->end()) {
-                            cerr << "Warning: end of list for expansion reached before all expansion planing were fulfilled (Pos. 2)." << endl;
+                            std::cerr << "Warning: end of list of control units for the simulated addition of components (SAC, aka expansion) reached before all expansion targets were fulfilled." << std::endl;
                             goto outer_loop_end;
                         }
                     }
@@ -1130,7 +1130,6 @@ void expansion::add_expansion_to_units(
         // Select Control Unit only if the number of added EVs would not exceed the individual limit (if it is set)
         if (Global::get_exp_cs_max_ev_per_cs() > 0) {
             if (current_unit->get_sim_comp_cs_possible_n_EVs() > Global::get_exp_cs_max_ev_per_cs()) {
-                std::cout << "Removing unit ID " << current_unit->get_unitID() << " due to n EVs >= MAX EVs for addition.\n";
                 continue;
             }
         }
