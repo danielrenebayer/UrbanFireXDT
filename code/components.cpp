@@ -1301,44 +1301,55 @@ void EVFSM::add_weekly_tour(
     }
 #endif
 
-    if (weekday > 6)
-        throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": A weekday > 6 is not possible!");
-    
-    if (ts_duration == 0)
-        ts_duration = 1;
+    const double steps_per_day = 24.0 / Global::get_time_step_size_in_h();
+    const double rounded_steps = std::round(steps_per_day);
+    if (rounded_steps < 1.0 ||
+        rounded_steps > static_cast<double>((~0UL) / 14UL) ||
+        std::abs(steps_per_day - rounded_steps) > 1e-8
+    ) {
+        throw std::runtime_error("EVFSM: a day must contain an integer number of time steps.");
+    }
+    const unsigned long ts_per_day = static_cast<unsigned long>(rounded_steps);
+    const unsigned long ts_per_week = 7UL * ts_per_day;
+    if (weekday < 0 || weekday > 6 || departure_ts_of_day >= ts_per_day) {
+        throw std::runtime_error("Invalid weekday or departure time for carID " + std::to_string(carID));
+    }
+    if (ts_duration == 0 || ts_duration > ts_per_week ||
+        !std::isfinite(tour_length_km) || tour_length_km < 0.0) {
+        throw std::runtime_error("Invalid duration or distance for carID " + std::to_string(carID));
+    }
 
+    // All comparisons use absolute time-step offsets from Monday midnight
+    const unsigned long departure = departure_ts_of_day + ts_per_day * static_cast<unsigned long>(weekday);
+    const unsigned long arrival   = departure + ts_duration;
+    //
     unsigned long this_new_tour_id = list_of_all_tours.size();
     if (list_of_all_tours.size() > 0) {
-        WeeklyVehicleTour* last_know_tour = list_of_all_tours.back();
+        WeeklyVehicleTour* previous_tour = list_of_all_tours.back();
+        const unsigned long previous_departure = previous_tour->departure_ts_of_day + ts_per_day * (unsigned long)(previous_tour->day_of_week);
         // Check, if tours are added in the wrong ordering
-        if (last_know_tour->day_of_week > weekday) {
-            throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": Weekday of new tour is bevore the latest added tour!");
-        } else if (last_know_tour->day_of_week == weekday && last_know_tour->departure_ts_of_day > departure_ts_of_day) {
-            throw std::runtime_error("Error when adding a new vehicle tour for carID " + std::to_string(carID) + ": Time step of departure of new tour is bevore the latest added tour!");
+        if (departure < previous_departure) {
+            throw std::runtime_error("Tours must be added in chronological order for carID " + std::to_string(carID) + ". Check your file with the vehicle tours.");
         }
         // Check, if tours are overlapping
         // A) For the previous tour
-        float atime_of_week_prev = 24 * Global::get_time_step_size_in_h() * last_know_tour->day_of_week + (float) (last_know_tour->departure_ts_of_day) + (float) (last_know_tour->ts_duration); // arrival time of week of the previous trip
-        float dtime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day); // departure time of week of the trip to add
-        if (atime_of_week_prev > dtime_of_week_new) {
-            std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with its previous tour (weekday=" << last_know_tour->day_of_week << ", dep. ts=" << last_know_tour->departure_ts_of_day << ", ts. dur=" << last_know_tour->ts_duration << "). ";
+        if (departure < previous_departure + previous_tour->ts_duration) {
+            std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with its previous tour (weekday=" << previous_tour->day_of_week << ", dep. ts=" << previous_tour->departure_ts_of_day << ", ts. dur=" << previous_tour->ts_duration << "). ";
             std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ").\n";
             return;
         }
         // B) For the first tour in the next week
-        WeeklyVehicleTour* first_known_tour = list_of_all_tours.front();
-        unsigned long ts_of_a_week = (unsigned long) std::floor(((double) (7 * 24) / (double) Global::get_time_step_size_in_h()));
-        float atime_of_week_new  = 24 * Global::get_time_step_size_in_h() * weekday + (float) (departure_ts_of_day) + (float) (ts_duration); // arrival time of week of the trip to add
-        if ((unsigned long) atime_of_week_new > ts_of_a_week) {
-            float atime_of_week_first = Global::get_time_step_size_in_h() * first_known_tour->day_of_week + (float) (first_known_tour->departure_ts_of_day);
-            if ((unsigned long) (atime_of_week_new) % ts_of_a_week > (unsigned long) atime_of_week_first) {
-                std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with the first known tour (weekday=" << first_known_tour->day_of_week << ", dep. ts=" << first_known_tour->departure_ts_of_day << "). ";
-                std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ", ts. dur=" << ts_duration << ").\n";
-                return;
-            }
+        const WeeklyVehicleTour* first_known_tour = list_of_all_tours.front();
+        const unsigned long first_departure_next_week = ts_per_week
+            + ts_per_day * static_cast<unsigned long>(first_known_tour->day_of_week)
+            + first_known_tour->departure_ts_of_day;
+        if (arrival > first_departure_next_week) {
+            std::cerr << "Warning in carID = " << carID << ": A tour is overlapping with the first tour of the following week (weekday=" << first_known_tour->day_of_week << ", dep. ts=" << first_known_tour->departure_ts_of_day << "). ";
+            std::cerr << "Ignoring the second tour (weekday=" << weekday << ", dep. ts=" << departure_ts_of_day << ", ts. dur=" << ts_duration << ").\n";
+            return;
         }
         // Set next tour ID for the last know tour
-        last_know_tour->next_tour_id = this_new_tour_id;
+        previous_tour->next_tour_id = this_new_tour_id;
     }
     // append new tour
     WeeklyVehicleTour& new_tour = list_of_tours_pd[weekday]->emplace_back(0, weekday, departure_ts_of_day, ts_duration, tour_length_km, with_work);
@@ -1452,6 +1463,7 @@ void EVFSM::preprocessTourInformation() {
                 // Pluggin-in required, if: SOC <= 0.35, or if SOC is too low for next tour, or if sampling says so
                 if (
                     battery->get_SOC() <= 0.35 ||
+                    ( next_sTour != complete_tour_plan.end() && battery->get_SOE() < next_sTour->energy_consumption_kWh ) ||
                     (*distribution)(*random_generator) <= Global::get_ev_plugin_probability()
                 ) {
                     current_state = EVState::ConnectedAtHome;
