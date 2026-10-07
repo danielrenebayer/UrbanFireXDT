@@ -336,7 +336,7 @@ class ComponentBS : public BaseComponent {
         double get_chargeRequest() const { return charge_request_kW; } ///< Returns the current charge request in kW
         double get_currentE_from_surplus() const { return currentE_from_surplus_kWh; } ///< Returns the amount of energy that was charged from surplus PV in kWh
         // setter methods
-        void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; }
+        void  set_chargeRequest(double requested_charge_kW) { charge_request_kW = requested_charge_kW; } ///< Sets a charge request. If the parameter is greater zero, a charing is requested, otherwise the battery should discharge (if possible). Can be overwritten by multiple calls during one time step. The charge request will eventually be executed when calling ComponentBS::calculateActions(). Thereupon, the actual charging power can be obtained using ComponentBS::get_currentLoad_kW().
         void  set_grid_charged_amount(double grid_charged_kW); ///< Sets the amount that has been charged from the grid (and not from the PV) for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again!
         void set_surplus_charged_amount(double surplus_charged_kW); ///< Sets the amount that has been charged from global surplus controller for the current step. Must be executed AFTER ComponentBS::calculateActions() has been called. This call is optional, but at maximum it must not be called more than once, before calculateActions() is called again! This also consideres energy that was "discharged" by the surplus controller to directly cover load.
         void reset_surplus_charged_amount(); ///< Resets the amount of energy that was charged from global surplus controller to zero. This can be called from time to time fo prevent the amount drifting too much due to numerical inaccuracies, when the surplus controller does not knkow BESS states.
@@ -350,7 +350,7 @@ class ComponentBS : public BaseComponent {
         void  set_efficiency_out(double value);
         void  set_self_discharge_rate(double value);
         // update / action methods
-        void calculateActions();
+        void calculateActions(); ///< Main method for executing the charge request as set by ComponentBS::set_chargeRequest() for this time step. Must be called exactly once per time step after ComponentBS::set_chargeRequest().
         void resetWeeklyCounter();
         void resetInternalState();
         double const validateNoSurplusChargeRequest(double charge_request_kW); ///< Validates and constrains a charge request to be within battery charge/discharge capabilities and only allows discharging from non-surplus-charged energy
