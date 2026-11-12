@@ -62,6 +62,7 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
         //
         // define internal functions (here i.e. a lambda function with complete capture-by-reference)
         auto parse_element = [&](string& element_name, boost::property_tree::ptree& scenario_dict) -> void {
+          try {
             if      ( element_name.compare("data input path")           == 0 )
             {
                 string path = scenario_dict.get_value<string>();
@@ -484,7 +485,11 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
                 // stop on unknown configuration option
                 throw std::runtime_error( "Unknonw config parameter '" + element_name + "'");
             }
-            return;
+          } catch (const std::exception& e) {
+            std::cerr << "Error while parsing configuration parameter '" << element_name << "': " << e.what() << std::endl;
+            throw;
+          }
+          return;
         };
 
         //
@@ -706,6 +711,9 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
 
     } catch (bpt::ptree_bad_path& j) {
         cerr << "Error when parsing json file: " << j.what() << endl;
+        return false;
+    } catch (const std::exception& e) {
+        std::cerr << "Configuration loading failed: " << e.what() << std::endl;
         return false;
     }
 
