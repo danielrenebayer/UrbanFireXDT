@@ -130,6 +130,10 @@ class ORToolsLPController : public BaseOptimizedController {
                 c_bs_P_upper_limit->SetCoefficient(p_bs_in_kW[t],  1.0);
                 c_bs_P_upper_limit->SetCoefficient(p_bs_out_kW[t], 1.0);
                 c_bs_P_upper_limit->SetCoefficient(dim_bs_P_kW,   -1.0);
+            } else {
+                MPConstraint* const c_bs_P_upper_limit = model->MakeRowConstraint(-infinity, max_p_bs_kW, "Bound for BS power " + tstr);
+                c_bs_P_upper_limit->SetCoefficient(p_bs_in_kW[t],  1.0);
+                c_bs_P_upper_limit->SetCoefficient(p_bs_out_kW[t], 1.0);
             }
         }
         // one additional time step of the battery storage

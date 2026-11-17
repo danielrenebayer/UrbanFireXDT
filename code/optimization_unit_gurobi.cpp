@@ -102,6 +102,8 @@ bool GurobiLPController::updateController(
             // add bounds for BS power if this BS size is an optimization variable
             if (optimize_BS_size) {
                 model.addConstr( p_bs_in_kW[t] + p_bs_out_kW[t] <= *dim_bs_P_kW );
+            } else {
+                model.addConstr( p_bs_in_kW[t] + p_bs_out_kW[t] <= max_p_bs_kW );
             }
         }
         // one additional time step of the battery storage
