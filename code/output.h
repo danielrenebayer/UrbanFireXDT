@@ -188,7 +188,7 @@ namespace output {
      * Call this function only if Global::get_create_ev_detailed_output() == true.
      * This function is thread safe.
      */
-    void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh);
+    void outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_ch_notathome, float cumsum_E_min, float cumsum_E_max, float driving_distance_km, float maxP_kWh, float ev_bs_SOE_precom, float ev_bs_SOE_kWh);
 
 }
 

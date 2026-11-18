@@ -77,6 +77,7 @@ struct EVFSMComponentState {
     double sum_of_E_used_for_driving_kWh;
     double sum_of_E_charged_home_kWh;
     double sum_of_E_discharged_home_kWh;
+    double sum_of_E_charged_on_the_way_kWh;
     unsigned long sum_of_ts_EV_is_connected;
     BSComponentState battery_state; // Nested battery state
 };
@@ -688,8 +689,9 @@ class EVFSM : public BaseComponentSemiFlexible {
         // variables for the final metrics calculation
         double sum_of_driving_distance_km;    ///< Sum of driven distance in km (only updated at the end of a tour, when the home place is reached again)
         double sum_of_E_used_for_driving_kWh; ///< Sum of electricity consumed by the EV required for driving in kWh
-        double sum_of_E_charged_home_kWh;     ///< Sum of charged electricity in kWh
+        double sum_of_E_charged_home_kWh;     ///< Sum of charged electricity at home in kWh
         double sum_of_E_discharged_home_kWh;  ///< Sum of discharged electricity in kWh from the EV
+        double sum_of_E_charged_on_the_way_kWh; ///< Sum of charged electricity away from home in kWh
         ulong  sum_of_ts_EV_is_connected;     ///< Number of time steps the EV is connected as at the home charging point
 #ifdef ADD_METHOD_ACCESS_PROTECTION_VARS
         // Variables for access protection of non-const methods during the simulation run

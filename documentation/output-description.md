@@ -155,4 +155,6 @@ The columns of this output follows the following nomenclature:
 | E used for driving [kWh]   | The sum of electric energy required by the car in the simulation in kWh |
 | Home-charged E [kWh]       | The sum of electric energy that has been charged at home in kWh. Can be higher than `E used for driving [kWh]`, especially in the case of bidirectional charging |
 | Home-discharged E [kWh]    | The sum of electric energy that has been discharged from the EV battery at home in kWh (only important for the case of bidirectional charging) |
+| Charged E away from home [kWh] | The sum of electric energy that has been charged away from home in kWh. This value can be greater than zero, even if 100% home charging is selected as it is sometimes not avoidable to finish a tour. |
+| n ts home-connected        | Number of time steps where the EV is connected to the charging station at home |
 

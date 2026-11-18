@@ -260,7 +260,7 @@ void output::initializeCUOutput(unsigned long scenario_id) {
         //buffer = new char[bufferSize];
         //cu_details_ev_output->rdbuf()->pubsetbuf(buffer, bufferSize);
         // add header to output file
-        *(cu_details_ev_output) << "TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_min_kWh,cumsum_E_max_kWh,ev_bs_SOE_kWh" << endl;
+        *(cu_details_ev_output) << "TimestepID,CarID,EVState,P_charging_kW,cumsum_E_charged_at_home_kWh,cumsum_E_charged_notathome_kWh,cumsum_E_min_kWh,cumsum_E_max_kWh,driving_distance_km,maxP_kWh,ev_bs_SOE_precom_kWh,ev_bs_SOE_kWh" << endl;
     }
 }
 
@@ -656,7 +656,7 @@ void output::outputControlCommandDetails(
     *(cu_details_ccmd_output) << oss.str() << "\n";
 }
 
-void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_min, float cumsum_E_max, float ev_bs_SOE_kWh) {
+void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState ev_state, float p_charging_kW, float cumsum_E_ch_home, float cumsum_E_ch_notathome, float cumsum_E_min, float cumsum_E_max, float driving_distance_km, float maxP_kWh, float ev_bs_SOE_precom, float ev_bs_SOE_kWh) {
     std::unique_lock lock(mtx_cu_details_ev); // secure access by using a mutex
     std::string ev_state_str;
     if (ev_state == EVState::ConnectedAtHome) {
@@ -668,7 +668,7 @@ void output::outputEVStateDetails(unsigned long ts, unsigned long carID, EVState
     } else {
         ev_state_str = "unknown";
     }
-    *(cu_details_ev_output) << ts << "," << carID << "," << ev_state_str << "," << p_charging_kW << "," << cumsum_E_ch_home << "," << cumsum_E_min << "," << cumsum_E_max << "," << ev_bs_SOE_kWh << "\n";
+    *(cu_details_ev_output) << ts << "," << carID << "," << ev_state_str << "," << p_charging_kW << "," << cumsum_E_ch_home << "," << cumsum_E_ch_notathome << "," << cumsum_E_min << "," << cumsum_E_max << "," << driving_distance_km << "," << maxP_kWh << "," << ev_bs_SOE_precom << "," << ev_bs_SOE_kWh << "\n";
 }
 
 

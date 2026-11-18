@@ -1222,7 +1222,7 @@ bool ComponentCS::setDemandToGivenValues(std::vector<double>& charging_power_per
 std::map<unsigned long, EVFSM*> EVFSM::list_of_cars;
 std::default_random_engine*            EVFSM::random_generator = new std::default_random_engine();
 std::uniform_real_distribution<float>* EVFSM::distribution     = new std::uniform_real_distribution<float>(0, 1);
-const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,HomeControlUnitID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],n ts home-connected";
+const std::string EVFSM::MetricsStringHeaderAnnual = "CarID,HomeControlUnitID,Driving distance [km],E used for driving [kWh],Home-charged E [kWh],Home-discharged E [kWh],Charged E away from home [kWh],n ts home-connected";
 
 EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     carID(carID),
@@ -1247,6 +1247,7 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     sum_of_E_used_for_driving_kWh = 0.0;
     sum_of_E_charged_home_kWh     = 0.0;
     sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_E_charged_on_the_way_kWh = 0.0;
     sum_of_ts_EV_is_connected     = 0;
     // Create the list of tours
     list_of_tours_pd.reserve(7);
@@ -1282,6 +1283,7 @@ std::string* EVFSM::get_metrics_string_annual() {
     *retstr += std::to_string(sum_of_E_used_for_driving_kWh)  + ",";
     *retstr += std::to_string(sum_of_E_charged_home_kWh)      + ",";
     *retstr += std::to_string(sum_of_E_discharged_home_kWh)   + ",";
+    *retstr += std::to_string(sum_of_E_charged_on_the_way_kWh) + ",";
     *retstr += std::to_string(sum_of_ts_EV_is_connected);
     return retstr;
 }
@@ -1540,7 +1542,7 @@ void EVFSM::preprocessTourInformation() {
             battery_SOE_kWh -= energy_demand_per_tour_ts;
             if (battery_SOE_kWh < 0.0) {
                 battery_SOE_kWh = 0.0;
-                std::cerr << "Error in processing data for CarID " << carID << ". Battery empty (while driving) during preprocessing at time step " << ts << "." << std::endl;
+                // charging on the way is required in this situation
             }
             prec_vec_of_curr_BS_E_cons_kWh[tsID] = energy_demand_per_tour_ts;
         }
@@ -1580,6 +1582,7 @@ void EVFSM::resetInternalState() {
     sum_of_E_used_for_driving_kWh = 0.0;
     sum_of_E_charged_home_kWh     = 0.0;
     sum_of_E_discharged_home_kWh  = 0.0;
+    sum_of_E_charged_on_the_way_kWh = 0.0;
     sum_of_ts_EV_is_connected     = 0;
 }
 
@@ -1594,6 +1597,7 @@ ComponentStateVariant EVFSM::saveInternalState() const {
     state.sum_of_E_used_for_driving_kWh = sum_of_E_used_for_driving_kWh;
     state.sum_of_E_charged_home_kWh = sum_of_E_charged_home_kWh;
     state.sum_of_E_discharged_home_kWh = sum_of_E_discharged_home_kWh;
+    state.sum_of_E_charged_on_the_way_kWh = sum_of_E_charged_on_the_way_kWh;
     state.sum_of_ts_EV_is_connected = sum_of_ts_EV_is_connected;
     
     // Save the nested battery state
@@ -1620,6 +1624,7 @@ void EVFSM::restoreInternalState(const ComponentStateVariant& state) {
         sum_of_E_used_for_driving_kWh = ev_state.sum_of_E_used_for_driving_kWh;
         sum_of_E_charged_home_kWh = ev_state.sum_of_E_charged_home_kWh;
         sum_of_E_discharged_home_kWh = ev_state.sum_of_E_discharged_home_kWh;
+        sum_of_E_charged_on_the_way_kWh = ev_state.sum_of_E_charged_on_the_way_kWh;
         sum_of_ts_EV_is_connected = ev_state.sum_of_ts_EV_is_connected;
         
         // Restore the nested battery state
@@ -1672,8 +1677,14 @@ void EVFSM::setCarStateForTimeStep(unsigned long ts) {
     }
     // Remove energy from the battery if car is driving
     if (current_state == EVState::Driving) {
+        double prev_SOE = battery->get_SOE();
         battery->set_chargeRequest(-prec_vec_of_curr_BS_E_cons_kWh[tsID]);
         battery->calculateActions();
+        if (battery->get_SOE() <= 0.0) {
+            // This amount has to be charged anywhere on the way
+            sum_of_E_charged_on_the_way_kWh += prec_vec_of_curr_BS_E_cons_kWh[tsID] * Global::get_time_step_size_in_h() - prev_SOE;
+            // battery SOE remains at 0.0, it cannot become negative, so nothing to do
+        }
     } else if (current_state == EVState::ConnectedAtHome) {
         // Increment counters
         sum_of_ts_EV_is_connected += 1;
@@ -1704,7 +1715,7 @@ void EVFSM::setDemandToProfileData(unsigned long ts) {
     }
 
     if (Global::get_create_ev_detailed_output()) {
-        output::outputEVStateDetails(ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
+        output::outputEVStateDetails(ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) sum_of_E_charged_on_the_way_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) prec_vec_of_driving_distance_km[current_ts-1], (float) prec_vec_of_maxP_kW[current_ts-1], (float) prec_vec_of_curr_BS_E_cons_kWh[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
 }
 
@@ -1766,7 +1777,7 @@ bool EVFSM::setDemandToGivenValue(double new_demand_kW) {
     sum_of_E_charged_home_kWh += e;
 
     if (Global::get_create_ev_detailed_output()) {
-        output::outputEVStateDetails(current_ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) battery->get_currentCharge_kWh());
+        output::outputEVStateDetails(current_ts, carID, current_state, (float) current_P_kW, (float) sum_of_E_charged_home_kWh, (float) sum_of_E_charged_on_the_way_kWh, (float) prec_vec_of_minE[current_ts-1], (float) prec_vec_of_maxE[current_ts-1], (float) prec_vec_of_driving_distance_km[current_ts-1], (float) prec_vec_of_maxP_kW[current_ts-1], (float) prec_vec_of_curr_BS_E_cons_kWh[current_ts-1], (float) battery->get_currentCharge_kWh());
     }
     return no_error;
 }
