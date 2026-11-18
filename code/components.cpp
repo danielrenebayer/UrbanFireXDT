@@ -481,7 +481,11 @@ void ComponentBS::reset_surplus_charged_amount() {
 }
 
 void ComponentBS::set_SOE_without_computations(double new_SOE_kWh) {
+    if (new_SOE_kWh < 0.0) {
+        new_SOE_kWh = 0.0;
+    }
     currentE_kWh = new_SOE_kWh;
+    SOC = currentE_kWh / maxE_kWh;
 }
 
 void ComponentBS::set_maxE_kWh(double value) {
@@ -1245,9 +1249,9 @@ EVFSM::EVFSM(unsigned long carID, ComponentCS* homeStation) :
     sum_of_E_discharged_home_kWh  = 0.0;
     sum_of_ts_EV_is_connected     = 0;
     // Create the list of tours
-    list_of_tours_pd.reserve(6);
+    list_of_tours_pd.reserve(7);
     for (unsigned int day = 0; day < 7; day++) {
-        list_of_tours_pd.push_back( new std::vector<WeeklyVehicleTour> () );
+        list_of_tours_pd.push_back( new std::deque<WeeklyVehicleTour> () );
     }
     // Initialize empty vector for storing future max power
     future_maxP_storage.assign(Global::get_control_horizon_in_ts(), 0.0);
@@ -1378,6 +1382,9 @@ void EVFSM::preprocessTourInformation() {
     prec_vec_of_driving_distance_km.resize(Global::get_n_timesteps(), 0.0);
     prec_vec_of_maxP_kW.resize(Global::get_n_timesteps(), 0.0);
     prec_vec_of_curr_BS_E_cons_kWh.resize(Global::get_n_timesteps(), 0.0);
+    // constant values
+    constexpr double EPSILON = 1e-6;
+    constexpr double SOC_THRESHOLD_FOR_PLUGIN = 0.35;
     // list of all tours / complete tour plan
     std::vector<struct SingleVehicleTour> complete_tour_plan;
     // loop over all simulation time steps twice
@@ -1422,6 +1429,8 @@ void EVFSM::preprocessTourInformation() {
     }
     // -- second, to compute upper and lower cumluative charging electricity consumption
     current_state = EVState::ConnectedAtHome; // the EV is at home (connected) at the beginning of the simulation run 
+    const double battery_max_SOE_kWh = battery->get_maxE_kWh();
+    double battery_SOE_kWh = battery->get_maxE_kWh(); // the (current) battery SOE, starting with a full battery
     double last_minE_value = 0.0; // actual minE value
     double last_maxE_value = 0.0; // actual maxE value ( <= cumsum_E_driving_kWh )
     double cumsum_E_driving_kWh = 0.0; // cumulative sum of electricity used for driving
@@ -1444,35 +1453,31 @@ void EVFSM::preprocessTourInformation() {
         prec_vec_of_states.at(ts-1) = current_state;
     }
     // main loop for simulation time span
-    bool ev_fully_charged_at_next_dep = false; // True, if the EV must be fully charged at the next departure (or at least charged in every time step)!
-    unsigned long ts_since_last_connection = 0;
-    // double current_min_cumsum_SOE_kWh = battery->get_maxE_kWh(); // Start with a full battery
     for (unsigned long ts = Global::get_first_timestep(); ts <= Global::get_last_timestep(); ts++) {
         unsigned long tsID = ts - 1;
-        ts_since_last_connection++;
         // is the currently active tour finished?
         if (current_sTour != NULL && current_sTour->ts_arrival <= ts) {
             // arrival of current tour
             cumsum_E_driving_kWh += current_sTour->energy_consumption_kWh;
             cumsum_driving_distance_km += current_sTour->weekly_tour->tour_length_km;
+            //
             // Computation of EVState: Connected or not connected at home?
-            if (Global::get_ev_plugin_probability() >= 1.0) {
+            const bool plugin_required =
+                Global::get_ev_plugin_probability() >= 1.0 ||
+                battery_SOE_kWh <= SOC_THRESHOLD_FOR_PLUGIN * battery_max_SOE_kWh ||
+                (
+                    next_sTour != complete_tour_plan.cend() &&
+                    battery_SOE_kWh + EPSILON < next_sTour->energy_consumption_kWh
+                );
+            // Always draw a random number, even if plugging in is
+            // mandatory. This improves comparability between different
+            // probability settings below 1.0 when using identical seeds.
+            const bool plugin_sampled = (*distribution)(*random_generator) <= Global::get_ev_plugin_probability();
+            //
+            if (plugin_required || plugin_sampled) {
                 current_state = EVState::ConnectedAtHome;
-                ts_since_last_connection = 0;
             } else {
-                // Pluggin-in required, if: SOC <= 0.35, or if SOC is too low for next tour, or if sampling says so
-                if (
-                    battery->get_SOC() <= 0.35 ||
-                    ( next_sTour != complete_tour_plan.end() && battery->get_SOE() < next_sTour->energy_consumption_kWh ) ||
-                    (*distribution)(*random_generator) <= Global::get_ev_plugin_probability()
-                ) {
-                    current_state = EVState::ConnectedAtHome;
-                    ts_since_last_connection = 0;
-                    // Attention: in this case (i.e., plugin probability < 1.0 and if connected), EV MUST always be fully charged (or at least as much as possible in the time at home)
-                    ev_fully_charged_at_next_dep = true;
-                } else {
-                    current_state = EVState::DisconnectedAtHome;
-                }
+                current_state = EVState::DisconnectedAtHome;
             }
             // remove current tour
             current_sTour = NULL;
@@ -1481,40 +1486,67 @@ void EVFSM::preprocessTourInformation() {
         // is there no current tour, and is there still a next tour, and if yes, does this tour start right now?
         if (current_sTour == NULL && next_sTour != complete_tour_plan.end() && next_sTour->ts_start <= ts) {
             current_sTour = &(*next_sTour);
-            current_state = EVState::Driving;
             // compute (mean) energy demand per tour time step
-            energy_demand_per_tour_ts = (current_sTour->weekly_tour->tour_length_km * econs_kWh_per_km) / (double) (current_sTour->weekly_tour->ts_duration);
-            // Compute new last_minE_value
-            const double PREV_last_minE_value = last_minE_value;
-            if (ev_fully_charged_at_next_dep) {
-                // BS must be full (or set to max. chargeable amount) on departure in this case
-                last_minE_value = last_maxE_value;
-            } else {
-                last_minE_value = last_maxE_value - battery->get_maxE_kWh();
-                if (last_minE_value < 0)
-                    last_minE_value = 0.0;
+            const double econs_this_tour_kWh = current_sTour->weekly_tour->tour_length_km * econs_kWh_per_km;
+            energy_demand_per_tour_ts = econs_this_tour_kWh / (double) (current_sTour->weekly_tour->ts_duration);
+            // Compute new last_minE_value (and battery SOE)
+            if (current_state == EVState::ConnectedAtHome) {
+                if (Global::get_ev_departure_min_soc() >= 1.0) {
+                    // MIND: Global::get_ev_departure_min_soc() >= 1.0 if selected and always required if Global::get_ev_plugin_probability() < 1.0
+                    // BS must be full (or set to max. chargeable amount) on departure in this case
+                    last_minE_value = last_maxE_value;
+                    // battery SOE to 100% is known / set
+                    battery_SOE_kWh = battery_max_SOE_kWh;
+                } else {
+                    // set the battery SOE, in this case this value represents the MINIMUM value only
+                    // charge enough to make next tour
+                    if (battery_SOE_kWh < econs_this_tour_kWh + EPSILON) {
+                        double diff = econs_this_tour_kWh + EPSILON - battery_SOE_kWh;
+                        // Attention: If this exceeds the maximum chargable amount up to now, the value must be lowered (even though the battery may get empty during charging)
+                        if (last_minE_value + diff > last_maxE_value) {
+                            diff = last_maxE_value - last_minE_value;
+                        }
+                        battery_SOE_kWh += diff;
+                        last_minE_value += diff;
+                    }
+                    // charge enough to fulfill required mininum departure SOC
+                    if (battery_SOE_kWh < Global::get_ev_departure_min_soc() * battery_max_SOE_kWh) {
+                        double diff2 = Global::get_ev_departure_min_soc() * battery_max_SOE_kWh - battery_SOE_kWh;
+                        // Attention: It can happen that the minimum SOC cannot be reached because there is not enough time to charge, in this case, the additional charge must be limited
+                        if (last_minE_value + diff2 > last_maxE_value) {
+                            diff2 = last_maxE_value - last_minE_value;
+                        }
+                        battery_SOE_kWh += diff2;
+                        last_minE_value += diff2;
+                    }
+                }
             }
             // check for infeasability (i.e., car is consuming more energy than can be charged)
             if (last_maxE_value < last_minE_value) {
-                std::cerr << "Error in processing data for CarID " << carID << ". last_maxE_value < last_minE_value at time step " << ts << ". Optimization model will get infeasible!" << std::endl;
+                if (last_maxE_value + EPSILON < last_minE_value) {
+                    std::cerr << "Error in processing data for CarID " << carID << ". last_maxE_value < last_minE_value at time step " << ts << ". Optimization model will get infeasible!" << std::endl;
+                    std::cerr << "last_maxE_value = " << last_maxE_value << ", last_minE_value = " << last_minE_value << std::endl;
+                }
+                last_maxE_value = last_minE_value;
             }
-            // set new EV battery state of charge
-            double must_be_charged_kWh = last_minE_value - PREV_last_minE_value;
-            battery->set_SOE_without_computations(must_be_charged_kWh);
+            // set state variable
+            current_state = EVState::Driving;
             // set next tour iterator to next tour and unset boolean variables
             next_sTour++;
-            ev_fully_charged_at_next_dep = false;
         }
         // Update the current EV battery state if driving
         if (current_state == EVState::Driving) {
             // remove consumed energy per step from the battery
-            battery->set_chargeRequest(-energy_demand_per_tour_ts);
-            battery->calculateActions();
+            battery_SOE_kWh -= energy_demand_per_tour_ts;
+            if (battery_SOE_kWh < 0.0) {
+                battery_SOE_kWh = 0.0;
+                std::cerr << "Error in processing data for CarID " << carID << ". Battery empty (while driving) during preprocessing at time step " << ts << "." << std::endl;
+            }
             prec_vec_of_curr_BS_E_cons_kWh[tsID] = energy_demand_per_tour_ts;
         }
         // Update current maxE values (if connected at home, else use old values)
         // and set current available max charging power
-        if (current_state == EVState::ConnectedAtHome) {
+        else if (current_state == EVState::ConnectedAtHome) {
             last_maxE_value += E_CHARGABLE_PER_TS_kWh;
             if (last_maxE_value > cumsum_E_driving_kWh) {
                 last_maxE_value = cumsum_E_driving_kWh;
@@ -1701,6 +1733,10 @@ bool EVFSM::setDemandToGivenValue(double new_demand_kW) {
         }
         new_demand_kW = Global::get_ev_max_charging_power_kW();
     }
+    if (new_demand_kW > epsilon_ev && current_state != EVState::ConnectedAtHome) {
+        no_error = false;
+    }
+    //
     double e = new_demand_kW * Global::get_time_step_size_in_h();
     double new_total_e = sum_of_E_charged_home_kWh + e;
     // check, if the new demand is within the min/max bands

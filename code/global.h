@@ -284,6 +284,7 @@ class Global {
         static float get_heat_cons_bobv_intercept()           { return heat_cons_bobv_intercept;    } ///< Parameter of linear regression (intercept) for estimating annual heat consumption based on the building volume (bobv)
         static float get_general_HP_profile_limit()           { return general_HP_profile_limit;    } ///< Returns the upper limit of the heat pump profiles -- values above this limit are just clipped. The value is defined in kW normalized to 1000 kWh (of electricity consumption) per year. Values below zero indicate that this variable is intended to have no effect..
         static float get_ev_plugin_probability()              { return ev_plugin_probability;   }
+        static float get_ev_departure_min_soc()               { return ev_departure_min_soc;        } ///< The minimum SOC of an EV at the departure (assuming there is enough time to charge it, otherwise the departure SOC can still be lower)
         static float get_ev_battery_size_kWh()                { return ev_battery_size_kWh;         } ///< The battery capacity in kWh for simulated EVs
         static float get_ev_consumption_kWh_km()              { return ev_consumption_kWh_km;       } ///< The electricity consumption of an EV for driving 1 km
         static float get_ev_max_charging_power_kW()           { return ev_max_charging_power_kW;    } ///< The maximum charging power of a simulated EV
@@ -386,6 +387,7 @@ class Global {
         static void set_heat_cons_bobv_intercept(float value);
         static void set_general_HP_profile_limit(float value);
         static void set_ev_plugin_probability(float value);
+        static void set_ev_departure_min_soc(float value);
         static void set_ev_battery_size_kWh(float value);
         static void set_ev_consumption_kWh_km(float value);
         static void set_ev_max_charging_power_kW(float value);
@@ -491,6 +493,7 @@ class Global {
         static float heat_cons_bobv_intercept;///< Parameter of linear regression (intercept) for estimating annual heat consumption of a building based on its volume
         static float general_HP_profile_limit;
         static float ev_plugin_probability;   ///< The probability of plugin in an EV
+        static float ev_departure_min_soc;
         static float ev_battery_size_kWh;     ///< The battery capacity in kWh for simulated EVs
         static float ev_consumption_kWh_km;   ///< The electricity consumption of an EV for driving 1 km
         static float ev_max_charging_power_kW;

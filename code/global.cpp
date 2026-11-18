@@ -166,6 +166,7 @@ float Global::heat_cons_bobv_slope     = 0.0;
 float Global::heat_cons_bobv_intercept = 0.0;
 float Global::general_HP_profile_limit =-1.0;
 float Global::ev_plugin_probability   = 0.25;
+float Global::ev_departure_min_soc    = 1.0;
 float Global::ev_battery_size_kWh    = 30.0;
 float Global::ev_consumption_kWh_km   = 0.2f;
 float Global::ev_max_charging_power_kW=11.0f;
@@ -268,6 +269,10 @@ bool Global::AllVariablesInitialized() {
     // Check for impossible combinations
     if (cs_max_charging_power_kW > 0.0 && controller_mode != ControllerMode::RuleBased ) {
         std::cerr << "Warning: Setting a upper limit for max charging power per control unit will be ignored if controller mode is other than rule-based." << std::endl;
+    }
+    if (ev_plugin_probability < 1.0 && ev_departure_min_soc < 1.0) {
+        std::cerr << "Error: Either 'EV plugin probability' or 'EV departure min SOC' must be set to 1.0!" << std::endl;
+        return false;
     }
     if (control_horizon_in_ts < control_update_freq_in_ts) {
         std::cerr << "Error: Control horizon < control update frequency!" << std::endl;
@@ -1039,6 +1044,17 @@ void Global::set_ev_plugin_probability(float value) {
             return;
         }
         Global::ev_plugin_probability = value;
+    }
+}
+void Global::set_ev_departure_min_soc(float value) {
+    if (is_locked) {
+        cerr << "Global variable ev_departure_min_soc cannot be set!" << endl;
+    } else {
+        if (value > 1.0 || value < 0.0) {
+            cerr << "Global variable ev_plugin_probability cannot be set to value " << value << " (allowed range: [0.0,1.0])" << endl;
+            return;
+        }
+        Global::ev_departure_min_soc = value;
     }
 }
 void Global::set_ev_battery_size_kWh(float value) {

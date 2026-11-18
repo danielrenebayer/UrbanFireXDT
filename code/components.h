@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include <deque>
 #include <map>
 #include <random>
 #include <string>
@@ -666,7 +667,7 @@ class EVFSM : public BaseComponentSemiFlexible {
         const float econs_kWh_per_km;    ///< Energy consumption of the current EV in kWh/km
         ComponentCS const* homeStation;  ///< Reference to the home station of the EV
         // variable members (constant during a simulation run)
-        std::vector<std::vector<WeeklyVehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 7 -> sunday)
+        std::vector<std::deque<WeeklyVehicleTour>*> list_of_tours_pd; ///< Vector of vector of tours, one individual vector per week day (0 -> monday, 7 -> sunday)
         std::vector<WeeklyVehicleTour*> list_of_all_tours; ///< Vector of all weekly tours. Is the same as `list_of_tours_pd` in a flattened order, i.e., witout day information.
         std::vector<EVState> prec_vec_of_states; ///< precomputed list of states per time step
         std::vector<double> prec_vec_of_minE; ///< Complete precomputed vector of minimum charged electricity up to the end of time step ts

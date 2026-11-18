@@ -117,7 +117,8 @@ Notice the difference between individual EVs and the EV charging station (CS): T
 
 | Config Parameter Name | Type    | Required | Default (if not set) | Possible Values | Description | Can be used for parameter variations |
 | ------                | ---     | ---      | ---                  | ---             | ------      | ---                                  |
-| EV plugin probability | float   | no       | 0.25                 | 0.0 to 1.0      | The probability of plugin in an EV when arraving at home (special cases for low SOC are hard coded) | no |
+| EV plugin probability | float   | no       | 0.25                 | 0.0 to 1.0      | The probability of plugin in an EV when arraving at home. This parameter MUST be set to 1.0 if parameter `EV departure min SOC` is lower than 1.0. | no |
+| EV departure min SOC  | float   | no       |  1.0                 | 0.0 to 1.0      | The minimum SOC of a EV when departing. Regardless of this parameter, the minimum SOC upon departure is always set to so that the EV will make the next tour without additional charging. This parameter MUST be set to 1.0 if parameter `EV plugin probability` is lower than 1.0. | no |
 | EV battery size kWh   | float   | no       | 30.0                 | 0.0 to inf      | The capacity of a simulated EV | no |
 | EV consumption kWh per km | float | no     |  0.2                 | 0.0 to inf      | The electricity consumption of an EV for driving 1 km | no |
 | EV max charging power | float   | no     |  11.0                  | 0.0 to inf      | The maximum charging power of a simulated EV | no |

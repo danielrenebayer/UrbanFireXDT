@@ -322,6 +322,10 @@ bool configld::load_config_file(unsigned long scenario_id, string& filepath) {
             {
                 Global::set_ev_plugin_probability( scenario_dict.get_value<float>() );
             }
+            else if ( element_name.compare("ev departure min soc") == 0)
+            {
+                Global::set_ev_departure_min_soc( scenario_dict.get_value<float>() );
+            }
             else if ( element_name.compare("ev battery size kwh") == 0)
             {
                 Global::set_ev_battery_size_kWh( scenario_dict.get_value<float>() );
@@ -1879,6 +1883,7 @@ void configld::output_variable_values(std::ostream& current_outstream) {
     PRINT_VAR(Global::get_heat_cons_bobv_intercept());
     PRINT_VAR(Global::get_general_HP_profile_limit());
     PRINT_VAR(Global::get_ev_plugin_probability());
+    PRINT_VAR(Global::get_ev_departure_min_soc());
     PRINT_VAR(Global::get_ev_battery_size_kWh());
     PRINT_VAR(Global::get_ev_consumption_kWh_km());
     PRINT_VAR(Global::get_ev_max_charging_power_kW());
